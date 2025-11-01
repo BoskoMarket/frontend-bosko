@@ -1,163 +1,227 @@
+import React, { useMemo, useState } from "react";
 import {
   View,
   Text,
   TouchableWithoutFeedback,
   Keyboard,
-  Pressable,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
+  StyleSheet,
+  ActivityIndicator,
 } from "react-native";
-import React, { useState } from "react";
 import { TextInput } from "react-native-paper";
-import { useAuth } from "@/context/AuthContext";
+import { Image } from "expo-image";
 import { router } from "expo-router";
+import { useAuth } from "@/context/AuthContext";
 import { globalStyles } from "@/styles/global-styles";
 import Colors from "@/constants/Colors";
-import { Image } from "expo-image";
+import { isValidEmail } from "@/utils/validators";
 
-export default function LogInView({ toLogin }: { toLogin: () => void }) {
+interface LogInViewProps {
+  toLogin: () => void;
+}
+
+export default function LogInView({ toLogin }: LogInViewProps) {
   const { login } = useAuth();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [credentials, setCredentials] = useState({ email: "", password: "" });
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isFormValid = useMemo(() => {
+    return Boolean(credentials.email && credentials.password);
+  }, [credentials]);
+
+  const handleChange = (key: "email" | "password", value: string) => {
+    setCredentials((prev) => ({ ...prev, [key]: value }));
+    setFieldErrors((prev) => ({ ...prev, [key]: undefined }));
+    setSubmitError("");
+  };
+
+  const validateForm = () => {
+    const errors: { email?: string; password?: string } = {};
+
+    const emailValidation = isValidEmail(credentials.email);
+    if (!emailValidation.valid) {
+      errors.email = emailValidation.error;
+    }
+
+    if (!credentials.password) {
+      errors.password = "La contraseña es obligatoria";
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleLogin = async () => {
-    // Validar campos
-    if (!formData.email || !formData.password) {
-      setError("Por favor completa todos los campos");
+    if (!validateForm()) {
       return;
     }
 
-    setError("");
-    setIsLoading(true);
+    setIsSubmitting(true);
+    setSubmitError("");
 
     try {
-      const response = await login(formData);
-
-      // response.data = 1;
-      // if (response.data) {
-      //   // Registro exitoso, redirigir al login
-      //   router.push("/(tabs)");
-      // }
-      router.push("/(tabs)");
-    } catch (error) {
-      setError("Error al registrar usuario. Por favor intenta nuevamente.");
-      console.error("Register error:", error);
+      await login(credentials);
+      router.replace("/(tabs)");
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        "No se pudo iniciar sesión, usuario o contraseña incorrectos";
+      setSubmitError(message);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
+
   return (
-    <TouchableWithoutFeedback
-      onPress={() => {
-        // Dismiss keyboard on press outside of input
-        Keyboard.dismiss();
-      }}
-      style={{ flex: 1 }}
-    >
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={80} // ajustá si tenés header
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View
-          style={{
-            alignItems: "center",
-            paddingVertical: "30%",
-            flex: 1,
-          }}
-        >
+        <View style={styles.innerContainer}>
           <Image
             source={require("@/assets/images/bosko-logo.png")}
-            style={{
-              width: 180,
-              height: 180,
-              marginBottom: 20,
-            }}
+            style={styles.logo}
             contentFit="contain"
           />
-          <TextInput
-            placeholder="E-mail"
-            value={formData.email}
-            placeholderTextColor={"gray"}
-            onChangeText={(text) => {
-              setFormData((prev) => ({ ...prev, email: text }));
-              setError("");
-            }}
-            style={globalStyles.input}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="next"
-            error={!!error}
-            onSubmitEditing={() => {
-              // Focus next input on submit
-              Keyboard.dismiss();
-            }}
-            left={<TextInput.Icon icon="email" color="gray" />}
-          />
 
-          <TextInput
-            placeholder="Contraseña"
-            value={formData.password}
-            placeholderTextColor={"gray"}
-            onChangeText={(text) => {
-              setFormData((prev) => ({ ...prev, password: text }));
-              setError("");
-            }}
-            style={globalStyles.input}
-            secureTextEntry
-            right={<TextInput.Icon icon="eye" />}
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="done"
-            error={!!error}
-            onSubmitEditing={() => {
-              // Dismiss keyboard on submit
-              Keyboard.dismiss();
-            }}
-            left={<TextInput.Icon icon="lock" color="gray" />}
-          />
-          {error ? <Text style={{ color: "red" }}>{error}</Text> : null}
+          <View style={styles.formContainer}>
+            <Text style={styles.title}>Bienvenido de nuevo</Text>
 
-          <Pressable
-            onPress={handleLogin}
-            disabled={isLoading}
-            style={({ pressed }) => [
-              { opacity: pressed || isLoading ? 0.7 : 1 },
-            ]}
-          >
-            <Text>{isLoading ? "Registrando..." : "Registrarse"}</Text>
-          </Pressable>
-          <Text
-            style={{
-              marginTop: 20,
-            }}
-            onPress={() => toLogin()}
-          >
-            ¿No tienes cuenta?
+            <TextInput
+              label="Correo electrónico"
+              mode="flat"
+              value={credentials.email}
+              onChangeText={(value) => handleChange("email", value)}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={styles.input}
+              error={Boolean(fieldErrors.email)}
+              placeholder="Correo electrónico"
+              testID="login-email"
+            />
+            {fieldErrors.email ? (
+              <Text style={globalStyles.textError}>{fieldErrors.email}</Text>
+            ) : null}
+
+            <TextInput
+              label="Contraseña"
+              mode="flat"
+              value={credentials.password}
+              onChangeText={(value) => handleChange("password", value)}
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              style={styles.input}
+              error={Boolean(fieldErrors.password)}
+              placeholder="Contraseña"
+              testID="login-password"
+            />
+            {fieldErrors.password ? (
+              <Text style={globalStyles.textError}>{fieldErrors.password}</Text>
+            ) : null}
+
             <Pressable
-              style={{
-                flexDirection: "row",
-                alignContent: "center",
-                justifyContent: "center",
-              }}
-              onPress={() => router.push("/login/RegisterView")}
+              style={[styles.submitButton, !isFormValid && styles.submitButtonDisabled]}
+              onPress={handleLogin}
+              disabled={isSubmitting || !isFormValid}
             >
-              <Text
-                style={{
-                  color: Colors.colorPrimary,
-                }}
-              >
-                Regístrate aquí
-              </Text>
+              {isSubmitting ? (
+                <ActivityIndicator color={Colors.white} />
+              ) : (
+                <Text style={styles.submitText}>Iniciar sesión</Text>
+              )}
             </Pressable>
-          </Text>
+
+            {submitError ? (
+              <Text style={[globalStyles.textError, styles.submitError]}>{submitError}</Text>
+            ) : null}
+
+            <View style={styles.footerContainer}>
+              <Text style={styles.footerText}>¿No tienes cuenta?</Text>
+              <Pressable onPress={toLogin} accessibilityRole="button">
+                <Text style={styles.linkText}> Regístrate aquí</Text>
+              </Pressable>
+            </View>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.dark.background,
+  },
+  innerContainer: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 80,
+    paddingBottom: 24,
+    justifyContent: "center",
+  },
+  logo: {
+    width: 160,
+    height: 160,
+    alignSelf: "center",
+    marginBottom: 32,
+  },
+  formContainer: {
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: 16,
+    padding: 24,
+    gap: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 12,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "600",
+    color: Colors.white,
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: "rgba(255,255,255,0.08)",
+    color: Colors.white,
+  },
+  submitButton: {
+    marginTop: 8,
+    paddingVertical: 14,
+    borderRadius: 24,
+    backgroundColor: Colors.gold,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
+  },
+  submitText: {
+    color: Colors.dark.background,
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  submitError: {
+    textAlign: "center",
+  },
+  footerContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 16,
+  },
+  footerText: {
+    color: Colors.white,
+  },
+  linkText: {
+    color: Colors.colorPrimary,
+    fontWeight: "600",
+  },
+});

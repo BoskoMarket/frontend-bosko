@@ -6,14 +6,23 @@ export interface Credentials {
   password: string;
 }
 
-export interface RegisterPayload extends Credentials {
-  name: string;
+export interface RegisterUserPayload extends Credentials {
+  fullName: string;
+  username: string;
+  nationality: string;
+  countryOfResidence: string;
+  phone: string;
 }
 
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
   user?: any;
+}
+
+interface AvailabilityResponse {
+  available: boolean;
+  message?: string;
 }
 
 /**
@@ -28,12 +37,41 @@ export async function login(credentials: Credentials): Promise<AuthResponse> {
 /**
  * REGISTER
  */
-export async function register(
-  payload: RegisterPayload
+export async function registerUser(
+  payload: RegisterUserPayload
 ): Promise<AuthResponse> {
-  const { data } = await api.post<AuthResponse>("/auth/register", payload);
-  
+  const { data } = await api.post<AuthResponse>("/user", payload);
+
   return data;
+}
+
+export async function checkEmailAvailability(email: string): Promise<boolean> {
+  const { data } = await api.get<AvailabilityResponse>("/user/check-email", {
+    params: { email },
+  });
+
+  return data.available;
+}
+
+export async function checkUsernameAvailability(
+  username: string
+): Promise<boolean> {
+  const { data } = await api.get<AvailabilityResponse>(
+    "/user/check-username",
+    {
+      params: { username },
+    }
+  );
+
+  return data.available;
+}
+
+export async function isPhoneUnique(phone: string): Promise<boolean> {
+  const { data } = await api.get<AvailabilityResponse>("/user/check-phone", {
+    params: { phone },
+  });
+
+  return data.available;
 }
 
 /**
@@ -68,28 +106,21 @@ export const refreshTokenService = async (
   oldRefreshToken: string | null
 ): Promise<string | null> => {
   try {
-  
-
     const { data, status } = await api.post("/auth/refresh", {
       refreshToken: oldRefreshToken,
     });
 
-   
-
     if (status === 200) {
       const { accessToken, refreshToken } = data;
 
-      
-        await setItemAsync("token", accessToken);
-        await setItemAsync("refreshToken", refreshToken);
-        return accessToken;
-      
+      await setItemAsync("token", accessToken);
+      await setItemAsync("refreshToken", refreshToken);
+      return accessToken;
     }
 
-    return data
+    return null;
   } catch (error) {
     console.error("Error refreshing token:", error);
     return null;
   }
-  return null;
 };

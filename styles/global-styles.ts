@@ -3,11 +3,16 @@ import Colors from "@/constants/Colors";
 export const globalStyles = {
     colorPrimary: '#85001B',
     colorSecondary: '#DB0C36',
+    textError: {
+        color: '#FF6B6B',
+        fontSize: 13,
+        marginTop: 4,
+    },
     title: {
         fontFamily: 'Inter-Bold',
         fontSize: 30,
         color: Colors.colorPrimary,
-       
+
     }
     ,
     subtitle: {
@@ -26,7 +31,7 @@ export const globalStyles = {
     // padding: 5,
     marginVertical: 5,
   },
- 
+
 }
 
 
