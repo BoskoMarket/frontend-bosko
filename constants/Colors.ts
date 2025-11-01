@@ -25,4 +25,6 @@ export default {
     marginBottom: 10,
   },
   colorPrimary: '#850221',
+  white: '#FFFFFF',
+  gold: '#C99A4E',
 };
