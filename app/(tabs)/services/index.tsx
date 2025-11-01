@@ -36,6 +36,8 @@ const categoriesWithCounts: CategoryWithCount[] = SERVICE_CATEGORIES.map(
   }
 );
 
+type CategoryListItem = CategoryWithCount;
+
 const featuredServices: ServiceProvider[] = SERVICE_PROVIDERS.slice(0, 6);
 
 export default function ServicesScreen() {
@@ -100,7 +102,7 @@ export default function ServicesScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
       <FlatList
         data={categoriesWithCounts}
         keyExtractor={(item) => item.id}
@@ -118,7 +120,7 @@ export default function ServicesScreen() {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: "./category/[id]",
+                  pathname: "/(tabs)/services/category/[id]",
                   params: { id: item.id },
                 })
               }
@@ -155,7 +157,7 @@ export default function ServicesScreen() {
                 key={service.id}
                 onPress={() =>
                   router.push({
-                    pathname: "./provider/[id]",
+                    pathname: "/(tabs)/services/provider/[id]",
                     params: { id: service.id },
                   })
                 }
@@ -175,9 +177,9 @@ export default function ServicesScreen() {
                     <View style={styles.metaDot} />
                     <Text style={styles.serviceMeta}>{service.location}</Text>
                   </View>
-                  <Text style={styles.serviceRate}>
+                  {/* <Text style={styles.serviceRate}>
                     Desde {formatRate(service.rate)}
-                  </Text>
+                  </Text> */}
                 </View>
               </Pressable>
             ))}
@@ -191,10 +193,10 @@ export default function ServicesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: TOKENS.color.bg,
+    backgroundColor: "#F9FAFB",
   },
   listContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingBottom: 40,
     gap: 18,
   },
@@ -203,7 +205,7 @@ const styles = StyleSheet.create({
   },
   header: {
     width: "100%",
-    marginBottom: 8,
+    marginVertical: 18,
     gap: 6,
   },
   heading: {
@@ -233,18 +235,23 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: TOKENS.color.text,
+    color: "white",
     marginBottom: 4,
   },
   cardDescription: {
     fontSize: 14,
-    color: TOKENS.color.sub,
+    color: "white",
     lineHeight: 19,
   },
   cardCount: {
+    borderRadius: TOKENS.radius.lg,
+    alignSelf: "flex-start",
+    marginTop: 10,
     fontSize: 13,
     fontWeight: "600",
-    color: TOKENS.color.text,
+    color: "white",
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    padding: 10,
   },
   servicesSection: {
     width: "100%",
@@ -311,4 +318,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: TOKENS.color.sub,
   },
+  cardHeader: { flexDirection: "row", justifyContent: "space-between" },
+  countBadge: { alignItems: "flex-end" },
+  countText: {
+    fontSize: 16,
+    color: "white",
+  },
+  countLabel: { fontSize: 12, color: "white" },
+  cardContent: { marginTop: 10, gap: 4 },
 });

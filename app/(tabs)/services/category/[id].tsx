@@ -35,26 +35,31 @@ export default function CategoryServicesScreen() {
 
   function handleProviderPress(provider: ServiceProvider) {
     router.push({
-      pathname: "../provider/[id]",
+      pathname: "/(tabs)/services/provider/[id]",
       params: { id: provider.id },
     });
   }
 
-  function formatRate(rate: ServiceProvider["rate"]) {
-    const symbol =
-      rate.currency === "ARS"
-        ? "$"
-        : rate.currency === "USD"
-        ? "US$"
-        : `${rate.currency} `;
-    return `${symbol}${rate.amount} / ${rate.unit}`;
-  }
+  // function formatRate(rate: ServiceProvider["rate"]) {
+  //   const symbol =
+  //     rate.currency === "ARS"
+  //       ? "$"
+  //       : rate.currency === "USD"
+  //       ? "US$"
+  //       : `${rate.currency} `;
+  //   return `${symbol}${rate.amount} / ${rate.unit}`;
+  // }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <View style={[styles.hero, { backgroundColor: accentColor }]}>
+      <View
+        style={[
+          styles.hero,
+          { borderBottomColor: accentColor, borderBottomWidth: 4 },
+        ]}
+      >
         <Pressable
           onPress={handleBack}
           accessibilityRole="button"
@@ -102,9 +107,9 @@ export default function CategoryServicesScreen() {
                 </View>
                 <Text style={styles.serviceHeadline}>{item.title}</Text>
                 <View style={styles.metaRow}>
-                  <Text style={styles.servicePrice}>
+                  {/* <Text style={styles.servicePrice}>
                     Desde {formatRate(item.rate)}
-                  </Text>
+                  </Text> */}
                   <View style={styles.dot} />
                   <Text style={styles.serviceReviews}>
                     {item.reviews} reseñas

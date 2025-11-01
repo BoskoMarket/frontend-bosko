@@ -127,9 +127,9 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
     setMyServices((prev) => prev.filter((s) => s.id !== id));
   }, []);
 
-  useEffect(() => {
-    loadMyServices().catch((err) => console.error(err));
-  }, [loadMyServices]);
+  // useEffect(() => {
+  //   loadMyServices().catch((err) => console.error(err));
+  // }, [loadMyServices]);
 
   const value: ServicesState = {
     services,

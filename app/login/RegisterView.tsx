@@ -20,6 +20,7 @@ import Colors from "@/constants/Colors";
 import { Image } from "expo-image";
 import { useAuth } from "@/context/AuthContext";
 import { globalStyles } from "@/styles/global-styles";
+import { RegisterFormData } from "@/services/auth";
 
 export default function RegisterView({ toLogin }: { toLogin: () => void }) {
   const { register } = useAuth();
@@ -34,17 +35,8 @@ export default function RegisterView({ toLogin }: { toLogin: () => void }) {
     | "lastName"
     | "userName"
     | "phone"
-    | "location";
-
-  type RegisterFormData = {
-    password: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    userName: string;
-    phone: string;
-    location: string;
-  };
+    | "location"
+    | "bio";
 
   const [formData, setFormData] = React.useState<RegisterFormData>({
     password: "",
@@ -54,6 +46,7 @@ export default function RegisterView({ toLogin }: { toLogin: () => void }) {
     userName: "",
     phone: "",
     location: "",
+    bio: "",
   });
 
   const steps: { label: string; field: FormField }[] = [
@@ -64,6 +57,7 @@ export default function RegisterView({ toLogin }: { toLogin: () => void }) {
     { label: "Nombre de usuario", field: "userName" },
     { label: "Teléfono", field: "phone" },
     { label: "Ubicación", field: "location" },
+    { label: "Biografía", field: "bio" },
   ];
 
   const onPressPagination = (index: number) => {
@@ -76,7 +70,7 @@ export default function RegisterView({ toLogin }: { toLogin: () => void }) {
   const handleFinish = async () => {
     const response = await register(formData);
 
-    if (response.data) {
+    if (response.data.accessToken) {
       // Registro exitoso, redirigir al login
       router.push("/(tabs)");
     } else {
@@ -168,6 +162,15 @@ export default function RegisterView({ toLogin }: { toLogin: () => void }) {
             onPress={() => ref.current?.scrollTo({ count: 1, animated: true })}
           />
         )}
+        <Text>
+          Ya tienes una cuenta?{" "}
+          <Text
+            onPress={() => router.push("/login")}
+            style={{ fontWeight: "bold" }}
+          >
+            Inicia sesión
+          </Text>
+        </Text>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );

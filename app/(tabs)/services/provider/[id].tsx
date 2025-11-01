@@ -37,19 +37,19 @@ export default function ProviderProfileScreen() {
     router.back();
   }
 
-  function formatRate(rate: ServiceProvider["rate"]) {
-    const symbol =
-      rate.currency === "ARS"
-        ? "$"
-        : rate.currency === "USD"
-        ? "US$"
-        : `${rate.currency} `;
-    return `${symbol}${rate.amount} / ${rate.unit}`;
-  }
+  // function formatRate(rate: ServiceProvider["rate"]) {
+  //   const symbol =
+  //     rate.currency === "ARS"
+  //       ? "$"
+  //       : rate.currency === "USD"
+  //       ? "US$"
+  //       : `${rate.currency} `;
+  //   return `${symbol}${rate.amount} / ${rate.unit}`;
+  // }
 
   if (!provider) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={styles.emptyState}>
           <Pressable onPress={handleBack} style={styles.backButton}>
@@ -70,13 +70,7 @@ export default function ProviderProfileScreen() {
   const accentColor = category?.accent ?? "#E8ECF2";
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* <Stack.Screen
-        options={{
-          title: provider.name,
-          headerLargeTitle: false,
-        }}
-      /> */}
+    <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -113,9 +107,9 @@ export default function ProviderProfileScreen() {
               </View>
               <Text style={styles.heroLocation}>{provider.location}</Text>
               <View style={styles.heroActions}>
-                <Text style={styles.heroRate}>
+                {/* <Text style={styles.heroRate}>
                   Desde {formatRate(provider.rate)}
-                </Text>
+                </Text> */}
                 <Pressable style={styles.quoteButton}>
                   <Text style={styles.quoteButtonText}>Cotizar servicio</Text>
                 </Pressable>
@@ -175,7 +169,6 @@ export default function ProviderProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: TOKENS.color.bg,
   },
   scrollContent: {
     padding: 20,
@@ -183,9 +176,13 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   headerRow: {
+    position: "absolute",
     flexDirection: "row",
     alignItems: "center",
     gap: 16,
+    zIndex: 10,
+    top: 30,
+    left: 40,
   },
   backButton: {
     width: 42,

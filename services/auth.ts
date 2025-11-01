@@ -6,9 +6,16 @@ export interface Credentials {
   password: string;
 }
 
-export interface RegisterPayload extends Credentials {
-  name: string;
-}
+export interface RegisterFormData {
+    password: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    userName: string;
+    phone: string;
+    location: string;
+    bio: string;
+  };
 
 export interface AuthResponse {
   accessToken: string;
@@ -28,12 +35,25 @@ export async function login(credentials: Credentials): Promise<AuthResponse> {
 /**
  * REGISTER
  */
-export async function register(
-  payload: RegisterPayload
+export async function registerService(
+  payload: RegisterFormData
 ): Promise<AuthResponse> {
-  const { data } = await api.post<AuthResponse>("/auth/register", payload);
+
+
   
-  return data;
+  
+  const response = await api.post<AuthResponse>("/auth/register", {
+    name: payload.firstName,
+    email: payload.email.trim(),
+    userName: payload.userName,
+    firstName: payload.firstName,
+    lastName: payload.lastName,
+    password: payload.password,
+  });
+  
+
+  
+  return response.data;
 }
 
 /**
