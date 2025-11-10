@@ -25,7 +25,10 @@ interface LogInViewProps {
 export default function LogInView({ toLogin }: LogInViewProps) {
   const { login } = useAuth();
   const [credentials, setCredentials] = useState({ email: "", password: "" });
-  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
+  const [fieldErrors, setFieldErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -104,6 +107,10 @@ export default function LogInView({ toLogin }: LogInViewProps) {
               error={Boolean(fieldErrors.email)}
               placeholder="Correo electrónico"
               testID="login-email"
+              underlineColor={Colors.colorPrimary}
+              activeOutlineColor={Colors.colorPrimary}
+              accessibilityIgnoresInvertColors={true}
+              activeUnderlineColor={Colors.colorPrimary}
             />
             {fieldErrors.email ? (
               <Text style={globalStyles.textError}>{fieldErrors.email}</Text>
@@ -121,13 +128,20 @@ export default function LogInView({ toLogin }: LogInViewProps) {
               error={Boolean(fieldErrors.password)}
               placeholder="Contraseña"
               testID="login-password"
+              underlineColor={Colors.colorPrimary}
+              activeOutlineColor={Colors.colorPrimary}
+              accessibilityIgnoresInvertColors={true}
+              activeUnderlineColor={Colors.colorPrimary}
             />
             {fieldErrors.password ? (
               <Text style={globalStyles.textError}>{fieldErrors.password}</Text>
             ) : null}
 
             <Pressable
-              style={[styles.submitButton, !isFormValid && styles.submitButtonDisabled]}
+              style={[
+                styles.submitButton,
+                !isFormValid && styles.submitButtonDisabled,
+              ]}
               onPress={handleLogin}
               disabled={isSubmitting || !isFormValid}
             >
@@ -139,7 +153,9 @@ export default function LogInView({ toLogin }: LogInViewProps) {
             </Pressable>
 
             {submitError ? (
-              <Text style={[globalStyles.textError, styles.submitError]}>{submitError}</Text>
+              <Text style={[globalStyles.textError, styles.submitError]}>
+                {submitError}
+              </Text>
             ) : null}
 
             <View style={styles.footerContainer}>
@@ -158,7 +174,7 @@ export default function LogInView({ toLogin }: LogInViewProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.dark.background,
+    backgroundColor: "transparent",
   },
   innerContainer: {
     flex: 1,
@@ -197,7 +213,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingVertical: 14,
     borderRadius: 24,
-    backgroundColor: Colors.gold,
+    backgroundColor: Colors.colorPrimary,
     alignItems: "center",
     justifyContent: "center",
   },

@@ -6,26 +6,15 @@ export interface Credentials {
   password: string;
 }
 
-<<<<<<< HEAD
-export interface RegisterFormData {
-    password: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    userName: string;
-    phone: string;
-    location: string;
-    bio: string;
-  };
-=======
 export interface RegisterUserPayload extends Credentials {
   fullName: string;
-  username: string;
+  userName: string;
   nationality: string;
   countryOfResidence: string;
   phone: string;
+  firstName: string;
+  lastName: string;
 }
->>>>>>> 7218bfcc5fc4857d767e9c338650cf6d30873ebf
 
 export interface AuthResponse {
   accessToken: string;
@@ -42,8 +31,17 @@ interface AvailabilityResponse {
  * LOGIN
  */
 export async function login(credentials: Credentials): Promise<AuthResponse> {
+
+  console.log(credentials, "Credenciales");
+  
   const { data } = await api.post<AuthResponse>("/auth/login", credentials);
 
+  if (!data) {
+    throw new Error("No data received from login");
+  }
+
+  console.log(data, "Soy el login");
+  
   return data;
 }
 
@@ -53,15 +51,19 @@ export async function login(credentials: Credentials): Promise<AuthResponse> {
 export async function registerUser(
   payload: RegisterUserPayload
 ): Promise<AuthResponse> {
-  const { data } = await api.post<AuthResponse>("/user", payload);
+
+  console.log(payload, "Soy el payload en el servicio");
+  
+  const { data } = await api.post<AuthResponse>("/register", payload);
+
+console.log(data, "Data en el servicio");
 
   return data;
 }
 
 export async function checkEmailAvailability(email: string): Promise<boolean> {
-  const { data } = await api.get<AvailabilityResponse>("/user/check-email", {
-    params: { email },
-  });
+  const { data } = await api.get<AvailabilityResponse>("/user");
+
 
   return data.available;
 }
@@ -69,14 +71,16 @@ export async function checkEmailAvailability(email: string): Promise<boolean> {
 export async function checkUsernameAvailability(
   username: string
 ): Promise<boolean> {
-  const { data } = await api.get<AvailabilityResponse>(
-    "/user/check-username",
-    {
-      params: { username },
+  console.log(username);
+  
+  const { data } = await api.get<boolean>(
+    `/auth/username-exists/${username}`, {
+    params: { username },
     }
   );
 
-  return data.available;
+  console.log(data, "Data en el servicio de username");
+  return data;
 }
 
 export async function isPhoneUnique(phone: string): Promise<boolean> {
@@ -118,6 +122,8 @@ export const validateTokenService = async (): Promise<number | null> => {
 export const refreshTokenService = async (
   oldRefreshToken: string | null
 ): Promise<string | null> => {
+  
+  
   try {
     const { data, status } = await api.post("/auth/refresh", {
       refreshToken: oldRefreshToken,
