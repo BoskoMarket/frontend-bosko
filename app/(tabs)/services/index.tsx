@@ -1,6 +1,6 @@
 import {
+  ActivityIndicator,
   FlatList,
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -9,100 +9,60 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
+import { useEffect, useMemo } from "react";
 
-import {
-  SERVICE_CATEGORIES,
-  ServiceCategory,
-} from "@/constants/serviceCategories";
-import {
-  SERVICE_PROVIDERS,
-  ServiceProvider,
-} from "@/constants/serviceProviders";
+import { ServiceCard } from "@/components/ServiceCard";
+import { useServices } from "@/context/ServicesContext";
+import type { Category } from "@/types/services";
 import { TOKENS } from "@/theme/tokens";
-import { useCallback, useMemo } from "react";
-
-type CategoryWithCount = ServiceCategory & { servicesCount: number };
-
-const categoriesWithCounts: CategoryWithCount[] = SERVICE_CATEGORIES.map(
-  (category) => {
-    const servicesInCategory = SERVICE_PROVIDERS.filter(
-      (provider) => provider.categoryId === category.id
-    );
-
-    return {
-      ...category,
-      servicesCount: servicesInCategory.length,
-    };
-  }
-);
-
-const featuredServices: ServiceProvider[] = SERVICE_PROVIDERS.slice(0, 6);
 
 export default function ServicesScreen() {
   const router = useRouter();
+  const {
+    categories,
+    categoriesStatus,
+    fetchCategories,
+    fetchServicesByCategory,
+    servicesByCategory,
+  } = useServices();
 
-  const categories = useMemo<CategoryListItem[]>(() => {
-    const counts = SERVICE_PROVIDERS.reduce<Record<string, number>>(
-      (acc, provider) => {
-        acc[provider.categoryId] = (acc[provider.categoryId] ?? 0) + 1;
-        return acc;
-      },
-      {}
-    );
+  useEffect(() => {
+    if (categoriesStatus === "idle") {
+      fetchCategories().catch(() => undefined);
+    }
+  }, [categoriesStatus, fetchCategories]);
 
-    return SERVICE_CATEGORIES.map((category) => ({
-      ...category,
-      servicesCount: counts[category.id] ?? 0,
-    }));
-  }, []);
-
-  const handleCategoryPress = useCallback(
-    (category: ServiceCategory) => {
-      router.push({
-        pathname: "/services/category/[id]",
-        params: { id: category.id },
+  useEffect(() => {
+    if (categories.length > 0) {
+      const preload = categories.slice(0, 2);
+      preload.forEach((category) => {
+        fetchServicesByCategory(category.id).catch(() => undefined);
       });
-    },
-    [router]
-  );
+    }
+  }, [categories, fetchServicesByCategory]);
 
-  const renderCategory = useCallback(
-    ({ item, index }: { item: CategoryListItem; index: number }) => (
-      <MotiView
-        from={{ opacity: 0, translateY: 24 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: "timing", duration: 420, delay: index * 70 }}
-        style={styles.cardWrapper}
-      >
-        <Pressable
-          onPress={() => handleCategoryPress(item)}
-          accessibilityRole="button"
-          accessibilityLabel={item.title}
-          accessibilityHint={`Abrir categoría ${item.title}`}
-          style={[styles.card, { backgroundColor: item.accent }]}
-          android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
-        >
-          <View style={styles.cardHeader}>
-            <Text style={styles.icon}>{item.icon}</Text>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>{item.servicesCount}</Text>
-              <Text style={styles.countLabel}>servicios</Text>
-            </View>
-          </View>
-          <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardDescription}>{item.description}</Text>
-          </View>
-        </Pressable>
-      </MotiView>
-    ),
-    [handleCategoryPress]
-  );
+  const featuredServices = useMemo(() => {
+    return Object.values(servicesByCategory)
+      .flat()
+      .slice(0, 6);
+  }, [servicesByCategory]);
+
+  const handleCategoryPress = (category: Category) => {
+    router.push({
+      pathname: "/services/category/[id]",
+      params: { id: category.id },
+    });
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {categoriesStatus === "loading" && categories.length === 0 ? (
+        <View style={styles.loader}>
+          <ActivityIndicator accessibilityLabel="Cargando categorías" />
+        </View>
+      ) : null}
       <FlatList
-        data={categoriesWithCounts}
+        data={categories}
         keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={styles.columnWrapper}
@@ -116,22 +76,20 @@ export default function ServicesScreen() {
             style={styles.cardWrapper}
           >
             <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: "./category/[id]",
-                  params: { id: item.id },
-                })
-              }
+              onPress={() => handleCategoryPress(item)}
               style={[styles.card, { backgroundColor: item.accent }]}
               android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
+              accessibilityRole="button"
+              accessibilityLabel={item.title}
+              accessibilityHint={`Abrir categoría ${item.title}`}
             >
               <Text style={styles.icon}>{item.icon}</Text>
-              <View>
+              <View style={styles.cardContent}>
                 <Text style={styles.cardTitle}>{item.title}</Text>
                 <Text style={styles.cardDescription}>{item.description}</Text>
               </View>
               <Text style={styles.cardCount}>
-                {item.servicesCount} servicios
+                {(item.servicesCount ?? 0).toString()} servicios
               </Text>
             </Pressable>
           </MotiView>
@@ -151,35 +109,16 @@ export default function ServicesScreen() {
               Tocá cualquier profesional para conocer su perfil.
             </Text>
             {featuredServices.map((service) => (
-              <Pressable
+              <ServiceCard
                 key={service.id}
+                service={service}
                 onPress={() =>
                   router.push({
                     pathname: "./provider/[id]",
-                    params: { id: service.id },
+                    params: { id: service.providerId, serviceId: service.id },
                   })
                 }
-                style={styles.serviceCard}
-              >
-                <Image
-                  source={{ uri: service.photo }}
-                  style={styles.serviceAvatar}
-                />
-                <View style={styles.serviceInfo}>
-                  <Text style={styles.serviceName}>{service.name}</Text>
-                  <Text style={styles.serviceHeadline}>{service.title}</Text>
-                  <View style={styles.serviceMetaRow}>
-                    <Text style={styles.serviceMetaHighlight}>
-                      {service.rating.toFixed(1)} ★
-                    </Text>
-                    <View style={styles.metaDot} />
-                    <Text style={styles.serviceMeta}>{service.location}</Text>
-                  </View>
-                  <Text style={styles.serviceRate}>
-                    Desde {formatRate(service.rate)}
-                  </Text>
-                </View>
-              </Pressable>
+              />
             ))}
           </View>
         )}
@@ -193,6 +132,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: TOKENS.color.bg,
   },
+  loader: {
+    padding: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   listContent: {
     paddingHorizontal: 20,
     paddingBottom: 40,
@@ -201,55 +145,55 @@ const styles = StyleSheet.create({
   columnWrapper: {
     gap: 18,
   },
-  header: {
-    width: "100%",
-    marginBottom: 8,
-    gap: 6,
-  },
-  heading: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: TOKENS.color.text,
-  },
-  subheading: {
-    fontSize: 15,
-    color: TOKENS.color.sub,
-    lineHeight: 20,
-  },
   cardWrapper: {
     flex: 1,
   },
   card: {
     flex: 1,
-    padding: 20,
-    minHeight: 170,
-    justifyContent: "space-between",
     borderRadius: TOKENS.radius.xl,
-    ...TOKENS.shadow.soft,
+    padding: 20,
+    gap: 12,
+    flexDirection: "row",
+    alignItems: "center",
   },
   icon: {
-    fontSize: 36,
+    fontSize: 24,
+  },
+  cardContent: {
+    flex: 1,
+    gap: 4,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: "700",
     color: TOKENS.color.text,
-    marginBottom: 4,
   },
   cardDescription: {
-    fontSize: 14,
+    fontSize: 13,
     color: TOKENS.color.sub,
-    lineHeight: 19,
   },
   cardCount: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "600",
     color: TOKENS.color.text,
   },
+  header: {
+    marginBottom: 12,
+    gap: 8,
+  },
+  heading: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: TOKENS.color.text,
+  },
+  subheading: {
+    fontSize: 14,
+    color: TOKENS.color.sub,
+    lineHeight: 20,
+  },
   servicesSection: {
-    width: "100%",
-    marginTop: 12,
-    gap: 12,
+    marginTop: 24,
+    gap: 16,
   },
   sectionTitle: {
     fontSize: 20,
@@ -258,57 +202,6 @@ const styles = StyleSheet.create({
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: TOKENS.color.sub,
-  },
-  serviceCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    backgroundColor: "#FFFFFF",
-    borderRadius: TOKENS.radius.lg,
-    gap: 14,
-    ...TOKENS.shadow.soft,
-  },
-  serviceAvatar: {
-    width: 54,
-    height: 54,
-    borderRadius: TOKENS.radius.lg,
-  },
-  serviceInfo: {
-    flex: 1,
-    gap: 4,
-  },
-  serviceName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: TOKENS.color.text,
-  },
-  serviceHeadline: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-  },
-  serviceMetaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  serviceMetaHighlight: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: TOKENS.color.primary,
-  },
-  metaDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#CBD3DA",
-  },
-  serviceMeta: {
-    fontSize: 13,
-    color: TOKENS.color.sub,
-  },
-  serviceRate: {
-    fontSize: 12,
     color: TOKENS.color.sub,
   },
 });
