@@ -1,6 +1,7 @@
+import React, { useEffect, useMemo } from "react";
 import {
+  ActivityIndicator,
   FlatList,
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -10,50 +11,82 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { MotiView } from "moti";
 
-import { SERVICE_CATEGORIES } from "@/constants/serviceCategories";
-import {
-  SERVICE_PROVIDERS,
-  ServiceProvider,
-} from "@/constants/serviceProviders";
+import ServiceCard from "@/components/ServiceCard";
+import { useServices } from "@/context/ServicesContext";
+import type { ServiceSummary } from "@/types/services";
 import { TOKENS } from "@/theme/tokens";
 
 export default function CategoryServicesScreen() {
-  const params = useLocalSearchParams();
+  const params = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
-
   const categoryId = typeof params.id === "string" ? params.id : undefined;
-  const category = SERVICE_CATEGORIES.find((item) => item.id === categoryId);
 
-  const services = SERVICE_PROVIDERS.filter(
-    (provider) => provider.categoryId === categoryId
-  );
+  const {
+    categories,
+    categoriesStatus,
+    servicesStatus,
+    fetchCategories,
+    fetchServicesByCategory,
+    getServicesForCategory,
+  } = useServices();
+
+  useEffect(() => {
+    if (!categoriesStatus.loaded && !categoriesStatus.loading) {
+      fetchCategories().catch((err) => console.error(err));
+    }
+  }, [categoriesStatus.loaded, categoriesStatus.loading, fetchCategories]);
+
+  useEffect(() => {
+    if (!categoryId) {
+      return;
+    }
+    fetchServicesByCategory(categoryId).catch((err) => console.error(err));
+  }, [categoryId, fetchServicesByCategory]);
+
+  const category = categories.find((item) => item.id === categoryId);
+  const services = categoryId ? getServicesForCategory(categoryId) : [];
+  const status = categoryId ? servicesStatus[categoryId] : undefined;
+
   const accentColor = category?.accent ?? "#E8ECF2";
+  const isLoading = Boolean(status?.loading && !status?.loaded && services.length === 0);
 
-  function handleBack() {
+  const headerCopy = useMemo(
+    () => ({
+      title: category?.title ?? "Servicios",
+      description:
+        category?.description ?? "Descubrí profesionales disponibles en esta categoría.",
+    }),
+    [category?.description, category?.title]
+  );
+
+  const handleBack = () => {
     router.back();
-  }
+  };
 
-  function handleProviderPress(provider: ServiceProvider) {
-    router.push({
-      pathname: "../provider/[id]",
-      params: { id: provider.id },
-    });
-  }
-
-  function formatRate(rate: ServiceProvider["rate"]) {
-    const symbol =
-      rate.currency === "ARS"
-        ? "$"
-        : rate.currency === "USD"
-        ? "US$"
-        : `${rate.currency} `;
-    return `${symbol}${rate.amount} / ${rate.unit}`;
-  }
+  const renderService = ({ item, index }: { item: ServiceSummary; index: number }) => (
+    <MotiView
+      from={{ opacity: 0, translateY: 28 }}
+      animate={{ opacity: 1, translateY: 0 }}
+      transition={{ type: "timing", duration: 420, delay: index * 70 }}
+      style={styles.serviceWrapper}
+    >
+      <ServiceCard
+        serviceId={item.id}
+        onPress={() =>
+          router.push({
+            pathname: "../provider/[id]",
+            params: { id: item.providerId },
+          })
+        }
+        style={styles.serviceCard}
+        accessibilityHint={`Abrir perfil del profesional asociado a ${headerCopy.title}`}
+      />
+    </MotiView>
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <Stack.Screen options={{ headerShown: false }} />
-
       <View style={[styles.hero, { backgroundColor: accentColor }]}>
         <Pressable
           onPress={handleBack}
@@ -64,10 +97,8 @@ export default function CategoryServicesScreen() {
           <Text style={styles.backIcon}>←</Text>
         </Pressable>
         <View style={styles.heroCopy}>
-          <Text style={styles.heroTitle}>{category?.title ?? "Servicios"}</Text>
-          <Text style={styles.heroSubtitle}>
-            {category?.description ?? "Descubrí profesionales disponibles."}
-          </Text>
+          <Text style={styles.heroTitle}>{headerCopy.title}</Text>
+          <Text style={styles.heroSubtitle}>{headerCopy.description}</Text>
         </View>
       </View>
 
@@ -76,53 +107,19 @@ export default function CategoryServicesScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        renderItem={({ item, index }) => (
-          <MotiView
-            from={{ opacity: 0, translateY: 28 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: "timing", duration: 420, delay: index * 70 }}
-            style={styles.serviceWrapper}
-          >
-            <Pressable
-              onPress={() => handleProviderPress(item)}
-              style={styles.serviceCard}
-              android_ripple={{ color: "rgba(0,0,0,0.04)" }}
-            >
-              <Image
-                source={{ uri: item.photo }}
-                style={styles.avatar}
-                resizeMode="cover"
-              />
-              <View style={styles.serviceInfo}>
-                <View style={styles.nameRow}>
-                  <Text style={styles.serviceName}>{item.name}</Text>
-                  <Text style={styles.serviceRating}>
-                    ★ {item.rating.toFixed(1)}
-                  </Text>
-                </View>
-                <Text style={styles.serviceHeadline}>{item.title}</Text>
-                <View style={styles.metaRow}>
-                  <Text style={styles.servicePrice}>
-                    Desde {formatRate(item.rate)}
-                  </Text>
-                  <View style={styles.dot} />
-                  <Text style={styles.serviceReviews}>
-                    {item.reviews} reseñas
-                  </Text>
-                </View>
-                <Text style={styles.serviceLocation}>{item.location}</Text>
-              </View>
-            </Pressable>
-          </MotiView>
-        )}
+        renderItem={renderService}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>
-              Pronto habrá profesionales aquí
-            </Text>
-            <Text style={styles.emptySubtitle}>
-              Estamos sumando especialistas en esta categoría.
-            </Text>
+            {isLoading ? (
+              <ActivityIndicator />
+            ) : (
+              <>
+                <Text style={styles.emptyTitle}>Pronto habrá profesionales aquí</Text>
+                <Text style={styles.emptySubtitle}>
+                  Estamos sumando especialistas en esta categoría.
+                </Text>
+              </>
+            )}
           </View>
         }
       />
@@ -179,80 +176,22 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   serviceCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-    backgroundColor: "#FFFFFF",
-    padding: 18,
-    borderRadius: TOKENS.radius.lg,
-    ...TOKENS.shadow.soft,
-  },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
-  },
-  serviceInfo: {
-    flex: 1,
-    gap: 6,
-  },
-  nameRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  serviceName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: TOKENS.color.text,
-  },
-  serviceRating: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: TOKENS.color.primary,
-  },
-  serviceHeadline: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-  },
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  servicePrice: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: TOKENS.color.text,
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#CBD3DA",
-  },
-  serviceReviews: {
-    fontSize: 12,
-    color: TOKENS.color.sub,
-  },
-  serviceLocation: {
-    fontSize: 12,
-    color: TOKENS.color.sub,
+    width: "100%",
   },
   emptyState: {
-    paddingVertical: 80,
+    paddingVertical: 40,
     alignItems: "center",
     gap: 8,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: "600",
     color: TOKENS.color.text,
+    textAlign: "center",
   },
   emptySubtitle: {
     fontSize: 14,
     color: TOKENS.color.sub,
     textAlign: "center",
-    paddingHorizontal: 20,
   },
 });
