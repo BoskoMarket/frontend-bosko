@@ -1,0 +1,27 @@
+const strings: Record<string, string> = {
+  searchPlaceholder: "Buscar servicios o prestadores",
+  noResults: "Sin resultados",
+  typing: "Escribiendo...",
+  myService: "Mi servicio",
+  createService: "Crear servicio",
+  editService: "Editar servicio",
+  deleteService: "Eliminar servicio",
+  confirmDeleteService: "¿Eliminar servicio?",
+  serviceName: "Nombre del servicio",
+  serviceDescription: "Descripción",
+  servicePrice: "Precio (opcional)",
+  serviceArea: "Zona",
+  serviceAvailability: "Disponibilidad",
+  serviceKeywords: "Palabras clave (separadas por coma)",
+  servicePhotos: "Fotos (URLs locales)",
+  save: "Guardar",
+  cancel: "Cancelar",
+  settingsTitle: "Configuración",
+  userName: "Nombre",
+  avatarUrl: "URL del avatar",
+  bio: "Biografía",
+  searchTitle: "Explorar",
+  profileHeaderTitle: "Perfil",
+};
+
+export const t = (key: string) => strings[key] ?? key;
