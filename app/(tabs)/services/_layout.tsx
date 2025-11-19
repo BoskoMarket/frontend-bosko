@@ -13,6 +13,12 @@ export default function ServicesLayout() {
       }}
     >
       <Stack.Screen
+        name="index"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
         name="category/[id]"
         options={{
           animation: "slide_from_right",

@@ -6,17 +6,8 @@ import { useAuth } from "@/context/AuthContext";
 export default function _layout() {
   // const { authLoaded, authState } = useAuth();
 
-  // if (authLoaded && authState.token) {
-  //   return <Redirect href="/(tabs)" />;
-  // }
-  return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          display: "none",
-        },
-      }}
-    />
-  );
+  if (authLoaded && authState.token) {
+  }
+  return <Redirect href="/(tabs)" />;
+  return <Redirect href="/login/LogInView" />;
 }
