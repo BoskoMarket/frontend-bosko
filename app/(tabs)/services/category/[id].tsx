@@ -48,13 +48,16 @@ export default function CategoryServicesScreen() {
   const status = categoryId ? servicesStatus[categoryId] : undefined;
 
   const accentColor = category?.accent ?? "#E8ECF2";
-  const isLoading = Boolean(status?.loading && !status?.loaded && services.length === 0);
+  const isLoading = Boolean(
+    status?.loading && !status?.loaded && services.length === 0
+  );
 
   const headerCopy = useMemo(
     () => ({
       title: category?.title ?? "Servicios",
       description:
-        category?.description ?? "Descubrí profesionales disponibles en esta categoría.",
+        category?.description ??
+        "Descubrí profesionales disponibles en esta categoría.",
     }),
     [category?.description, category?.title]
   );
@@ -63,7 +66,13 @@ export default function CategoryServicesScreen() {
     router.back();
   };
 
-  const renderService = ({ item, index }: { item: ServiceSummary; index: number }) => (
+  const renderService = ({
+    item,
+    index,
+  }: {
+    item: ServiceSummary;
+    index: number;
+  }) => (
     <MotiView
       from={{ opacity: 0, translateY: 28 }}
       animate={{ opacity: 1, translateY: 0 }}
@@ -86,7 +95,7 @@ export default function CategoryServicesScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <Stack.Screen options={{ headerShown: false }} />
+      {/* <Stack.Screen options={{ headerShown: false }} /> */}
       <View style={[styles.hero, { backgroundColor: accentColor }]}>
         <Pressable
           onPress={handleBack}
@@ -114,7 +123,9 @@ export default function CategoryServicesScreen() {
               <ActivityIndicator />
             ) : (
               <>
-                <Text style={styles.emptyTitle}>Pronto habrá profesionales aquí</Text>
+                <Text style={styles.emptyTitle}>
+                  Pronto habrá profesionales aquí
+                </Text>
                 <Text style={styles.emptySubtitle}>
                   Estamos sumando especialistas en esta categoría.
                 </Text>
@@ -130,11 +141,11 @@ export default function CategoryServicesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: TOKENS.color.bg,
+    backgroundColor: "white",
   },
   hero: {
-    margin: 20,
     borderRadius: TOKENS.radius.xl,
+    marginBottom: 16,
     padding: 20,
     flexDirection: "row",
     alignItems: "center",

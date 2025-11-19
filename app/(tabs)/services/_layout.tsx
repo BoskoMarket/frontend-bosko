@@ -11,7 +11,12 @@ export default function ServicesLayout() {
     //   contentStyle: { backgroundColor: TOKENS.color.bg },
     // }}
     >
-      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="index"
+        options={{
+          headerShown: false,
+        }}
+      />
       <Stack.Screen
         name="category/[id]"
         options={{

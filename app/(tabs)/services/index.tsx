@@ -63,7 +63,8 @@ export default function ServicesScreen() {
 
   const renderCategory = useCallback(
     ({ item, index }: { item: CategoryListItem; index: number }) => {
-      const count = item.servicesCount ?? getServicesForCategory(item.id).length;
+      const count =
+        item.servicesCount ?? getServicesForCategory(item.id).length;
       return (
         <MotiView
           from={{ opacity: 0, translateY: 24 }}
@@ -97,7 +98,9 @@ export default function ServicesScreen() {
       {categoriesStatus.loading ? (
         <ActivityIndicator />
       ) : (
-        <Text style={styles.emptyText}>Pronto habrá categorías disponibles.</Text>
+        <Text style={styles.emptyText}>
+          Pronto habrá categorías disponibles.
+        </Text>
       )}
       {categoriesStatus.error ? (
         <Text style={styles.errorText}>{categoriesStatus.error}</Text>
@@ -156,7 +159,7 @@ export default function ServicesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: TOKENS.color.bg,
+    backgroundColor: "white",
   },
   listContent: {
     paddingHorizontal: 20,
@@ -173,7 +176,7 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 24,
     fontWeight: "700",
-    color: TOKENS.color.text,
+    color: TOKENS.color.primary,
   },
   subheading: {
     fontSize: 14,
@@ -189,6 +192,14 @@ const styles = StyleSheet.create({
     padding: 18,
     gap: 12,
     justifyContent: "space-between",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   icon: {
     fontSize: 32,
