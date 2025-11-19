@@ -109,7 +109,7 @@ export default function ServicesScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
       <FlatList
         data={categories}
         keyExtractor={(item) => item.id}
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   listContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingBottom: 40,
     gap: 18,
   },
@@ -247,4 +247,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#DC2626",
   },
+  cardHeader: { flexDirection: "row", justifyContent: "space-between" },
+  countBadge: { alignItems: "flex-end" },
+  countText: {
+    fontSize: 16,
+    color: "white",
+  },
+  countLabel: { fontSize: 12, color: "white" },
+  cardContent: { marginTop: 10, gap: 4 },
 });

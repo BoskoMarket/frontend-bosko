@@ -4,12 +4,13 @@ import { TOKENS } from "@/theme/tokens";
 export default function ServicesLayout() {
   return (
     <Stack
-    // screenOptions={{
-    //   headerTintColor: TOKENS.color.text,
-    //   headerTitleAlign: "center",
-    //   headerShadowVisible: false,
-    //   contentStyle: { backgroundColor: TOKENS.color.bg },
-    // }}
+      screenOptions={{
+        headerShown: false,
+        headerTintColor: TOKENS.color.text,
+        headerTitleAlign: "center",
+        headerShadowVisible: false,
+        contentStyle: { backgroundColor: TOKENS.color.bg },
+      }}
     >
       <Stack.Screen
         name="index"

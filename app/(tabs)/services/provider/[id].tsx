@@ -22,7 +22,7 @@ export default function ProviderProfileScreen() {
 
   if (!providerId) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={styles.fallback}> 
           <Text style={styles.fallbackTitle}>No encontramos este profesional</Text>
@@ -57,7 +57,6 @@ export default function ProviderProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: TOKENS.color.bg,
   },
   scrollContent: {
     padding: 20,

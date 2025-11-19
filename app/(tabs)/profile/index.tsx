@@ -3,8 +3,10 @@ import React from "react";
 import ProfileHeader from "@/components/profileComponentes/ProfileHeader";
 import ProfileSection from "@/components/profileComponentes/ProfileSection";
 import { RelativePathString, router } from "expo-router";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ProfileScreen() {
+  const { logout } = useAuth();
   return (
     <ScrollView style={styles.container}>
       <ProfileHeader />
@@ -64,7 +66,10 @@ export default function ProfileScreen() {
           },
           {
             label: "Cerrar sesión",
-            onPress: () => console.log("Cerrar sesión"),
+            onPress: () => {
+              logout();
+              router.replace("/login");
+            },
           },
         ]}
       />

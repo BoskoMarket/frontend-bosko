@@ -6,8 +6,14 @@ export interface Credentials {
   password: string;
 }
 
-export interface RegisterPayload extends Credentials {
-  name: string;
+export interface RegisterUserPayload extends Credentials {
+  fullName: string;
+  userName: string;
+  nationality: string;
+  countryOfResidence: string;
+  phone: string;
+  firstName: string;
+  lastName: string;
 }
 
 export interface AuthResponse {
@@ -16,24 +22,73 @@ export interface AuthResponse {
   user?: any;
 }
 
+interface AvailabilityResponse {
+  available: boolean;
+  message?: string;
+}
+
 /**
  * LOGIN
  */
 export async function login(credentials: Credentials): Promise<AuthResponse> {
+
+  console.log(credentials, "Credenciales");
+  
   const { data } = await api.post<AuthResponse>("/auth/login", credentials);
 
+  if (!data) {
+    throw new Error("No data received from login");
+  }
+
+  console.log(data, "Soy el login");
+  
   return data;
 }
 
 /**
  * REGISTER
  */
-export async function register(
-  payload: RegisterPayload
+export async function registerUser(
+  payload: RegisterUserPayload
 ): Promise<AuthResponse> {
-  const { data } = await api.post<AuthResponse>("/auth/register", payload);
+
+  console.log(payload, "Soy el payload en el servicio");
   
+  const { data } = await api.post<AuthResponse>("/register", payload);
+
+console.log(data, "Data en el servicio");
+
   return data;
+}
+
+export async function checkEmailAvailability(email: string): Promise<boolean> {
+  const { data } = await api.get<AvailabilityResponse>("/user");
+
+
+  return data.available;
+}
+
+export async function checkUsernameAvailability(
+  username: string
+): Promise<boolean> {
+  console.log(username);
+  
+  const { data } = await api.get<boolean>(
+    `/auth/username-exists/${username}`, {
+    params: { username },
+    }
+  );
+
+  console.log(data, "Data en el servicio de username");
+  return data;
+}
+
+export async function isPhoneUnique(phone: string): Promise<boolean> {
+  const { data } = await api.get<AvailabilityResponse>("/user/check-phone", {
+    params: { phone },
+  });
+
+  return data.available;
 }
 
 /**
@@ -67,29 +122,24 @@ export const validateTokenService = async (): Promise<number | null> => {
 export const refreshTokenService = async (
   oldRefreshToken: string | null
 ): Promise<string | null> => {
-  try {
   
-
+  
+  try {
     const { data, status } = await api.post("/auth/refresh", {
       refreshToken: oldRefreshToken,
     });
 
-   
-
     if (status === 200) {
       const { accessToken, refreshToken } = data;
 
-      
-        await setItemAsync("token", accessToken);
-        await setItemAsync("refreshToken", refreshToken);
-        return accessToken;
-      
+      await setItemAsync("token", accessToken);
+      await setItemAsync("refreshToken", refreshToken);
+      return accessToken;
     }
 
-    return data
+    return null;
   } catch (error) {
     console.error("Error refreshing token:", error);
     return null;
   }
-  return null;
 };
