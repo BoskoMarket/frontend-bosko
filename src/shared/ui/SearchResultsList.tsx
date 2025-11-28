@@ -21,7 +21,7 @@ const renderItem: ListRenderItem<SearchResult> = ({ item }) => (
     <View style={styles.avatarPlaceholder} accessibilityLabel={item.user.name} />
     <View style={{ flex: 1 }}>
       <Text style={styles.title}>{item.user.name}</Text>
-      {item.service && <Text style={styles.subtitle}>{item.service.name}</Text>}
+      {item.service && <Text style={styles.subtitle}>{item.service.title}</Text>}
     </View>
   </View>
 );

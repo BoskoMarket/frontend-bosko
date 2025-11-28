@@ -116,12 +116,12 @@ export default function ServicesScreen() {
             style={styles.cardWrapper}
           >
             <Pressable
-              onPress={() =>
+              onPress={() => {
                 router.push({
-                  pathname: "./category/[id]",
+                  pathname: "/(tabs)/services/category/[id]",
                   params: { id: item.id },
-                })
-              }
+                });
+              }}
               style={[styles.card, { backgroundColor: item.accent }]}
               android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
             >
@@ -176,7 +176,7 @@ export default function ServicesScreen() {
                     <Text style={styles.serviceMeta}>{service.location}</Text>
                   </View>
                   <Text style={styles.serviceRate}>
-                    Desde {formatRate(service.rate)}
+                    {/* Desde {formatRate(service.rate)} */}
                   </Text>
                 </View>
               </Pressable>

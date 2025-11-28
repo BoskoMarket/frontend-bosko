@@ -3,12 +3,12 @@ import { ScrollView, StyleSheet, Text } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { useBoskoData } from "@/src/shared/state/DataContext";
 import { ServiceCard } from "@/src/shared/ui/ServiceCard";
-import { Service, User } from "@/src/types";
+import { ServiceProvider, User } from "@/src/types";
 
 export const ProfileDetailPage = () => {
   const params = useLocalSearchParams<{ id: string }>();
   const { getProfile } = useBoskoData();
-  const [state, setState] = useState<{ user?: User; service?: Service }>();
+  const [state, setState] = useState<{ user?: User; service?: ServiceProvider }>();
 
   useEffect(() => {
     if (!params.id) return;

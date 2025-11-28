@@ -7,7 +7,8 @@ import React, {
   useState,
 } from "react";
 import { apiClient } from "@/src/shared/api/client";
-import { SearchResult, Service, User } from "@/src/types";
+import { SearchResult, ServiceProvider, ServiceProviderInput, User } from "@/src/types";
+import { SERVICE_PROVIDERS } from "@/constants/serviceProviders";
 
 interface SearchState {
   status: "idle" | "typing" | "done" | "empty";
@@ -17,8 +18,8 @@ interface SearchState {
 }
 
 interface ServiceManager {
-  service?: Service;
-  createOrUpdate: (payload: Omit<Service, "id" | "userId">) => Promise<Service>;
+  service?: ServiceProvider;
+  createOrUpdate: (payload: ServiceProviderInput) => Promise<ServiceProvider>;
   remove: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -34,19 +35,25 @@ interface BoskoDataContextValue {
   search: SearchState;
   serviceManager: ServiceManager;
   currentUser: CurrentUserState;
-  getProfile: (userId: string) => Promise<{ user?: User; service?: Service }>;
+  getProfile: (userId: string) => Promise<{ user?: User; service?: ServiceProvider }>;
 }
 
-const BoskoDataContext = createContext<BoskoDataContextValue | undefined>(undefined);
+const BoskoDataContext = createContext<BoskoDataContextValue | undefined>(
+  undefined
+);
+
+const DEFAULT_USER_ID = SERVICE_PROVIDERS[0]?.id ?? "provider-1";
 
 export const BoskoDataProvider = ({ children }: { children: ReactNode }) => {
-  const currentUserId = "u-1";
-  const [searchState, setSearchState] = useState<Omit<SearchState, "runSearch">>({
+  const currentUserId = DEFAULT_USER_ID;
+  const [searchState, setSearchState] = useState<
+    Omit<SearchState, "runSearch">
+  >({
     status: "idle",
     query: "",
     results: [],
   });
-  const [service, setService] = useState<Service | undefined>();
+  const [service, setService] = useState<ServiceProvider | undefined>();
   const [user, setUser] = useState<User | undefined>();
 
   const loadCurrentUser = useCallback(async () => {
@@ -68,17 +75,22 @@ export const BoskoDataProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     setSearchState((prev) => ({ ...prev, status: "typing", query }));
-    const results = await apiClient.search(query);
-    setSearchState({
-      status: results.length ? "done" : "empty",
-      query,
-      results,
-    });
+    try {
+      const results = await apiClient.search(query);
+      setSearchState({
+        status: results.length ? "done" : "empty",
+        query,
+        results,
+      });
+    } catch (error) {
+      console.error("Search failed", error);
+      setSearchState({ status: "empty", query, results: [] });
+    }
   }, []);
 
   const createOrUpdate = useCallback(
-    async (payload: Omit<Service, "id" | "userId">) => {
-      const servicePayload = await apiClient.saveService({ ...payload, userId: currentUserId });
+    async (payload: ServiceProviderInput) => {
+      const servicePayload = await apiClient.saveService(currentUserId, payload);
       setService(servicePayload);
       return servicePayload;
     },
@@ -87,9 +99,9 @@ export const BoskoDataProvider = ({ children }: { children: ReactNode }) => {
 
   const remove = useCallback(async () => {
     if (!service) return;
-    await apiClient.deleteService(service.id);
+    await apiClient.deleteService(currentUserId);
     setService(undefined);
-  }, [service]);
+  }, [currentUserId, service]);
 
   const refreshService = useCallback(async () => {
     const fresh = await apiClient.getServiceByUser(currentUserId);
@@ -123,7 +135,12 @@ export const BoskoDataProvider = ({ children }: { children: ReactNode }) => {
     () => ({
       currentUserId,
       search: { ...searchState, runSearch },
-      serviceManager: { service, createOrUpdate, remove, refresh: refreshService },
+      serviceManager: {
+        service,
+        createOrUpdate,
+        remove,
+        refresh: refreshService,
+      },
       currentUser: { user, refresh: refreshUser, update: updateUser },
       getProfile,
     }),
@@ -142,7 +159,11 @@ export const BoskoDataProvider = ({ children }: { children: ReactNode }) => {
     ]
   );
 
-  return <BoskoDataContext.Provider value={value}>{children}</BoskoDataContext.Provider>;
+  return (
+    <BoskoDataContext.Provider value={value}>
+      {children}
+    </BoskoDataContext.Provider>
+  );
 };
 
 export const useBoskoData = () => {

@@ -1,34 +1,52 @@
 import { rankResults } from "@/src/shared/utils/ranking";
-import { Service, User } from "@/src/types";
+import { ServiceProvider, User } from "@/src/types";
+
+const baseService = (overrides: Partial<ServiceProvider>): ServiceProvider => ({
+  id: "provider",
+  categoryId: "custom",
+  name: "Nombre",
+  title: "Servicio",
+  summary: "Resumen",
+  rating: 5,
+  reviews: 10,
+  location: "CABA",
+  rate: { amount: 10, currency: "USD", unit: "hora" },
+  avatar: "https://placehold.co/96x96",
+  photo: "https://placehold.co/400x200",
+  heroImage: "https://placehold.co/600x300",
+  bio: "Bio",
+  tags: ["custom"],
+  recentWorks: [
+    {
+      id: "work-1",
+      title: "Trabajo 1",
+      image: "https://placehold.co/200",
+      timeAgo: "1 semana",
+    },
+  ],
+  ...overrides,
+});
 
 describe("rankResults", () => {
   const users: User[] = [
-    { id: "u1", name: "Ana", avatar: "", bio: "", zone: "" },
-    { id: "u2", name: "Bruno", avatar: "", bio: "", zone: "" },
+    { id: "ana", name: "Ana", avatar: "", bio: "", zone: "" },
+    { id: "bruno", name: "Bruno", avatar: "", bio: "", zone: "" },
   ];
-  const services: Service[] = [
-    {
-      id: "s1",
-      userId: "u1",
-      name: "Clases de Yoga",
-      description: "Yoga en casa",
-      price: 100,
-      area: "",
-      availability: "",
-      keywords: ["yoga"],
-      photos: [],
-    },
-    {
-      id: "s2",
-      userId: "u2",
-      name: "Jardinería",
-      description: "Plantas",
-      price: 100,
-      area: "",
-      availability: "",
-      keywords: ["plantas"],
-      photos: [],
-    },
+  const services: ServiceProvider[] = [
+    baseService({
+      id: "ana",
+      name: "Ana",
+      title: "Clases de Yoga",
+      summary: "Yoga en casa",
+      tags: ["yoga"],
+    }),
+    baseService({
+      id: "bruno",
+      name: "Bruno",
+      title: "Jardinería",
+      summary: "Cuidado de plantas",
+      tags: ["plantas"],
+    }),
   ];
 
   it("prioriza coincidencia en nombre de usuario", () => {

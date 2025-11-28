@@ -56,11 +56,19 @@ export default function TabsLayout() {
         />
         <Tabs.Screen
           name="chat"
-          options={{ href: null, title: "Mensajes", tabBarIcon: () => <Text>💬</Text> }}
+          options={{
+            href: null,
+            title: "Mensajes",
+            tabBarIcon: () => <Text>💬</Text>,
+          }}
         />
         <Tabs.Screen
           name="settings"
-          options={{ href: null, title: "Settings", tabBarButton: () => null }}
+          options={{
+            href: null,
+            title: "Settings",
+            tabBarIcon: () => <Text>⚙️</Text>,
+          }}
         />
       </Tabs>
 

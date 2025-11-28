@@ -1,4 +1,5 @@
-export type Keyword = string;
+import { ServiceProvider } from "@/constants/serviceProviders";
+export type { ServiceProvider };
 
 export interface Photo {
   id: string;
@@ -6,18 +7,7 @@ export interface Photo {
   description?: string;
 }
 
-export interface Service {
-  id: string;
-  userId: string;
-  name: string;
-  description: string;
-  price?: number;
-  area: string;
-  availability: string;
-  keywords: Keyword[];
-  photos: Photo[];
-  rating?: number;
-}
+export type ServiceProviderInput = Omit<ServiceProvider, "id"> & { id?: string };
 
 export interface User {
   id: string;
@@ -29,17 +19,17 @@ export interface User {
 
 export interface SearchResult {
   user: User;
-  service?: Service;
+  service?: ServiceProvider;
   score: number;
 }
 
 export interface Repository {
   listUsers(): Promise<User[]>;
   getUserById(id: string): Promise<User | undefined>;
-  listServices(): Promise<Service[]>;
-  getServiceByUserId(userId: string): Promise<Service | undefined>;
-  createOrUpdateService(service: Omit<Service, "id"> & { id?: string }): Promise<Service>;
-  deleteService(serviceId: string): Promise<void>;
+  listServices(): Promise<ServiceProvider[]>;
+  getServiceByUserId(userId: string): Promise<ServiceProvider | undefined>;
+  createOrUpdateService(userId: string, service: ServiceProviderInput): Promise<ServiceProvider>;
+  deleteService(userId: string): Promise<void>;
   updateUser(user: User): Promise<User>;
   searchEntities(query: string): Promise<SearchResult[]>;
 }
