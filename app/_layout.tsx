@@ -7,6 +7,7 @@ import { PostsProvider } from "@/context/PostsContext";
 import { ReviewsProvider } from "@/context/ReviewsContext";
 import { ServicesProvider } from "@/context/ServicesContext";
 import { UserProvider } from "@/context/UserContext";
+import { BoskoDataProvider } from "@/src/shared/state/DataContext";
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
@@ -26,15 +27,17 @@ export default function _layout() {
             <PostsProvider serviceId="global">
               <ReviewsProvider serviceId="global">
                 <ServicesProvider>
-                  {/* <Redirect href="/login" /> */}
-                  <Tabs
-                    screenOptions={{
-                      headerShown: false,
-                      tabBarStyle: {
-                        display: "none",
-                      },
-                    }}
-                  />
+                  <BoskoDataProvider>
+                    {/* <Redirect href="/login" /> */}
+                    <Tabs
+                      screenOptions={{
+                        headerShown: false,
+                        tabBarStyle: {
+                          display: "none",
+                        },
+                      }}
+                    />
+                  </BoskoDataProvider>
                 </ServicesProvider>
               </ReviewsProvider>
             </PostsProvider>

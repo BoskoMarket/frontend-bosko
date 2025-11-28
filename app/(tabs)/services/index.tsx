@@ -117,8 +117,34 @@ export default function ServicesScreen() {
         columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        renderItem={renderCategory}
-        ListEmptyComponent={listEmpty}
+        renderItem={({ item, index }) => (
+          <MotiView
+            from={{ opacity: 0, translateY: 24 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: "timing", duration: 400, delay: index * 60 }}
+            style={styles.cardWrapper}
+          >
+            <Pressable
+              onPress={() => {
+                router.push({
+                  pathname: "/(tabs)/services/category/[id]",
+                  params: { id: item.id },
+                });
+              }}
+              style={[styles.card, { backgroundColor: item.accent }]}
+              android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
+            >
+              <Text style={styles.icon}>{item.icon}</Text>
+              <View>
+                <Text style={styles.cardTitle}>{item.title}</Text>
+                <Text style={styles.cardDescription}>{item.description}</Text>
+              </View>
+              <Text style={styles.cardCount}>
+                {item.servicesCount} servicios
+              </Text>
+            </Pressable>
+          </MotiView>
+        )}
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.heading}>Categorías sugeridas</Text>
@@ -147,10 +173,24 @@ export default function ServicesScreen() {
                   accessibilityHint={`Abrir perfil de ${service.name}`}
                   style={styles.serviceCard}
                 />
-              ))}
-            </View>
-          ) : null
-        }
+                <View style={styles.serviceInfo}>
+                  <Text style={styles.serviceName}>{service.name}</Text>
+                  <Text style={styles.serviceHeadline}>{service.title}</Text>
+                  <View style={styles.serviceMetaRow}>
+                    <Text style={styles.serviceMetaHighlight}>
+                      {service.rating.toFixed(1)} ★
+                    </Text>
+                    <View style={styles.metaDot} />
+                    <Text style={styles.serviceMeta}>{service.location}</Text>
+                  </View>
+                  <Text style={styles.serviceRate}>
+                    {/* Desde {formatRate(service.rate)} */}
+                  </Text>
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        )}
       />
     </SafeAreaView>
   );
