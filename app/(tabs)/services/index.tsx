@@ -1,6 +1,7 @@
+import React, { useCallback, useEffect, useMemo } from "react";
 import {
+  ActivityIndicator,
   FlatList,
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -10,54 +11,41 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 
-import {
-  SERVICE_CATEGORIES,
-  ServiceCategory,
-} from "@/constants/serviceCategories";
-import {
-  SERVICE_PROVIDERS,
-  ServiceProvider,
-} from "@/constants/serviceProviders";
+import ServiceCard from "@/components/ServiceCard";
+import { useServices } from "@/context/ServicesContext";
+import type { Category } from "@/types/services";
 import { TOKENS } from "@/theme/tokens";
-import { useCallback, useMemo } from "react";
 
-type CategoryWithCount = ServiceCategory & { servicesCount: number };
-
-const categoriesWithCounts: CategoryWithCount[] = SERVICE_CATEGORIES.map(
-  (category) => {
-    const servicesInCategory = SERVICE_PROVIDERS.filter(
-      (provider) => provider.categoryId === category.id
-    );
-
-    return {
-      ...category,
-      servicesCount: servicesInCategory.length,
-    };
-  }
-);
-
-const featuredServices: ServiceProvider[] = SERVICE_PROVIDERS.slice(0, 6);
+type CategoryListItem = Category & { servicesCount?: number };
 
 export default function ServicesScreen() {
   const router = useRouter();
+  const {
+    categories,
+    categoriesStatus,
+    servicesStatus,
+    fetchCategories,
+    fetchServicesByCategory,
+    getServicesForCategory,
+  } = useServices();
 
-  const categories = useMemo<CategoryListItem[]>(() => {
-    const counts = SERVICE_PROVIDERS.reduce<Record<string, number>>(
-      (acc, provider) => {
-        acc[provider.categoryId] = (acc[provider.categoryId] ?? 0) + 1;
-        return acc;
-      },
-      {}
-    );
+  useEffect(() => {
+    if (!categoriesStatus.loaded && !categoriesStatus.loading) {
+      fetchCategories().catch((err) => console.error(err));
+    }
+  }, [categoriesStatus.loaded, categoriesStatus.loading, fetchCategories]);
 
-    return SERVICE_CATEGORIES.map((category) => ({
-      ...category,
-      servicesCount: counts[category.id] ?? 0,
-    }));
-  }, []);
+  useEffect(() => {
+    categories.slice(0, 3).forEach((category) => {
+      const status = servicesStatus[category.id];
+      if (!status?.loaded && !status?.loading) {
+        fetchServicesByCategory(category.id).catch((err) => console.error(err));
+      }
+    });
+  }, [categories, fetchServicesByCategory, servicesStatus]);
 
   const handleCategoryPress = useCallback(
-    (category: ServiceCategory) => {
+    (category: CategoryListItem) => {
       router.push({
         pathname: "/services/category/[id]",
         params: { id: category.id },
@@ -66,43 +54,64 @@ export default function ServicesScreen() {
     [router]
   );
 
+  const featuredServices = useMemo(() => {
+    const collected = categories.flatMap((category) =>
+      getServicesForCategory(category.id)
+    );
+    return collected.slice(0, 6);
+  }, [categories, getServicesForCategory]);
+
   const renderCategory = useCallback(
-    ({ item, index }: { item: CategoryListItem; index: number }) => (
-      <MotiView
-        from={{ opacity: 0, translateY: 24 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: "timing", duration: 420, delay: index * 70 }}
-        style={styles.cardWrapper}
-      >
-        <Pressable
-          onPress={() => handleCategoryPress(item)}
-          accessibilityRole="button"
-          accessibilityLabel={item.title}
-          accessibilityHint={`Abrir categoría ${item.title}`}
-          style={[styles.card, { backgroundColor: item.accent }]}
-          android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
+    ({ item, index }: { item: CategoryListItem; index: number }) => {
+      const count =
+        item.servicesCount ?? getServicesForCategory(item.id).length;
+      return (
+        <MotiView
+          from={{ opacity: 0, translateY: 24 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          transition={{ type: "timing", duration: 420, delay: index * 70 }}
+          style={styles.cardWrapper}
         >
-          <View style={styles.cardHeader}>
+          <Pressable
+            onPress={() => handleCategoryPress(item)}
+            accessibilityRole="button"
+            accessibilityLabel={item.title}
+            accessibilityHint={`Abrir categoría ${item.title}`}
+            style={[styles.card, { backgroundColor: item.accent }]}
+            android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
+          >
             <Text style={styles.icon}>{item.icon}</Text>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>{item.servicesCount}</Text>
-              <Text style={styles.countLabel}>servicios</Text>
+            <View>
+              <Text style={styles.cardTitle}>{item.title}</Text>
+              <Text style={styles.cardDescription}>{item.description}</Text>
             </View>
-          </View>
-          <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardDescription}>{item.description}</Text>
-          </View>
-        </Pressable>
-      </MotiView>
-    ),
-    [handleCategoryPress]
+            <Text style={styles.cardCount}>{count} servicios</Text>
+          </Pressable>
+        </MotiView>
+      );
+    },
+    [getServicesForCategory, handleCategoryPress]
+  );
+
+  const listEmpty = (
+    <View style={styles.emptyState}>
+      {categoriesStatus.loading ? (
+        <ActivityIndicator />
+      ) : (
+        <Text style={styles.emptyText}>
+          Pronto habrá categorías disponibles.
+        </Text>
+      )}
+      {categoriesStatus.error ? (
+        <Text style={styles.errorText}>{categoriesStatus.error}</Text>
+      ) : null}
+    </View>
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
       <FlatList
-        data={categoriesWithCounts}
+        data={categories}
         keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={styles.columnWrapper}
@@ -144,26 +153,25 @@ export default function ServicesScreen() {
             </Text>
           </View>
         }
-        ListFooterComponent={() => (
-          <View style={styles.servicesSection}>
-            <Text style={styles.sectionTitle}>Servicios destacados</Text>
-            <Text style={styles.sectionSubtitle}>
-              Tocá cualquier profesional para conocer su perfil.
-            </Text>
-            {featuredServices.map((service) => (
-              <Pressable
-                key={service.id}
-                onPress={() =>
-                  router.push({
-                    pathname: "./provider/[id]",
-                    params: { id: service.id },
-                  })
-                }
-                style={styles.serviceCard}
-              >
-                <Image
-                  source={{ uri: service.photo }}
-                  style={styles.serviceAvatar}
+        ListFooterComponent={
+          featuredServices.length > 0 ? (
+            <View style={styles.servicesSection}>
+              <Text style={styles.sectionTitle}>Servicios destacados</Text>
+              <Text style={styles.sectionSubtitle}>
+                Tocá cualquier profesional para conocer su perfil.
+              </Text>
+              {featuredServices.map((service) => (
+                <ServiceCard
+                  key={service.id}
+                  serviceId={service.id}
+                  onPress={() =>
+                    router.push({
+                      pathname: "./provider/[id]",
+                      params: { id: service.providerId },
+                    })
+                  }
+                  accessibilityHint={`Abrir perfil de ${service.name}`}
+                  style={styles.serviceCard}
                 />
                 <View style={styles.serviceInfo}>
                   <Text style={styles.serviceName}>{service.name}</Text>
@@ -191,10 +199,10 @@ export default function ServicesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: TOKENS.color.bg,
+    backgroundColor: "white",
   },
   listContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingBottom: 40,
     gap: 18,
   },
@@ -202,54 +210,56 @@ const styles = StyleSheet.create({
     gap: 18,
   },
   header: {
-    width: "100%",
-    marginBottom: 8,
-    gap: 6,
+    gap: 4,
+    marginBottom: 12,
   },
   heading: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: "700",
-    color: TOKENS.color.text,
+    color: TOKENS.color.primary,
   },
   subheading: {
-    fontSize: 15,
+    fontSize: 14,
     color: TOKENS.color.sub,
-    lineHeight: 20,
   },
   cardWrapper: {
     flex: 1,
   },
   card: {
     flex: 1,
-    padding: 20,
-    minHeight: 170,
-    justifyContent: "space-between",
+    minHeight: 150,
     borderRadius: TOKENS.radius.xl,
-    ...TOKENS.shadow.soft,
+    padding: 18,
+    gap: 12,
+    justifyContent: "space-between",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   icon: {
-    fontSize: 36,
+    fontSize: 32,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
     color: TOKENS.color.text,
-    marginBottom: 4,
   },
   cardDescription: {
-    fontSize: 14,
+    fontSize: 13,
     color: TOKENS.color.sub,
-    lineHeight: 19,
   },
   cardCount: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: TOKENS.color.text,
+    fontSize: 12,
+    color: TOKENS.color.sub,
   },
   servicesSection: {
-    width: "100%",
-    marginTop: 12,
-    gap: 12,
+    marginTop: 32,
+    gap: 16,
   },
   sectionTitle: {
     fontSize: 20,
@@ -261,54 +271,28 @@ const styles = StyleSheet.create({
     color: TOKENS.color.sub,
   },
   serviceCard: {
-    flexDirection: "row",
+    marginBottom: 12,
+  },
+  emptyState: {
+    width: "100%",
     alignItems: "center",
-    padding: 16,
-    backgroundColor: "#FFFFFF",
-    borderRadius: TOKENS.radius.lg,
-    gap: 14,
-    ...TOKENS.shadow.soft,
+    gap: 8,
+    paddingVertical: 40,
   },
-  serviceAvatar: {
-    width: 54,
-    height: 54,
-    borderRadius: TOKENS.radius.lg,
-  },
-  serviceInfo: {
-    flex: 1,
-    gap: 4,
-  },
-  serviceName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: TOKENS.color.text,
-  },
-  serviceHeadline: {
+  emptyText: {
     fontSize: 14,
     color: TOKENS.color.sub,
   },
-  serviceMetaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  serviceMetaHighlight: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: TOKENS.color.primary,
-  },
-  metaDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#CBD3DA",
-  },
-  serviceMeta: {
-    fontSize: 13,
-    color: TOKENS.color.sub,
-  },
-  serviceRate: {
+  errorText: {
     fontSize: 12,
-    color: TOKENS.color.sub,
+    color: "#DC2626",
   },
+  cardHeader: { flexDirection: "row", justifyContent: "space-between" },
+  countBadge: { alignItems: "flex-end" },
+  countText: {
+    fontSize: 16,
+    color: "white",
+  },
+  countLabel: { fontSize: 12, color: "white" },
+  cardContent: { marginTop: 10, gap: 4 },
 });
