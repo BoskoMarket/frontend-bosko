@@ -6,48 +6,61 @@ import {
   Text,
   View,
 } from "react-native";
+import { useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { MotiView } from "moti";
 
-import { SERVICE_CATEGORIES } from "@/constants/serviceCategories";
-import {
-  SERVICE_PROVIDERS,
-  ServiceProvider,
-} from "@/constants/serviceProviders";
 import { TOKENS } from "@/theme/tokens";
+import { useCategories } from "@/src/contexts/CategoriesContext";
+import { useProviders } from "@/src/contexts/ProvidersContext";
+import { Category } from "@/src/interfaces/category";
+import { Provider } from "@/src/interfaces/provider";
 
 export default function CategoryServicesScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
 
   const categoryId = typeof params.id === "string" ? params.id : undefined;
-  const category = SERVICE_CATEGORIES.find((item) => item.id === categoryId);
+  const { categories, loading: categoriesLoading } = useCategories();
+  const {
+    providers,
+    loading: providersLoading,
+    error: providersError,
+    loadProviders,
+  } = useProviders();
 
-  const services = SERVICE_PROVIDERS.filter(
-    (provider) => provider.categoryId === categoryId
-  );
+  const category = categories.find((item) => item.id === categoryId);
+
+  useEffect(() => {
+    if (providers.length === 0) {
+      loadProviders().catch((err) => console.error(err));
+    }
+  }, [providers.length, loadProviders]);
+
+  const services = providers.filter((provider) => provider.categoryId === categoryId);
   const accentColor = category?.accent ?? "#E8ECF2";
+  const loading = categoriesLoading || providersLoading;
 
   function handleBack() {
     router.back();
   }
 
-  function handleProviderPress(provider: ServiceProvider) {
+  function handleProviderPress(provider: Provider) {
     router.push({
       pathname: "../provider/[id]",
       params: { id: provider.id },
     });
   }
 
-  function formatRate(rate: ServiceProvider["rate"]) {
-    const symbol =
-      rate.currency === "ARS"
-        ? "$"
-        : rate.currency === "USD"
-        ? "US$"
-        : `${rate.currency} `;
-    return `${symbol}${rate.amount} / ${rate.unit}`;
+  function formatRate(rate?: Provider["rate"]) {
+    if (!rate || rate.amount === undefined) {
+      return "Tarifa no disponible";
+    }
+    const currency = rate.currency?.toUpperCase();
+    const symbol = currency === "ARS" ? "$" : currency === "USD" ? "US$" : `${currency ?? ""} `;
+    const unit = rate.unit ? ` / ${rate.unit}` : "";
+    return `${symbol}${rate.amount}${unit}`;
   }
 
   return (
@@ -76,6 +89,8 @@ export default function CategoryServicesScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshing={loading}
+        onRefresh={() => loadProviders().catch((err) => console.error(err))}
         renderItem={({ item, index }) => (
           <MotiView
             from={{ opacity: 0, translateY: 28 }}
@@ -97,7 +112,7 @@ export default function CategoryServicesScreen() {
                 <View style={styles.nameRow}>
                   <Text style={styles.serviceName}>{item.name}</Text>
                   <Text style={styles.serviceRating}>
-                    ★ {item.rating.toFixed(1)}
+                    ★ {item.rating ? item.rating.toFixed(1) : "N/D"}
                   </Text>
                 </View>
                 <Text style={styles.serviceHeadline}>{item.title}</Text>
@@ -107,7 +122,7 @@ export default function CategoryServicesScreen() {
                   </Text>
                   <View style={styles.dot} />
                   <Text style={styles.serviceReviews}>
-                    {item.reviews} reseñas
+                    {item.reviewsCount ?? item.reviews ?? 0} reseñas
                   </Text>
                 </View>
                 <Text style={styles.serviceLocation}>{item.location}</Text>
@@ -118,10 +133,12 @@ export default function CategoryServicesScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>
-              Pronto habrá profesionales aquí
+              {loading ? "Cargando profesionales..." : "Pronto habrá profesionales aquí"}
             </Text>
             <Text style={styles.emptySubtitle}>
-              Estamos sumando especialistas en esta categoría.
+              {providersError
+                ? providersError
+                : "Estamos sumando especialistas en esta categoría."}
             </Text>
           </View>
         }

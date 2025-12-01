@@ -10,54 +10,75 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 
-import {
-  SERVICE_CATEGORIES,
-  ServiceCategory,
-} from "@/constants/serviceCategories";
-import {
-  SERVICE_PROVIDERS,
-  ServiceProvider,
-} from "@/constants/serviceProviders";
 import { TOKENS } from "@/theme/tokens";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
+import { useCategories } from "@/src/contexts/CategoriesContext";
+import { useProviders } from "@/src/contexts/ProvidersContext";
+import { Category } from "@/src/interfaces/category";
+import { Provider } from "@/src/interfaces/provider";
 
-type CategoryWithCount = ServiceCategory & { servicesCount: number };
+type CategoryWithCount = Category & { servicesCount: number };
+type CategoryListItem = CategoryWithCount;
 
-const categoriesWithCounts: CategoryWithCount[] = SERVICE_CATEGORIES.map(
-  (category) => {
-    const servicesInCategory = SERVICE_PROVIDERS.filter(
-      (provider) => provider.categoryId === category.id
-    );
+const FALLBACK_ACCENTS = ["#E6F0FF", "#F5ECFF", "#FFF4E5", "#FFEFF3"];
 
-    return {
-      ...category,
-      servicesCount: servicesInCategory.length,
-    };
+function formatRate(rate?: Provider["rate"]) {
+  if (!rate || rate.amount === undefined) {
+    return "Tarifa no disponible";
   }
-);
 
-const featuredServices: ServiceProvider[] = SERVICE_PROVIDERS.slice(0, 6);
+  const currency = rate.currency?.toUpperCase();
+  const symbol = currency === "ARS" ? "$" : currency === "USD" ? "US$" : `${currency ?? ""} `;
+  const unit = rate.unit ? ` / ${rate.unit}` : "";
+  return `${symbol}${rate.amount}${unit}`;
+}
 
 export default function ServicesScreen() {
   const router = useRouter();
 
-  const categories = useMemo<CategoryListItem[]>(() => {
-    const counts = SERVICE_PROVIDERS.reduce<Record<string, number>>(
-      (acc, provider) => {
-        acc[provider.categoryId] = (acc[provider.categoryId] ?? 0) + 1;
-        return acc;
-      },
-      {}
-    );
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+  } = useCategories();
+  const {
+    providers,
+    loading: providersLoading,
+    error: providersError,
+    loadProviders,
+  } = useProviders();
 
-    return SERVICE_CATEGORIES.map((category) => ({
+  useEffect(() => {
+    if (providers.length === 0) {
+      loadProviders().catch((err) => console.error(err));
+    }
+  }, [providers.length, loadProviders]);
+
+  const categoriesWithCounts = useMemo<CategoryListItem[]>(() => {
+    const counts = providers.reduce<Record<string, number>>((acc, provider) => {
+      if (provider.categoryId) {
+        acc[provider.categoryId] = (acc[provider.categoryId] ?? 0) + 1;
+      }
+      return acc;
+    }, {});
+
+    return categories.map((category, index) => ({
       ...category,
+      accent: category.accent ?? FALLBACK_ACCENTS[index % FALLBACK_ACCENTS.length],
+      icon: category.icon ?? "🛠️",
       servicesCount: counts[category.id] ?? 0,
     }));
-  }, []);
+  }, [categories, providers]);
+
+  const featuredServices = useMemo<Provider[]>(
+    () => providers.slice(0, 6),
+    [providers]
+  );
+
+  const loading = categoriesLoading || providersLoading;
 
   const handleCategoryPress = useCallback(
-    (category: ServiceCategory) => {
+    (category: Category) => {
       router.push({
         pathname: "/services/category/[id]",
         params: { id: category.id },
@@ -101,6 +122,26 @@ export default function ServicesScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {loading ? (
+        <View style={styles.header}>
+          <Text style={styles.heading}>Cargando categorías...</Text>
+        </View>
+      ) : null}
+      {categoriesError || providersError ? (
+        <View style={styles.header}>
+          <Text style={styles.subheading}>
+            {categoriesError || providersError || "Ocurrió un error al cargar los datos"}
+          </Text>
+        </View>
+      ) : null}
+      {!loading && categoriesWithCounts.length === 0 ? (
+        <View style={styles.header}>
+          <Text style={styles.heading}>No hay categorías para mostrar</Text>
+          <Text style={styles.subheading}>
+            Intenta nuevamente más tarde.
+          </Text>
+        </View>
+      ) : null}
       <FlatList
         data={categoriesWithCounts}
         keyExtractor={(item) => item.id}
@@ -165,21 +206,21 @@ export default function ServicesScreen() {
                   source={{ uri: service.photo }}
                   style={styles.serviceAvatar}
                 />
-                <View style={styles.serviceInfo}>
-                  <Text style={styles.serviceName}>{service.name}</Text>
-                  <Text style={styles.serviceHeadline}>{service.title}</Text>
-                  <View style={styles.serviceMetaRow}>
-                    <Text style={styles.serviceMetaHighlight}>
-                      {service.rating.toFixed(1)} ★
+                  <View style={styles.serviceInfo}>
+                    <Text style={styles.serviceName}>{service.name}</Text>
+                    <Text style={styles.serviceHeadline}>{service.title}</Text>
+                    <View style={styles.serviceMetaRow}>
+                      <Text style={styles.serviceMetaHighlight}>
+                        {service.rating ? service.rating.toFixed(1) : "N/D"} ★
+                      </Text>
+                      <View style={styles.metaDot} />
+                      <Text style={styles.serviceMeta}>{service.location}</Text>
+                    </View>
+                    <Text style={styles.serviceRate}>
+                      Desde {formatRate(service.rate)}
                     </Text>
-                    <View style={styles.metaDot} />
-                    <Text style={styles.serviceMeta}>{service.location}</Text>
                   </View>
-                  <Text style={styles.serviceRate}>
-                    Desde {formatRate(service.rate)}
-                  </Text>
-                </View>
-              </Pressable>
+                </Pressable>
             ))}
           </View>
         )}
