@@ -13,23 +13,15 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useServices } from "@/context/ServicesContext";
-import type { Service, ServicePayload } from "@/services/service";
-
-const CATEGORY_OPTIONS = [
-  "Construcción",
-  "Electricidad",
-  "Plomería",
-  "Limpieza",
-  "Jardinería",
-  "Otro",
-];
+import { useServices } from "@/src/contexts/ServicesContext";
+import { useCategories } from "@/src/contexts/CategoriesContext";
+import type { Service, ServicePayload } from "@/src/interfaces/service";
 
 type FormState = {
   title: string;
   description: string;
   price: string;
-  category: string;
+  categoryId?: string;
   image?: string | null;
 };
 
@@ -37,7 +29,7 @@ const EMPTY_FORM: FormState = {
   title: "",
   description: "",
   price: "",
-  category: CATEGORY_OPTIONS[0],
+  categoryId: undefined,
   image: undefined,
 };
 
@@ -55,13 +47,9 @@ async function imageToBase64(uri: string): Promise<string> {
 export default function ServiceFormScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ serviceId?: string }>();
-  const {
-    myServices,
-    myServicesLoading,
-    addService,
-    editService,
-    currentPlan,
-  } = useServices();
+  const { services, loading, loadServices, fetchService, addService, editService } =
+    useServices();
+  const { categories, loading: categoriesLoading, loadCategories } = useCategories();
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -71,18 +59,28 @@ export default function ServiceFormScreen() {
   const isEditing = useMemo(() => !!selectedService, [selectedService]);
 
   useEffect(() => {
-    if (myServices.length === 0) {
-      setSelectedService(null);
-      setForm({ ...EMPTY_FORM });
-      setImageUri(undefined);
-      return;
+    if (categories.length === 0) {
+      loadCategories().catch((err) => console.error(err));
     }
+  }, [categories.length, loadCategories]);
 
+  useEffect(() => {
+    if (!params.serviceId && services.length === 0 && !loading) {
+      loadServices().catch((err) => console.error(err));
+    }
+  }, [params.serviceId, services.length, loading, loadServices]);
+
+  useEffect(() => {
     const serviceFromParam = params.serviceId
-      ? myServices.find((service) => service.id === params.serviceId)
+      ? services.find((service) => service.id === params.serviceId)
       : null;
 
-    const serviceToLoad = serviceFromParam ?? myServices[0];
+    if (!serviceFromParam && params.serviceId) {
+      fetchService(params.serviceId).catch((err) => console.error(err));
+    }
+
+    const serviceToLoad = serviceFromParam ?? services[0];
+    const defaultCategory = serviceToLoad?.categoryId ?? categories[0]?.id;
 
     if (serviceToLoad) {
       setSelectedService(serviceToLoad);
@@ -90,23 +88,23 @@ export default function ServiceFormScreen() {
         title: serviceToLoad.title ?? "",
         description: serviceToLoad.description ?? "",
         price: serviceToLoad.price ? String(serviceToLoad.price) : "",
-        category: serviceToLoad.category ?? CATEGORY_OPTIONS[0],
+        categoryId: defaultCategory,
         image: serviceToLoad.image,
       });
       setImageUri(serviceToLoad.image ?? undefined);
     } else {
       setSelectedService(null);
-      setForm({ ...EMPTY_FORM });
+      setForm({ ...EMPTY_FORM, categoryId: defaultCategory });
       setImageUri(undefined);
     }
-  }, [myServices, params.serviceId]);
+  }, [services, params.serviceId, categories]);
 
   const handleInputChange = (key: keyof FormState, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSelectCategory = (category: string) => {
-    setForm((prev) => ({ ...prev, category }));
+  const handleSelectCategory = (categoryId?: string) => {
+    setForm((prev) => ({ ...prev, categoryId }));
   };
 
   const handlePickImage = async () => {
@@ -148,6 +146,11 @@ export default function ServiceFormScreen() {
       return false;
     }
 
+    if (!form.categoryId) {
+      setError("Selecciona una categoría");
+      return false;
+    }
+
     setError(null);
     return true;
   };
@@ -165,18 +168,13 @@ export default function ServiceFormScreen() {
       title: form.title.trim(),
       description: form.description.trim(),
       price: Number(form.price),
-      category: form.category,
+      categoryId: form.categoryId,
       image: imagePayload ?? null,
     };
   };
 
   const handleSubmit = async () => {
     if (!validateForm()) {
-      return;
-    }
-
-    if (!isEditing && currentPlan === "FREE" && myServices.length >= 1) {
-      Alert.alert("Plan Bosko", "Actualizar a plan Plus para más");
       return;
     }
 
@@ -249,22 +247,28 @@ export default function ServiceFormScreen() {
 
       <Text style={styles.label}>Categoría</Text>
       <View style={styles.categoriesContainer}>
-        {CATEGORY_OPTIONS.map((option) => {
-          const selected = form.category === option;
-          return (
-            <Pressable
-              key={option}
-              style={[styles.categoryChip, selected && styles.categoryChipSelected]}
-              onPress={() => handleSelectCategory(option)}
-            >
-              <Text
-                style={[styles.categoryText, selected && styles.categoryTextSelected]}
+        {categoriesLoading && categories.length === 0 ? (
+          <ActivityIndicator />
+        ) : categories.length === 0 ? (
+          <Text style={styles.helper}>No hay categorías disponibles</Text>
+        ) : (
+          categories.map((category) => {
+            const selected = form.categoryId === category.id;
+            return (
+              <Pressable
+                key={category.id}
+                style={[styles.categoryChip, selected && styles.categoryChipSelected]}
+                onPress={() => handleSelectCategory(category.id)}
               >
-                {option}
-              </Text>
-            </Pressable>
-          );
-        })}
+                <Text
+                  style={[styles.categoryText, selected && styles.categoryTextSelected]}
+                >
+                  {category.name}
+                </Text>
+              </Pressable>
+            );
+          })
+        )}
       </View>
 
       <Text style={styles.label}>Foto</Text>
@@ -285,9 +289,9 @@ export default function ServiceFormScreen() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <Pressable
-        style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+        style={[styles.submitButton, (submitting || categoriesLoading) && styles.submitButtonDisabled]}
         onPress={handleSubmit}
-        disabled={submitting}
+        disabled={submitting || categoriesLoading}
       >
         {submitting ? (
           <ActivityIndicator color="#fff" />
@@ -296,7 +300,7 @@ export default function ServiceFormScreen() {
         )}
       </Pressable>
 
-      {myServicesLoading && !isEditing ? (
+      {loading && !isEditing ? (
         <View style={styles.loader}>
           <ActivityIndicator />
         </View>
