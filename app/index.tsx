@@ -16,6 +16,8 @@ export default function OnBoarding() {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const { authLoaded, authState } = useAuth();
 
+  console.log("Se pinta index tab");
+
   const ref = React.useRef<ICarouselInstance>(null);
 
   const onPressPagination = (index: number) => {
@@ -62,6 +64,8 @@ export default function OnBoarding() {
   if (authLoaded && authState.token) {
     return <Redirect href="/(tabs)" />;
   }
+
+  return <Redirect href="/(tabs)" />;
 
   return (
     <View style={{ flex: 1, alignItems: "center", top: 50 }}>

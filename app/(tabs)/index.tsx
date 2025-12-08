@@ -65,8 +65,15 @@ export default function Dashboard() {
       style={{ backgroundColor: TOKENS.color.bg }}
       ListHeaderComponent={
         <View style={{ gap: 20, paddingBottom: 120, paddingHorizontal: 5 }}>
-          <NavBar />
-          <HeroCarousel data={hero} />
+          <View
+            style={{
+              backgroundColor: TOKENS.color.primary,
+              borderBottomRightRadius: 55,
+            }}
+          >
+            <NavBar />
+            <HeroCarousel data={hero} />
+          </View>
           <CategoryChips items={categories} />
           <ProfessionalsCarousel data={pros} />
           <PromoBanner />

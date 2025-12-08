@@ -5,9 +5,9 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function _layout() {
   const { authLoaded, authState } = useAuth();
+  return <Redirect href="/(tabs)" />;
+  if (!authLoaded) return null;
+  if (authState.token) return <Redirect href="/(tabs)" />;
 
-  if (authLoaded && authState.token) {
-    return <Redirect href="/(tabs)" />;
-  }
-  return <Redirect href="/login/LogInView" />;
+  return <Slot />;
 }

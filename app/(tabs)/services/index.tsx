@@ -28,7 +28,12 @@ function formatRate(rate?: Provider["rate"]) {
   }
 
   const currency = rate.currency?.toUpperCase();
-  const symbol = currency === "ARS" ? "$" : currency === "USD" ? "US$" : `${currency ?? ""} `;
+  const symbol =
+    currency === "ARS"
+      ? "$"
+      : currency === "USD"
+      ? "US$"
+      : `${currency ?? ""} `;
   const unit = rate.unit ? ` / ${rate.unit}` : "";
   return `${symbol}${rate.amount}${unit}`;
 }
@@ -62,9 +67,12 @@ export default function ServicesScreen() {
       return acc;
     }, {});
 
+    console.log(categories, "Estas son las categorias");
+
     return categories.map((category, index) => ({
       ...category,
-      accent: category.accent ?? FALLBACK_ACCENTS[index % FALLBACK_ACCENTS.length],
+      accent:
+        category.accent ?? FALLBACK_ACCENTS[index % FALLBACK_ACCENTS.length],
       icon: category.icon ?? "🛠️",
       servicesCount: counts[category.id] ?? 0,
     }));
@@ -130,16 +138,16 @@ export default function ServicesScreen() {
       {categoriesError || providersError ? (
         <View style={styles.header}>
           <Text style={styles.subheading}>
-            {categoriesError || providersError || "Ocurrió un error al cargar los datos"}
+            {categoriesError ||
+              providersError ||
+              "Ocurrió un error al cargar los datos"}
           </Text>
         </View>
       ) : null}
       {!loading && categoriesWithCounts.length === 0 ? (
         <View style={styles.header}>
           <Text style={styles.heading}>No hay categorías para mostrar</Text>
-          <Text style={styles.subheading}>
-            Intenta nuevamente más tarde.
-          </Text>
+          <Text style={styles.subheading}>Intenta nuevamente más tarde.</Text>
         </View>
       ) : null}
       <FlatList
@@ -206,21 +214,21 @@ export default function ServicesScreen() {
                   source={{ uri: service.photo }}
                   style={styles.serviceAvatar}
                 />
-                  <View style={styles.serviceInfo}>
-                    <Text style={styles.serviceName}>{service.name}</Text>
-                    <Text style={styles.serviceHeadline}>{service.title}</Text>
-                    <View style={styles.serviceMetaRow}>
-                      <Text style={styles.serviceMetaHighlight}>
-                        {service.rating ? service.rating.toFixed(1) : "N/D"} ★
-                      </Text>
-                      <View style={styles.metaDot} />
-                      <Text style={styles.serviceMeta}>{service.location}</Text>
-                    </View>
-                    <Text style={styles.serviceRate}>
-                      Desde {formatRate(service.rate)}
+                <View style={styles.serviceInfo}>
+                  <Text style={styles.serviceName}>{service.name}</Text>
+                  <Text style={styles.serviceHeadline}>{service.title}</Text>
+                  <View style={styles.serviceMetaRow}>
+                    <Text style={styles.serviceMetaHighlight}>
+                      {service.rating ? service.rating.toFixed(1) : "N/D"} ★
                     </Text>
+                    <View style={styles.metaDot} />
+                    <Text style={styles.serviceMeta}>{service.location}</Text>
                   </View>
-                </Pressable>
+                  <Text style={styles.serviceRate}>
+                    Desde {formatRate(service.rate)}
+                  </Text>
+                </View>
+              </Pressable>
             ))}
           </View>
         )}
