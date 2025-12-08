@@ -38,10 +38,9 @@ export default function TabsLayout() {
           name="index"
           options={{ title: "Inicio", tabBarIcon: () => <Text>🏠</Text> }}
         />
-
         <Tabs.Screen
-          name="chat"
-          options={{ title: "Mensajes", tabBarIcon: () => <Text>💬</Text> }}
+          name="search"
+          options={{ title: "Buscar", tabBarIcon: () => <Text>🔎</Text> }}
         />
         <Tabs.Screen
           name="services"
@@ -54,6 +53,22 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="profile"
           options={{ title: "Perfil", tabBarIcon: () => <Text>👤</Text> }}
+        />
+        <Tabs.Screen
+          name="chat"
+          options={{
+            href: null,
+            title: "Mensajes",
+            tabBarIcon: () => <Text>💬</Text>,
+          }}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={{
+            href: null,
+            title: "Settings",
+            tabBarIcon: () => <Text>⚙️</Text>,
+          }}
         />
       </Tabs>
 

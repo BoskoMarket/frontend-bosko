@@ -1,6 +1,7 @@
+import React, { useEffect, useMemo } from "react";
 import {
+  ActivityIndicator,
   FlatList,
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -11,6 +12,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { MotiView } from "moti";
 
+import ServiceCard from "@/components/ServiceCard";
+import { useServices } from "@/context/ServicesContext";
+import type { ServiceSummary } from "@/types/services";
 import { TOKENS } from "@/theme/tokens";
 import { useCategories } from "@/src/contexts/CategoriesContext";
 import { useProviders } from "@/src/contexts/ProvidersContext";
@@ -18,33 +22,50 @@ import { Category } from "@/src/interfaces/category";
 import { Provider } from "@/src/interfaces/provider";
 
 export default function CategoryServicesScreen() {
-  const params = useLocalSearchParams();
+  const params = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
-
   const categoryId = typeof params.id === "string" ? params.id : undefined;
-  const { categories, loading: categoriesLoading } = useCategories();
-  const {
-    providers,
-    loading: providersLoading,
-    error: providersError,
-    loadProviders,
-  } = useProviders();
 
-  const category = categories.find((item) => item.id === categoryId);
+  const {
+    categories,
+    categoriesStatus,
+    servicesStatus,
+    fetchCategories,
+    fetchServicesByCategory,
+    getServicesForCategory,
+  } = useServices();
 
   useEffect(() => {
-    if (providers.length === 0) {
-      loadProviders().catch((err) => console.error(err));
+    if (!categoriesStatus.loaded && !categoriesStatus.loading) {
+      fetchCategories().catch((err) => console.error(err));
     }
-  }, [providers.length, loadProviders]);
+  }, [categoriesStatus.loaded, categoriesStatus.loading, fetchCategories]);
 
-  const services = providers.filter((provider) => provider.categoryId === categoryId);
+  useEffect(() => {
+    if (!categoryId) {
+      return;
+    }
+    fetchServicesByCategory(categoryId).catch((err) => console.error(err));
+  }, [categoryId, fetchServicesByCategory]);
+
+  const category = categories.find((item) => item.id === categoryId);
+  const services = categoryId ? getServicesForCategory(categoryId) : [];
+  const status = categoryId ? servicesStatus[categoryId] : undefined;
+
   const accentColor = category?.accent ?? "#E8ECF2";
-  const loading = categoriesLoading || providersLoading;
+  const isLoading = Boolean(
+    status?.loading && !status?.loaded && services.length === 0
+  );
 
-  function handleBack() {
-    router.back();
-  }
+  const headerCopy = useMemo(
+    () => ({
+      title: category?.title ?? "Servicios",
+      description:
+        category?.description ??
+        "Descubrí profesionales disponibles en esta categoría.",
+    }),
+    [category?.description, category?.title]
+  );
 
   function handleProviderPress(provider: Provider) {
     router.push({
@@ -65,8 +86,7 @@ export default function CategoryServicesScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <Stack.Screen options={{ headerShown: false }} />
-
+      {/* <Stack.Screen options={{ headerShown: false }} /> */}
       <View style={[styles.hero, { backgroundColor: accentColor }]}>
         <Pressable
           onPress={handleBack}
@@ -77,10 +97,8 @@ export default function CategoryServicesScreen() {
           <Text style={styles.backIcon}>←</Text>
         </Pressable>
         <View style={styles.heroCopy}>
-          <Text style={styles.heroTitle}>{category?.title ?? "Servicios"}</Text>
-          <Text style={styles.heroSubtitle}>
-            {category?.description ?? "Descubrí profesionales disponibles."}
-          </Text>
+          <Text style={styles.heroTitle}>{headerCopy.title}</Text>
+          <Text style={styles.heroSubtitle}>{headerCopy.description}</Text>
         </View>
       </View>
 
@@ -150,11 +168,11 @@ export default function CategoryServicesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: TOKENS.color.bg,
+    backgroundColor: "white",
   },
   hero: {
-    margin: 20,
     borderRadius: TOKENS.radius.xl,
+    marginBottom: 16,
     padding: 20,
     flexDirection: "row",
     alignItems: "center",
@@ -196,80 +214,22 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   serviceCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-    backgroundColor: "#FFFFFF",
-    padding: 18,
-    borderRadius: TOKENS.radius.lg,
-    ...TOKENS.shadow.soft,
-  },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
-  },
-  serviceInfo: {
-    flex: 1,
-    gap: 6,
-  },
-  nameRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  serviceName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: TOKENS.color.text,
-  },
-  serviceRating: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: TOKENS.color.primary,
-  },
-  serviceHeadline: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-  },
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  servicePrice: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: TOKENS.color.text,
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#CBD3DA",
-  },
-  serviceReviews: {
-    fontSize: 12,
-    color: TOKENS.color.sub,
-  },
-  serviceLocation: {
-    fontSize: 12,
-    color: TOKENS.color.sub,
+    width: "100%",
   },
   emptyState: {
-    paddingVertical: 80,
+    paddingVertical: 40,
     alignItems: "center",
     gap: 8,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 16,
+    fontWeight: "600",
     color: TOKENS.color.text,
+    textAlign: "center",
   },
   emptySubtitle: {
     fontSize: 14,
     color: TOKENS.color.sub,
     textAlign: "center",
-    paddingHorizontal: 20,
   },
 });

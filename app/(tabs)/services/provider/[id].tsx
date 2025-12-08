@@ -1,16 +1,7 @@
-import { useEffect, useState } from "react";
-import {
-  Image,
-  ImageBackground,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import React, { useEffect } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { MotiView } from "moti";
 
 import { TOKENS } from "@/theme/tokens";
 import { useCategories } from "@/src/contexts/CategoriesContext";
@@ -18,7 +9,7 @@ import { useProviders } from "@/src/contexts/ProvidersContext";
 import { Provider } from "@/src/interfaces/provider";
 
 export default function ProviderProfileScreen() {
-  const params = useLocalSearchParams();
+  const params = useLocalSearchParams<{ id?: string }>();
   const router = useRouter();
 
   const { categories } = useCategories();
@@ -62,9 +53,9 @@ export default function ProviderProfileScreen() {
     return `${symbol}${rate.amount}${unit}`;
   }
 
-  if (!provider) {
+  if (!providerId) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={styles.emptyState}>
           <Pressable onPress={handleBack} style={styles.backButton}>
@@ -90,12 +81,7 @@ export default function ProviderProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* <Stack.Screen
-        options={{
-          title: provider.name,
-          headerLargeTitle: false,
-        }}
-      /> */}
+      <Stack.Screen options={{ headerShown: false }} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -194,189 +180,26 @@ export default function ProviderProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: TOKENS.color.bg,
   },
   scrollContent: {
     padding: 20,
-    gap: 20,
+    gap: 24,
     paddingBottom: 40,
   },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-  },
-  backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: TOKENS.radius.lg,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    ...TOKENS.shadow.soft,
-  },
-  backIcon: {
-    fontSize: 20,
-    color: TOKENS.color.text,
-  },
-  heroCard: {
-    borderRadius: TOKENS.radius.xl,
-    overflow: "hidden",
-    ...TOKENS.shadow.soft,
-  },
-  heroBackground: {
-    padding: 24,
-  },
-  heroBackgroundImage: {
-    borderRadius: TOKENS.radius.xl,
-  },
-  heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.25)",
-  },
-  heroContent: {
-    alignItems: "center",
-    gap: 10,
-  },
-  heroAvatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 4,
-    backgroundColor: "#FFFFFF",
-  },
-  heroName: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  heroTitle: {
-    fontSize: 16,
-    color: "#F5F7FA",
-  },
-  heroSummary: {
-    fontSize: 14,
-    color: "#E1E6EC",
-    textAlign: "center",
-    lineHeight: 20,
-  },
-  heroStats: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  heroRating: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#FFE082",
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.6)",
-  },
-  heroReviews: {
-    fontSize: 13,
-    color: "#F1F5F9",
-  },
-  heroLocation: {
-    fontSize: 13,
-    color: "#F1F5F9",
-  },
-  heroActions: {
-    marginTop: 4,
-    alignItems: "center",
-    gap: 8,
-  },
-  heroRate: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  quoteButton: {
-    marginTop: 4,
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 10,
-    paddingHorizontal: 26,
-    borderRadius: TOKENS.radius.pill,
-  },
-  quoteButtonText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: TOKENS.color.text,
-  },
-  section: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: TOKENS.radius.lg,
-    padding: 18,
-    gap: 12,
-    ...TOKENS.shadow.soft,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: TOKENS.color.text,
-  },
-  sectionBody: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-    lineHeight: 20,
-  },
-  tagsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  tag: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: TOKENS.radius.pill,
-  },
-  tagText: {
-    fontSize: 12,
-    color: TOKENS.color.text,
-  },
-  worksList: {
-    gap: 12,
-  },
-  workCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  workImage: {
-    width: 72,
-    height: 72,
-    borderRadius: TOKENS.radius.lg,
-  },
-  workInfo: {
-    flex: 1,
-    gap: 4,
-  },
-  workTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: TOKENS.color.text,
-  },
-  workTime: {
-    fontSize: 12,
-    color: TOKENS.color.sub,
-  },
-  emptyState: {
+  fallback: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 16,
-    padding: 32,
+    paddingHorizontal: 24,
+    gap: 12,
   },
-  emptyTitle: {
+  fallbackTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontWeight: "600",
     color: TOKENS.color.text,
     textAlign: "center",
   },
-  emptySubtitle: {
+  fallbackSubtitle: {
     fontSize: 14,
     color: TOKENS.color.sub,
     textAlign: "center",
