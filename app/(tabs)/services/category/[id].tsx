@@ -7,7 +7,6 @@ import {
   Text,
   View,
 } from "react-native";
-import { useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { MotiView } from "moti";
@@ -20,6 +19,7 @@ import { useCategories } from "@/src/contexts/CategoriesContext";
 import { useProviders } from "@/src/contexts/ProvidersContext";
 import { Category } from "@/src/interfaces/category";
 import { Provider } from "@/src/interfaces/provider";
+import { Image } from "expo-image";
 
 export default function CategoryServicesScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -34,6 +34,14 @@ export default function CategoryServicesScreen() {
     fetchServicesByCategory,
     getServicesForCategory,
   } = useServices();
+
+  const {
+    loading: providersLoading,
+    error: providersError,
+
+    loadProviders,
+    providers,
+  } = useProviders();
 
   useEffect(() => {
     if (!categoriesStatus.loaded && !categoriesStatus.loading) {
@@ -57,6 +65,9 @@ export default function CategoryServicesScreen() {
     status?.loading && !status?.loaded && services.length === 0
   );
 
+  const handleBack = () => {
+    router.back();
+  };
   const headerCopy = useMemo(
     () => ({
       title: category?.title ?? "Servicios",
@@ -79,7 +90,12 @@ export default function CategoryServicesScreen() {
       return "Tarifa no disponible";
     }
     const currency = rate.currency?.toUpperCase();
-    const symbol = currency === "ARS" ? "$" : currency === "USD" ? "US$" : `${currency ?? ""} `;
+    const symbol =
+      currency === "ARS"
+        ? "$"
+        : currency === "USD"
+        ? "US$"
+        : `${currency ?? ""} `;
     const unit = rate.unit ? ` / ${rate.unit}` : "";
     return `${symbol}${rate.amount}${unit}`;
   }
@@ -107,7 +123,7 @@ export default function CategoryServicesScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        refreshing={loading}
+        refreshing={isLoading}
         onRefresh={() => loadProviders().catch((err) => console.error(err))}
         renderItem={({ item, index }) => (
           <MotiView
@@ -124,7 +140,7 @@ export default function CategoryServicesScreen() {
               <Image
                 source={{ uri: item.photo }}
                 style={styles.avatar}
-                resizeMode="cover"
+                contentFit="cover"
               />
               <View style={styles.serviceInfo}>
                 <View style={styles.nameRow}>
@@ -151,7 +167,9 @@ export default function CategoryServicesScreen() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>
-              {loading ? "Cargando profesionales..." : "Pronto habrá profesionales aquí"}
+              {isLoading
+                ? "Cargando profesionales..."
+                : "Pronto habrá profesionales aquí"}
             </Text>
             <Text style={styles.emptySubtitle}>
               {providersError

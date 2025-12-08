@@ -1,4 +1,3 @@
-import React, { useCallback, useEffect, useMemo } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -10,45 +9,24 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
+import { useCallback, useEffect, useMemo } from "react";
+
+import ServiceCard from "@/components/ServiceCard";
 
 import { TOKENS } from "@/theme/tokens";
-import { useCallback, useEffect, useMemo } from "react";
 import { useCategories } from "@/src/contexts/CategoriesContext";
 import { useProviders } from "@/src/contexts/ProvidersContext";
 import { Category } from "@/src/interfaces/category";
-import { Provider } from "@/src/interfaces/provider";
+import { useServices } from "@/src/contexts/ServicesContext";
 
 type CategoryWithCount = Category & { servicesCount: number };
 type CategoryListItem = CategoryWithCount;
 
 const FALLBACK_ACCENTS = ["#E6F0FF", "#F5ECFF", "#FFF4E5", "#FFEFF3"];
 
-function formatRate(rate?: Provider["rate"]) {
-  if (!rate || rate.amount === undefined) {
-    return "Tarifa no disponible";
-  }
-
-  const currency = rate.currency?.toUpperCase();
-  const symbol =
-    currency === "ARS"
-      ? "$"
-      : currency === "USD"
-      ? "US$"
-      : `${currency ?? ""} `;
-  const unit = rate.unit ? ` / ${rate.unit}` : "";
-  return `${symbol}${rate.amount}${unit}`;
-}
-
 export default function ServicesScreen() {
   const router = useRouter();
-  const {
-    categories,
-    categoriesStatus,
-    servicesStatus,
-    fetchCategories,
-    fetchServicesByCategory,
-    getServicesForCategory,
-  } = useServices();
+  const { services } = useServices();
 
   const {
     categories,
@@ -62,6 +40,7 @@ export default function ServicesScreen() {
     loadProviders,
   } = useProviders();
 
+  console.log(categories);
   useEffect(() => {
     if (providers.length === 0) {
       loadProviders().catch((err) => console.error(err));
@@ -76,28 +55,21 @@ export default function ServicesScreen() {
       return acc;
     }, {});
 
-    console.log(categories, "Estas son las categorias");
-
     return categories.map((category, index) => ({
       ...category,
       accent:
         category.accent ?? FALLBACK_ACCENTS[index % FALLBACK_ACCENTS.length],
-      icon: category.icon ?? "🛠️",
+      icon: category.icon ?? "*",
       servicesCount: counts[category.id] ?? 0,
     }));
   }, [categories, providers]);
-
-  const featuredServices = useMemo<Provider[]>(
-    () => providers.slice(0, 6),
-    [providers]
-  );
 
   const loading = categoriesLoading || providersLoading;
 
   const handleCategoryPress = useCallback(
     (category: Category) => {
       router.push({
-        pathname: "/services/category/[id]",
+        pathname: "/(tabs)/services/category/[id]",
         params: { id: category.id },
       });
     },
@@ -106,54 +78,22 @@ export default function ServicesScreen() {
 
   const featuredServices = useMemo(() => {
     const collected = categories.flatMap((category) =>
-      getServicesForCategory(category.id)
+      services.filter((service) => service.categoryId === category.id)
     );
     return collected.slice(0, 6);
-  }, [categories, getServicesForCategory]);
-
-  const renderCategory = useCallback(
-    ({ item, index }: { item: CategoryListItem; index: number }) => {
-      const count =
-        item.servicesCount ?? getServicesForCategory(item.id).length;
-      return (
-        <MotiView
-          from={{ opacity: 0, translateY: 24 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          transition={{ type: "timing", duration: 420, delay: index * 70 }}
-          style={styles.cardWrapper}
-        >
-          <Pressable
-            onPress={() => handleCategoryPress(item)}
-            accessibilityRole="button"
-            accessibilityLabel={item.title}
-            accessibilityHint={`Abrir categoría ${item.title}`}
-            style={[styles.card, { backgroundColor: item.accent }]}
-            android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
-          >
-            <Text style={styles.icon}>{item.icon}</Text>
-            <View>
-              <Text style={styles.cardTitle}>{item.title}</Text>
-              <Text style={styles.cardDescription}>{item.description}</Text>
-            </View>
-            <Text style={styles.cardCount}>{count} servicios</Text>
-          </Pressable>
-        </MotiView>
-      );
-    },
-    [getServicesForCategory, handleCategoryPress]
-  );
+  }, [categories, services]);
 
   const listEmpty = (
     <View style={styles.emptyState}>
-      {categoriesStatus.loading ? (
+      {categoriesLoading ? (
         <ActivityIndicator />
       ) : (
         <Text style={styles.emptyText}>
-          Pronto habrá categorías disponibles.
+          Pronto habra categorias disponibles.
         </Text>
       )}
-      {categoriesStatus.error ? (
-        <Text style={styles.errorText}>{categoriesStatus.error}</Text>
+      {categoriesError ? (
+        <Text style={styles.errorText}>{categoriesError}</Text>
       ) : null}
     </View>
   );
@@ -162,7 +102,7 @@ export default function ServicesScreen() {
     <SafeAreaView style={styles.safeArea}>
       {loading ? (
         <View style={styles.header}>
-          <Text style={styles.heading}>Cargando categorías...</Text>
+          <Text style={styles.heading}>Cargando categorias...</Text>
         </View>
       ) : null}
       {categoriesError || providersError ? (
@@ -170,23 +110,24 @@ export default function ServicesScreen() {
           <Text style={styles.subheading}>
             {categoriesError ||
               providersError ||
-              "Ocurrió un error al cargar los datos"}
+              "Ocurrio un error al cargar los datos"}
           </Text>
         </View>
       ) : null}
       {!loading && categoriesWithCounts.length === 0 ? (
         <View style={styles.header}>
-          <Text style={styles.heading}>No hay categorías para mostrar</Text>
-          <Text style={styles.subheading}>Intenta nuevamente más tarde.</Text>
+          <Text style={styles.heading}>No hay categorias para mostrar</Text>
+          <Text style={styles.subheading}>Intenta nuevamente mas tarde.</Text>
         </View>
       ) : null}
       <FlatList
-        data={categories}
+        data={categoriesWithCounts}
         keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={listEmpty}
         renderItem={({ item, index }) => (
           <MotiView
             from={{ opacity: 0, translateY: 24 }}
@@ -195,12 +136,7 @@ export default function ServicesScreen() {
             style={styles.cardWrapper}
           >
             <Pressable
-              onPress={() => {
-                router.push({
-                  pathname: "/(tabs)/services/category/[id]",
-                  params: { id: item.id },
-                });
-              }}
+              onPress={() => handleCategoryPress(item)}
               style={[styles.card, { backgroundColor: item.accent }]}
               android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
             >
@@ -210,16 +146,16 @@ export default function ServicesScreen() {
                 <Text style={styles.cardDescription}>{item.description}</Text>
               </View>
               <Text style={styles.cardCount}>
-                {item.servicesCount} servicios
+                {item.servicesCount ?? 0} servicios
               </Text>
             </Pressable>
           </MotiView>
         )}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.heading}>Categorías sugeridas</Text>
+            <Text style={styles.heading}>Categorias sugeridas</Text>
             <Text style={styles.subheading}>
-              Elegí una categoría para ver profesionales disponibles.
+              Elige una categoria para ver profesionales disponibles.
             </Text>
           </View>
         }
@@ -228,7 +164,7 @@ export default function ServicesScreen() {
             <View style={styles.servicesSection}>
               <Text style={styles.sectionTitle}>Servicios destacados</Text>
               <Text style={styles.sectionSubtitle}>
-                Tocá cualquier profesional para conocer su perfil.
+                Toca cualquier profesional para conocer su perfil.
               </Text>
               {featuredServices.map((service) => (
                 <ServiceCard
@@ -243,24 +179,10 @@ export default function ServicesScreen() {
                   accessibilityHint={`Abrir perfil de ${service.name}`}
                   style={styles.serviceCard}
                 />
-                <View style={styles.serviceInfo}>
-                  <Text style={styles.serviceName}>{service.name}</Text>
-                  <Text style={styles.serviceHeadline}>{service.title}</Text>
-                  <View style={styles.serviceMetaRow}>
-                    <Text style={styles.serviceMetaHighlight}>
-                      {service.rating ? service.rating.toFixed(1) : "N/D"} ★
-                    </Text>
-                    <View style={styles.metaDot} />
-                    <Text style={styles.serviceMeta}>{service.location}</Text>
-                  </View>
-                  <Text style={styles.serviceRate}>
-                    {/* Desde {formatRate(service.rate)} */}
-                  </Text>
-                </View>
-              </Pressable>
-            ))}
-          </View>
-        )}
+              ))}
+            </View>
+          ) : null
+        }
       />
     </SafeAreaView>
   );
