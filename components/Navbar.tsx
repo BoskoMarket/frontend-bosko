@@ -7,10 +7,10 @@ export function NavBar() {
     <View style={styles.wrap}>
       <Text style={styles.brand}>Bosko</Text>
       <View style={{ flexDirection: "row", gap: 12 }}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => {}}>
           <Text>🔍</Text>
         </TouchableOpacity>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => {}}>
           <Text>🔔</Text>
         </TouchableOpacity>
       </View>
@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: TOKENS.color.bg,
+    // backgroundColor: TOKENS.color.bg,
   },
   brand: { fontSize: 22, fontWeight: "800", color: TOKENS.color.text },
 });

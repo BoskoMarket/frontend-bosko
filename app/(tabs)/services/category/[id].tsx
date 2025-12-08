@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { MotiView } from "moti";
@@ -15,6 +16,10 @@ import ServiceCard from "@/components/ServiceCard";
 import { useServices } from "@/context/ServicesContext";
 import type { ServiceSummary } from "@/types/services";
 import { TOKENS } from "@/theme/tokens";
+import { useCategories } from "@/src/contexts/CategoriesContext";
+import { useProviders } from "@/src/contexts/ProvidersContext";
+import { Category } from "@/src/interfaces/category";
+import { Provider } from "@/src/interfaces/provider";
 
 export default function CategoryServicesScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -62,36 +67,22 @@ export default function CategoryServicesScreen() {
     [category?.description, category?.title]
   );
 
-  const handleBack = () => {
-    router.back();
-  };
+  function handleProviderPress(provider: Provider) {
+    router.push({
+      pathname: "../provider/[id]",
+      params: { id: provider.id },
+    });
+  }
 
-  const renderService = ({
-    item,
-    index,
-  }: {
-    item: ServiceSummary;
-    index: number;
-  }) => (
-    <MotiView
-      from={{ opacity: 0, translateY: 28 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: "timing", duration: 420, delay: index * 70 }}
-      style={styles.serviceWrapper}
-    >
-      <ServiceCard
-        serviceId={item.id}
-        onPress={() =>
-          router.push({
-            pathname: "../provider/[id]",
-            params: { id: item.providerId },
-          })
-        }
-        style={styles.serviceCard}
-        accessibilityHint={`Abrir perfil del profesional asociado a ${headerCopy.title}`}
-      />
-    </MotiView>
-  );
+  function formatRate(rate?: Provider["rate"]) {
+    if (!rate || rate.amount === undefined) {
+      return "Tarifa no disponible";
+    }
+    const currency = rate.currency?.toUpperCase();
+    const symbol = currency === "ARS" ? "$" : currency === "USD" ? "US$" : `${currency ?? ""} `;
+    const unit = rate.unit ? ` / ${rate.unit}` : "";
+    return `${symbol}${rate.amount}${unit}`;
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -116,21 +107,57 @@ export default function CategoryServicesScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        renderItem={renderService}
+        refreshing={loading}
+        onRefresh={() => loadProviders().catch((err) => console.error(err))}
+        renderItem={({ item, index }) => (
+          <MotiView
+            from={{ opacity: 0, translateY: 28 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: "timing", duration: 420, delay: index * 70 }}
+            style={styles.serviceWrapper}
+          >
+            <Pressable
+              onPress={() => handleProviderPress(item)}
+              style={styles.serviceCard}
+              android_ripple={{ color: "rgba(0,0,0,0.04)" }}
+            >
+              <Image
+                source={{ uri: item.photo }}
+                style={styles.avatar}
+                resizeMode="cover"
+              />
+              <View style={styles.serviceInfo}>
+                <View style={styles.nameRow}>
+                  <Text style={styles.serviceName}>{item.name}</Text>
+                  <Text style={styles.serviceRating}>
+                    ★ {item.rating ? item.rating.toFixed(1) : "N/D"}
+                  </Text>
+                </View>
+                <Text style={styles.serviceHeadline}>{item.title}</Text>
+                <View style={styles.metaRow}>
+                  <Text style={styles.servicePrice}>
+                    Desde {formatRate(item.rate)}
+                  </Text>
+                  <View style={styles.dot} />
+                  <Text style={styles.serviceReviews}>
+                    {item.reviewsCount ?? item.reviews ?? 0} reseñas
+                  </Text>
+                </View>
+                <Text style={styles.serviceLocation}>{item.location}</Text>
+              </View>
+            </Pressable>
+          </MotiView>
+        )}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            {isLoading ? (
-              <ActivityIndicator />
-            ) : (
-              <>
-                <Text style={styles.emptyTitle}>
-                  Pronto habrá profesionales aquí
-                </Text>
-                <Text style={styles.emptySubtitle}>
-                  Estamos sumando especialistas en esta categoría.
-                </Text>
-              </>
-            )}
+            <Text style={styles.emptyTitle}>
+              {loading ? "Cargando profesionales..." : "Pronto habrá profesionales aquí"}
+            </Text>
+            <Text style={styles.emptySubtitle}>
+              {providersError
+                ? providersError
+                : "Estamos sumando especialistas en esta categoría."}
+            </Text>
           </View>
         }
       />

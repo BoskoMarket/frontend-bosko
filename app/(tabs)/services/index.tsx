@@ -11,12 +11,33 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 
-import ServiceCard from "@/components/ServiceCard";
-import { useServices } from "@/context/ServicesContext";
-import type { Category } from "@/types/services";
 import { TOKENS } from "@/theme/tokens";
+import { useCallback, useEffect, useMemo } from "react";
+import { useCategories } from "@/src/contexts/CategoriesContext";
+import { useProviders } from "@/src/contexts/ProvidersContext";
+import { Category } from "@/src/interfaces/category";
+import { Provider } from "@/src/interfaces/provider";
 
-type CategoryListItem = Category & { servicesCount?: number };
+type CategoryWithCount = Category & { servicesCount: number };
+type CategoryListItem = CategoryWithCount;
+
+const FALLBACK_ACCENTS = ["#E6F0FF", "#F5ECFF", "#FFF4E5", "#FFEFF3"];
+
+function formatRate(rate?: Provider["rate"]) {
+  if (!rate || rate.amount === undefined) {
+    return "Tarifa no disponible";
+  }
+
+  const currency = rate.currency?.toUpperCase();
+  const symbol =
+    currency === "ARS"
+      ? "$"
+      : currency === "USD"
+      ? "US$"
+      : `${currency ?? ""} `;
+  const unit = rate.unit ? ` / ${rate.unit}` : "";
+  return `${symbol}${rate.amount}${unit}`;
+}
 
 export default function ServicesScreen() {
   const router = useRouter();
@@ -29,23 +50,52 @@ export default function ServicesScreen() {
     getServicesForCategory,
   } = useServices();
 
-  useEffect(() => {
-    if (!categoriesStatus.loaded && !categoriesStatus.loading) {
-      fetchCategories().catch((err) => console.error(err));
-    }
-  }, [categoriesStatus.loaded, categoriesStatus.loading, fetchCategories]);
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+  } = useCategories();
+  const {
+    providers,
+    loading: providersLoading,
+    error: providersError,
+    loadProviders,
+  } = useProviders();
 
   useEffect(() => {
-    categories.slice(0, 3).forEach((category) => {
-      const status = servicesStatus[category.id];
-      if (!status?.loaded && !status?.loading) {
-        fetchServicesByCategory(category.id).catch((err) => console.error(err));
+    if (providers.length === 0) {
+      loadProviders().catch((err) => console.error(err));
+    }
+  }, [providers.length, loadProviders]);
+
+  const categoriesWithCounts = useMemo<CategoryListItem[]>(() => {
+    const counts = providers.reduce<Record<string, number>>((acc, provider) => {
+      if (provider.categoryId) {
+        acc[provider.categoryId] = (acc[provider.categoryId] ?? 0) + 1;
       }
-    });
-  }, [categories, fetchServicesByCategory, servicesStatus]);
+      return acc;
+    }, {});
+
+    console.log(categories, "Estas son las categorias");
+
+    return categories.map((category, index) => ({
+      ...category,
+      accent:
+        category.accent ?? FALLBACK_ACCENTS[index % FALLBACK_ACCENTS.length],
+      icon: category.icon ?? "🛠️",
+      servicesCount: counts[category.id] ?? 0,
+    }));
+  }, [categories, providers]);
+
+  const featuredServices = useMemo<Provider[]>(
+    () => providers.slice(0, 6),
+    [providers]
+  );
+
+  const loading = categoriesLoading || providersLoading;
 
   const handleCategoryPress = useCallback(
-    (category: CategoryListItem) => {
+    (category: Category) => {
       router.push({
         pathname: "/services/category/[id]",
         params: { id: category.id },
@@ -109,7 +159,27 @@ export default function ServicesScreen() {
   );
 
   return (
-    <SafeAreaView edges={["left", "right"]} style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea}>
+      {loading ? (
+        <View style={styles.header}>
+          <Text style={styles.heading}>Cargando categorías...</Text>
+        </View>
+      ) : null}
+      {categoriesError || providersError ? (
+        <View style={styles.header}>
+          <Text style={styles.subheading}>
+            {categoriesError ||
+              providersError ||
+              "Ocurrió un error al cargar los datos"}
+          </Text>
+        </View>
+      ) : null}
+      {!loading && categoriesWithCounts.length === 0 ? (
+        <View style={styles.header}>
+          <Text style={styles.heading}>No hay categorías para mostrar</Text>
+          <Text style={styles.subheading}>Intenta nuevamente más tarde.</Text>
+        </View>
+      ) : null}
       <FlatList
         data={categories}
         keyExtractor={(item) => item.id}
@@ -178,7 +248,7 @@ export default function ServicesScreen() {
                   <Text style={styles.serviceHeadline}>{service.title}</Text>
                   <View style={styles.serviceMetaRow}>
                     <Text style={styles.serviceMetaHighlight}>
-                      {service.rating.toFixed(1)} ★
+                      {service.rating ? service.rating.toFixed(1) : "N/D"} ★
                     </Text>
                     <View style={styles.metaDot} />
                     <Text style={styles.serviceMeta}>{service.location}</Text>

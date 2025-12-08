@@ -5,9 +5,11 @@ import { OrdersProvider } from "@/context/OdersContext";
 import { PaymentsProvider } from "@/context/PaymentContext";
 import { PostsProvider } from "@/context/PostsContext";
 import { ReviewsProvider } from "@/context/ReviewsContext";
-import { ServicesProvider } from "@/context/ServicesContext";
-import { UserProvider } from "@/context/UserContext";
-import { BoskoDataProvider } from "@/src/shared/state/DataContext";
+import { CategoriesProvider } from "@/src/contexts/CategoriesContext";
+import { ProvidersProvider } from "@/src/contexts/ProvidersContext";
+import { SearchProvider } from "@/src/contexts/SearchContext";
+import { ServicesProvider } from "@/src/contexts/ServicesContext";
+import { UsersProvider } from "@/src/contexts/UsersContext";
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
@@ -21,29 +23,33 @@ configureReanimatedLogger({
 export default function _layout() {
   return (
     <AuthProvider>
-      <UserProvider>
-        <PaymentsProvider>
-          <OrdersProvider>
-            <PostsProvider serviceId="global">
-              <ReviewsProvider serviceId="global">
-                <ServicesProvider>
-                  <BoskoDataProvider>
-                    {/* <Redirect href="/login" /> */}
-                    <Tabs
-                      screenOptions={{
-                        headerShown: false,
-                        tabBarStyle: {
-                          display: "none",
-                        },
-                      }}
-                    />
-                  </BoskoDataProvider>
-                </ServicesProvider>
-              </ReviewsProvider>
-            </PostsProvider>
-          </OrdersProvider>
-        </PaymentsProvider>
-      </UserProvider>
+      <UsersProvider>
+        <CategoriesProvider>
+          <ProvidersProvider>
+            <ServicesProvider>
+              <SearchProvider>
+                <PaymentsProvider>
+                  <OrdersProvider>
+                    <PostsProvider serviceId="global">
+                      <ReviewsProvider serviceId="global">
+                        {/* <Redirect href="/login" /> */}
+                        <Tabs
+                          screenOptions={{
+                            headerShown: false,
+                            tabBarStyle: {
+                              display: "none",
+                            },
+                          }}
+                        />
+                      </ReviewsProvider>
+                    </PostsProvider>
+                  </OrdersProvider>
+                </PaymentsProvider>
+              </SearchProvider>
+            </ServicesProvider>
+          </ProvidersProvider>
+        </CategoriesProvider>
+      </UsersProvider>
     </AuthProvider>
   );
 }
