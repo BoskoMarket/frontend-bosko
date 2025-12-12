@@ -1,9 +1,7 @@
 import {
   login as loginService,
   registerUser as registerUserService,
-  checkEmailAvailability as checkEmailAvailabilityService,
   checkUsernameAvailability as checkUsernameAvailabilityService,
-  isPhoneUnique as isPhoneUniqueService,
   refreshTokenService,
   Credentials,
   RegisterUserPayload,
@@ -16,9 +14,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 interface AuthContextType {
   login: (credentials: Credentials) => Promise<AuthResponse>;
   registerUser: (data: RegisterUserPayload) => Promise<AuthResponse>;
-  checkEmailAvailability: (email: string) => Promise<boolean>;
   checkUsernameAvailability: (username: string) => Promise<boolean>;
-  isPhoneUnique: (phone: string) => Promise<boolean>;
   isLoading: boolean;
   error: string | null;
   accessToken: string | null;
@@ -122,39 +118,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const checkEmailAvailability = async (email: string) => {
-    try {
-      setError(null);
-      return await checkEmailAvailabilityService(email);
-    } catch (error: any) {
-      const message =
-        error.response?.data?.message || "No se pudo validar el correo";
-      setError(message);
-      throw new Error(message);
-    }
-  };
-
   const checkUsernameAvailability = async (username: string) => {
     try {
       setError(null);
-      const response = await checkUsernameAvailabilityService(username);
-      console.log(response, "respuesta en check");
-      return response;
+      const exists = await checkUsernameAvailabilityService(username);
+      // La API devuelve true si existe, false si está disponible
+      return exists;
     } catch (error: any) {
       const message =
         error.response?.data?.message || "No se pudo validar el usuario";
-      setError(message);
-      throw new Error(message);
-    }
-  };
-
-  const checkPhoneUniqueness = async (phone: string) => {
-    try {
-      setError(null);
-      return await isPhoneUniqueService(phone);
-    } catch (error: any) {
-      const message =
-        error.response?.data?.message || "No se pudo validar el teléfono";
       setError(message);
       throw new Error(message);
     }
@@ -176,19 +148,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
+
     const checkAuth = async () => {
       try {
+
+
         const savedToken = await getItemAsync("token");
         const savedRefreshToken = await getItemAsync("refreshToken");
         const savedUserEmail = await getItemAsync("userEmail");
         const savedUserRaw = await getItemAsync("user");
         const savedUser = parseUser(savedUserRaw);
 
-        if (!savedToken || !savedRefreshToken || !savedUserEmail) {
-          router.push("/login");
-          await logout();
+        console.log(savedToken, savedRefreshToken, savedUserEmail, savedUser);
+
+        if (!savedToken || !savedRefreshToken) {
+          setAuthLoaded(true);
           return;
         }
+
+
+
 
         setAuthState({
           token: savedToken,
@@ -198,25 +177,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
 
         setAuthLoaded(true);
-
-        const refreshed = await refreshTokenService(savedRefreshToken);
-
-        if (refreshed) {
-          await setItemAsync("token", refreshed);
-          setAuthState({
-            token: refreshed,
-            refreshToken: savedRefreshToken,
-            userEmail: savedUserEmail,
-            user: savedUser,
-          });
-        } else {
-          console.warn("No se pudo refrescar el token.");
-          await logout();
-        }
       } catch (error) {
         console.error("Error en checkAuth:", error);
         await logout();
-      } finally {
         setAuthLoaded(true);
       }
     };
@@ -229,9 +192,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       value={{
         login: loginFn,
         registerUser,
-        checkEmailAvailability,
         checkUsernameAvailability,
-        isPhoneUnique: checkPhoneUniqueness,
         isLoading,
         error,
         accessToken,

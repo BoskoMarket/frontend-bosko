@@ -30,8 +30,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const updateToken = await getItemAsync("updateToken");
-      const newAccessToken = await refreshTokenService(updateToken);
+      const refreshToken = await getItemAsync("refreshToken");
+      const newAccessToken = await refreshTokenService(refreshToken);
 
       if (newAccessToken) {
         await setItemAsync("token", newAccessToken);
@@ -39,7 +39,7 @@ api.interceptors.response.use(
         return api(originalRequest);
       } else {
         await deleteItemAsync("token");
-        await deleteItemAsync("updateToken");
+        await deleteItemAsync("refreshToken");
         // router.replace('/login'); // opcional
       }
     }
