@@ -10,6 +10,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 import { useCallback, useEffect, useMemo } from "react";
+import { LinearGradient } from "expo-linear-gradient";
+import { BlurView } from "expo-blur";
 
 import ServiceCard from "@/components/ServiceCard";
 
@@ -18,16 +20,44 @@ import { useCategories } from "@/src/contexts/CategoriesContext";
 import { useProviders } from "@/src/contexts/ProvidersContext";
 import { Category } from "@/src/interfaces/category";
 import { useServices } from "@/context/ServicesContext";
+import Colors from "@/constants/Colors";
 
 type CategoryWithCount = Category & { servicesCount: number };
 type CategoryListItem = CategoryWithCount;
 
 const FALLBACK_ACCENTS = ["#E6F0FF", "#F5ECFF", "#FFF4E5", "#FFEFF3"];
 
+// Icon mapping based on category name keywords
+const getCategoryIcon = (name: string): string => {
+  const lowerName = name.toLowerCase();
+
+  if (lowerName.includes("plom") || lowerName.includes("agua") || lowerName.includes("cañ")) return "🔧";
+  if (lowerName.includes("electric") || lowerName.includes("luz")) return "⚡";
+  if (lowerName.includes("pintu") || lowerName.includes("pared")) return "🎨";
+  if (lowerName.includes("carpint") || lowerName.includes("madera")) return "🪚";
+  if (lowerName.includes("jardin") || lowerName.includes("plant")) return "🌿";
+  if (lowerName.includes("limpieza") || lowerName.includes("aseo")) return "🧹";
+  if (lowerName.includes("belleza") || lowerName.includes("estét") || lowerName.includes("peluq")) return "💇";
+  if (lowerName.includes("diseño") || lowerName.includes("gráf")) return "🎨";
+  if (lowerName.includes("fotograf")) return "📸";
+  if (lowerName.includes("música") || lowerName.includes("audio")) return "🎵";
+  if (lowerName.includes("cocina") || lowerName.includes("chef") || lowerName.includes("gastr")) return "👨‍🍳";
+  if (lowerName.includes("mecán") || lowerName.includes("auto") || lowerName.includes("coche")) return "🔩";
+  if (lowerName.includes("tecnolog") || lowerName.includes("comput") || lowerName.includes("inform")) return "💻";
+  if (lowerName.includes("clases") || lowerName.includes("educac") || lowerName.includes("enseñ")) return "📚";
+  if (lowerName.includes("salud") || lowerName.includes("médic") || lowerName.includes("enfermer")) return "🏥";
+  if (lowerName.includes("fitness") || lowerName.includes("deport") || lowerName.includes("gym")) return "💪";
+  if (lowerName.includes("mascot") || lowerName.includes("veterin")) return "🐾";
+  if (lowerName.includes("construc") || lowerName.includes("albañ")) return "🏗️";
+  if (lowerName.includes("transport") || lowerName.includes("mudanza")) return "🚚";
+  if (lowerName.includes("event") || lowerName.includes("fiesta")) return "🎉";
+
+  return "⭐"; // Default icon
+};
+
 export default function ServicesScreen() {
   const router = useRouter();
   const { services } = useServices();
-
 
   const {
     categories,
@@ -41,7 +71,6 @@ export default function ServicesScreen() {
     loadProviders,
   } = useProviders();
 
-  console.log(categories);
   useEffect(() => {
     if (providers.length === 0) {
       loadProviders().catch((err) => console.error(err));
@@ -64,7 +93,7 @@ export default function ServicesScreen() {
       ...category,
       accent:
         category.accent ?? FALLBACK_ACCENTS[index % FALLBACK_ACCENTS.length],
-      icon: category.icon ?? "*",
+      icon: getCategoryIcon(category.name),
       servicesCount: counts[category.id] ?? 0,
     }));
   }, [categories, providers]);
@@ -135,24 +164,80 @@ export default function ServicesScreen() {
         ListEmptyComponent={listEmpty}
         renderItem={({ item, index }) => (
           <MotiView
-            from={{ opacity: 0, translateY: 24 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: "timing", duration: 400, delay: index * 60 }}
+            from={{ opacity: 0, translateY: 50, scale: 0.9 }}
+            animate={{ opacity: 1, translateY: 0, scale: 1 }}
+            transition={{
+              type: "spring",
+              damping: 15,
+              stiffness: 150,
+              delay: index * 80,
+            }}
             style={styles.cardWrapper}
           >
             <Pressable
               onPress={() => handleCategoryPress(item)}
-              style={[styles.card, { backgroundColor: item.accent }]}
-              android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
+              style={styles.cardContainer}
             >
-              <Text style={styles.icon}>{item.icon}</Text>
-              <View>
-                <Text style={styles.cardTitle}>{item.name}</Text>
-                <Text style={styles.cardDescription}>{item.description}</Text>
-              </View>
-              <Text style={styles.cardCount}>
-                {item.servicesCount ?? 0} servicios
-              </Text>
+              {({ pressed }) => (
+                <MotiView
+                  animate={{
+                    scale: pressed ? 0.95 : 1,
+                    translateY: pressed ? 2 : 0,
+                  }}
+                  transition={{ type: "timing", duration: 150 }}
+                  style={styles.card}
+                >
+                  <LinearGradient
+                    colors={[
+                      `${Colors.colorPrimary}15`,
+                      `${Colors.colorPrimary}08`,
+                      "rgba(255,255,255,0.95)",
+                    ]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.gradientBackground}
+                  >
+                    {/* Icon with glow effect */}
+                    <View style={styles.iconContainer}>
+                      <LinearGradient
+                        colors={[Colors.colorPrimary, Colors.colorPrimaryDark]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.iconGradient}
+                      >
+                        <Text style={styles.icon}>{item.icon}</Text>
+                      </LinearGradient>
+                    </View>
+
+                    {/* Content */}
+                    <View style={styles.cardContent}>
+                      <Text style={styles.cardTitle} numberOfLines={1}>
+                        {item.name}
+                      </Text>
+                      <Text style={styles.cardDescription} numberOfLines={2}>
+                        {item.description ?? ""}
+                      </Text>
+                    </View>
+
+                    {/* Count badge */}
+                    <View style={styles.countBadge}>
+                      <LinearGradient
+                        colors={[Colors.colorPrimary, Colors.colorPrimaryDark]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.countGradient}
+                      >
+                        <Text style={styles.countText}>
+                          {item.servicesCount ?? 0}
+                        </Text>
+                      </LinearGradient>
+                    </View>
+
+                    {/* Glassmorphic overlay */}
+                    <View style={styles.glassOverlay} />
+                  </LinearGradient>
+                </MotiView>
+              )}
             </Pressable>
           </MotiView>
         )}
@@ -196,70 +281,123 @@ export default function ServicesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: "#f8f9fa",
   },
   listContent: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 16,
     paddingBottom: 40,
-    gap: 18,
+    gap: 16,
   },
   columnWrapper: {
-    gap: 18,
+    gap: 16,
   },
   header: {
     gap: 4,
-    marginBottom: 12,
+    marginBottom: 20,
   },
   heading: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: TOKENS.color.primary,
+    fontSize: 28,
+    fontWeight: "800",
+    color: Colors.colorPrimary,
+    letterSpacing: -0.5,
   },
   subheading: {
-    fontSize: 14,
+    fontSize: 15,
     color: TOKENS.color.sub,
+    lineHeight: 20,
   },
   cardWrapper: {
     flex: 1,
   },
+  cardContainer: {
+    flex: 1,
+  },
   card: {
     flex: 1,
-    minHeight: 150,
-    borderRadius: TOKENS.radius.xl,
-    padding: 18,
-    gap: 12,
-    justifyContent: "space-between",
-    shadowColor: "#000",
+    minHeight: 180,
+    borderRadius: 24,
+    overflow: "hidden",
+    shadowColor: Colors.colorPrimary,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 8,
     },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  gradientBackground: {
+    flex: 1,
+    padding: 20,
+    justifyContent: "space-between",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.8)",
+  },
+  iconContainer: {
+    alignSelf: "flex-start",
+    marginBottom: 12,
+  },
+  iconGradient: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: Colors.colorPrimary,
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   icon: {
-    fontSize: 32,
+    fontSize: 28,
+  },
+  cardContent: {
+    gap: 6,
+    flex: 1,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "700",
-    color: TOKENS.color.text,
+    color: Colors.colorPrimaryDark,
+    letterSpacing: -0.3,
   },
   cardDescription: {
     fontSize: 13,
     color: TOKENS.color.sub,
+    lineHeight: 18,
   },
-  cardCount: {
-    fontSize: 12,
-    color: TOKENS.color.sub,
+  countBadge: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+  },
+  countGradient: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    shadowColor: Colors.colorPrimary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  countText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "white",
+  },
+  glassOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: 24,
   },
   servicesSection: {
     marginTop: 32,
     gap: 16,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "700",
     color: TOKENS.color.text,
   },
@@ -284,12 +422,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#DC2626",
   },
-  cardHeader: { flexDirection: "row", justifyContent: "space-between" },
-  countBadge: { alignItems: "flex-end" },
-  countText: {
-    fontSize: 16,
-    color: "white",
-  },
-  countLabel: { fontSize: 12, color: "white" },
-  cardContent: { marginTop: 10, gap: 4 },
 });

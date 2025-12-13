@@ -25,6 +25,7 @@ export default {
     marginBottom: 10,
   },
   colorPrimary: '#850221',
+  colorPrimaryDark: '#5c0117',
   white: '#FFFFFF',
-  
+
 };
