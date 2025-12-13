@@ -79,6 +79,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await setItemAsync("token", response.accessToken);
       await setItemAsync("refreshToken", response.refreshToken);
       await setItemAsync("userEmail", email);
+
+      // Update authState so ProfileContext and other contexts can react
+      setAuthState({
+        token: response.accessToken,
+        refreshToken: response.refreshToken,
+        userEmail: email,
+        user: response.user || null,
+      });
     }
   };
 
