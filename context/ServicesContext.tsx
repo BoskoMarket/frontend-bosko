@@ -3,7 +3,6 @@ import React, {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useReducer,
   useState,
@@ -80,39 +79,39 @@ type MarketplaceAction =
   | { type: "SET_CATEGORIES"; payload: Category[] }
   | { type: "SET_CATEGORIES_STATUS"; payload: Partial<ResourceState> }
   | {
-      type: "SET_SERVICES";
-      payload: { categoryId: string; services: ServiceSummary[] };
-    }
+    type: "SET_SERVICES";
+    payload: { categoryId: string; services: ServiceSummary[] };
+  }
   | {
-      type: "SET_SERVICES_STATUS";
-      payload: { categoryId: string; status: Partial<ResourceState> };
-    }
+    type: "SET_SERVICES_STATUS";
+    payload: { categoryId: string; status: Partial<ResourceState> };
+  }
   | { type: "SET_PROVIDER"; payload: ProviderProfile }
   | {
-      type: "SET_PROVIDER_STATUS";
-      payload: { providerId: string; status: Partial<ResourceState> };
-    }
+    type: "SET_PROVIDER_STATUS";
+    payload: { providerId: string; status: Partial<ResourceState> };
+  }
   | {
-      type: "SET_REVIEWS";
-      payload: { serviceId: string; reviews: Review[] };
-    }
+    type: "SET_REVIEWS";
+    payload: { serviceId: string; reviews: Review[] };
+  }
   | {
-      type: "SET_REVIEWS_STATUS";
-      payload: { serviceId: string; status: Partial<ResourceState> };
-    }
+    type: "SET_REVIEWS_STATUS";
+    payload: { serviceId: string; status: Partial<ResourceState> };
+  }
   | {
-      type: "UPDATE_SERVICE_METRICS";
-      payload: { serviceId: string; averageRating: number; reviewsCount: number };
-    }
+    type: "UPDATE_SERVICE_METRICS";
+    payload: { serviceId: string; averageRating: number; reviewsCount: number };
+  }
   | {
-      type: "SET_PROVIDER_RATING";
-      payload: { providerId: string; averageRating: number; reviewsCount: number };
-    }
+    type: "SET_PROVIDER_RATING";
+    payload: { providerId: string; averageRating: number; reviewsCount: number };
+  }
   | { type: "SET_USER_PURCHASES"; payload: { userId: string; serviceIds: string[] } }
   | {
-      type: "SET_REVIEW_ELIGIBILITY";
-      payload: { serviceId: string; userId: string; canReview: boolean };
-    };
+    type: "SET_REVIEW_ELIGIBILITY";
+    payload: { serviceId: string; userId: string; canReview: boolean };
+  };
 
 const initialMarketplaceState: MarketplaceState = {
   categories: [],
@@ -237,11 +236,11 @@ const marketplaceReducer = (
         servicesById: updatedServicesById,
         servicesByCategory: categoryServices
           ? {
-              ...state.servicesByCategory,
-              [service.categoryId]: categoryServices.map((item) =>
-                item.id === serviceId ? updatedService : item
-              ),
-            }
+            ...state.servicesByCategory,
+            [service.categoryId]: categoryServices.map((item) =>
+              item.id === serviceId ? updatedService : item
+            ),
+          }
           : state.servicesByCategory,
       };
     }
@@ -256,13 +255,13 @@ const marketplaceReducer = (
         },
         providers: provider
           ? {
-              ...state.providers,
-              [providerId]: {
-                ...provider,
-                averageRating,
-                reviewsCount,
-              },
-            }
+            ...state.providers,
+            [providerId]: {
+              ...provider,
+              averageRating,
+              reviewsCount,
+            },
+          }
           : state.providers,
       };
     }
@@ -508,11 +507,11 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
       const average =
         count > 0
           ? Number(
-              (
-                reviews.reduce((acc, review) => acc + review.rating, 0) /
-                count
-              ).toFixed(2)
-            )
+            (
+              reviews.reduce((acc, review) => acc + review.rating, 0) /
+              count
+            ).toFixed(2)
+          )
           : fallbackAverage;
       const reviewsCount = count > 0 ? count : fallbackCount;
       dispatch({

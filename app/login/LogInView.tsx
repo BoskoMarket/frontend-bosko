@@ -160,7 +160,7 @@ export default function LogInView({ toLogin }: LogInViewProps) {
 
             <View style={styles.footerContainer}>
               <Text style={styles.footerText}>¿No tienes cuenta?</Text>
-              <Pressable onPress={toLogin} accessibilityRole="button">
+              <Pressable onPress={() => router.replace("/login/RegisterView")} accessibilityRole="button">
                 <Text style={styles.linkText}> Regístrate aquí</Text>
               </Pressable>
             </View>

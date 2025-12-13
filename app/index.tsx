@@ -66,14 +66,12 @@ export default function OnBoarding() {
     return null;
   }
 
-  // If authenticated, go to tabs
+  // Simple: if authenticated, go to tabs. Otherwise, go to login.
   if (authState.token) {
     return <Redirect href="/(tabs)" />;
   }
 
-  // If not authenticated, redirect to login is handled by _layout.tsx protection
-  // But we can fallback to login here too to be safe, or show onboarding.
-  return <Redirect href="/login/LogInView" />;
+  return <Redirect href="/login" />;
 
   // Uncomment below to show onboarding instead
   /*

@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { Redirect, Tabs, Stack, useRouter, useSegments } from "expo-router";
+import React from "react";
+import { Stack } from "expo-router";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { OrdersProvider } from "@/context/OdersContext";
 import { PaymentsProvider } from "@/context/PaymentContext";
@@ -24,35 +24,16 @@ configureReanimatedLogger({
 });
 
 function RootLayoutNav() {
-  const { authState, authLoaded } = useAuth();
-  const segments = useSegments();
-  const router = useRouter();
+  const { authLoaded } = useAuth();
 
-  useEffect(() => {
-    if (!authLoaded) return;
-
-    const inAuthGroup = segments[0] === '(auth)' || segments[0] === 'login';
-
-    if (
-      // If the user is not signed in and the initial segment is not anything in the auth group.
-      !authState.token &&
-      !inAuthGroup
-    ) {
-      // Redirect to the sign-in page.
-      router.replace('/login/LogInView');
-    } else if (authState.token && inAuthGroup) {
-      // Redirect away from the sign-in page.
-      router.replace('/(tabs)');
-    }
-  }, [authState.token, segments, authLoaded]);
-
-  // Show generic loading screen while checking auth
+  // Show nothing while checking auth
   if (!authLoaded) {
     return null;
   }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="login" />
     </Stack>
