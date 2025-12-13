@@ -6,16 +6,13 @@ import RegisterView from "./RegisterView";
 export default function Index() {
   const [toLogin, setToLogin] = React.useState(false);
 
-  const handleLogin = () => {
-    setToLogin(!toLogin);
-  };
   return (
     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       {/* <Text style={globalStyles.title}>Bosko</Text> */}
       {toLogin ? (
-        <RegisterView toLogin={handleLogin} />
+        <RegisterView toLogin={() => setToLogin(!toLogin)} />
       ) : (
-        <LogInView toLogin={handleLogin} />
+        <LogInView toLogin={() => setToLogin(!toLogin)} />
       )}
     </View>
   );

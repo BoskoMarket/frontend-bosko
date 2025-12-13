@@ -61,12 +61,21 @@ export default function OnBoarding() {
       image: require("@/assets/lotties/register2.json"),
     },
   ];
-  if (authLoaded && authState.token) {
+  // Wait for auth to load
+  if (!authLoaded) {
+    return null;
+  }
+
+  // Simple: if authenticated, go to tabs. Otherwise, go to login.
+  if (authState.token) {
     return <Redirect href="/(tabs)" />;
   }
 
-  return <Redirect href="/(tabs)" />;
+  return <Redirect href="/login" />;
 
+  // Uncomment below to show onboarding instead
+  /*
+  
   return (
     <View style={{ flex: 1, alignItems: "center", top: 50 }}>
       <Carousel
@@ -81,7 +90,7 @@ export default function OnBoarding() {
         onProgressChange={(offsetProgress, absoluteProgress) => {
           progress.value = absoluteProgress;
           const newIndex = Math.round(absoluteProgress);
-
+  
           setCurrentIndex(newIndex);
         }}
       />
@@ -108,7 +117,7 @@ export default function OnBoarding() {
         horizontal
         onPress={onPressPagination}
       />
-
+  
       {currentIndex === slides.length - 1 ? (
         <ButtonBosko
           onPress={() => router.push("/login")}
@@ -127,6 +136,7 @@ export default function OnBoarding() {
       )}
     </View>
   );
+    */
 }
 
 const styles = StyleSheet.create({

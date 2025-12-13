@@ -13,9 +13,10 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useServices } from "@/src/contexts/ServicesContext";
+import { useServices } from "@/context/ServicesContext";
 import { useCategories } from "@/src/contexts/CategoriesContext";
-import type { Service, ServicePayload } from "@/src/interfaces/service";
+import type { ServicePayload } from "@/services/service";
+import type { Service } from "@/services/service";
 
 type FormState = {
   title: string;
@@ -47,7 +48,7 @@ async function imageToBase64(uri: string): Promise<string> {
 export default function ServiceFormScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ serviceId?: string }>();
-  const { services, loading, loadServices, fetchService, addService, editService } =
+  const { services, loading, loadServices, getService, addService, editService } =
     useServices();
   const { categories, loading: categoriesLoading, loadCategories } = useCategories();
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -76,11 +77,13 @@ export default function ServiceFormScreen() {
       : null;
 
     if (!serviceFromParam && params.serviceId) {
-      fetchService(params.serviceId).catch((err) => console.error(err));
+      getService(params.serviceId).then(service => {
+        if (service) setSelectedService(service);
+      }).catch((err) => console.error(err));
     }
 
     const serviceToLoad = serviceFromParam ?? services[0];
-    const defaultCategory = serviceToLoad?.categoryId ?? categories[0]?.id;
+    const defaultCategory = (typeof serviceToLoad?.category === 'object' ? serviceToLoad.category.id : serviceToLoad?.category) ?? categories[0]?.id;
 
     if (serviceToLoad) {
       setSelectedService(serviceToLoad);
@@ -168,7 +171,7 @@ export default function ServiceFormScreen() {
       title: form.title.trim(),
       description: form.description.trim(),
       price: Number(form.price),
-      categoryId: form.categoryId,
+      category: form.categoryId ?? "",
       image: imagePayload ?? null,
     };
   };

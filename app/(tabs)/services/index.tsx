@@ -17,7 +17,7 @@ import { TOKENS } from "@/theme/tokens";
 import { useCategories } from "@/src/contexts/CategoriesContext";
 import { useProviders } from "@/src/contexts/ProvidersContext";
 import { Category } from "@/src/interfaces/category";
-import { useServices } from "@/src/contexts/ServicesContext";
+import { useServices } from "@/context/ServicesContext";
 
 type CategoryWithCount = Category & { servicesCount: number };
 type CategoryListItem = CategoryWithCount;
@@ -27,6 +27,7 @@ const FALLBACK_ACCENTS = ["#E6F0FF", "#F5ECFF", "#FFF4E5", "#FFEFF3"];
 export default function ServicesScreen() {
   const router = useRouter();
   const { services } = useServices();
+
 
   const {
     categories,
@@ -49,8 +50,12 @@ export default function ServicesScreen() {
 
   const categoriesWithCounts = useMemo<CategoryListItem[]>(() => {
     const counts = providers.reduce<Record<string, number>>((acc, provider) => {
-      if (provider.categoryId) {
-        acc[provider.categoryId] = (acc[provider.categoryId] ?? 0) + 1;
+      const categoryId =
+        provider.categoryId ??
+        (provider as any)?.category?.id ??
+        (provider as any)?.category_id;
+      if (categoryId) {
+        acc[categoryId] = (acc[categoryId] ?? 0) + 1;
       }
       return acc;
     }, {});
@@ -142,7 +147,7 @@ export default function ServicesScreen() {
             >
               <Text style={styles.icon}>{item.icon}</Text>
               <View>
-                <Text style={styles.cardTitle}>{item.title}</Text>
+                <Text style={styles.cardTitle}>{item.name}</Text>
                 <Text style={styles.cardDescription}>{item.description}</Text>
               </View>
               <Text style={styles.cardCount}>
@@ -173,10 +178,10 @@ export default function ServicesScreen() {
                   onPress={() =>
                     router.push({
                       pathname: "./provider/[id]",
-                      params: { id: service.providerId },
+                      params: { id: service.id },
                     })
                   }
-                  accessibilityHint={`Abrir perfil de ${service.name}`}
+                  accessibilityHint={`Abrir perfil de ${service.title}`}
                   style={styles.serviceCard}
                 />
               ))}

@@ -12,8 +12,8 @@ import {
 } from "react-native";
 import { useFocusEffect, useRouter } from "expo-router";
 
-import { useServices } from "@/src/contexts/ServicesContext";
-import type { Service } from "@/src/interfaces/service";
+import { useServices } from "@/context/ServicesContext";
+import type { Service } from "@/services/service";
 
 const currencyFormatter = new Intl.NumberFormat("es-MX", {
   style: "currency",
@@ -25,7 +25,7 @@ function ServiceCard({ service, onEdit, onDelete }: {
   onEdit: (service: Service) => void;
   onDelete: (service: Service) => void;
 }) {
-  const categoryLabel = service.categoryName ?? service.categoryId ?? "Sin categoría";
+  const categoryLabel = typeof service.category === 'object' ? service.category.name : service.category ?? "Sin categoría";
   const priceValue = service.price ?? 0;
   return (
     <View style={styles.card}>
@@ -86,7 +86,7 @@ export default function MyServiceScreen() {
               Alert.alert(
                 "Error",
                 error?.response?.data?.message ||
-                  "No se pudo eliminar el servicio"
+                "No se pudo eliminar el servicio"
               );
             }
           },
