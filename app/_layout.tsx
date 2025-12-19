@@ -17,6 +17,7 @@ import {
 } from "react-native-reanimated";
 import { ServicesProvider } from "@/context/ServicesContext";
 import { ProfileProvider } from "@/context/ProfileContext";
+import { ChatProvider } from "@/context/ChatContext";
 
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
@@ -36,6 +37,7 @@ function RootLayoutNav() {
       <Stack.Screen name="index" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="login" />
+      <Stack.Screen name="chat/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }
@@ -53,9 +55,11 @@ export default function _layout() {
                     <PaymentsProvider>
                       <OrdersProvider>
                         <PostsProvider serviceId="global">
-                          <ReviewsProvider serviceId="global">
-                            <RootLayoutNav />
-                          </ReviewsProvider>
+                          <ChatProvider>
+                            <ReviewsProvider serviceId="global">
+                              <RootLayoutNav />
+                            </ReviewsProvider>
+                          </ChatProvider>
                         </PostsProvider>
                       </OrdersProvider>
                     </PaymentsProvider>
