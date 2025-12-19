@@ -28,4 +28,17 @@ export default {
   colorPrimaryDark: '#5c0117',
   white: '#FFFFFF',
 
+  // Premium Theme (Bosko Gold & Dark)
+  premium: {
+    background: '#0f0f0f',
+    card: '#1e1e1e', // Lighter dark for cards
+    gold: '#FFD700', // Classic Gold
+    goldLight: 'rgba(255, 215, 0, 0.1)', // Tint for backgrounds
+    goldBorder: 'rgba(255, 215, 0, 0.2)',
+    textPrimary: '#FFFFFF',
+    textSecondary: 'rgba(255, 255, 255, 0.7)',
+    textTertiary: 'rgba(255, 255, 255, 0.4)',
+    borderSubtle: 'rgba(255, 255, 255, 0.1)',
+    inputBackground: 'rgba(255, 255, 255, 0.05)',
+  }
 };

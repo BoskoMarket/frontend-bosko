@@ -8,6 +8,7 @@ export interface UserProfile {
     lastName?: string;
     bio?: string;
     avatarUrl?: string;
+    bannerUrl?: string;
     location?: string;
     isVerified: boolean;
     createdAt: string;
@@ -19,6 +20,7 @@ export interface UpdateProfilePayload {
     lastName?: string;
     bio?: string;
     avatarUrl?: string;
+    bannerUrl?: string;
     location?: string;
 }
 

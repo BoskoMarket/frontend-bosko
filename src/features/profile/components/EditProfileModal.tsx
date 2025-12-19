@@ -46,22 +46,14 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
     const validate = () => {
         const newErrors: Record<string, string> = {};
-
-        if (!formData.firstName?.trim()) {
-            newErrors.firstName = "El nombre es obligatorio";
-        }
-
-        if (formData.bio && formData.bio.length > 200) {
-            newErrors.bio = "La biografía no puede exceder 200 caracteres";
-        }
-
+        if (!formData.firstName?.trim()) newErrors.firstName = "El nombre es obligatorio";
+        if (formData.bio && formData.bio.length > 200) newErrors.bio = "La biografía no puede exceder 200 caracteres";
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     const handleSave = async () => {
         if (!validate()) return;
-
         setIsSaving(true);
         try {
             await onSave(formData);
@@ -80,133 +72,118 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     };
 
     return (
-        <Modal
-            visible={visible}
-            transparent
-            animationType="fade"
-            onRequestClose={handleClose}
-        >
+        <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
             <View style={styles.overlay}>
                 <Pressable style={styles.backdrop} onPress={handleClose} />
+                {/* Full screen feel modal */}
+                <Animated.View entering={SlideInDown.springify()} style={styles.modalContainer}>
+                    <BlurView intensity={80} tint="dark" style={styles.modalBlur}>
+                        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
 
-                <Animated.View
-                    entering={SlideInDown.springify()}
-                    style={styles.modalContainer}
-                >
-                    <BlurView intensity={40} tint="dark" style={styles.modalBlur}>
-                        <KeyboardAvoidingView
-                            behavior={Platform.OS === "ios" ? "padding" : undefined}
-                            style={styles.keyboardView}
-                        >
                             {/* Header */}
                             <View style={styles.header}>
                                 <Text style={styles.title}>Editar Perfil</Text>
-                                <Pressable
-                                    onPress={handleClose}
-                                    style={({ pressed }) => [
-                                        styles.closeButton,
-                                        pressed && styles.closeButtonPressed,
-                                    ]}
-                                >
-                                    <MaterialIcons name="close" size={24} color={Colors.white} />
+                                <Pressable onPress={handleClose} style={styles.closeButton}>
+                                    <MaterialIcons name="close" size={24} color={Colors.premium.textPrimary} />
                                 </Pressable>
                             </View>
 
-                            {/* Form */}
-                            <ScrollView
-                                style={styles.scrollView}
-                                showsVerticalScrollIndicator={false}
-                            >
-                                <View style={styles.form}>
-                                    <TextInput
-                                        label="Nombre"
-                                        mode="flat"
-                                        value={formData.firstName}
-                                        onChangeText={(value) => handleChange("firstName", value)}
-                                        style={styles.input}
-                                        error={Boolean(errors.firstName)}
-                                        underlineColor={Colors.colorPrimary}
-                                        activeUnderlineColor={Colors.colorPrimary}
-                                    />
-                                    {errors.firstName && (
-                                        <Text style={styles.errorText}>{errors.firstName}</Text>
-                                    )}
+                            <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+                                <View style={styles.formSection}>
+                                    <Text style={styles.sectionTitle}>Información Personal</Text>
 
-                                    <TextInput
-                                        label="Apellido"
-                                        mode="flat"
-                                        value={formData.lastName}
-                                        onChangeText={(value) => handleChange("lastName", value)}
-                                        style={styles.input}
-                                        underlineColor={Colors.colorPrimary}
-                                        activeUnderlineColor={Colors.colorPrimary}
-                                    />
-
-                                    <TextInput
-                                        label="Ubicación"
-                                        mode="flat"
-                                        value={formData.location}
-                                        onChangeText={(value) => handleChange("location", value)}
-                                        style={styles.input}
-                                        placeholder="Ciudad, País"
-                                        underlineColor={Colors.colorPrimary}
-                                        activeUnderlineColor={Colors.colorPrimary}
-                                    />
-
-                                    <TextInput
-                                        label="Biografía"
-                                        mode="flat"
-                                        value={formData.bio}
-                                        onChangeText={(value) => handleChange("bio", value)}
-                                        style={[styles.input, styles.bioInput]}
-                                        multiline
-                                        numberOfLines={4}
-                                        maxLength={200}
-                                        placeholder="Cuéntanos sobre ti..."
-                                        error={Boolean(errors.bio)}
-                                        underlineColor={Colors.colorPrimary}
-                                        activeUnderlineColor={Colors.colorPrimary}
-                                    />
-                                    <View style={styles.charCount}>
-                                        <Text style={styles.charCountText}>
-                                            {formData.bio?.length || 0}/200
-                                        </Text>
+                                    <View style={styles.inputGroup}>
+                                        <TextInput
+                                            label="Nombre"
+                                            mode="flat"
+                                            value={formData.firstName}
+                                            onChangeText={(v) => handleChange("firstName", v)}
+                                            style={styles.input}
+                                            textColor={Colors.premium.textPrimary}
+                                            theme={{ colors: { onSurfaceVariant: Colors.premium.textSecondary } }}
+                                            underlineColor={Colors.colorPrimary}
+                                            activeUnderlineColor={Colors.colorPrimary}
+                                            error={!!errors.firstName}
+                                        />
+                                        {errors.firstName && <Text style={styles.errorText}>{errors.firstName}</Text>}
                                     </View>
-                                    {errors.bio && (
-                                        <Text style={styles.errorText}>{errors.bio}</Text>
-                                    )}
+
+                                    <View style={styles.inputGroup}>
+                                        <TextInput
+                                            label="Apellido"
+                                            mode="flat"
+                                            value={formData.lastName}
+                                            onChangeText={(v) => handleChange("lastName", v)}
+                                            style={styles.input}
+                                            textColor={Colors.premium.textPrimary}
+                                            theme={{ colors: { onSurfaceVariant: Colors.premium.textSecondary } }}
+                                            underlineColor={Colors.colorPrimary}
+                                            activeUnderlineColor={Colors.colorPrimary}
+                                        />
+                                    </View>
+
+                                    <View style={styles.inputGroup}>
+                                        <TextInput
+                                            label="Ubicación"
+                                            mode="flat"
+                                            value={formData.location}
+                                            onChangeText={(v) => handleChange("location", v)}
+                                            style={styles.input}
+                                            textColor={Colors.premium.textPrimary}
+                                            theme={{ colors: { onSurfaceVariant: Colors.premium.textSecondary } }}
+                                            underlineColor={Colors.colorPrimary}
+                                            activeUnderlineColor={Colors.colorPrimary}
+                                            placeholder="Ciudad, País"
+                                            placeholderTextColor={Colors.premium.textTertiary}
+                                        />
+                                    </View>
+
+                                    <View style={styles.inputGroup}>
+                                        <TextInput
+                                            label="Biografía"
+                                            mode="flat"
+                                            value={formData.bio}
+                                            onChangeText={(v) => handleChange("bio", v)}
+                                            style={[styles.input, styles.bioInput]}
+                                            textColor={Colors.premium.textPrimary}
+                                            theme={{ colors: { onSurfaceVariant: Colors.premium.textSecondary } }}
+                                            underlineColor={Colors.colorPrimary}
+                                            activeUnderlineColor={Colors.colorPrimary}
+                                            multiline
+                                            numberOfLines={4}
+                                            maxLength={200}
+                                            error={!!errors.bio}
+                                        />
+                                        <Text style={styles.charCount}>{formData.bio?.length || 0}/200</Text>
+                                        {errors.bio && <Text style={styles.errorText}>{errors.bio}</Text>}
+                                    </View>
+                                </View>
+
+                                <View style={styles.formSection}>
+                                    <View style={styles.sectionHeader}>
+                                        <MaterialIcons name="security" size={20} color={Colors.colorPrimary} />
+                                        <Text style={styles.sectionTitle}>Seguridad</Text>
+                                    </View>
+                                    <View style={styles.securityCard}>
+                                        <Text style={styles.securityText}>Para cambiar tu contraseña o correo, por favor contacta a soporte o usa la versión web por seguridad.</Text>
+                                    </View>
                                 </View>
                             </ScrollView>
 
-                            {/* Actions */}
-                            <View style={styles.actions}>
-                                <Pressable
-                                    style={({ pressed }) => [
-                                        styles.cancelButton,
-                                        pressed && styles.buttonPressed,
-                                    ]}
-                                    onPress={handleClose}
-                                    disabled={isSaving}
-                                >
+                            {/* Footer Actions */}
+                            <View style={styles.footer}>
+                                <Pressable style={styles.cancelButton} onPress={handleClose}>
                                     <Text style={styles.cancelButtonText}>Cancelar</Text>
                                 </Pressable>
-
                                 <Pressable
-                                    style={({ pressed }) => [
-                                        styles.saveButton,
-                                        pressed && styles.buttonPressed,
-                                        isSaving && styles.saveButtonDisabled,
-                                    ]}
+                                    style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
                                     onPress={handleSave}
                                     disabled={isSaving}
                                 >
-                                    {isSaving ? (
-                                        <ActivityIndicator color={Colors.white} />
-                                    ) : (
-                                        <Text style={styles.saveButtonText}>Guardar</Text>
-                                    )}
+                                    {isSaving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Guardar Cambios</Text>}
                                 </Pressable>
                             </View>
+
                         </KeyboardAvoidingView>
                     </BlurView>
                 </Animated.View>
@@ -216,113 +193,28 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-    overlay: {
-        flex: 1,
-        backgroundColor: "rgba(0, 0, 0, 0.7)",
-        justifyContent: "flex-end",
-    },
-    backdrop: {
-        ...StyleSheet.absoluteFillObject,
-    },
-    modalContainer: {
-        maxHeight: "85%",
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        overflow: "hidden",
-        borderWidth: 1,
-        borderColor: "rgba(255, 255, 255, 0.1)",
-    },
-    modalBlur: {
-        flex: 1,
-    },
-    keyboardView: {
-        flex: 1,
-    },
-    header: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: "rgba(255, 255, 255, 0.1)",
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: "700",
-        color: Colors.white,
-    },
-    closeButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: "rgba(255, 255, 255, 0.1)",
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    closeButtonPressed: {
-        opacity: 0.7,
-    },
-    scrollView: {
-        flex: 1,
-    },
-    form: {
-        padding: 20,
-        gap: 16,
-    },
-    input: {
-        backgroundColor: "rgba(255, 255, 255, 0.08)",
-    },
-    bioInput: {
-        minHeight: 100,
-    },
-    charCount: {
-        alignItems: "flex-end",
-        marginTop: -12,
-    },
-    charCountText: {
-        fontSize: 12,
-        color: "rgba(255, 255, 255, 0.5)",
-    },
-    errorText: {
-        color: "#EF4444",
-        fontSize: 12,
-        marginTop: -8,
-    },
-    actions: {
-        flexDirection: "row",
-        gap: 12,
-        padding: 20,
-        borderTopWidth: 1,
-        borderTopColor: "rgba(255, 255, 255, 0.1)",
-    },
-    cancelButton: {
-        flex: 1,
-        paddingVertical: 14,
-        borderRadius: 12,
-        backgroundColor: "rgba(255, 255, 255, 0.1)",
-        alignItems: "center",
-    },
-    cancelButtonText: {
-        color: Colors.white,
-        fontSize: 16,
-        fontWeight: "600",
-    },
-    saveButton: {
-        flex: 1,
-        paddingVertical: 14,
-        borderRadius: 12,
-        backgroundColor: Colors.colorPrimary,
-        alignItems: "center",
-    },
-    saveButtonDisabled: {
-        opacity: 0.6,
-    },
-    saveButtonText: {
-        color: Colors.white,
-        fontSize: 16,
-        fontWeight: "600",
-    },
-    buttonPressed: {
-        opacity: 0.8,
-    },
+    overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.8)", justifyContent: "flex-end" },
+    backdrop: { ...StyleSheet.absoluteFillObject },
+    modalContainer: { height: "95%", backgroundColor: Colors.premium.background, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: "hidden" },
+    modalBlur: { flex: 1 },
+    header: { flexDirection: "row", justifyContent: "space-between", padding: 20, alignItems: "center", borderBottomWidth: 1, borderBottomColor: Colors.premium.borderSubtle },
+    title: { fontSize: 24, fontWeight: "bold", color: Colors.colorPrimary },
+    closeButton: { padding: 8, backgroundColor: Colors.premium.borderSubtle, borderRadius: 20 },
+    content: { flex: 1, padding: 20 },
+    formSection: { marginBottom: 24 },
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 8 },
+    sectionTitle: { color: Colors.premium.textPrimary, fontSize: 18, fontWeight: "600", marginBottom: 16 },
+    inputGroup: { marginBottom: 16 },
+    input: { backgroundColor: Colors.premium.inputBackground, fontSize: 16 },
+    bioInput: { minHeight: 100 },
+    charCount: { alignSelf: "flex-end", color: Colors.premium.textTertiary, fontSize: 12, marginTop: 4 },
+    errorText: { color: "#EF4444", fontSize: 12, marginTop: 4 },
+    securityCard: { padding: 16, backgroundColor: Colors.premium.goldLight, borderRadius: 12, borderWidth: 1, borderColor: Colors.premium.goldBorder },
+    securityText: { color: Colors.premium.textSecondary, fontSize: 14, lineHeight: 20 },
+    footer: { flexDirection: "row", padding: 20, gap: 16, borderTopWidth: 1, borderTopColor: Colors.premium.borderSubtle, backgroundColor: "rgba(0,0,0,0.2)" },
+    cancelButton: { flex: 1, padding: 16, borderRadius: 12, backgroundColor: Colors.premium.borderSubtle, alignItems: "center" },
+    cancelButtonText: { color: Colors.premium.textPrimary, fontWeight: "600" },
+    saveButton: { flex: 2, padding: 16, borderRadius: 12, backgroundColor: Colors.colorPrimary, alignItems: "center" },
+    saveButtonDisabled: { opacity: 0.6 },
+    saveButtonText: { color: Colors.premium.textPrimary, fontWeight: "bold", fontSize: 16 },
 });

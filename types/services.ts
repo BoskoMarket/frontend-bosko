@@ -6,7 +6,7 @@ export type Rate = {
 
 export type Category = {
   id: string;
-  title: string;
+  name: string;
   description: string;
   icon: string;
   accent: string;

@@ -16,7 +16,7 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value }) => {
 
     return (
         <View style={styles.infoRow}>
-            <MaterialIcons name={icon} size={20} color="rgba(255, 255, 255, 0.6)" />
+            <MaterialIcons name={icon} size={20} color="#94a3b8" />
             <View style={styles.infoTextContainer}>
                 <Text style={styles.infoLabel}>{label}</Text>
                 <Text style={styles.infoValue}>{value}</Text>
@@ -47,8 +47,8 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
     };
 
     return (
-        <Animated.View entering={FadeInUp.delay(200)} style={styles.container}>
-            <BlurView intensity={20} tint="dark" style={styles.blur}>
+        <View style={styles.container}>
+            <BlurView intensity={20} tint="light" style={styles.blur}>
                 <View style={styles.content}>
                     <Text style={styles.sectionTitle}>Información</Text>
 
@@ -69,7 +69,7 @@ export const ProfileInfo: React.FC<ProfileInfoProps> = ({
                     </View>
                 </View>
             </BlurView>
-        </Animated.View>
+        </View>
     );
 };
 
@@ -91,13 +91,13 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 18,
         fontWeight: "700",
-        color: Colors.white,
+        color: "#1e293b", // Dark text
         marginBottom: 4,
     },
     bioContainer: {
         paddingVertical: 12,
         paddingHorizontal: 16,
-        backgroundColor: "rgba(255, 255, 255, 0.05)",
+        backgroundColor: "rgba(0, 0, 0, 0.05)", // Darker tint for light bg
         borderRadius: 12,
         borderLeftWidth: 3,
         borderLeftColor: Colors.colorPrimary,
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
     bio: {
         fontSize: 14,
         lineHeight: 20,
-        color: "rgba(255, 255, 255, 0.8)",
+        color: "#475569", // Dark gray
     },
     infoList: {
         gap: 16,
@@ -120,11 +120,11 @@ const styles = StyleSheet.create({
     },
     infoLabel: {
         fontSize: 12,
-        color: "rgba(255, 255, 255, 0.5)",
+        color: "#94a3b8",
         marginBottom: 2,
     },
     infoValue: {
         fontSize: 14,
-        color: Colors.white,
+        color: "#334155", // Dark text
     },
 });

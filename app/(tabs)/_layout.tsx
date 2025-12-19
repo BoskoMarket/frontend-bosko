@@ -4,6 +4,7 @@ import { View, Pressable, Text, StyleSheet } from "react-native";
 // import { useUser } from "@/hooks/useUser";
 import { TOKENS } from "@/theme/tokens";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { globalStyles } from "@/styles/global-styles";
 
 export default function TabsLayout() {
   const router = useRouter();
@@ -25,13 +26,13 @@ export default function TabsLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarStyle: { height: 72, backgroundColor: "rgba(255,255,255,0.7)" },
+          tabBarStyle: { height: 72, backgroundColor: globalStyles.colorPrimary },
           tabBarActiveTintColor: TOKENS.color.primary,
           tabBarInactiveTintColor: "#9A9AA0",
           tabBarLabelStyle: { fontSize: 12, marginBottom: 6 },
           tabBarShowLabel: true,
           tabBarHideOnKeyboard: true,
-          animation: "fade",
+
         }}
       >
         <Tabs.Screen

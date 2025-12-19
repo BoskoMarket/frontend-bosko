@@ -16,7 +16,6 @@ export default function OnBoarding() {
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const { authLoaded, authState } = useAuth();
 
-  console.log("Se pinta index tab");
 
   const ref = React.useRef<ICarouselInstance>(null);
 
