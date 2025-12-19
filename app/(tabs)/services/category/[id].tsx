@@ -22,6 +22,14 @@ import { useProviders } from "@/src/contexts/ProvidersContext";
 import { Category } from "@/src/interfaces/category";
 import { Provider } from "@/src/interfaces/provider";
 import Colors from "@/constants/Colors";
+import { Ionicons } from "@expo/vector-icons";
+
+const GRADIENTS = [
+  ['#850221', '#5c0117'], // Bosko Burgundy
+  ['#333333', '#000000'], // Premium Dark
+  ['#a00e31', '#6e0a22'], // Crimson
+  ['#434343', '#000000'], // Charcoal
+];
 
 export default function CategoryServicesScreen() {
   const params = useLocalSearchParams<{ id?: string }>();
@@ -71,20 +79,17 @@ export default function CategoryServicesScreen() {
 
   const headerCopy = useMemo(
     () => ({
-      title: category?.title ?? "Servicios",
+      title: category?.name ?? "Servicios",
       description:
         category?.description ??
         "Descubrí profesionales disponibles en esta categoría.",
     }),
-    [category?.description, category?.title]
+    [category?.description, category?.name]
   );
 
-  function handleServicePress(service: Provider) {
-    router.push({
-      pathname: "../provider/[id]",
-      params: { id: service.id },
-    });
-  }
+  const handleServicePress = (service: ServiceSummary) => {
+    router.push(`/(tabs)/services/provider/${service.id}`);
+  };
 
   function formatRate(rate?: Provider["rate"]) {
     if (!rate || rate.amount === undefined) {
@@ -160,90 +165,78 @@ export default function CategoryServicesScreen() {
               {({ pressed }) => (
                 <MotiView
                   animate={{
-                    scale: pressed ? 0.97 : 1,
+                    scale: pressed ? 0.98 : 1,
                   }}
                   transition={{ type: "timing", duration: 150 }}
                   style={styles.providerCard}
                 >
                   <LinearGradient
-                    colors={["rgba(255,255,255,0.98)", "rgba(255,255,255,0.95)"]}
+                    colors={GRADIENTS[index % GRADIENTS.length] as any}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.cardGradient}
                   >
-                    {/* Avatar and Basic Info */}
-                    <View style={styles.cardHeader}>
-                      <View style={styles.avatarContainer}>
+                    {/* Decorative Elements */}
+                    <View style={styles.circleDecoration1} />
+                    <View style={styles.circleDecoration2} />
+
+                    {/* Content Row */}
+                    <View style={styles.mainContent}>
+                      {/* Avatar Column */}
+                      <View style={styles.avatarColumn}>
                         <Image
-                          source={{ uri: item.photo || item.avatar }}
+                          source={{ uri: item.thumbnail }}
                           style={styles.avatar}
                           contentFit="cover"
                           placeholder={require("@/assets/images/bosko-logo.png")}
                         />
-                        {item.rating && item.rating >= 4.5 && (
+                        {item.averageRating && item.averageRating >= 4.5 && (
                           <View style={styles.verifiedBadge}>
-                            <Text style={styles.verifiedIcon}>✓</Text>
+                            <Ionicons name="checkmark" size={10} color="#fff" />
                           </View>
                         )}
                       </View>
-                      <View style={styles.headerInfo}>
-                        <Text style={styles.providerName} numberOfLines={1}>
-                          {item.name}
-                        </Text>
-                        <Text style={styles.providerTitle} numberOfLines={1}>
-                          {item.title}
-                        </Text>
+
+                      {/* Info Column */}
+                      <View style={styles.infoColumn}>
+                        <View style={styles.headerRow}>
+                          <Text style={styles.providerName} numberOfLines={1}>{item.name}</Text>
+                          {/* Rating Badge (Highlighted) */}
+                          <View style={styles.ratingBadge}>
+                            <Ionicons name="star" size={14} color="#FFD700" />
+                            <Text style={styles.ratingText}>{item.averageRating ? item.averageRating.toFixed(1) : 'New'}</Text>
+                          </View>
+                        </View>
+
+                        <Text style={styles.providerTitle} numberOfLines={1}>{item.title}</Text>
+
                         {item.location && (
                           <View style={styles.locationRow}>
-                            <Text style={styles.locationIcon}>📍</Text>
-                            <Text style={styles.locationText} numberOfLines={1}>
-                              {item.location}
-                            </Text>
+                            <Ionicons name="location-outline" size={12} color="rgba(255,255,255,0.7)" />
+                            <Text style={styles.locationText} numberOfLines={1}>{item.location}</Text>
                           </View>
                         )}
                       </View>
                     </View>
 
-                    {/* Bio/Summary */}
+                    {/* Description excerpt */}
                     {item.summary && (
-                      <Text style={styles.summary} numberOfLines={2}>
-                        {item.summary}
-                      </Text>
+                      <Text style={styles.summary} numberOfLines={2}>{item.summary}</Text>
                     )}
 
-                    {/* Tags */}
-                    {item.tags && item.tags.length > 0 && (
-                      <View style={styles.tagsContainer}>
-                        {item.tags.slice(0, 3).map((tag: string, idx: number) => (
-                          <View key={idx} style={styles.tag}>
-                            <Text style={styles.tagText}>{tag}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    )}
-
-                    {/* Bottom Row: Rating, Reviews, Price */}
-                    <View style={styles.cardFooter}>
-                      <View style={styles.ratingContainer}>
-                        {item.rating && (
-                          <View style={styles.ratingBadge}>
-                            <Text style={styles.starIcon}>★</Text>
-                            <Text style={styles.ratingText}>
-                              {item.rating.toFixed(1)}
-                            </Text>
-                          </View>
-                        )}
-                        {(item.reviewsCount || item.reviews) && (
-                          <Text style={styles.reviewsText}>
-                            ({item.reviewsCount ?? item.reviews} reseñas)
-                          </Text>
-                        )}
-                      </View>
+                    {/* Footer: Price */}
+                    <View style={styles.footerRow}>
                       <View style={styles.priceContainer}>
                         <Text style={styles.priceLabel}>Desde</Text>
                         <Text style={styles.priceText}>{formatRate(item.rate)}</Text>
                       </View>
+                      {item.reviewsCount > 0 && (
+                        <Text style={styles.reviewsText}>
+                          ({item.reviewsCount} reseñas)
+                        </Text>
+                      )}
                     </View>
+
                   </LinearGradient>
                 </MotiView>
               )}
@@ -278,6 +271,7 @@ export default function CategoryServicesScreen() {
 }
 
 const styles = StyleSheet.create({
+  // ... existing styles ...
   safeArea: {
     flex: 1,
     backgroundColor: "#f8f9fa",
@@ -360,164 +354,173 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   listContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 40,
-    gap: 16,
+    gap: 20,
   },
   cardWrapper: {
     width: "100%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
   },
   cardContainer: {
-    width: "100%",
+    borderRadius: 24,
+    overflow: "hidden",
   },
   providerCard: {
-    borderRadius: 20,
+    borderRadius: 24,
     overflow: "hidden",
-    shadowColor: Colors.colorPrimary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 6,
   },
   cardGradient: {
-    padding: 16,
-    gap: 14,
-    borderWidth: 1,
-    borderColor: "rgba(133, 2, 33, 0.1)",
+    padding: 20,
+    minHeight: 180,
+    position: 'relative',
+    justifyContent: 'space-between',
   },
-  cardHeader: {
-    flexDirection: "row",
-    gap: 14,
+  circleDecoration1: {
+    position: 'absolute',
+    top: -40,
+    right: -40,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  avatarContainer: {
-    position: "relative",
+  circleDecoration2: {
+    position: 'absolute',
+    bottom: -20,
+    left: -20,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  mainContent: {
+    flexDirection: 'row',
+    gap: 16,
+    alignItems: 'flex-start',
+  },
+  avatarColumn: {
+    position: 'relative',
   },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
-    backgroundColor: "#f0f0f0",
+    width: 60,
+    height: 60,
+    borderRadius: 20,
     borderWidth: 2,
-    borderColor: Colors.colorPrimary,
+    borderColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
   },
   verifiedBadge: {
-    position: "absolute",
-    bottom: -4,
-    right: -4,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    position: 'absolute',
+    bottom: -5,
+    right: -5,
     backgroundColor: Colors.colorPrimary,
-    alignItems: "center",
-    justifyContent: "center",
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 2,
-    borderColor: "#FFFFFF",
+    borderColor: '#fff',
   },
-  verifiedIcon: {
-    fontSize: 12,
-    color: "#FFFFFF",
-    fontWeight: "700",
-  },
-  headerInfo: {
+  infoColumn: {
     flex: 1,
     gap: 4,
-    justifyContent: "center",
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   providerName: {
     fontSize: 18,
-    fontWeight: "700",
-    color: Colors.colorPrimaryDark,
-    letterSpacing: -0.3,
+    fontWeight: 'bold',
+    color: '#fff',
+    flex: 1,
+    marginRight: 8,
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+    borderColor: 'rgba(255,215,0,0.3)',
+    borderWidth: 1,
+  },
+  ratingText: {
+    color: '#FFD700',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   providerTitle: {
     fontSize: 14,
-    color: TOKENS.color.sub,
-    fontWeight: "500",
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '500',
   },
   locationRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
     marginTop: 2,
   },
-  locationIcon: {
-    fontSize: 12,
-  },
   locationText: {
-    fontSize: 13,
-    color: TOKENS.color.sub,
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.7)',
   },
   summary: {
-    fontSize: 14,
-    color: TOKENS.color.text,
-    lineHeight: 20,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
+    lineHeight: 18,
+    marginTop: 12,
+    marginBottom: 12,
   },
-  tagsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  tag: {
-    backgroundColor: `${Colors.colorPrimary}10`,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: `${Colors.colorPrimary}20`,
-  },
-  tagText: {
-    fontSize: 12,
-    color: Colors.colorPrimary,
-    fontWeight: "600",
-  },
-  cardFooter: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingTop: 12,
+  footerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
     borderTopWidth: 1,
-    borderTopColor: "rgba(0,0,0,0.05)",
+    borderTopColor: 'rgba(255,255,255,0.1)',
+    paddingTop: 12,
   },
-  ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+  tagsRow: {
+    flexDirection: 'row',
     gap: 6,
   },
-  ratingBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: `${Colors.colorPrimary}15`,
+  tag: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 4,
     borderRadius: 8,
   },
-  starIcon: {
-    fontSize: 14,
-    color: Colors.colorPrimary,
-  },
-  ratingText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: Colors.colorPrimary,
-  },
-  reviewsText: {
-    fontSize: 13,
-    color: TOKENS.color.sub,
+  tagText: {
+    fontSize: 11,
+    color: '#fff',
   },
   priceContainer: {
-    alignItems: "flex-end",
+    alignItems: 'flex-end',
   },
   priceLabel: {
-    fontSize: 11,
-    color: TOKENS.color.sub,
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.6)',
     marginBottom: 2,
   },
   priceText: {
     fontSize: 16,
     fontWeight: "700",
-    color: Colors.colorPrimary,
+    color: "#fff",
+  },
+  reviewsText: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.7)",
+    marginLeft: 6,
   },
   emptyState: {
     paddingVertical: 60,

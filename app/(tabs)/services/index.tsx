@@ -11,10 +11,9 @@ import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 import { useCallback, useEffect, useMemo } from "react";
 import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
+import { Ionicons } from "@expo/vector-icons";
 
 import ServiceCard from "@/components/ServiceCard";
-
 import { TOKENS } from "@/theme/tokens";
 import { useCategories } from "@/src/contexts/CategoriesContext";
 import { useProviders } from "@/src/contexts/ProvidersContext";
@@ -22,7 +21,7 @@ import { Category } from "@/src/interfaces/category";
 import { useServices } from "@/context/ServicesContext";
 import Colors from "@/constants/Colors";
 
-type CategoryWithCount = Category & { servicesCount: number };
+type CategoryWithCount = Category & { servicesCount: number; gradient?: string[] };
 type CategoryListItem = CategoryWithCount;
 
 const FALLBACK_ACCENTS = ["#E6F0FF", "#F5ECFF", "#FFF4E5", "#FFEFF3"];
@@ -54,6 +53,13 @@ const getCategoryIcon = (name: string): string => {
 
   return "⭐"; // Default icon
 };
+const GRADIENTS = [
+  ['#850221', '#5c0117'], // Bosko Burgundy
+  ['#333333', '#000000'], // Premium Dark
+  ['#B8860B', '#8B6914'], // Antique Gold (Darker for contrast)
+  ['#a00e31', '#6e0a22'], // Crimson
+  ['#434343', '#000000'], // Charcoal
+];
 
 export default function ServicesScreen() {
   const router = useRouter();
@@ -95,6 +101,7 @@ export default function ServicesScreen() {
         category.accent ?? FALLBACK_ACCENTS[index % FALLBACK_ACCENTS.length],
       icon: getCategoryIcon(category.name),
       servicesCount: counts[category.id] ?? 0,
+      gradient: GRADIENTS[index % GRADIENTS.length],
     }));
   }, [categories, providers]);
 
@@ -112,7 +119,10 @@ export default function ServicesScreen() {
 
   const featuredServices = useMemo(() => {
     const collected = categories.flatMap((category) =>
-      services.filter((service) => service.categoryId === category.id)
+      services.filter((service) => {
+        const catId = typeof service.category === 'string' ? service.category : service.category?.id;
+        return catId === category.id;
+      })
     );
     return collected.slice(0, 6);
   }, [categories, services]);
@@ -120,7 +130,7 @@ export default function ServicesScreen() {
   const listEmpty = (
     <View style={styles.emptyState}>
       {categoriesLoading ? (
-        <ActivityIndicator />
+        <ActivityIndicator color={Colors.colorPrimary} />
       ) : (
         <Text style={styles.emptyText}>
           Pronto habra categorias disponibles.
@@ -148,104 +158,103 @@ export default function ServicesScreen() {
           </Text>
         </View>
       ) : null}
-      {!loading && categoriesWithCounts.length === 0 ? (
-        <View style={styles.header}>
-          <Text style={styles.heading}>No hay categorias para mostrar</Text>
-          <Text style={styles.subheading}>Intenta nuevamente mas tarde.</Text>
-        </View>
-      ) : null}
+
       <FlatList
         data={categoriesWithCounts}
         keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.columnWrapper}
+        // Switched to 1 column for wide cards
+        numColumns={1}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={listEmpty}
-        renderItem={({ item, index }) => (
-          <MotiView
-            from={{ opacity: 0, translateY: 50, scale: 0.9 }}
-            animate={{ opacity: 1, translateY: 0, scale: 1 }}
-            transition={{
-              type: "spring",
-              damping: 15,
-              stiffness: 150,
-              delay: index * 80,
-            }}
-            style={styles.cardWrapper}
-          >
-            <Pressable
-              onPress={() => handleCategoryPress(item)}
-              style={styles.cardContainer}
+        renderItem={({ item, index }) => {
+          // Mock Stats
+          const popularity = (item.servicesCount * 142) + 500;
+          const likes = (item.servicesCount * 89) + 200;
+          const followed = item.servicesCount * 12;
+
+          return (
+            <MotiView
+              from={{ opacity: 0, translateY: 50, scale: 0.95 }}
+              animate={{ opacity: 1, translateY: 0, scale: 1 }}
+              transition={{
+                type: "spring",
+                damping: 15,
+                stiffness: 150,
+                delay: index * 100,
+              }}
+              style={styles.cardWrapper}
             >
-              {({ pressed }) => (
-                <MotiView
-                  animate={{
-                    scale: pressed ? 0.95 : 1,
-                    translateY: pressed ? 2 : 0,
-                  }}
-                  transition={{ type: "timing", duration: 150 }}
-                  style={styles.card}
-                >
-                  <LinearGradient
-                    colors={[
-                      `${Colors.colorPrimary}15`,
-                      `${Colors.colorPrimary}08`,
-                      "rgba(255,255,255,0.95)",
-                    ]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.gradientBackground}
+              <Pressable
+                onPress={() => handleCategoryPress(item)}
+                style={styles.cardContainer}
+              >
+                {({ pressed }) => (
+                  <MotiView
+                    animate={{
+                      scale: pressed ? 0.98 : 1,
+                    }}
+                    transition={{ type: "timing", duration: 100 }}
+                    style={styles.card}
                   >
-                    {/* Icon with glow effect */}
-                    <View style={styles.iconContainer}>
-                      <LinearGradient
-                        colors={[Colors.colorPrimary, Colors.colorPrimaryDark]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.iconGradient}
-                      >
-                        <Text style={styles.icon}>{item.icon}</Text>
-                      </LinearGradient>
-                    </View>
+                    <LinearGradient
+                      colors={(item as any).gradient || GRADIENTS[0]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.gradientBackground}
+                    >
+                      {/* Decorative Circles */}
+                      <View style={styles.circleDecoration1} />
+                      <View style={styles.circleDecoration2} />
 
-                    {/* Content */}
-                    <View style={styles.cardContent}>
-                      <Text style={styles.cardTitle} numberOfLines={1}>
-                        {item.name}
-                      </Text>
-                      <Text style={styles.cardDescription} numberOfLines={2}>
-                        {item.description ?? ""}
-                      </Text>
-                    </View>
+                      <View style={styles.mainRow}>
+                        {/* Avatar/Icon Section */}
+                        <View style={styles.avatarSection}>
+                          <View style={styles.avatarCircle}>
+                            <Text style={styles.avatarIcon}>{item.icon}</Text>
+                          </View>
+                          <View style={styles.titleSection}>
+                            <Text style={styles.cardTitle}>{item.name}</Text>
+                            <Text style={styles.cardSubtitle}>{item.description || 'Explora esta categoría'}</Text>
+                          </View>
+                        </View>
 
-                    {/* Count badge */}
-                    <View style={styles.countBadge}>
-                      <LinearGradient
-                        colors={[Colors.colorPrimary, Colors.colorPrimaryDark]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.countGradient}
-                      >
-                        <Text style={styles.countText}>
-                          {item.servicesCount ?? 0}
-                        </Text>
-                      </LinearGradient>
-                    </View>
+                        {/* Ranking Section */}
+                        <View style={styles.rankSection}>
+                          <Ionicons name="ellipsis-horizontal" size={20} color="rgba(255,255,255,0.6)" style={{ alignSelf: 'flex-end', marginBottom: 8 }} />
+                          <Text style={styles.rankNumber}>{index + 1}</Text>
+                          <Text style={styles.rankLabel}>Ranking</Text>
+                        </View>
+                      </View>
 
-                    {/* Glassmorphic overlay */}
-                    <View style={styles.glassOverlay} />
-                  </LinearGradient>
-                </MotiView>
-              )}
-            </Pressable>
-          </MotiView>
-        )}
+                      {/* Stats Row */}
+                      <View style={styles.statsRow}>
+                        <View style={styles.statItem}>
+                          <Text style={styles.statValue}>{popularity}</Text>
+                          <Text style={styles.statLabel}>Popularidad</Text>
+                        </View>
+                        <View style={styles.statItem}>
+                          <Text style={styles.statValue}>{likes}</Text>
+                          <Text style={styles.statLabel}>Likes</Text>
+                        </View>
+                        <View style={styles.statItem}>
+                          <Text style={styles.statValue}>{followed}</Text>
+                          <Text style={styles.statLabel}>Seguidores</Text>
+                        </View>
+                      </View>
+
+                    </LinearGradient>
+                  </MotiView>
+                )}
+              </Pressable>
+            </MotiView>
+          )
+        }}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.heading}>Categorias sugeridas</Text>
+            <Text style={styles.heading}>Categorias</Text>
             <Text style={styles.subheading}>
-              Elige una categoria para ver profesionales disponibles.
+              Encuentra los mejores profesionales.
             </Text>
           </View>
         }
@@ -253,23 +262,35 @@ export default function ServicesScreen() {
           featuredServices.length > 0 ? (
             <View style={styles.servicesSection}>
               <Text style={styles.sectionTitle}>Servicios destacados</Text>
-              <Text style={styles.sectionSubtitle}>
-                Toca cualquier profesional para conocer su perfil.
-              </Text>
-              {featuredServices.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  serviceId={service.id}
-                  onPress={() =>
-                    router.push({
-                      pathname: "./provider/[id]",
-                      params: { id: service.id },
-                    })
-                  }
-                  accessibilityHint={`Abrir perfil de ${service.title}`}
-                  style={styles.serviceCard}
-                />
-              ))}
+              {featuredServices.map((service) => {
+                // Map Service (Management) to ServiceSummary (Catalog) for display
+                const fallbackSummary: any = {
+                  ...service,
+                  providerId: service.userId || '',
+                  name: 'Proveedor', // Placeholder if name unavailable in Service type
+                  rate: { amount: service.price, currency: 'ARS', unit: 'hr' },
+                  thumbnail: service.image || '',
+                  categoryId: typeof service.category === 'string' ? service.category : service.category?.id || '',
+                };
+
+                return (
+                  <ServiceCard
+                    key={service.id}
+                    serviceId={service.id || ''}
+                    fallback={fallbackSummary}
+                    onPress={() => {
+                      if (service.id) {
+                        router.push({
+                          pathname: "/(tabs)/services/provider/[id]",
+                          params: { id: service.id },
+                        })
+                      }
+                    }}
+                    accessibilityHint={`Abrir perfil de ${service.title}`}
+                    style={styles.serviceCard}
+                  />
+                )
+              })}
             </View>
           ) : null
         }
@@ -284,113 +305,140 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8f9fa",
   },
   listContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingBottom: 40,
-    gap: 16,
-  },
-  columnWrapper: {
-    gap: 16,
+    gap: 20,
   },
   header: {
-    gap: 4,
     marginBottom: 20,
+    marginTop: 10,
   },
   heading: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: "800",
     color: Colors.colorPrimary,
     letterSpacing: -0.5,
   },
   subheading: {
-    fontSize: 15,
+    fontSize: 16,
     color: TOKENS.color.sub,
-    lineHeight: 20,
+    marginTop: 4,
   },
   cardWrapper: {
-    flex: 1,
-  },
-  cardContainer: {
-    flex: 1,
-  },
-  card: {
-    flex: 1,
-    minHeight: 180,
-    borderRadius: 24,
-    overflow: "hidden",
-    shadowColor: Colors.colorPrimary,
+    width: '100%',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 8,
+      height: 10,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 12,
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    elevation: 8,
+  },
+  cardContainer: {
+    borderRadius: 24,
+    overflow: "hidden",
+  },
+  card: {
+    height: 160,
+    borderRadius: 24,
   },
   gradientBackground: {
     flex: 1,
     padding: 20,
-    justifyContent: "space-between",
+    justifyContent: 'space-between',
+    position: 'relative',
+  },
+  circleDecoration1: {
+    position: 'absolute',
+    top: -50,
+    right: -50,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  circleDecoration2: {
+    position: 'absolute',
+    bottom: -30,
+    left: -30,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  mainRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    zIndex: 1,
+  },
+  avatarSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatarCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.8)",
+    borderColor: 'rgba(255,255,255,0.3)',
+    marginRight: 16,
   },
-  iconContainer: {
-    alignSelf: "flex-start",
-    marginBottom: 12,
-  },
-  iconGradient: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: Colors.colorPrimary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  icon: {
+  avatarIcon: {
     fontSize: 28,
   },
-  cardContent: {
-    gap: 6,
+  titleSection: {
     flex: 1,
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: Colors.colorPrimaryDark,
-    letterSpacing: -0.3,
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 2,
   },
-  cardDescription: {
+  cardSubtitle: {
     fontSize: 13,
-    color: TOKENS.color.sub,
-    lineHeight: 18,
+    color: 'rgba(255,255,255,0.7)',
   },
-  countBadge: {
-    position: "absolute",
-    top: 16,
-    right: 16,
+  rankSection: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 50,
   },
-  countGradient: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-    shadowColor: Colors.colorPrimary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+  rankNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
   },
-  countText: {
+  rankLabel: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.7)',
+    textTransform: 'uppercase',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    maxWidth: '70%',
+    marginLeft: 76, // Align with title start (60 avatar + 16 margin)
+    zIndex: 1,
+  },
+  statItem: {
+    alignItems: 'flex-start',
+  },
+  statValue: {
     fontSize: 14,
-    fontWeight: "700",
-    color: "white",
+    fontWeight: '700',
+    color: '#fff',
   },
-  glassOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255,255,255,0.1)",
-    borderRadius: 24,
+  statLabel: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: 2,
   },
   servicesSection: {
     marginTop: 32,
@@ -400,10 +448,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "700",
     color: TOKENS.color.text,
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
   },
   serviceCard: {
     marginBottom: 12,

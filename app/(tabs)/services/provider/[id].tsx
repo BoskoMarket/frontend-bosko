@@ -23,20 +23,107 @@ export default function ProviderProfileScreen() {
   const router = useRouter();
   const serviceId = typeof params.id === "string" ? params.id : undefined;
 
+  const {
+    selectServiceById,
+    getService,
+    fetchProviderProfile,
+    getProviderById,
+  } = useServices();
   const { categories } = useCategories();
-  const { services } = useServices();
-  console.log(categories);
 
-  // Find the service which contains provider info
-  const service = services.find((s) => s.id === serviceId);
-  const provider = service?.provider;
-  const category = categories.find((c) => c.id === service?.categoryId);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [serviceData, setServiceData] = useState<any>(null);
+  const [providerData, setProviderData] = useState<any>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadData() {
+      if (!serviceId) {
+        setError("ID de servicio no válido");
+        setIsLoading(false);
+        return;
+      }
+
+      // If we already have the data for this ID, don't reset loading to true immediately
+      // This prevents flickering if the effect re-runs due to context updates
+      if (serviceData?.id === serviceId && providerData) {
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        console.log("Fetching service:", serviceId);
+        // 1. Try to get Service Summary (Read Model)
+        let summary = selectServiceById(serviceId);
+        let sData: any = summary;
+        let pId: string | undefined = summary?.providerId;
+
+        // 2. If not found, fetch Service (Write Model)
+        if (!sData) {
+          try {
+            const fetchedService = await getService(serviceId);
+            if (fetchedService) {
+              sData = fetchedService;
+              pId = fetchedService.userId;
+            }
+          } catch (err) {
+            console.error("Error fetching service:", err);
+          }
+        }
+
+        if (!sData) {
+          throw new Error("Servicio no encontrado");
+        }
+
+        console.log("Service Data Loaded:", sData);
+        if (isMounted) setServiceData(sData);
+
+        // 3. Fetch Provider Profile
+        if (pId) {
+          let profile = getProviderById(pId);
+          if (!profile) {
+            profile = await fetchProviderProfile(pId);
+          }
+          console.log("Provider Data Loaded:", profile);
+          if (isMounted) setProviderData(profile);
+        }
+
+      } catch (err: any) {
+        console.error("Load Error:", err);
+        if (isMounted) setError(err.message || "Error al cargar");
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+    // Exclude functions from dependency array to prevent loops when context state updates
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceId]);
+
+
+  const category = categories.find((c) => c.id === (serviceData?.categoryId || serviceData?.category));
+  const providerName = providerData ? `${providerData.firstName || ""} ${providerData.lastName || providerData.name || ""}`.trim() : serviceData?.name || "Proveedor";
+  const providerUsername = providerData?.username || providerName.toLowerCase().replace(/\s+/g, '');
 
   function handleBack() {
     router.back();
   }
 
   function formatPrice(min?: number, max?: number, currency?: string) {
+    if (serviceData?.rate) {
+      // It's a ServiceSummary with Rate object
+      const { amount, currency: curr, unit } = serviceData.rate;
+      return `${curr || "$"} ${amount} / ${unit || "hr"}`;
+    }
     if (!min && !max) return "Consultar";
     const symbol = currency === "ARS" ? "$" : currency === "USD" ? "US$" : "$";
     if (min && max) {
@@ -45,7 +132,7 @@ export default function ProviderProfileScreen() {
     return `${symbol}${(min || max)?.toLocaleString()}`;
   }
 
-  if (!service || !provider) {
+  if (isLoading || !serviceData) {
     return (
       <SafeAreaView edges={["top"]} style={styles.safeArea}>
         <Stack.Screen options={{ headerShown: false }} />
@@ -60,7 +147,12 @@ export default function ProviderProfileScreen() {
     );
   }
 
-  const providerName = `${provider.firstName || ""} ${provider.lastName || ""}`.trim();
+  // Normalize data for view
+  const title = serviceData.title;
+  const description = serviceData.description || serviceData.summary;
+  const location = serviceData.location || providerData?.location;
+  const status = serviceData.status || "ACTIVE";
+  const priceDisplay = formatPrice(serviceData.priceMin, serviceData.priceMax, serviceData.currency); // fallback if not Rate
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -88,7 +180,7 @@ export default function ProviderProfileScreen() {
             {/* Avatar */}
             <View style={styles.avatarContainer}>
               <Image
-                source={require("@/assets/images/bosko-logo.png")}
+                source={providerData?.avatar ? { uri: providerData.avatar } : require("@/assets/images/bosko-logo.png")}
                 style={styles.heroAvatar}
                 contentFit="cover"
               />
@@ -99,11 +191,11 @@ export default function ProviderProfileScreen() {
 
             {/* Provider Info */}
             <Text style={styles.heroName}>{providerName}</Text>
-            <Text style={styles.heroUsername}>@{provider.username}</Text>
-            {service.location && (
+            <Text style={styles.heroUsername}>@{providerUsername}</Text>
+            {location && (
               <View style={styles.locationRow}>
                 <Text style={styles.locationIcon}>📍</Text>
-                <Text style={styles.locationText}>{service.location}</Text>
+                <Text style={styles.locationText}>{location}</Text>
               </View>
             )}
 
@@ -111,6 +203,11 @@ export default function ProviderProfileScreen() {
             {category && (
               <View style={styles.categoryBadge}>
                 <Text style={styles.categoryText}>{category.name}</Text>
+              </View>
+            )}
+            {!category && serviceData.category && typeof serviceData.category === 'string' && (
+              <View style={styles.categoryBadge}>
+                <Text style={styles.categoryText}>Servicio</Text>
               </View>
             )}
           </View>
@@ -129,9 +226,9 @@ export default function ProviderProfileScreen() {
             end={{ x: 1, y: 1 }}
             style={styles.cardGradient}
           >
-            <Text style={styles.serviceTitle}>{service.title}</Text>
-            {service.description && (
-              <Text style={styles.serviceDescription}>{service.description}</Text>
+            <Text style={styles.serviceTitle}>{title}</Text>
+            {description && (
+              <Text style={styles.serviceDescription}>{description}</Text>
             )}
 
             {/* Price Section */}
@@ -139,7 +236,7 @@ export default function ProviderProfileScreen() {
               <View style={styles.priceContainer}>
                 <Text style={styles.priceLabel}>Precio estimado</Text>
                 <Text style={styles.priceText}>
-                  {formatPrice(service.priceMin, service.priceMax, service.currency)}
+                  {priceDisplay}
                 </Text>
               </View>
               <Pressable style={styles.quoteButton}>
@@ -163,21 +260,21 @@ export default function ProviderProfileScreen() {
               <View
                 style={[
                   styles.statusBadge,
-                  service.status === "ACTIVE" && styles.statusActive,
+                  status === "ACTIVE" && styles.statusActive,
                 ]}
               >
                 <Text style={styles.statusText}>
-                  {service.status === "ACTIVE" ? "Disponible" : service.status}
+                  {status === "ACTIVE" ? "Disponible" : status}
                 </Text>
               </View>
             </View>
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>Categoría</Text>
-              <Text style={styles.detailValue}>{category?.name || "N/A"}</Text>
+              <Text style={styles.detailValue}>{category?.name || "General"}</Text>
             </View>
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>Ubicación</Text>
-              <Text style={styles.detailValue}>{service.location || "A convenir"}</Text>
+              <Text style={styles.detailValue}>{location || "A convenir"}</Text>
             </View>
             <View style={styles.detailItem}>
               <Text style={styles.detailLabel}>Proveedor</Text>
@@ -187,7 +284,7 @@ export default function ProviderProfileScreen() {
         </MotiView>
 
         {/* What's Included */}
-        {service.description && (
+        {description && (
           <MotiView
             from={{ opacity: 0, translateY: 20 }}
             animate={{ opacity: 1, translateY: 0 }}
@@ -195,7 +292,7 @@ export default function ProviderProfileScreen() {
             style={styles.includesCard}
           >
             <Text style={styles.sectionTitle}>Descripción completa</Text>
-            <Text style={styles.includesText}>{service.description}</Text>
+            <Text style={styles.includesText}>{description}</Text>
           </MotiView>
         )}
 
