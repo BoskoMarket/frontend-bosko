@@ -1,40 +1,17 @@
 // /screens/Dashboard.tsx
-import { View, FlatList } from "react-native";
+import { View, FlatList, StatusBar } from "react-native";
 import { NavBar } from "@/components/Navbar";
-import { HeroCarousel } from "@/components/HeroCarousel";
-import { CategoryChips } from "@/components/CategoryChips";
 import { ProfessionalsCarousel } from "@/components/ProfesionalCarousel";
-import { PromoBanner } from "@/components/PromoBanner";
 import { OffersGrid } from "@/components/OffersGrid";
+import { PromoBanner } from "@/components/PromoBanner";
+import { PremiumBanner } from "@/src/components/PremiumBanner";
+import { CategoryVideoCarousel } from "@/src/components/CategoryVideoCarousel";
 import { QuickActions } from "@/components/QuickActions";
 import { TOKENS } from "@/theme/tokens";
+import Colors from "@/constants/Colors";
+import { useRouter } from "expo-router";
 
-const hero = [
-  {
-    title: "Encontrá profesionales",
-    subtitle: "Cerca tuyo, verificados",
-    cta: "Explorar",
-  },
-  {
-    title: "Ofrecé tu trabajo",
-    subtitle: "Mostrá tu perfil y crecé",
-    cta: "Publicar",
-    color: TOKENS.color.primaryDark,
-  },
-  {
-    title: "Promocioná tu negocio",
-    subtitle: "Llega a más clientes",
-    cta: "Anunciar",
-    color: TOKENS.color.primary,
-  },
-];
-
-const categories = [
-  { id: "1", label: "Plomería" },
-  { id: "2", label: "Electricidad" },
-  { id: "3", label: "Belleza" },
-  { id: "4", label: "Diseño" },
-];
+// Mock data for other components (keeping existing mocks)
 const pros = [
   {
     id: "p1",
@@ -59,29 +36,32 @@ const offers = [
 ];
 
 export default function Dashboard() {
+  const router = useRouter();
+
   return (
-    <FlatList
-      data={[]}
-      style={{ backgroundColor: TOKENS.color.bg }}
-      ListHeaderComponent={
-        <View style={{ gap: 20, paddingBottom: 120, paddingHorizontal: 5 }}>
-          <View
-            style={{
-              backgroundColor: TOKENS.color.primary,
-              borderBottomRightRadius: 55,
-            }}
-          >
-            <NavBar />
-            <HeroCarousel data={hero} />
+    <>
+      <StatusBar barStyle="light-content" />
+      <FlatList
+        data={[]}
+        style={{ backgroundColor: Colors.white }}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        ListHeaderComponent={
+          <View>
+            <PremiumBanner />
+            <CategoryVideoCarousel
+              onSelectCategory={(id) => router.push({ pathname: "/(tabs)/services/category/[id]", params: { id } })}
+            />
+
+            <View style={{ paddingHorizontal: 5, gap: 24 }}>
+              <ProfessionalsCarousel data={pros} />
+              <PromoBanner />
+              <OffersGrid data={offers} />
+              <QuickActions onPublish={() => { }} onRequest={() => { }} />
+            </View>
           </View>
-          <CategoryChips items={categories} />
-          <ProfessionalsCarousel data={pros} />
-          <PromoBanner />
-          <OffersGrid data={offers} />
-          <QuickActions onPublish={() => {}} onRequest={() => {}} />
-        </View>
-      }
-      renderItem={null}
-    />
+        }
+        renderItem={null}
+      />
+    </>
   );
 }

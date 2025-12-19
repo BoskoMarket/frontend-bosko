@@ -4,6 +4,7 @@ export type ServiceCategory = {
   description: string;
   icon: string;
   accent: string;
+  video?: string;
   servicesCount?: number;
 };
 

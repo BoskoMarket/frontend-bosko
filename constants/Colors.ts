@@ -40,5 +40,35 @@ export default {
     textTertiary: 'rgba(255, 255, 255, 0.4)',
     borderSubtle: 'rgba(255, 255, 255, 0.1)',
     inputBackground: 'rgba(255, 255, 255, 0.05)',
+    shadows: {
+      small: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 2,
+      },
+      medium: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.30,
+        shadowRadius: 4.65,
+        elevation: 8,
+      },
+      large: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.5,
+        shadowRadius: 12,
+        elevation: 20,
+      },
+      gold: {
+        shadowColor: "#FFD700",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.4,
+        shadowRadius: 16,
+        elevation: 16,
+      }
+    }
   }
 };
