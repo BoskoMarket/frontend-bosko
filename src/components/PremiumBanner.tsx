@@ -1,19 +1,21 @@
 import React from 'react';
-import { View, Text, StyleSheet, TextInput, Pressable, Platform } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import Colors from '@/constants/Colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const PremiumBanner = () => {
     const insets = useSafeAreaInsets();
+    const router = useRouter();
+
 
     return (
         <View style={styles.container}>
             <LinearGradient
-                colors={[Colors.premium.background, '#1a0505', '#2d0a0a']}
-                start={{ x: 0, y: 0 }}
+                colors={[Colors.colorPrimary, Colors.colorPrimary, '#2d0a0a']}
+                start={{ x: 1, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={[styles.gradient, { paddingTop: insets.top + 10 }]}
             >
@@ -22,22 +24,17 @@ export const PremiumBanner = () => {
                         <Text style={styles.greeting}>Hola, Frank</Text>
                         <Text style={styles.subGreeting}>¿Qué necesitas hoy?</Text>
                     </View>
-                    <Pressable style={styles.iconButton}>
-                        <Ionicons name="notifications-outline" size={24} color={Colors.premium.gold} />
-                    </Pressable>
-                </View>
-
-                <View style={styles.searchContainer}>
-                    <BlurView intensity={20} tint="dark" style={styles.searchBlur}>
-                        <MaterialIcons name="search" size={24} color={Colors.premium.textSecondary} />
-                        <TextInput
-                            placeholder="Buscar servicios o profesionales..."
-                            placeholderTextColor={Colors.premium.textTertiary}
-                            style={styles.input}
-                        />
-                        <View style={styles.searchDivider} />
-                        <MaterialIcons name="tune" size={24} color={Colors.premium.gold} />
-                    </BlurView>
+                    <View style={styles.actionsRow}>
+                        <Pressable
+                            style={styles.iconButton}
+                            onPress={() => router.push('/(tabs)/search')}
+                        >
+                            <Ionicons name="search-outline" size={24} color={Colors.premium.gold} />
+                        </Pressable>
+                        <Pressable style={styles.iconButton}>
+                            <Ionicons name="notifications-outline" size={24} color={Colors.premium.gold} />
+                        </Pressable>
+                    </View>
                 </View>
             </LinearGradient>
 
@@ -53,22 +50,23 @@ export const PremiumBanner = () => {
 const styles = StyleSheet.create({
     container: {
         marginBottom: 20,
-        backgroundColor: Colors.premium.background,
-        // Height removed to allow auto-sizing based on content
+        ...Colors.premium.shadows.global,
+        height: 280,
     },
     gradient: {
         paddingHorizontal: 20,
-        paddingBottom: 40,
+        paddingBottom: 30, // Reduced padding bottom since no search bar
         borderBottomLeftRadius: 30,
         borderBottomRightRadius: 30,
-        ...Colors.premium.shadows.medium,
+        ...Colors.premium.shadows.global,
+        height: 280,
     },
     headerContent: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 24,
-        height: 250,
+        marginBottom: 10,
+        // Removed fixed height to fit content naturally
     },
     greeting: {
         fontSize: 28,
@@ -81,6 +79,10 @@ const styles = StyleSheet.create({
         color: Colors.premium.textSecondary,
         marginTop: 4,
     },
+    actionsRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
     iconButton: {
         width: 44,
         height: 44,
@@ -91,38 +93,11 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: Colors.premium.borderSubtle,
     },
-    searchContainer: {
-        borderRadius: 16,
-        overflow: 'hidden',
-        borderWidth: 1,
-        borderColor: Colors.premium.goldBorder,
-        ...Colors.premium.shadows.gold, // Gold glow effect
-    },
-    searchBlur: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        backgroundColor: 'rgba(30, 30, 30, 0.6)',
-    },
-    input: {
-        flex: 1,
-        marginLeft: 12,
-        fontSize: 16,
-        color: Colors.premium.textPrimary,
-    },
-    searchDivider: {
-        width: 1,
-        height: 20,
-        backgroundColor: Colors.premium.borderSubtle,
-        marginHorizontal: 12,
-    },
     bottomFade: {
-        position: 'absolute',
-        bottom: -20,
-        left: 0,
-        right: 0,
-        height: 40,
-        zIndex: -1,
+        shadowColor: Colors.premium.background,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3,
+        elevation: 5,
     }
 });

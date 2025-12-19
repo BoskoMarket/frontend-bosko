@@ -5,76 +5,57 @@ import { View, Pressable, Text, StyleSheet } from "react-native";
 import { TOKENS } from "@/theme/tokens";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { globalStyles } from "@/styles/global-styles";
+import { CustomTabBar } from "@/src/components/CustomTabBar";
 
 export default function TabsLayout() {
   const router = useRouter();
-  // const { viewMode, hasServices } = useUser();
 
-  // const onFabPress = () => {
-  //   if (viewMode === "client") {
-  //     router.push("/request/new");
-  //   } else {
-  //     router.push(hasServices ? "/pro/hub" : "/pro/services/new");
-  //   }
-  // };
+  const onFabPress = () => {
+    router.push("/(tabs)/services");
+  };
 
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: "#fff" }}
+      style={{ flex: 1, backgroundColor: TOKENS.color.primary }}
       edges={["top", "left", "right"]}
     >
       <Tabs
+        tabBar={(props) => <CustomTabBar {...props} />}
         screenOptions={{
           headerShown: false,
-          tabBarStyle: { height: 72, backgroundColor: globalStyles.colorPrimary },
-          tabBarActiveTintColor: TOKENS.color.primary,
-          tabBarInactiveTintColor: "#9A9AA0",
-          tabBarLabelStyle: { fontSize: 12, marginBottom: 6 },
-          tabBarShowLabel: true,
           tabBarHideOnKeyboard: true,
 
         }}
+
       >
         <Tabs.Screen
           name="index"
-          options={{ title: "Inicio", tabBarIcon: () => <Text>🏠</Text> }}
+          options={{ title: "Inicio" }}
         />
-        <Tabs.Screen
-          name="search"
-          options={{ title: "Buscar", tabBarIcon: () => <Text>🔎</Text> }}
-        />
+
         <Tabs.Screen
           name="services"
-          options={{ title: "Servicios", tabBarIcon: () => <Text>🔧</Text> }}
+          options={{ title: "Servicios" }}
         />
         <Tabs.Screen
           name="reels"
-          options={{ title: "Reels", tabBarIcon: () => <Text> 🎥</Text> }}
+          options={{ title: "Reels" }}
         />
         <Tabs.Screen
           name="profile"
-          options={{ title: "Perfil", tabBarIcon: () => <Text>👤</Text> }}
+          options={{ title: "Perfil" }}
         />
         <Tabs.Screen
           name="chat"
           options={{
-            href: null,
             title: "Mensajes",
-            tabBarIcon: () => <Text>💬</Text>,
           }}
         />
-        <Tabs.Screen
-          name="settings"
-          options={{
-            href: null,
-            title: "Settings",
-            tabBarIcon: () => <Text>⚙️</Text>,
-          }}
-        />
+
       </Tabs>
 
-      {/* FAB central
-      <Pressable style={styles.fab} onPress={onFabPress}>
+
+      {/* <Pressable style={styles.fab} onPress={onFabPress}>
         <Text style={styles.fabText}>＋</Text>
       </Pressable> */}
     </SafeAreaView>

@@ -68,6 +68,13 @@ export default {
         shadowOpacity: 0.4,
         shadowRadius: 16,
         elevation: 16,
+      },
+      global: {
+        shadowColor: "#000",
+        shadowOffset: { width: 6, height: 2 },
+        shadowOpacity: 0.7,
+        shadowRadius: 5,
+        elevation: 15, // High elevation for Android depth
       }
     }
   }

@@ -7,8 +7,8 @@ import Colors from '@/constants/Colors';
 import { useCategories } from '@/src/contexts/CategoriesContext';
 import { Category } from '@/src/interfaces/category';
 
-const CARD_WIDTH = 140;
-const CARD_HEIGHT = 200;
+const CARD_WIDTH = 160;
+const CARD_HEIGHT = 300;
 
 interface VideoCategoryCardProps {
     category: Category;
@@ -123,21 +123,23 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 20,
         fontWeight: 'bold',
-        color: Colors.premium.textPrimary,
+        color: Colors.colorPrimary,
     },
     subtitle: {
         fontSize: 12,
-        color: Colors.premium.textSecondary,
+        color: Colors.dark.text,
     },
     scrollContent: {
         paddingHorizontal: 20,
         gap: 12,
+        paddingVertical: 22,
     },
     cardContainer: {
         width: CARD_WIDTH,
         height: CARD_HEIGHT,
         borderRadius: 20,
-        ...Colors.premium.shadows.medium,
+        backgroundColor: Colors.premium.card, // Required for shadow/elevation on Android
+        ...Colors.premium.shadows.global,
     },
     pressable: {
         flex: 1,

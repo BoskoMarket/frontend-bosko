@@ -10,7 +10,7 @@ export function ProfessionalsCarousel({ data }: { data: any[] }) {
       keyExtractor={(i) => i.id}
       renderItem={({ item }) => <ProfessionalCard item={item} />}
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: 12, paddingRight: 16 }}
+      contentContainerStyle={{ gap: 12, paddingRight: 16, paddingVertical: 12 }}
     />
   );
 }

@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import Svg, { Path } from 'react-native-svg';
 import Colors from '@/constants/Colors';
+import { PremiumButton } from '@/src/components/PremiumButton';
 
 const { width } = Dimensions.get('window');
 const CURVE_HEIGHT = 60;
@@ -64,17 +65,15 @@ export const ProviderCTA = () => {
                         </View>
                     </View>
 
-                    <Pressable style={styles.ctaButton}>
-                        <LinearGradient
-                            colors={[Colors.premium.gold, '#B8860B']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            style={styles.buttonGradient}
-                        >
-                            <Text style={styles.buttonText}>Convertirme en Proveedor</Text>
-                            <MaterialCommunityIcons name="arrow-right" size={20} color="#000" />
-                        </LinearGradient>
-                    </Pressable>
+                    <PremiumButton
+                        title="Convertirme en Proveedor"
+                        iconRight="arrow-forward"
+                        variant="primary"
+                        onPress={() => { }}
+                        gradientColors={[Colors.premium.gold, '#B8860B']}
+                        textStyle={{ color: '#1a0505', fontSize: 16, fontWeight: 'bold' }}
+                        style={styles.ctaButton}
+                    />
                 </LinearGradient>
             </MotiView>
         </View>
@@ -166,16 +165,5 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         ...Colors.premium.shadows.gold,
     },
-    buttonGradient: {
-        paddingVertical: 18,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 8,
-    },
-    buttonText: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#1a0505',
-    }
+
 });

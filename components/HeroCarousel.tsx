@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { BlurView } from "expo-blur";
 import { TOKENS } from "@/theme/tokens";
-import ButtonBosko from "./ButtonBosko";
+import { PremiumButton } from "@/src/components/PremiumButton";
 import { router } from "expo-router";
 const { width } = Dimensions.get("window");
 
@@ -29,7 +29,7 @@ export function HeroCarousel({
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.sub}>{item.subtitle}</Text>
 
-          <ButtonBosko
+          <PremiumButton
             title="Explorar"
             onPress={() => router.push("/(tabs)/services")}
           />

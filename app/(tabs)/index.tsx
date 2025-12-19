@@ -1,10 +1,11 @@
 // /screens/Dashboard.tsx
-import { View, FlatList, StatusBar } from "react-native";
+import { View, FlatList, StatusBar, Text } from "react-native";
 import { NavBar } from "@/components/Navbar";
 import { ProfessionalsCarousel } from "@/components/ProfesionalCarousel";
 import { OffersGrid } from "@/components/OffersGrid";
 import { PromoBanner } from "@/components/PromoBanner";
 import { PremiumBanner } from "@/src/components/PremiumBanner";
+import { PremiumButton } from "@/src/components/PremiumButton";
 import { CategoryVideoCarousel } from "@/src/components/CategoryVideoCarousel";
 import { QuickActions } from "@/components/QuickActions";
 import { TOKENS } from "@/theme/tokens";
@@ -57,6 +58,41 @@ export default function Dashboard() {
               <PromoBanner />
               <OffersGrid data={offers} />
               <QuickActions onPublish={() => { }} onRequest={() => { }} />
+
+              <View style={{ padding: 20, gap: 15, alignItems: 'center' }}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: Colors.premium.textPrimary }}>New Button System</Text>
+                <PremiumButton
+                  title="Solicitar Servicio"
+                  onPress={() => { }}
+                  icon="flash"
+                />
+                <PremiumButton
+                  title="Ver Detalles"
+                  variant="secondary"
+                  onPress={() => { }}
+                  iconRight="arrow-forward"
+                />
+                <PremiumButton
+                  title="Omitir"
+                  variant="ghost"
+                  onPress={() => { }}
+                />
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <PremiumButton
+                    title="Call"
+                    size="small"
+                    variant="outline"
+                    icon="call"
+                    onPress={() => { }}
+                  />
+                  <PremiumButton
+                    title="Chat"
+                    size="small"
+                    onPress={() => { }}
+                    icon="chatbubble"
+                  />
+                </View>
+              </View>
             </View>
           </View>
         }

@@ -15,7 +15,7 @@
 //   Pagination,
 // } from "react-native-reanimated-carousel";
 // import { router } from "expo-router";
-// import ButtonBosko from "@/components/ButtonBosko";
+// import { PremiumButton } from "@/src/components/PremiumButton";
 // import Colors from "@/constants/Colors";
 // import { Image } from "expo-image";
 // import { useAuth } from "@/context/AuthContext";
@@ -159,9 +159,9 @@
 //         />
 
 //         {currentIndex === steps.length - 1 ? (
-//           <ButtonBosko title="Finalizar Registro" onPress={handleFinish} />
+//           <PremiumButton title="Finalizar Registro" onPress={handleFinish} />
 //         ) : (
-//           <ButtonBosko
+//           <PremiumButton
 //             title="Siguiente"
 //             onPress={() => ref.current?.scrollTo({ count: 1, animated: true })}
 //           />

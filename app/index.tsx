@@ -8,7 +8,7 @@ import Carousel, {
 import OnBoardingSlide from "@/components/OnBoardingSlide";
 import { useSharedValue } from "react-native-reanimated";
 import { globalStyles } from "@/styles/global-styles";
-import ButtonBosko from "@/components/ButtonBosko";
+import { PremiumButton } from "@/src/components/PremiumButton";
 import { useAuth } from "@/context/AuthContext";
 
 export default function OnBoarding() {

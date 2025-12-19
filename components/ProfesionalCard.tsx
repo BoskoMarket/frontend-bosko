@@ -1,6 +1,7 @@
 // /components/ProfessionalCard.tsx
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { TOKENS } from "@/theme/tokens";
+import Colors from "@/constants/Colors";
 
 export function ProfessionalCard({
   item,
@@ -31,11 +32,11 @@ export function ProfessionalCard({
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
-    backgroundColor: "rgba(255,255,255,0.7)",
+    backgroundColor: "rgba(255,255,255,1)",
     borderRadius: 18,
     padding: 12,
     marginHorizontal: 16,
-    ...TOKENS.shadow.soft,
+    ...Colors.premium.shadows.global,
   },
   avatar: { width: 56, height: 56, borderRadius: 12 },
   name: { fontWeight: "800", color: TOKENS.color.text },
