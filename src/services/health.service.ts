@@ -1,6 +1,7 @@
-import http from "../lib/http";
+import api from "@/core/api/axiosinstance";
+
 
 export async function getAppHealth() {
-  const { data } = await http.get("/");
+  const { data } = await api.get("/");
   return data;
 }

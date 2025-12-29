@@ -1,11 +1,33 @@
-import { ServiceProvider } from "@/features/servicesUser/constants/serviceProviders";
 
-export type { ServiceProvider };
+
+
 
 export interface Photo {
   id: string;
   uri: string;
   description?: string;
+}
+
+export interface ServiceProvider {
+  id: string;
+  name: string;
+  title: string;
+  summary: string;
+  categoryId: string;
+  location: string;
+  rate: {
+    amount: number;
+    currency: string;
+    unit: string;
+  };
+  tags: string[];
+  avatar: string;
+  photo: string;
+  heroImage: string;
+  bio: string;
+  rating: number;
+  reviews: number;
+  recentWorks: Photo[];
 }
 
 export type ServiceProviderInput = Omit<ServiceProvider, "id"> & { id?: string };

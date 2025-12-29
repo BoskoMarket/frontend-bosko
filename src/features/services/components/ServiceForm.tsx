@@ -44,12 +44,16 @@ const createInitialState = (service?: ServiceProvider): FormState => ({
   rating: service ? String(service.rating) : "",
   reviews: service ? String(service.reviews) : "",
   recentWorks: service?.recentWorks
-    ? service.recentWorks.map((work) => work.image).join(", ")
+    ? service.recentWorks
+        .map((work: { image: string }) => work.image)
+        .join(", ")
     : "",
 });
 
 export const ServiceForm = ({ initialService, onSubmit }: Props) => {
-  const [form, setForm] = useState<FormState>(() => createInitialState(initialService));
+  const [form, setForm] = useState<FormState>(() =>
+    createInitialState(initialService)
+  );
   const [loading, setLoading] = useState(false);
 
   const onChange = (key: keyof FormState, value: string) => {
@@ -58,9 +62,14 @@ export const ServiceForm = ({ initialService, onSubmit }: Props) => {
 
   const buildPayload = (): ServiceProviderInput => {
     const fallbackImage = "https://placehold.co/600x300";
-    const heroImage = form.heroImage || initialService?.heroImage || form.photo || fallbackImage;
+    const heroImage =
+      form.heroImage ||
+      initialService?.heroImage ||
+      form.photo ||
+      fallbackImage;
     const photo = form.photo || initialService?.photo || heroImage;
-    const avatar = form.avatar || initialService?.avatar || "https://placehold.co/96x96";
+    const avatar =
+      form.avatar || initialService?.avatar || "https://placehold.co/96x96";
 
     const tags = form.tags
       .split(",")
@@ -75,10 +84,15 @@ export const ServiceForm = ({ initialService, onSubmit }: Props) => {
     const recentWorks =
       recentWorksImages.length > 0
         ? recentWorksImages.map((image, index) => ({
-            id: initialService?.recentWorks?.[index]?.id ?? `custom-work-${index}`,
-            title: initialService?.recentWorks?.[index]?.title ?? `${form.title} #${index + 1}`,
+            id:
+              initialService?.recentWorks?.[index]?.id ??
+              `custom-work-${index}`,
+            title:
+              initialService?.recentWorks?.[index]?.title ??
+              `${form.title} #${index + 1}`,
             image,
-            timeAgo: initialService?.recentWorks?.[index]?.timeAgo ?? "Reciente",
+            timeAgo:
+              initialService?.recentWorks?.[index]?.timeAgo ?? "Reciente",
           }))
         : initialService?.recentWorks ?? [
             {
@@ -133,7 +147,11 @@ export const ServiceForm = ({ initialService, onSubmit }: Props) => {
     { key: "summary", label: t("serviceSummary"), multiline: true },
     { key: "categoryId", label: t("serviceCategory") },
     { key: "location", label: t("serviceLocation") },
-    { key: "rateAmount", label: t("serviceRateAmount"), keyboardType: "numeric" },
+    {
+      key: "rateAmount",
+      label: t("serviceRateAmount"),
+      keyboardType: "numeric",
+    },
     { key: "rateCurrency", label: t("serviceRateCurrency") },
     { key: "rateUnit", label: t("serviceRateUnit") },
     { key: "tags", label: t("serviceTags") },
@@ -161,7 +179,10 @@ export const ServiceForm = ({ initialService, onSubmit }: Props) => {
           />
         </View>
       ))}
-      <Button title={loading ? t("saving") : t("save")} onPress={handleSubmit} />
+      <Button
+        title={loading ? t("saving") : t("save")}
+        onPress={handleSubmit}
+      />
     </View>
   );
 };

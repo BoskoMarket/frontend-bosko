@@ -14,7 +14,7 @@ import { ProfileStats } from "./components/ProfileStats";
 import { ProfileInfo } from "./components/ProfileInfo";
 import { SettingsMenu } from "./components/SettingsMenu";
 import { EditProfileModal } from "./components/EditProfileModal";
-import { useProfile } from "../servicesUser/state/ProfileContext";
+import { useProfile } from "./state/ProfileContext";
 import { UpdateProfilePayload } from "../servicesUser/services/profile";
 import Colors from "@/core/design-system/Colors";
 

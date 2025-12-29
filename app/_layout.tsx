@@ -1,7 +1,7 @@
 import React from "react";
 import { Redirect, Stack, Tabs } from "expo-router";
 import { AuthProvider, useAuth } from "@/features/auth/state/AuthContext";
-import { ProfileProvider } from "@/features/servicesUser/state/ProfileContext";
+import { ProfileProvider } from "@/features/profile/state/ProfileContext";
 import { OrdersProvider } from "@/features/orders/state/OdersContext";
 import { PaymentsProvider } from "@/features/payments/state/PaymentContext";
 import { PostsProvider } from "@/features/servicesUser/state/PostsContext";

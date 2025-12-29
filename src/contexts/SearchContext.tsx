@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useState } from "react";
 import { extractApiError } from "../lib/errors";
 import { SearchResponse } from "../interfaces/search";
-import { search as searchApi } from "../services/search.service";
+import { search as searchApi } from "../features/search/services/search.service";
 
 interface SearchState {
   lastQuery: string;
@@ -13,7 +13,9 @@ interface SearchState {
 
 const SearchContext = createContext<SearchState | undefined>(undefined);
 
-export const SearchProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+export const SearchProvider: React.FC<React.PropsWithChildren> = ({
+  children,
+}) => {
   const [results, setResults] = useState<SearchResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +38,9 @@ export const SearchProvider: React.FC<React.PropsWithChildren> = ({ children }) 
   }, []);
 
   return (
-    <SearchContext.Provider value={{ results, loading, error, lastQuery, runSearch }}>
+    <SearchContext.Provider
+      value={{ results, loading, error, lastQuery, runSearch }}
+    >
       {children}
     </SearchContext.Provider>
   );
