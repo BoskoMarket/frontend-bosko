@@ -1,6 +1,3 @@
-import React from "react";
-import MyServiceScreen from "@/screens/MyServiceScreen";
+import MyServiceScreen from "@/features/servicesUser/screens/MyServiceScreen";
 
-export default function Services() {
-  return <MyServiceScreen />;
-}
+export default MyServiceScreen;

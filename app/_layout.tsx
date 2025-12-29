@@ -1,22 +1,21 @@
 import React from "react";
-import { Stack } from "expo-router";
-import { AuthProvider, useAuth } from "@/context/AuthContext";
-import { OrdersProvider } from "@/context/OdersContext";
-import { PaymentsProvider } from "@/context/PaymentContext";
-import { PostsProvider } from "@/context/PostsContext";
-import { ReviewsProvider } from "@/context/ReviewsContext";
-import { CategoriesProvider } from "@/src/contexts/CategoriesContext";
-import { ProvidersProvider } from "@/src/contexts/ProvidersContext";
-import { SearchProvider } from "@/src/contexts/SearchContext";
-import { BoskoDataProvider } from "@/src/shared/state/DataContext";
-
-import { UsersProvider } from "@/src/contexts/UsersContext";
+import { Redirect, Stack, Tabs } from "expo-router";
+import { AuthProvider, useAuth } from "@/features/auth/state/AuthContext";
+import { ProfileProvider } from "@/features/servicesUser/state/ProfileContext";
+import { OrdersProvider } from "@/features/orders/state/OdersContext";
+import { PaymentsProvider } from "@/features/payments/state/PaymentContext";
+import { PostsProvider } from "@/features/servicesUser/state/PostsContext";
+import { ReviewsProvider } from "@/features/servicesUser/state/ReviewsContext";
+import { ServicesProvider } from "@/features/servicesUser/state/ServicesContext";
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from "react-native-reanimated";
-import { ServicesProvider } from "@/context/ServicesContext";
-import { ProfileProvider } from "@/context/ProfileContext";
+import { UserProvider } from "@/features/users/state/UserContext";
+import { UsersProvider } from "@/contexts/UsersContext";
+import { CategoriesProvider } from "@/contexts/CategoriesContext";
+import { ProvidersProvider } from "@/contexts/ProvidersContext";
+import { SearchProvider } from "@/contexts/SearchContext";
 
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
@@ -36,6 +35,7 @@ function RootLayoutNav() {
       <Stack.Screen name="index" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="login" />
+      <Stack.Screen name="chat/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }
@@ -45,25 +45,23 @@ export default function _layout() {
     <AuthProvider>
       <ProfileProvider>
         <UsersProvider>
-          <BoskoDataProvider>
-            <CategoriesProvider>
-              <ProvidersProvider>
-                <ServicesProvider>
-                  <SearchProvider>
-                    <PaymentsProvider>
-                      <OrdersProvider>
-                        <PostsProvider serviceId="global">
-                          <ReviewsProvider serviceId="global">
-                            <RootLayoutNav />
-                          </ReviewsProvider>
-                        </PostsProvider>
-                      </OrdersProvider>
-                    </PaymentsProvider>
-                  </SearchProvider>
-                </ServicesProvider>
-              </ProvidersProvider>
-            </CategoriesProvider>
-          </BoskoDataProvider>
+          <CategoriesProvider>
+            <ProvidersProvider>
+              <ServicesProvider>
+                <SearchProvider>
+                  <PaymentsProvider>
+                    <OrdersProvider>
+                      <PostsProvider serviceId="global">
+                        <ReviewsProvider serviceId="global">
+                          <RootLayoutNav />
+                        </ReviewsProvider>
+                      </PostsProvider>
+                    </OrdersProvider>
+                  </PaymentsProvider>
+                </SearchProvider>
+              </ServicesProvider>
+            </ProvidersProvider>
+          </CategoriesProvider>
         </UsersProvider>
       </ProfileProvider>
     </AuthProvider>

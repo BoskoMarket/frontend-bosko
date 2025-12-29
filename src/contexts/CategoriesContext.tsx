@@ -1,4 +1,10 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { extractApiError } from "../lib/errors";
 import { Id } from "../interfaces/common";
 import { Category } from "../interfaces/category";
@@ -16,13 +22,18 @@ interface CategoriesState {
   loadCategories: () => Promise<void>;
   findCategory: (id: Id) => Category | undefined;
   refreshCategory: (id: Id) => Promise<Category | null>;
-  editCategory: (id: Id, payload: Partial<Category>) => Promise<Category | null>;
+  editCategory: (
+    id: Id,
+    payload: Partial<Category>
+  ) => Promise<Category | null>;
   removeCategory: (id: Id) => Promise<void>;
 }
 
 const CategoriesContext = createContext<CategoriesState | undefined>(undefined);
 
-export const CategoriesProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
+export const CategoriesProvider: React.FC<React.PropsWithChildren> = ({
+  children,
+}) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +43,8 @@ export const CategoriesProvider: React.FC<React.PropsWithChildren> = ({ children
     setError(null);
     try {
       const data = await listCategories();
+      console.log(data, "data de categories");
+
       setCategories(data);
     } catch (err) {
       setError(extractApiError(err));
@@ -66,16 +79,21 @@ export const CategoriesProvider: React.FC<React.PropsWithChildren> = ({ children
     }
   }, []);
 
-  const editCategory = useCallback(async (id: Id, payload: Partial<Category>) => {
-    try {
-      const updated = await updateCategory(id, payload);
-      setCategories((prev) => prev.map((cat) => (cat.id === id ? updated : cat)));
-      return updated;
-    } catch (err) {
-      setError(extractApiError(err));
-      return null;
-    }
-  }, []);
+  const editCategory = useCallback(
+    async (id: Id, payload: Partial<Category>) => {
+      try {
+        const updated = await updateCategory(id, payload);
+        setCategories((prev) =>
+          prev.map((cat) => (cat.id === id ? updated : cat))
+        );
+        return updated;
+      } catch (err) {
+        setError(extractApiError(err));
+        return null;
+      }
+    },
+    []
+  );
 
   const removeCategory = useCallback(async (id: Id) => {
     try {
@@ -107,7 +125,9 @@ export const CategoriesProvider: React.FC<React.PropsWithChildren> = ({ children
 export const useCategories = () => {
   const context = useContext(CategoriesContext);
   if (!context) {
-    throw new Error("useCategories debe usarse dentro de un CategoriesProvider");
+    throw new Error(
+      "useCategories debe usarse dentro de un CategoriesProvider"
+    );
   }
   return context;
 };

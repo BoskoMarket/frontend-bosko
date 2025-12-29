@@ -1,7 +1,7 @@
 import React from "react";
 import { Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { router } from "expo-router";
-import Colors from "@/constants/Colors";
+import Colors from "@/core/design-system/Colors";
 
 export default function TermsAndConditionsScreen() {
   return (
@@ -14,9 +14,9 @@ export default function TermsAndConditionsScreen() {
         condiciones.
       </Text>
       <Text style={styles.paragraph}>
-        Al continuar, confirmas que aceptas el uso responsable de la
-        plataforma, el tratamiento de tus datos según nuestras políticas y que
-        tu información de contacto es verídica.
+        Al continuar, confirmas que aceptas el uso responsable de la plataforma,
+        el tratamiento de tus datos según nuestras políticas y que tu
+        información de contacto es verídica.
       </Text>
 
       <Pressable
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 32,
-    backgroundColor: Colors.gold,
+    backgroundColor: Colors.colorPrimary,
     paddingVertical: 14,
     borderRadius: 22,
     alignItems: "center",

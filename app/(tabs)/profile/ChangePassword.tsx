@@ -1,10 +1,3 @@
-import { View, Text } from "react-native";
-import React from "react";
+import ChangePasswordScreen from "@/features/users/screens/ChangePasswordScreen";
 
-export default function ChangePassword() {
-  return (
-    <View>
-      <Text>ChangePassword</Text>
-    </View>
-  );
-}
+export default ChangePasswordScreen;

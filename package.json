@@ -11,7 +11,10 @@
   },
   "jest": {
     "preset": "jest-expo",
-    "testPathIgnorePatterns": ["/node_modules/", "<rootDir>/src/tests/e2e/"],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/src/tests/e2e/"
+    ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/$1"
     }
@@ -20,10 +23,12 @@
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@expo/vector-icons": "15.0.2",
+    "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/native": "^7.1.6",
     "axios": "^1.12.2",
     "bosko": "file:",
     "expo": "^54.0.4",
+    "expo-av": "~16.0.8",
     "expo-blur": "~15.0.7",
     "expo-constants": "18.0.9",
     "expo-file-system": "~17.0.1",

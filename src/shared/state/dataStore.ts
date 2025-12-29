@@ -1,90 +1,91 @@
-import { ServiceProvider, SERVICE_PROVIDERS } from "@/constants/serviceProviders";
-import { Repository, SearchResult, User } from "@/src/types";
-import { rankResults } from "@/src/shared/utils/ranking";
 
-const providerSeed: ServiceProvider[] = SERVICE_PROVIDERS.slice(0, 8);
+// import { Repository, SearchResult, ServiceProvider, User } from "@/src/types";
+// import { rankResults } from "@/src/shared/utils/ranking";
 
-const usersSeed: User[] = providerSeed.map((provider) => ({
-  id: provider.id,
-  name: provider.name,
-  avatar: provider.avatar,
-  bio: provider.bio,
-  zone: provider.location,
-}));
 
-const servicesSeed: ServiceProvider[] = providerSeed.map((provider) => ({
-  ...provider,
-}));
+// // const providerSeed: ServiceProvider[] = SERVICE_PROVIDERS.slice(0, 8);
 
-const clone = <T,>(value: T): T =>
-  value === undefined ? (value as T) : JSON.parse(JSON.stringify(value));
+// const usersSeed: User[] = providerSeed.map((provider) => ({
+//   id: provider.id,
+//   name: provider.name,
+//   avatar: provider.avatar,
+//   bio: provider.bio,
+//   zone: provider.location,
+// }));
 
-export class InMemoryRepository implements Repository {
-  private users: User[];
-  private services: ServiceProvider[];
+// const servicesSeed: ServiceProvider[] = providerSeed.map((provider) => ({
+//   ...provider,
+// }));
 
-  constructor(users: User[] = usersSeed, services: ServiceProvider[] = servicesSeed) {
-    this.users = clone(users);
-    this.services = clone(services);
-  }
+// const clone = <T,>(value: T): T =>
+//   value === undefined ? (value as T) : JSON.parse(JSON.stringify(value));
 
-  async listUsers() {
-    return clone(this.users);
-  }
+// export class InMemoryRepository implements Repository {
+//   private users: User[];
+//   private services: ServiceProvider[];
 
-  async getUserById(id: string) {
-    return clone(this.users.find((user) => user.id === id));
-  }
+//   constructor(users: User[] = usersSeed, services: ServiceProvider[] = servicesSeed) {
+//     this.users = clone(users);
+//     this.services = clone(services);
+//   }
 
-  async listServices() {
-    return clone(this.services);
-  }
+//   async listUsers() {
+//     return clone(this.users);
+//   }
 
-  async getServiceByUserId(userId: string) {
-    return clone(this.services.find((service) => service.id === userId));
-  }
+//   async getUserById(id: string) {
+//     return clone(this.users.find((user) => user.id === id));
+//   }
 
-  async createOrUpdateService(
-    userId: string,
-    serviceInput: Omit<ServiceProvider, "id"> & { id?: string }
-  ) {
-    const id = userId;
-    const service: ServiceProvider = { ...serviceInput, id };
-    const existingIndex = this.services.findIndex((s) => s.id === userId);
+//   async listServices() {
+//     return clone(this.services);
+//   }
 
-    if (existingIndex >= 0) {
-      this.services[existingIndex] = service;
-    } else {
-      this.services.push(service);
-    }
+//   async getServiceByUserId(userId: string) {
+//     return clone(this.services.find((service) => service.id === userId));
+//   }
 
-    if (!this.users.some((user) => user.id === userId)) {
-      this.users.push({
-        id: userId,
-        name: service.name,
-        avatar: service.avatar,
-        bio: service.bio,
-        zone: service.location,
-      });
-    }
+//   async createOrUpdateService(
+//     userId: string,
+//     serviceInput: Omit<ServiceProvider, "id"> & { id?: string }
+//   ) {
+//     const id = userId;
+//     const service: ServiceProvider = { ...serviceInput, id };
+//     const existingIndex = this.services.findIndex((s) => s.id === userId);
 
-    return clone(service);
-  }
+//     if (existingIndex >= 0) {
+//       this.services[existingIndex] = service;
+//     } else {
+//       this.services.push(service);
+//     }
 
-  async deleteService(userId: string) {
-    this.services = this.services.filter((service) => service.id !== userId);
-  }
+//     if (!this.users.some((user) => user.id === userId)) {
+//       this.users.push({
+//         id: userId,
+//         name: service.name,
+//         avatar: service.avatar,
+//         bio: service.bio,
+//         zone: service.location,
+//       });
+//     }
 
-  async updateUser(user: User) {
-    this.users = this.users.map((u) => (u.id === user.id ? user : u));
-    return clone(user);
-  }
+//     return clone(service);
+//   }
 
-  async searchEntities(query: string): Promise<SearchResult[]> {
-    const users = await this.listUsers();
-    const services = await this.listServices();
-    return rankResults(users, services, query);
-  }
-}
+//   async deleteService(userId: string) {
+//     this.services = this.services.filter((service) => service.id !== userId);
+//   }
 
-export const repository = new InMemoryRepository();
+//   async updateUser(user: User) {
+//     this.users = this.users.map((u) => (u.id === user.id ? user : u));
+//     return clone(user);
+//   }
+
+//   async searchEntities(query: string): Promise<SearchResult[]> {
+//     const users = await this.listUsers();
+//     const services = await this.listServices();
+//     return rankResults(users, services, query);
+//   }
+// }
+
+// export const repository = new InMemoryRepository();

@@ -1,6 +1,3 @@
-import React from "react";
-import { ProfileScreen } from "@/src/features/profile/ProfileScreen";
+import { ProfileScreen } from "@/features/profile/ProfileScreen";
 
-export default function ProfileTab() {
-  return <ProfileScreen />;
-}
+export default ProfileScreen;

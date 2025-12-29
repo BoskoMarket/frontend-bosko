@@ -17,7 +17,7 @@ import { SearchBar } from "@/src/shared/ui/SearchBar";
 import { Category } from "@/src/interfaces/category";
 import { Provider } from "@/src/interfaces/provider";
 import { Service } from "@/src/interfaces/service";
-import { TOKENS } from "@/theme/tokens";
+import { TOKENS } from "@/core/design-system/tokens";
 
 type ResultItem =
   | { key: string; type: "category"; data: Category }
