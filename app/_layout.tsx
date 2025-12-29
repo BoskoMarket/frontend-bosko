@@ -1,12 +1,12 @@
 import React from "react";
 import { Redirect, Tabs } from "expo-router";
-import { AuthProvider } from "@/context/AuthContext";
-import { OrdersProvider } from "@/context/OdersContext";
-import { PaymentsProvider } from "@/context/PaymentContext";
-import { PostsProvider } from "@/context/PostsContext";
-import { ReviewsProvider } from "@/context/ReviewsContext";
-import { ServicesProvider } from "@/context/ServicesContext";
-import { UserProvider } from "@/context/UserContext";
+import { AuthProvider } from "@/auth/state/AuthContext";
+import { OrdersProvider } from "@/orders/state/OdersContext";
+import { PaymentsProvider } from "@/payments/state/PaymentContext";
+import { PostsProvider } from "@/services/state/PostsContext";
+import { ReviewsProvider } from "@/services/state/ReviewsContext";
+import { ServicesProvider } from "@/services/state/ServicesContext";
+import { UserProvider } from "@/users/state/UserContext";
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,

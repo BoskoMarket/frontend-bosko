@@ -1,5 +1,5 @@
 import { Stack } from "expo-router";
-import { TOKENS } from "@/theme/tokens";
+import { TOKENS } from "@/core/design-system/tokens";
 
 export default function ServicesLayout() {
   return (
