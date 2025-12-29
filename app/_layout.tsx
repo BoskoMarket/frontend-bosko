@@ -12,6 +12,10 @@ import {
 } from "react-native-reanimated";
 import { BoskoDataProvider } from "@/shared/state/DataContext";
 import { UserProvider } from "@/features/users/state/UserContext";
+import { UsersProvider } from "@/contexts/UsersContext";
+import { CategoriesProvider } from "@/contexts/CategoriesContext";
+import { ProvidersProvider } from "@/contexts/ProvidersContext";
+import { SearchProvider } from "@/contexts/SearchContext";
 
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
@@ -21,29 +25,33 @@ configureReanimatedLogger({
 export default function _layout() {
   return (
     <AuthProvider>
-      <UserProvider>
-        <PaymentsProvider>
-          <OrdersProvider>
-            <PostsProvider serviceId="global">
-              <ReviewsProvider serviceId="global">
-                <ServicesProvider>
-                  <BoskoDataProvider>
-                    {/* <Redirect href="/login" /> */}
-                    <Tabs
-                      screenOptions={{
-                        headerShown: false,
-                        tabBarStyle: {
-                          display: "none",
-                        },
-                      }}
-                    />
-                  </BoskoDataProvider>
-                </ServicesProvider>
-              </ReviewsProvider>
-            </PostsProvider>
-          </OrdersProvider>
-        </PaymentsProvider>
-      </UserProvider>
+      <UsersProvider>
+        <CategoriesProvider>
+          <ProvidersProvider>
+            <ServicesProvider>
+              <SearchProvider>
+                <PaymentsProvider>
+                  <OrdersProvider>
+                    <PostsProvider serviceId="global">
+                      <ReviewsProvider serviceId="global">
+                        {/* <Redirect href="/login" /> */}
+                        <Tabs
+                          screenOptions={{
+                            headerShown: false,
+                            tabBarStyle: {
+                              display: "none",
+                            },
+                          }}
+                        />
+                      </ReviewsProvider>
+                    </PostsProvider>
+                  </OrdersProvider>
+                </PaymentsProvider>
+              </SearchProvider>
+            </ServicesProvider>
+          </ProvidersProvider>
+        </CategoriesProvider>
+      </UsersProvider>
     </AuthProvider>
   );
 }

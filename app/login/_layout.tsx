@@ -9,5 +9,8 @@ export default function _layout() {
   if (authLoaded && authState.token) {
   }
   return <Redirect href="/(tabs)" />;
-  return <Redirect href="/login/LogInView" />;
+  if (!authLoaded) return null;
+  if (authState.token) return <Redirect href="/(tabs)" />;
+
+  return <Slot />;
 }

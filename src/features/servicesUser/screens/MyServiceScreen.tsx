@@ -28,6 +28,9 @@ function ServiceCard({
   onEdit: (service: Service) => void;
   onDelete: (service: Service) => void;
 }) {
+  const categoryLabel =
+    service.categoryName ?? service.categoryId ?? "Sin categoría";
+  const priceValue = service.price ?? 0;
   return (
     <View style={styles.card}>
       {service.image ? (
@@ -41,9 +44,9 @@ function ServiceCard({
         <Text style={styles.cardTitle}>{service.title}</Text>
         <Text style={styles.cardDescription}>{service.description}</Text>
         <View style={styles.cardMeta}>
-          <Text style={styles.cardCategory}>{service.category}</Text>
+          <Text style={styles.cardCategory}>{categoryLabel}</Text>
           <Text style={styles.cardPrice}>
-            {currencyFormatter.format(service.price ?? 0)}
+            {currencyFormatter.format(priceValue)}
           </Text>
         </View>
         <View style={styles.cardActions}>
@@ -64,13 +67,7 @@ function ServiceCard({
 
 export default function MyServiceScreen() {
   const router = useRouter();
-  const {
-    myServices,
-    myServicesLoading,
-    loadMyServices,
-    removeService,
-    currentPlan,
-  } = useServices();
+  const { services, loading, loadServices, removeService } = useServices();
 
   const handleEdit = (service: Service) => {
     router.push({
@@ -109,8 +106,8 @@ export default function MyServiceScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      loadMyServices().catch((err) => console.error(err));
-    }, [loadMyServices])
+      loadServices().catch((err) => console.error(err));
+    }, [loadServices])
   );
 
   const renderService = ({ item }: { item: Service }) => (
@@ -118,22 +115,22 @@ export default function MyServiceScreen() {
   );
 
   const planMessage =
-    currentPlan === "FREE"
-      ? "Tu plan gratuito te permite administrar un solo servicio. Actualiza a Plus para añadir más."
-      : "Plan Plus activo. Puedes publicar múltiples servicios.";
+    services.length === 0
+      ? "Crea tu primer servicio para comenzar a recibir solicitudes."
+      : "Administra y actualiza tus servicios publicados.";
 
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Mis servicios</Text>
       <Text style={styles.planMessage}>{planMessage}</Text>
 
-      {myServicesLoading && myServices.length === 0 ? (
+      {loading && services.length === 0 ? (
         <View style={styles.loader}>
           <ActivityIndicator />
         </View>
       ) : null}
 
-      {myServices.length === 0 && !myServicesLoading ? (
+      {services.length === 0 && !loading ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyTitle}>Aún no has publicado servicios</Text>
           <Text style={styles.emptyDescription}>
@@ -148,15 +145,15 @@ export default function MyServiceScreen() {
         </View>
       ) : (
         <FlatList
-          data={myServices}
+          data={services}
           keyExtractor={(item, index) => item.id ?? `service-${index}`}
           renderItem={renderService}
           contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl
-              refreshing={myServicesLoading}
+              refreshing={loading}
               onRefresh={() =>
-                loadMyServices().catch((err) => console.error(err))
+                loadServices().catch((err) => console.error(err))
               }
             />
           }

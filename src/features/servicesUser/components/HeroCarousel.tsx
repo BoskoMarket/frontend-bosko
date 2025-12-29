@@ -10,6 +10,8 @@ import {
 import { BlurView } from "expo-blur";
 import { TOKENS } from "@/core/design-system/tokens";
 import { Image } from "expo-image";
+import ButtonBosko from "@/shared/components/ButtonBosko";
+import { router } from "expo-router";
 const { width } = Dimensions.get("window");
 
 export function HeroCarousel({
@@ -24,13 +26,15 @@ export function HeroCarousel({
       data={data}
       pagingEnabled
       renderItem={({ item }) => (
-        <BlurView intensity={30} tint="light" style={styles.card}>
+        <View style={styles.card}>
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.sub}>{item.subtitle}</Text>
-          <TouchableOpacity style={styles.btn}>
-            <Text style={{ color: "#fff", fontWeight: "700" }}>{item.cta}</Text>
-          </TouchableOpacity>
-        </BlurView>
+
+          <ButtonBosko
+            title="Explorar"
+            onPress={() => router.push("/(tabs)/services")}
+          />
+        </View>
       )}
     />
   );
@@ -42,10 +46,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: "hidden",
     padding: 16,
-    backgroundColor: TOKENS.color.primary,
-    ...TOKENS.shadow.soft,
+    backgroundColor: "transparent",
+    // ...TOKENS.shadow.soft,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
-  title: { fontSize: 18, fontWeight: "800", color: TOKENS.color.text },
+  title: { fontSize: 22, fontWeight: "800", color: TOKENS.color.text },
   sub: { color: TOKENS.color.sub, marginTop: 6 },
   btn: {
     width: 120,
