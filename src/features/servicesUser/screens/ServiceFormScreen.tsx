@@ -97,7 +97,10 @@ export default function ServiceFormScreen() {
     }
 
     const serviceToLoad = serviceFromParam ?? services[0];
-    const defaultCategory = serviceToLoad?.categoryId ?? categories[0]?.id;
+    const defaultCategory =
+      (typeof serviceToLoad?.category === "object"
+        ? serviceToLoad.category.id
+        : serviceToLoad?.category) ?? categories[0]?.id;
 
     if (serviceToLoad) {
       setSelectedService(serviceToLoad);
@@ -187,7 +190,7 @@ export default function ServiceFormScreen() {
       title: form.title.trim(),
       description: form.description.trim(),
       price: Number(form.price),
-      categoryId: form.categoryId,
+      category: form.categoryId ?? "",
       image: imagePayload ?? null,
     };
   };

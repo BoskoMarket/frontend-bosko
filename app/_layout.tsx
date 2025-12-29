@@ -1,6 +1,6 @@
 import React from "react";
-import { Redirect, Tabs } from "expo-router";
-import { AuthProvider } from "@/features/auth/state/AuthContext";
+import { Redirect, Stack, Tabs } from "expo-router";
+import { AuthProvider, useAuth } from "@/features/auth/state/AuthContext";
 import { OrdersProvider } from "@/features/orders/state/OdersContext";
 import { PaymentsProvider } from "@/features/payments/state/PaymentContext";
 import { PostsProvider } from "@/features/servicesUser/state/PostsContext";
@@ -21,6 +21,23 @@ configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
   strict: false,
 });
+
+function RootLayoutNav() {
+  const { authLoaded } = useAuth();
+
+  // Show nothing while checking auth
+  if (!authLoaded) {
+    return null;
+  }
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="login" />
+    </Stack>
+  );
+}
 
 export default function _layout() {
   return (

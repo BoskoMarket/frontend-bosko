@@ -8,16 +8,14 @@ export default function ProfileLayout() {
       <Stack.Screen
         name="Services"
         options={{
-          title: "Mis servicios",
-          headerShown: true,
+          headerShown: false,
         }}
       />
       <Stack.Screen
         name="AddServices"
         options={{
-          title: "Gestionar servicio",
-          headerShown: true,
-          presentation: "card",
+          headerShown: false,
+          presentation: "modal",
         }}
       />
     </Stack>

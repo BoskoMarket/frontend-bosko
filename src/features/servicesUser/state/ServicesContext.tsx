@@ -3,7 +3,6 @@ import React, {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useReducer,
   useState,
@@ -24,7 +23,15 @@ import {
   Service,
   ServicePayload,
 } from "../services/service";
-import { fetchServiceById } from "../services/services";
+import { fetchAllServices, fetchServiceById } from "../services/services";
+import {
+  addReviewService,
+  fetchCategoriesService,
+  fetchProviderProfileService,
+  fetchServiceReviewsService,
+  fetchServicesByCategoryService,
+  fetchUserPurchasesService,
+} from "../services/catalog";
 
 interface ResourceState {
   loading: boolean;
@@ -584,7 +591,7 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
       }
 
       try {
-        const purchases = await fetchUserPurchases(userId, serviceId);
+        const purchases = await fetchUserPurchasesService(userId, serviceId);
         const purchasedServiceIds = purchases.map(
           (purchase) => purchase.serviceId
         );
