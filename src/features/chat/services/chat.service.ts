@@ -1,4 +1,5 @@
-import http from "../lib/http";
+import api from "@/core/api/axiosinstance";
+
 
 export interface Message {
     id: string;
@@ -31,26 +32,26 @@ export interface SendMessageDto {
 
 // Endpoints based on standard conventions since none were found
 export async function getChats(): Promise<Chat[]> {
-    const { data } = await http.get<Chat[]>('/chat/history');
+    const { data } = await api.get<Chat[]>('/chat/history');
     return data;
 }
 
 export async function getChatById(id: string): Promise<Chat> {
-    const { data } = await http.get<Chat>(`/chat/history/${id}`);
+    const { data } = await api.get<Chat>(`/chat/history/${id}`);
     return data;
 }
 
 export async function getChatMessages(chatId: string): Promise<Message[]> {
-    const { data } = await http.get<Message[]>(`/chats/${chatId}/messages`);
+    const { data } = await api.get<Message[]>(`/chats/${chatId}/messages`);
     return data;
 }
 
 export async function createChat(recipientId: string): Promise<Chat> {
-    const { data } = await http.post<Chat>('/chats', { recipientId });
+    const { data } = await api.post<Chat>('/chats', { recipientId });
     return data;
 }
 
 export async function sendMessage(chatId: string, content: string): Promise<Message> {
-    const { data } = await http.post<Message>(`/chats/${chatId}/messages`, { content });
+    const { data } = await api.post<Message>(`/chats/${chatId}/messages`, { content });
     return data;
 }

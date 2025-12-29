@@ -19,7 +19,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import Colors from "@/core/design-system/Colors";
-import { useChat } from "@/features/servicesUser/state/ChatContext";
+import { useChat } from "@/features/chat/state/ChatContext";
 
 export default function ChatDetailScreen() {
   const { id } = useLocalSearchParams();

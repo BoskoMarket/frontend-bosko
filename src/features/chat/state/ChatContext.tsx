@@ -12,7 +12,7 @@ import {
   getChatMessages,
   sendMessage,
   createChat,
-} from "@/src/services/chat.service";
+} from "@/features/chat/services/chat.service";
 import { useAuth } from "@/features/auth/state/AuthContext";
 
 interface ChatContextType {

@@ -6,10 +6,6 @@ import type {
   Review,
   ServiceSummary,
 } from "@/types/services";
-import { SERVICE_PROVIDERS, ServiceProvider } from "../constants/serviceProviders";
-import { MOCK_PURCHASES, MOCK_REVIEWS } from "@/assets/fonts/mockServiceReviews";
-import { SERVICE_CATEGORIES } from "../constants/serviceCategories";
-import { ENDPOINTS } from "@/assets/fonts/api";
 import api from "@/core/api/axiosinstance";
 
 export type AddReviewRequest = AddReviewPayload & {

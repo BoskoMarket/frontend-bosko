@@ -4,7 +4,7 @@ import {
   UpdateProfilePayload,
   updateUserProfile,
   UserProfile,
-} from "../services/profile";
+} from "../../servicesUser/services/profile";
 import { useAuth } from "@/features/auth/state/AuthContext";
 
 interface ProfileContextType {
