@@ -1,3 +1,3 @@
-import ProfileEditScreen from "@/users/screens/ProfileEditScreen";
+import ProfileEditScreen from "@/features/users/screens/ProfileEditScreen";
 
 export default ProfileEditScreen;

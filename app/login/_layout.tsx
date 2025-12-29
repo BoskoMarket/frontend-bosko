@@ -4,7 +4,7 @@ import { Redirect, Slot, Tabs } from "expo-router";
 import { useAuth } from "@/features/auth/state/AuthContext";
 
 export default function _layout() {
-  // const { authLoaded, authState } = useAuth();
+  const { authLoaded, authState } = useAuth();
 
   if (authLoaded && authState.token) {
   }

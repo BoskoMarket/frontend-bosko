@@ -7,8 +7,13 @@ import React, {
   useState,
 } from "react";
 import { apiClient } from "@/src/shared/api/client";
-import { SearchResult, ServiceProvider, ServiceProviderInput, User } from "@/src/types";
-import { SERVICE_PROVIDERS } from "@/constants/serviceProviders";
+import {
+  SearchResult,
+  ServiceProvider,
+  ServiceProviderInput,
+  User,
+} from "@/src/types";
+import { SERVICE_PROVIDERS } from "@/features/servicesUser/constants/serviceProviders";
 
 interface SearchState {
   status: "idle" | "typing" | "done" | "empty";
@@ -35,7 +40,9 @@ interface BoskoDataContextValue {
   search: SearchState;
   serviceManager: ServiceManager;
   currentUser: CurrentUserState;
-  getProfile: (userId: string) => Promise<{ user?: User; service?: ServiceProvider }>;
+  getProfile: (
+    userId: string
+  ) => Promise<{ user?: User; service?: ServiceProvider }>;
 }
 
 const BoskoDataContext = createContext<BoskoDataContextValue | undefined>(
@@ -90,7 +97,10 @@ export const BoskoDataProvider = ({ children }: { children: ReactNode }) => {
 
   const createOrUpdate = useCallback(
     async (payload: ServiceProviderInput) => {
-      const servicePayload = await apiClient.saveService(currentUserId, payload);
+      const servicePayload = await apiClient.saveService(
+        currentUserId,
+        payload
+      );
       setService(servicePayload);
       return servicePayload;
     },

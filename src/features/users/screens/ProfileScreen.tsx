@@ -1,8 +1,9 @@
 import { ScrollView, StyleSheet } from "react-native";
 import React from "react";
-import ProfileHeader from "@/users/components/ProfileHeader";
-import ProfileSection from "@/users/components/ProfileSection";
+
 import { RelativePathString, router } from "expo-router";
+import ProfileHeader from "../components/ProfileHeader";
+import ProfileSection from "../components/ProfileSection";
 
 export default function ProfileScreen() {
   return (
@@ -60,7 +61,7 @@ export default function ProfileScreen() {
         options={[
           {
             label: "Bosko Pro",
-            onPress: () => router.push("/pro/subscription"),
+            onPress: () => router.push("/(tabs)/profile/BoskoPro"),
           },
           {
             label: "Cerrar sesión",

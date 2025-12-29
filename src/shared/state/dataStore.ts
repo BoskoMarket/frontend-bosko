@@ -1,6 +1,7 @@
-import { ServiceProvider, SERVICE_PROVIDERS } from "@/constants/serviceProviders";
-import { Repository, SearchResult, User } from "@/src/types";
+
+import { Repository, SearchResult, ServiceProvider, User } from "@/src/types";
 import { rankResults } from "@/src/shared/utils/ranking";
+import { SERVICE_PROVIDERS } from "@/features/servicesUser/constants/serviceProviders";
 
 const providerSeed: ServiceProvider[] = SERVICE_PROVIDERS.slice(0, 8);
 
