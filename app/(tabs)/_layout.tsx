@@ -1,79 +1,49 @@
 // app/(tabs)/_layout.tsx
-import { Tabs, useRouter } from "expo-router";
+import { Tabs, useRouter, Redirect } from "expo-router";
 import { View, Pressable, Text, StyleSheet } from "react-native";
 // import { useUser } from "@/hooks/useUser";
 import { TOKENS } from "@/core/design-system/tokens";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { CustomTabBar } from "@/src/components/CustomTabBar";
+import { useAuth } from "@/features/auth/state/AuthContext";
 
 export default function TabsLayout() {
   const router = useRouter();
-  // const { viewMode, hasServices } = useUser();
+  const { authLoaded, authState } = useAuth();
 
-  // const onFabPress = () => {
-  //   if (viewMode === "client") {
-  //     router.push("/request/new");
-  //   } else {
-  //     router.push(hasServices ? "/pro/hub" : "/pro/services/new");
-  //   }
-  // };
+  const onFabPress = () => {
+    router.push("/(tabs)/services");
+  };
+
+  if (!authLoaded) return null;
+  if (!authState.token) return <Redirect href="/login" />;
 
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: "#fff" }}
+      style={{ flex: 1, backgroundColor: TOKENS.color.primary }}
       edges={["top", "left", "right"]}
     >
       <Tabs
+        tabBar={(props) => <CustomTabBar {...props} />}
         screenOptions={{
           headerShown: false,
-          tabBarStyle: { height: 72, backgroundColor: "rgba(255,255,255,0.7)" },
-          tabBarActiveTintColor: TOKENS.color.primary,
-          tabBarInactiveTintColor: "#9A9AA0",
-          tabBarLabelStyle: { fontSize: 12, marginBottom: 6 },
-          tabBarShowLabel: true,
           tabBarHideOnKeyboard: true,
-          animation: "fade",
         }}
       >
-        <Tabs.Screen
-          name="index"
-          options={{ title: "Inicio", tabBarIcon: () => <Text>🏠</Text> }}
-        />
-        <Tabs.Screen
-          name="search"
-          options={{ title: "Buscar", tabBarIcon: () => <Text>🔎</Text> }}
-        />
-        <Tabs.Screen
-          name="services"
-          options={{ title: "Servicios", tabBarIcon: () => <Text>🔧</Text> }}
-        />
-        <Tabs.Screen
-          name="reels"
-          options={{ title: "Reels", tabBarIcon: () => <Text> 🎥</Text> }}
-        />
-        <Tabs.Screen
-          name="profile"
-          options={{ title: "Perfil", tabBarIcon: () => <Text>👤</Text> }}
-        />
+        <Tabs.Screen name="index" options={{ title: "Inicio" }} />
+
+        <Tabs.Screen name="services" options={{ title: "Servicios" }} />
+        <Tabs.Screen name="reels" options={{ title: "Reels" }} />
+        <Tabs.Screen name="profile" options={{ title: "Perfil" }} />
         <Tabs.Screen
           name="chat"
           options={{
-            href: null,
             title: "Mensajes",
-            tabBarIcon: () => <Text>💬</Text>,
-          }}
-        />
-        <Tabs.Screen
-          name="settings"
-          options={{
-            href: null,
-            title: "Settings",
-            tabBarIcon: () => <Text>⚙️</Text>,
           }}
         />
       </Tabs>
 
-      {/* FAB central
-      <Pressable style={styles.fab} onPress={onFabPress}>
+      {/* <Pressable style={styles.fab} onPress={onFabPress}>
         <Text style={styles.fabText}>＋</Text>
       </Pressable> */}
     </SafeAreaView>

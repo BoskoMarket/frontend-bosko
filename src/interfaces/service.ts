@@ -8,11 +8,29 @@ export interface Service {
   price?: number;
   categoryId?: Id;
   categoryName?: string;
+  category?: {
+    id: Id;
+    name?: string;
+    description?: string;
+    parentId?: Id | null;
+  };
   providerId?: Id;
+  provider?: {
+    id: Id;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    location?: string | null;
+  };
   userId?: Id;
   image?: string | null;
   rating?: number;
   reviewCount?: number;
+  location?: string;
+  priceMin?: number;
+  priceMax?: number;
+  currency?: string;
+  status?: string;
   createdAt?: string;
   updatedAt?: string;
 }

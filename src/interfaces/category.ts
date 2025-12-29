@@ -6,6 +6,7 @@ export interface Category {
   description?: string;
   icon?: string;
   accent?: string;
+  video?: string;
   createdAt?: string;
   updatedAt?: string;
 }

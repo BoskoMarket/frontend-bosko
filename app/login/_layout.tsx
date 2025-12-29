@@ -1,14 +1,10 @@
-import { View, Text } from "react-native";
 import React from "react";
-import { Redirect, Slot, Tabs } from "expo-router";
+import { Redirect, Slot } from "expo-router";
 import { useAuth } from "@/features/auth/state/AuthContext";
 
-export default function _layout() {
+export default function LoginLayout() {
   const { authLoaded, authState } = useAuth();
 
-  if (authLoaded && authState.token) {
-  }
-  return <Redirect href="/(tabs)" />;
   if (!authLoaded) return null;
   if (authState.token) return <Redirect href="/(tabs)" />;
 

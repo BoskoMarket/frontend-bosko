@@ -1,4 +1,4 @@
-import { View, FlatList } from "react-native";
+import { View, FlatList, Text } from "react-native";
 import { NavBar } from "@/shared/components/Navbar";
 import { HeroCarousel } from "@/features/servicesUser/components/HeroCarousel";
 import { CategoryChips } from "@/features/servicesUser/components/CategoryChips";
@@ -7,6 +7,12 @@ import { PromoBanner } from "@/features/servicesUser/components/PromoBanner";
 import { OffersGrid } from "@/features/servicesUser/components/OffersGrid";
 import { QuickActions } from "@/features/servicesUser/components/QuickActions";
 import { TOKENS } from "@/core/design-system/tokens";
+import { PremiumButton } from "@/components/PremiumButton";
+import { StatusBar } from "expo-status-bar";
+import Colors from "@/core/design-system/Colors";
+import { PremiumBanner } from "@/components/PremiumBanner";
+import { CategoryVideoCarousel } from "@/components/CategoryVideoCarousel";
+import { router } from "expo-router";
 
 const hero = [
   {
@@ -59,21 +65,76 @@ const offers = [
 
 export default function DashboardScreen() {
   return (
-    <FlatList
-      data={[]}
-      style={{ backgroundColor: TOKENS.color.bg }}
-      ListHeaderComponent={
-        <View style={{ gap: 20, paddingBottom: 120, paddingHorizontal: 5 }}>
-          <NavBar />
-          <HeroCarousel data={hero} />
-          <CategoryChips items={categories} />
-          <ProfessionalsCarousel data={pros} />
-          <PromoBanner />
-          <OffersGrid data={offers} />
-          <QuickActions onPublish={() => {}} onRequest={() => {}} />
-        </View>
-      }
-      renderItem={null}
-    />
+    <>
+      <FlatList
+        data={[]}
+        style={{ backgroundColor: Colors.white }}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        ListHeaderComponent={
+          <View>
+            <PremiumBanner />
+            <CategoryVideoCarousel
+              onSelectCategory={(id) =>
+                router.push({
+                  pathname: "/(tabs)/services/category/[id]",
+                  params: { id },
+                })
+              }
+            />
+
+            <View style={{ paddingHorizontal: 5, gap: 24 }}>
+              <ProfessionalsCarousel data={pros} />
+              <PromoBanner />
+              <OffersGrid data={offers} />
+              <QuickActions onPublish={() => {}} onRequest={() => {}} />
+
+              <View style={{ padding: 20, gap: 15, alignItems: "center" }}>
+                <Text
+                  style={{
+                    fontSize: 18,
+                    fontWeight: "bold",
+                    color: Colors.premium.textPrimary,
+                  }}
+                >
+                  New Button System
+                </Text>
+                <PremiumButton
+                  title="Solicitar Servicio"
+                  onPress={() => {}}
+                  icon="flash"
+                />
+                <PremiumButton
+                  title="Ver Detalles"
+                  variant="secondary"
+                  onPress={() => {}}
+                  iconRight="arrow-forward"
+                />
+                <PremiumButton
+                  title="Omitir"
+                  variant="ghost"
+                  onPress={() => {}}
+                />
+                <View style={{ flexDirection: "row", gap: 10 }}>
+                  <PremiumButton
+                    title="Call"
+                    size="small"
+                    variant="outline"
+                    icon="call"
+                    onPress={() => {}}
+                  />
+                  <PremiumButton
+                    title="Chat"
+                    size="small"
+                    onPress={() => {}}
+                    icon="chatbubble"
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
+        }
+        renderItem={null}
+      />
+    </>
   );
 }

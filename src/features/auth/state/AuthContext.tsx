@@ -72,6 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   });
 
   const persistSession = async (response: AuthResponse, email: string) => {
+    console.log("💾 [AuthContext] Persisting session...");
     if (response.accessToken) {
       setAccessToken(response.accessToken);
       setRefreshToken(response.refreshToken);
@@ -79,14 +80,28 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await setItemAsync("token", response.accessToken);
       await setItemAsync("refreshToken", response.refreshToken);
       await setItemAsync("userEmail", email);
+      if (response.user) {
+        await setItemAsync("user", JSON.stringify(response.user));
+      }
+
+      // Update authState so ProfileContext and other contexts can react
+      console.log("✅ [AuthContext] Session persisted, updating authState");
+      setAuthState({
+        token: response.accessToken,
+        refreshToken: response.refreshToken,
+        userEmail: email,
+        user: response.user || null,
+      });
     }
   };
 
   const loginFn = async ({ email, password }: Credentials) => {
+    console.log("🔑 [AuthContext] Starting login...");
     setIsLoading(true);
     setError(null);
     try {
       const response = await loginService({ email, password });
+      console.log("✅ [AuthContext] Login successful");
 
       await persistSession(response, email);
       return response;
@@ -133,10 +148,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = async () => {
+    console.log("🚪 [AuthContext] Logging out...");
     await deleteItemAsync("token");
     await deleteItemAsync("refreshToken");
     await deleteItemAsync("userEmail");
     await deleteItemAsync("user");
+    console.log("✅ [AuthContext] Cleared storage, updating authState");
     setAuthState({
       token: null,
       refreshToken: null,
@@ -145,10 +162,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
     setAccessToken(null);
     setRefreshToken(null);
+    console.log("✅ [AuthContext] Logout complete");
   };
 
   useEffect(() => {
     const checkAuth = async () => {
+      console.log("🔍 [AuthContext] Checking auth on mount...");
       try {
         const savedToken = await getItemAsync("token");
         const savedRefreshToken = await getItemAsync("refreshToken");
@@ -156,13 +175,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const savedUserRaw = await getItemAsync("user");
         const savedUser = parseUser(savedUserRaw);
 
-        console.log(savedToken, savedRefreshToken, savedUserEmail, savedUser);
+        console.log("📦 [AuthContext] Stored credentials:", {
+          hasToken: !!savedToken,
+          hasRefreshToken: !!savedRefreshToken,
+          email: savedUserEmail,
+          hasUser: !!savedUser,
+        });
 
         if (!savedToken || !savedRefreshToken) {
+          console.log("❌ [AuthContext] No stored credentials found");
           setAuthLoaded(true);
           return;
         }
 
+        console.log("✅ [AuthContext] Restoring session from storage");
         setAuthState({
           token: savedToken,
           refreshToken: savedRefreshToken,

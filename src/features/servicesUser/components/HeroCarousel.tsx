@@ -12,6 +12,7 @@ import { TOKENS } from "@/core/design-system/tokens";
 import { Image } from "expo-image";
 import ButtonBosko from "@/shared/components/ButtonBosko";
 import { router } from "expo-router";
+import { PremiumButton } from "@/components/PremiumButton";
 const { width } = Dimensions.get("window");
 
 export function HeroCarousel({
@@ -30,7 +31,7 @@ export function HeroCarousel({
           <Text style={styles.title}>{item.title}</Text>
           <Text style={styles.sub}>{item.subtitle}</Text>
 
-          <ButtonBosko
+          <PremiumButton
             title="Explorar"
             onPress={() => router.push("/(tabs)/services")}
           />

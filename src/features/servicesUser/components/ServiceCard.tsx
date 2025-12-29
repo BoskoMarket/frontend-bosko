@@ -8,10 +8,12 @@ import {
   View,
   ViewStyle,
 } from "react-native";
-
-import { useServices } from "@/context/ServicesContext";
-import type { Rate, ServiceSummary } from "@/types/services";
-import { TOKENS } from "@/theme/tokens";
+import { MotiView } from "moti";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
+import { Rate, ServiceSummary } from "@/types/services";
+import { useServices } from "../state/ServicesContext";
+import Colors from "@/core/design-system/Colors";
 
 type ServiceCardProps = {
   serviceId: string;
@@ -22,8 +24,15 @@ type ServiceCardProps = {
 };
 
 const formatRate = (rate: Rate) => {
-  const symbol = rate.currency === "ARS" ? "$" : rate.currency === "USD" ? "US$" : `${rate.currency} `;
-  return `${symbol}${rate.amount} / ${rate.unit}`;
+  const symbol =
+    rate.currency === "ARS"
+      ? "$"
+      : rate.currency === "USD"
+      ? "US$"
+      : `${rate.currency} `;
+  return `${symbol}${rate.amount} ${
+    rate.unit !== "fixed" ? "/ " + rate.unit : ""
+  }`;
 };
 
 const ServiceCard: React.FC<ServiceCardProps> = ({
@@ -48,124 +57,246 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
   }
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.card, style]}
-      accessibilityRole="button"
-      accessibilityLabel={`Servicio de ${service.name}`}
-      accessibilityHint={
-        accessibilityHint ?? "Abrir el perfil del profesional seleccionado"
-      }
+    <MotiView
+      from={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ type: "timing", duration: 500 }}
+      style={[styles.container, style]}
     >
-      {service.thumbnail ? (
-        <Image
-          source={{ uri: service.thumbnail }}
-          style={styles.avatar}
-          resizeMode="cover"
-        />
-      ) : (
-        <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>Sin foto</Text>
+      <Pressable
+        onPress={onPress}
+        style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+        accessibilityRole="button"
+        accessibilityLabel={`Servicio de ${service.name}`}
+        accessibilityHint={
+          accessibilityHint ?? "Abrir el perfil del profesional seleccionado"
+        }
+      >
+        {/* Cover Image Section */}
+        <View style={styles.coverContainer}>
+          {service.thumbnail ? (
+            <Image
+              source={{ uri: service.thumbnail }}
+              style={styles.coverImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <LinearGradient
+              colors={[Colors.colorPrimary, Colors.colorPrimaryDark]}
+              style={styles.placeholderCover}
+            >
+              <Ionicons
+                name="briefcase-outline"
+                size={40}
+                color="rgba(255,255,255,0.3)"
+              />
+            </LinearGradient>
+          )}
+
+          {/* Rating Badge */}
+          <View style={styles.ratingBadge}>
+            <Ionicons name="star" size={12} color="#FFD700" />
+            <Text style={styles.ratingText}>
+              {rating.averageRating.toFixed(1)}
+            </Text>
+          </View>
+
+          {/* Price Badge */}
+          <View style={styles.priceBadge}>
+            <Text style={styles.priceText}>{formatRate(service.rate)}</Text>
+          </View>
         </View>
-      )}
-      <View style={styles.info}>
-        <View style={styles.headerRow}>
-          <Text style={styles.name}>{service.name}</Text>
-          <Text style={styles.rating}>{rating.averageRating.toFixed(1)} ★</Text>
+
+        {/* Content Section */}
+        <View style={styles.content}>
+          <View style={styles.providerRow}>
+            {/* Provider Avatar (Overlapping) */}
+            {/* TODO: If provider avatar url is available in service summary, use it. Otherwise placeholder */}
+            <View style={styles.avatarContainer}>
+              <Image
+                source={{
+                  uri: `https://i.pravatar.cc/150?u=${service.providerId}`,
+                }}
+                style={styles.avatar}
+              />
+            </View>
+            <View style={styles.providerInfo}>
+              <Text style={styles.providerName}>{service.name}</Text>
+              <View style={styles.locationRow}>
+                <Ionicons
+                  name="location-outline"
+                  size={12}
+                  color={Colors.title.color}
+                />
+                <Text style={styles.locationText}>{service.location}</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.serviceDetails}>
+            <Text style={styles.serviceTitle} numberOfLines={2}>
+              {service.title}
+            </Text>
+            <Text style={styles.reviewsText}>
+              {rating.reviewsCount} reseñas
+            </Text>
+          </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.ctaText}>Ver detalles</Text>
+            <Ionicons
+              name="arrow-forward"
+              size={16}
+              color={Colors.colorPrimary}
+            />
+          </View>
         </View>
-        <Text style={styles.title}>{service.title}</Text>
-        <Text numberOfLines={2} style={styles.summary}>
-          {service.summary}
-        </Text>
-        <View style={styles.metaRow}>
-          <Text style={styles.metaHighlight}>{formatRate(service.rate)}</Text>
-          <View style={styles.dot} />
-          <Text style={styles.metaText}>{service.location}</Text>
-        </View>
-        <Text style={styles.reviews}>{rating.reviewsCount} reseñas</Text>
-      </View>
-    </Pressable>
+      </Pressable>
+    </MotiView>
   );
 };
 
 export default ServiceCard;
 
 const styles = StyleSheet.create({
+  container: {
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
   card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    overflow: "hidden",
+  },
+  pressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
+  coverContainer: {
+    height: 160,
+    width: "100%",
+    position: "relative",
+  },
+  coverImage: {
+    width: "100%",
+    height: "100%",
+  },
+  placeholderCover: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  ratingBadge: {
+    position: "absolute",
+    top: 16,
+    right: 16,
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
-    backgroundColor: "#FFFFFF",
-    padding: 18,
-    borderRadius: TOKENS.radius.lg,
-    ...TOKENS.shadow.soft,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  ratingText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 12,
+  },
+  priceBadge: {
+    position: "absolute",
+    bottom: 16,
+    right: 16,
+    backgroundColor: Colors.colorPrimary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    shadowColor: Colors.colorPrimary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  priceText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+  content: {
+    padding: 16,
+    paddingTop: 8, // Space for avatar overlap
+  },
+  providerRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    marginTop: -40, // Overlap effect
+    marginBottom: 12,
+  },
+  avatarContainer: {
+    padding: 3,
+    backgroundColor: "#fff",
+    borderRadius: 28,
+    marginRight: 10,
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
-  placeholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 18,
-    backgroundColor: "#E5E7EB",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  placeholderText: {
-    fontSize: 10,
-    color: "#6B7280",
-  },
-  info: {
+  providerInfo: {
     flex: 1,
-    gap: 6,
+    paddingBottom: 4, // Align with avatar bottom
   },
-  headerRow: {
+  providerName: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#fff",
+    textShadowColor: "rgba(0, 0, 0, 0.75)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+    marginBottom: 4, // Push up slightly to be on image or just below
+  },
+  locationRow: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 4,
+  },
+  locationText: {
+    fontSize: 12,
+    color: Colors.title.color,
+  },
+  serviceDetails: {
+    gap: 4,
+    marginBottom: 12,
+  },
+  serviceTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: Colors.title.color,
+    lineHeight: 24,
+  },
+  reviewsText: {
+    fontSize: 12,
+    color: Colors.title.color,
+  },
+  footer: {
+    flexDirection: "row",
     justifyContent: "space-between",
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: TOKENS.color.text,
-  },
-  rating: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: TOKENS.color.primary,
-  },
-  title: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-  },
-  summary: {
-    fontSize: 12,
-    color: TOKENS.color.sub,
-  },
-  metaRow: {
-    flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#f0f0f0",
+    paddingTop: 12,
   },
-  metaHighlight: {
-    fontSize: 13,
+  ctaText: {
+    fontSize: 14,
     fontWeight: "600",
-    color: TOKENS.color.text,
-  },
-  metaText: {
-    fontSize: 12,
-    color: TOKENS.color.sub,
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#D1D5DB",
-  },
-  reviews: {
-    fontSize: 12,
-    color: TOKENS.color.sub,
+    color: Colors.colorPrimary,
   },
 });

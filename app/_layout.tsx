@@ -1,6 +1,7 @@
 import React from "react";
 import { Redirect, Stack, Tabs } from "expo-router";
 import { AuthProvider, useAuth } from "@/features/auth/state/AuthContext";
+import { ProfileProvider } from "@/features/servicesUser/state/ProfileContext";
 import { OrdersProvider } from "@/features/orders/state/OdersContext";
 import { PaymentsProvider } from "@/features/payments/state/PaymentContext";
 import { PostsProvider } from "@/features/servicesUser/state/PostsContext";
@@ -10,7 +11,6 @@ import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from "react-native-reanimated";
-import { BoskoDataProvider } from "@/shared/state/DataContext";
 import { UserProvider } from "@/features/users/state/UserContext";
 import { UsersProvider } from "@/contexts/UsersContext";
 import { CategoriesProvider } from "@/contexts/CategoriesContext";
@@ -35,6 +35,7 @@ function RootLayoutNav() {
       <Stack.Screen name="index" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="login" />
+      <Stack.Screen name="chat/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }
@@ -42,8 +43,8 @@ function RootLayoutNav() {
 export default function _layout() {
   return (
     <AuthProvider>
-      <UsersProvider>
-        <BoskoDataProvider>
+      <ProfileProvider>
+        <UsersProvider>
           <CategoriesProvider>
             <ProvidersProvider>
               <ServicesProvider>
@@ -52,15 +53,7 @@ export default function _layout() {
                     <OrdersProvider>
                       <PostsProvider serviceId="global">
                         <ReviewsProvider serviceId="global">
-                          {/* <Redirect href="/login" /> */}
-                          <Tabs
-                            screenOptions={{
-                              headerShown: false,
-                              tabBarStyle: {
-                                display: "none",
-                              },
-                            }}
-                          />
+                          <RootLayoutNav />
                         </ReviewsProvider>
                       </PostsProvider>
                     </OrdersProvider>
@@ -69,8 +62,8 @@ export default function _layout() {
               </ServicesProvider>
             </ProvidersProvider>
           </CategoriesProvider>
-        </BoskoDataProvider>
-      </UsersProvider>
+        </UsersProvider>
+      </ProfileProvider>
     </AuthProvider>
   );
 }

@@ -12,6 +12,7 @@ import {
 import { useServices } from "@/context/ServicesContext";
 import type { Rate } from "@/types/services";
 import { TOKENS } from "@/theme/tokens";
+import { PremiumButton } from "@/src/components/PremiumButton";
 
 const formatRate = (rate: Rate) => {
   const symbol = rate.currency === "ARS" ? "$" : rate.currency === "USD" ? "US$" : `${rate.currency} `;
@@ -118,14 +119,13 @@ const ProviderProfile: React.FC<ProviderProfileProps> = ({
             <Text style={styles.heroLocation}>{provider.location}</Text>
             <View style={styles.heroActions}>
               <Text style={styles.heroRate}>Desde {formatRate(provider.rate)}</Text>
-              <Pressable
-                onPress={onRequestQuote}
-                accessibilityRole="button"
-                accessibilityLabel="Solicitar cotización"
-                style={[styles.quoteButton, { backgroundColor: categoryAccent }]}
-              >
-                <Text style={styles.quoteButtonText}>Cotizar servicio</Text>
-              </Pressable>
+              <PremiumButton
+                title="Cotizar servicio"
+                onPress={() => onRequestQuote && onRequestQuote()}
+                size="small"
+                style={{ backgroundColor: categoryAccent, borderRadius: TOKENS.radius.lg }}
+                textStyle={{ color: TOKENS.color.text }}
+              />
             </View>
           </View>
         </ImageBackground>
@@ -278,16 +278,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#FFFFFF",
   },
-  quoteButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: TOKENS.radius.lg,
-  },
-  quoteButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: TOKENS.color.text,
-  },
+
   section: {
     gap: 12,
     backgroundColor: "#FFFFFF",

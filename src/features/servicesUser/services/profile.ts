@@ -1,4 +1,5 @@
-import api from "@/axiosinstance";
+import api from "@/core/api/axiosinstance";
+
 
 export interface UserProfile {
     id: string;
@@ -8,6 +9,7 @@ export interface UserProfile {
     lastName?: string;
     bio?: string;
     avatarUrl?: string;
+    bannerUrl?: string;
     location?: string;
     isVerified: boolean;
     createdAt: string;
@@ -19,6 +21,7 @@ export interface UpdateProfilePayload {
     lastName?: string;
     bio?: string;
     avatarUrl?: string;
+    bannerUrl?: string;
     location?: string;
 }
 
@@ -27,8 +30,19 @@ export interface UpdateProfilePayload {
  * GET /auth/me
  */
 export async function getCurrentUserProfile(): Promise<UserProfile> {
-    const { data } = await api.get<UserProfile>("/auth/me");
-    return data;
+    console.log("🌐 [ProfileService] Fetching current user profile from /auth/me");
+    try {
+        const { data } = await api.get<UserProfile>("/auth/me");
+        console.log("✅ [ProfileService] Profile fetched successfully:", data);
+        return data;
+    } catch (error: any) {
+        console.error("❌ [ProfileService] Error fetching profile:", {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data
+        });
+        throw error;
+    }
 }
 
 /**

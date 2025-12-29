@@ -9,12 +9,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { MotiView } from "moti";
-
-import { SERVICE_CATEGORIES } from "@/features/servicesUser/constants/serviceCategories";
-import {
-  SERVICE_PROVIDERS,
-  ServiceProvider,
-} from "@/features/servicesUser/constants/serviceProviders";
 import { TOKENS } from "@/core/design-system/tokens";
 
 export default function CategoryServicesScreen() {
@@ -22,12 +16,6 @@ export default function CategoryServicesScreen() {
   const router = useRouter();
 
   const categoryId = typeof params.id === "string" ? params.id : undefined;
-  const category = SERVICE_CATEGORIES.find((item) => item.id === categoryId);
-
-  const services = SERVICE_PROVIDERS.filter(
-    (provider) => provider.categoryId === categoryId
-  );
-  const accentColor = category?.accent ?? "#E8ECF2";
 
   function handleBack() {
     router.back();

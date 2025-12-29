@@ -1,6 +1,6 @@
 import {
+  ActivityIndicator,
   FlatList,
-  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -9,98 +9,119 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
+import { useCallback, useEffect, useMemo } from "react";
 
-import {
-  SERVICE_CATEGORIES,
-  ServiceCategory,
-} from "@/features/servicesUser/constants/serviceCategories";
-import {
-  SERVICE_PROVIDERS,
-  ServiceProvider,
-} from "@/features/servicesUser/constants/serviceProviders";
+import { useCategories } from "@/src/contexts/CategoriesContext";
+import { useProviders } from "@/src/contexts/ProvidersContext";
+import { Category } from "@/src/interfaces/category";
+import { useServices } from "../state/ServicesContext";
 import { TOKENS } from "@/core/design-system/tokens";
-import { useCallback, useMemo } from "react";
 
-type CategoryWithCount = ServiceCategory & { servicesCount: number };
+type CategoryWithCount = Category & { servicesCount: number };
+type CategoryListItem = CategoryWithCount;
 
-const categoriesWithCounts: CategoryWithCount[] = SERVICE_CATEGORIES.map(
-  (category) => {
-    const servicesInCategory = SERVICE_PROVIDERS.filter(
-      (provider) => provider.categoryId === category.id
-    );
-
-    return {
-      ...category,
-      servicesCount: servicesInCategory.length,
-    };
-  }
-);
-
-const featuredServices: ServiceProvider[] = SERVICE_PROVIDERS.slice(0, 6);
+const FALLBACK_ACCENTS = ["#E6F0FF", "#F5ECFF", "#FFF4E5", "#FFEFF3"];
 
 export default function ServicesScreen() {
   const router = useRouter();
+  const { services } = useServices();
 
-  const categories = useMemo<CategoryListItem[]>(() => {
-    const counts = SERVICE_PROVIDERS.reduce<Record<string, number>>(
-      (acc, provider) => {
-        acc[provider.categoryId] = (acc[provider.categoryId] ?? 0) + 1;
-        return acc;
-      },
-      {}
-    );
+  const {
+    categories,
+    loading: categoriesLoading,
+    error: categoriesError,
+  } = useCategories();
+  const {
+    providers,
+    loading: providersLoading,
+    error: providersError,
+    loadProviders,
+  } = useProviders();
 
-    return SERVICE_CATEGORIES.map((category) => ({
+  console.log(categories);
+  useEffect(() => {
+    if (providers.length === 0) {
+      loadProviders().catch((err) => console.error(err));
+    }
+  }, [providers.length, loadProviders]);
+
+  const categoriesWithCounts = useMemo<CategoryListItem[]>(() => {
+    const counts = providers.reduce<Record<string, number>>((acc, provider) => {
+      const categoryId =
+        provider.categoryId ??
+        (provider as any)?.category?.id ??
+        (provider as any)?.category_id;
+      if (categoryId) {
+        acc[categoryId] = (acc[categoryId] ?? 0) + 1;
+      }
+      return acc;
+    }, {});
+
+    return categories.map((category, index) => ({
       ...category,
+      accent:
+        category.accent ?? FALLBACK_ACCENTS[index % FALLBACK_ACCENTS.length],
+      icon: category.icon ?? "*",
       servicesCount: counts[category.id] ?? 0,
     }));
-  }, []);
+  }, [categories, providers]);
+
+  const loading = categoriesLoading || providersLoading;
 
   const handleCategoryPress = useCallback(
-    (category: ServiceCategory) => {
+    (category: Category) => {
       router.push({
-        pathname: "/services/category/[id]",
+        pathname: "/(tabs)/services/category/[id]",
         params: { id: category.id },
       });
     },
     [router]
   );
 
-  const renderCategory = useCallback(
-    ({ item, index }: { item: CategoryListItem; index: number }) => (
-      <MotiView
-        from={{ opacity: 0, translateY: 24 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: "timing", duration: 420, delay: index * 70 }}
-        style={styles.cardWrapper}
-      >
-        <Pressable
-          onPress={() => handleCategoryPress(item)}
-          accessibilityRole="button"
-          accessibilityLabel={item.title}
-          accessibilityHint={`Abrir categoría ${item.title}`}
-          style={[styles.card, { backgroundColor: item.accent }]}
-          android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
-        >
-          <View style={styles.cardHeader}>
-            <Text style={styles.icon}>{item.icon}</Text>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>{item.servicesCount}</Text>
-              <Text style={styles.countLabel}>servicios</Text>
-            </View>
-          </View>
-          <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardDescription}>{item.description}</Text>
-          </View>
-        </Pressable>
-      </MotiView>
-    ),
-    [handleCategoryPress]
+  const featuredServices = useMemo(() => {
+    const collected = categories.flatMap((category) =>
+      services.filter((service) => service.categoryId === category.id)
+    );
+    return collected.slice(0, 6);
+  }, [categories, services]);
+
+  const listEmpty = (
+    <View style={styles.emptyState}>
+      {categoriesLoading ? (
+        <ActivityIndicator />
+      ) : (
+        <Text style={styles.emptyText}>
+          Pronto habra categorias disponibles.
+        </Text>
+      )}
+      {categoriesError ? (
+        <Text style={styles.errorText}>{categoriesError}</Text>
+      ) : null}
+    </View>
   );
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {loading ? (
+        <View style={styles.header}>
+          <Text style={styles.heading}>Cargando categorias...</Text>
+        </View>
+      ) : null}
+      {categoriesError || providersError ? (
+        <View style={styles.header}>
+          <Text style={styles.subheading}>
+            {categoriesError ||
+              providersError ||
+              "Ocurrio un error al cargar los datos"}
+          </Text>
+        </View>
+      ) : null}
+      {!loading && categoriesWithCounts.length === 0 ? (
+        <View style={styles.header}>
+          <Text style={styles.heading}>No hay categorias para mostrar</Text>
+          <Text style={styles.subheading}>Intenta nuevamente mas tarde.</Text>
+        </View>
+      ) : null}
       <FlatList
         data={categoriesWithCounts}
         keyExtractor={(item) => item.id}
@@ -108,6 +129,7 @@ export default function ServicesScreen() {
         columnWrapperStyle={styles.columnWrapper}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={listEmpty}
         renderItem={({ item, index }) => (
           <MotiView
             from={{ opacity: 0, translateY: 24 }}
@@ -116,73 +138,53 @@ export default function ServicesScreen() {
             style={styles.cardWrapper}
           >
             <Pressable
-              onPress={() =>
-                router.push({
-                  pathname: "./category/[id]",
-                  params: { id: item.id },
-                })
-              }
+              onPress={() => handleCategoryPress(item)}
               style={[styles.card, { backgroundColor: item.accent }]}
               android_ripple={{ color: "rgba(0,0,0,0.08)", borderless: false }}
             >
               <Text style={styles.icon}>{item.icon}</Text>
               <View>
-                <Text style={styles.cardTitle}>{item.title}</Text>
+                <Text style={styles.cardTitle}>{item.name}</Text>
                 <Text style={styles.cardDescription}>{item.description}</Text>
               </View>
               <Text style={styles.cardCount}>
-                {item.servicesCount} servicios
+                {item.servicesCount ?? 0} servicios
               </Text>
             </Pressable>
           </MotiView>
         )}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.heading}>Categorías sugeridas</Text>
+            <Text style={styles.heading}>Categorias sugeridas</Text>
             <Text style={styles.subheading}>
-              Elegí una categoría para ver profesionales disponibles.
+              Elige una categoria para ver profesionales disponibles.
             </Text>
           </View>
         }
-        ListFooterComponent={() => (
-          <View style={styles.servicesSection}>
-            <Text style={styles.sectionTitle}>Servicios destacados</Text>
-            <Text style={styles.sectionSubtitle}>
-              Tocá cualquier profesional para conocer su perfil.
-            </Text>
-            {featuredServices.map((service) => (
-              <Pressable
-                key={service.id}
-                onPress={() =>
-                  router.push({
-                    pathname: "./provider/[id]",
-                    params: { id: service.id },
-                  })
-                }
-                style={styles.serviceCard}
-              >
-                <Image
-                  source={{ uri: service.photo }}
-                  style={styles.serviceAvatar}
+        ListFooterComponent={
+          featuredServices.length > 0 ? (
+            <View style={styles.servicesSection}>
+              <Text style={styles.sectionTitle}>Servicios destacados</Text>
+              <Text style={styles.sectionSubtitle}>
+                Toca cualquier profesional para conocer su perfil.
+              </Text>
+              {featuredServices.map((service) => (
+                <ServiceCard
+                  key={service.id}
+                  serviceId={service.id}
+                  onPress={() =>
+                    router.push({
+                      pathname: "./provider/[id]",
+                      params: { id: service.id },
+                    })
+                  }
+                  accessibilityHint={`Abrir perfil de ${service.title}`}
+                  style={styles.serviceCard}
                 />
-                <View style={styles.serviceInfo}>
-                  <Text style={styles.serviceName}>{service.name}</Text>
-                  <Text style={styles.serviceHeadline}>{service.title}</Text>
-                  <View style={styles.serviceMetaRow}>
-                    <Text style={styles.serviceMetaHighlight}>
-                      {service.rating.toFixed(1)} ★
-                    </Text>
-                    <View style={styles.metaDot} />
-                    <Text style={styles.serviceMeta}>{service.location}</Text>
-                  </View>
-                  <Text style={styles.serviceRate}>
-                    Desde {formatRate(service.rate)}
-                  </Text>
-                </View>
-              </Pressable>
-            ))}
-          </View>
-        )}
+              ))}
+            </View>
+          ) : null
+        }
       />
     </SafeAreaView>
   );
@@ -191,69 +193,50 @@ export default function ServicesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: TOKENS.color.bg,
+    backgroundColor: "white",
   },
   listContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 10,
     paddingBottom: 40,
     gap: 18,
   },
   columnWrapper: {
-    justifyContent: "space-between",
+    gap: 18,
   },
   header: {
-    paddingVertical: 10,
+    gap: 4,
+    marginBottom: 12,
   },
   heading: {
     fontSize: 24,
     fontWeight: "700",
-    color: TOKENS.color.text,
+    color: TOKENS.color.primary,
   },
   subheading: {
     fontSize: 14,
     color: TOKENS.color.sub,
-    marginTop: 6,
   },
   cardWrapper: {
     flex: 1,
   },
   card: {
-    borderRadius: TOKENS.radius.lg,
-    padding: 16,
-    minHeight: 160,
+    flex: 1,
+    minHeight: 150,
+    borderRadius: TOKENS.radius.xl,
+    padding: 18,
+    gap: 12,
     justifyContent: "space-between",
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 2,
-  },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   icon: {
     fontSize: 32,
-  },
-  countBadge: {
-    backgroundColor: "rgba(255,255,255,0.6)",
-    borderRadius: 12,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    alignItems: "center",
-  },
-  countText: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: TOKENS.color.text,
-  },
-  countLabel: {
-    fontSize: 10,
-    color: TOKENS.color.sub,
-  },
-  cardContent: {
-    gap: 6,
   },
   cardTitle: {
     fontSize: 16,
@@ -261,18 +244,16 @@ const styles = StyleSheet.create({
     color: TOKENS.color.text,
   },
   cardDescription: {
-    fontSize: 12,
+    fontSize: 13,
     color: TOKENS.color.sub,
   },
   cardCount: {
     fontSize: 12,
-    fontWeight: "600",
-    color: TOKENS.color.text,
-    marginTop: 10,
+    color: TOKENS.color.sub,
   },
   servicesSection: {
-    marginTop: 24,
-    paddingBottom: 12,
+    marginTop: 32,
+    gap: 16,
   },
   sectionTitle: {
     fontSize: 20,
@@ -282,77 +263,30 @@ const styles = StyleSheet.create({
   sectionSubtitle: {
     fontSize: 14,
     color: TOKENS.color.sub,
-    marginTop: 6,
-    marginBottom: 16,
   },
   serviceCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderRadius: TOKENS.radius.md,
-    backgroundColor: "#fff",
     marginBottom: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
   },
-  serviceAvatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    marginRight: 12,
-  },
-  serviceInfo: {
-    flex: 1,
-    gap: 4,
-  },
-  serviceName: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: TOKENS.color.text,
-  },
-  serviceHeadline: {
-    fontSize: 13,
-    color: TOKENS.color.sub,
-  },
-  serviceMetaRow: {
-    flexDirection: "row",
+  emptyState: {
+    width: "100%",
     alignItems: "center",
     gap: 8,
+    paddingVertical: 40,
   },
-  serviceMetaHighlight: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: TOKENS.color.primary,
-  },
-  metaDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: TOKENS.color.sub,
-  },
-  serviceMeta: {
-    fontSize: 12,
+  emptyText: {
+    fontSize: 14,
     color: TOKENS.color.sub,
   },
-  serviceRate: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: TOKENS.color.text,
+  errorText: {
+    fontSize: 12,
+    color: "#DC2626",
   },
+  cardHeader: { flexDirection: "row", justifyContent: "space-between" },
+  countBadge: { alignItems: "flex-end" },
+  countText: {
+    fontSize: 16,
+    color: "white",
+  },
+  countLabel: { fontSize: 12, color: "white" },
+  cardContent: { marginTop: 10, gap: 4 },
 });
-
-const formatRate = (rate: number) => {
-  if (!rate) return "Consultar";
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    maximumFractionDigits: 0,
-  }).format(rate);
-};
-
-interface CategoryListItem extends ServiceCategory {
-  servicesCount: number;
-}
