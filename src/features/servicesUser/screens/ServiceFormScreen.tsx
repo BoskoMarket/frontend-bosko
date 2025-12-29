@@ -62,7 +62,11 @@ export default function ServiceFormScreen() {
   const params = useLocalSearchParams<{ serviceId?: string }>();
   const { services, loading, loadServices, addService, editService } =
     useServices();
-  const { categories, loading: categoriesLoading, loadCategories } = useCategories();
+  const {
+    categories,
+    loading: categoriesLoading,
+    loadCategories,
+  } = useCategories();
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -285,17 +289,18 @@ export default function ServiceFormScreen() {
                 ]}
               >
                 <Text
-                  style={[styles.categoryText, selected && styles.categoryTextSelected]}
+                  style={[
+                    styles.categoryText,
+                    selected && styles.categoryTextSelected,
+                  ]}
                 >
                   {option.name}
                 </Text>
               </Text>
-              </Pressable>
-            );
-          })
-        )}
+            </Pressable>
+          );
+        })}
       </View>
-
 
       <Text style={styles.label}>Foto</Text>
       {imageUri ? (
@@ -315,7 +320,10 @@ export default function ServiceFormScreen() {
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <Pressable
-        style={[styles.submitButton, (submitting || categoriesLoading) && styles.submitButtonDisabled]}
+        style={[
+          styles.submitButton,
+          (submitting || categoriesLoading) && styles.submitButtonDisabled,
+        ]}
         onPress={handleSubmit}
         disabled={submitting || categoriesLoading}
       >

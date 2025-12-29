@@ -1,7 +1,7 @@
+import { API_URL } from "@/core/config/env";
 import axios from "axios";
 import { getItemAsync } from "expo-secure-store";
 
-import { API_URL } from "@/env";
 
 const http = axios.create({
   baseURL: API_URL,

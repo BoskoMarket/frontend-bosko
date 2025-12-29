@@ -26,31 +26,33 @@ export default function _layout() {
   return (
     <AuthProvider>
       <UsersProvider>
-        <CategoriesProvider>
-          <ProvidersProvider>
-            <ServicesProvider>
-              <SearchProvider>
-                <PaymentsProvider>
-                  <OrdersProvider>
-                    <PostsProvider serviceId="global">
-                      <ReviewsProvider serviceId="global">
-                        {/* <Redirect href="/login" /> */}
-                        <Tabs
-                          screenOptions={{
-                            headerShown: false,
-                            tabBarStyle: {
-                              display: "none",
-                            },
-                          }}
-                        />
-                      </ReviewsProvider>
-                    </PostsProvider>
-                  </OrdersProvider>
-                </PaymentsProvider>
-              </SearchProvider>
-            </ServicesProvider>
-          </ProvidersProvider>
-        </CategoriesProvider>
+        <BoskoDataProvider>
+          <CategoriesProvider>
+            <ProvidersProvider>
+              <ServicesProvider>
+                <SearchProvider>
+                  <PaymentsProvider>
+                    <OrdersProvider>
+                      <PostsProvider serviceId="global">
+                        <ReviewsProvider serviceId="global">
+                          {/* <Redirect href="/login" /> */}
+                          <Tabs
+                            screenOptions={{
+                              headerShown: false,
+                              tabBarStyle: {
+                                display: "none",
+                              },
+                            }}
+                          />
+                        </ReviewsProvider>
+                      </PostsProvider>
+                    </OrdersProvider>
+                  </PaymentsProvider>
+                </SearchProvider>
+              </ServicesProvider>
+            </ProvidersProvider>
+          </CategoriesProvider>
+        </BoskoDataProvider>
       </UsersProvider>
     </AuthProvider>
   );
