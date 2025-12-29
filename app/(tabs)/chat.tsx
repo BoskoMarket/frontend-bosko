@@ -1,10 +1,3 @@
-import { View, Text } from "react-native";
-import React from "react";
+import Chat from "@/src/usuarios/screens/Chat";
 
-export default function chat() {
-  return (
-    <View>
-      <Text>chat</Text>
-    </View>
-  );
-}
+export default Chat;

@@ -1,10 +1,3 @@
-import { View, Text } from "react-native";
-import React from "react";
+import Payments from "@/src/pagos/screens/Payments";
 
-export default function Payments() {
-  return (
-    <View>
-      <Text>Payments</Text>
-    </View>
-  );
-}
+export default Payments;

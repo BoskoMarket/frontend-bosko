@@ -1,7 +1,7 @@
 import { View, Text } from "react-native";
 import React from "react";
 import { Redirect, Slot, Tabs } from "expo-router";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/src/auth/hooks/AuthContext";
 
 export default function _layout() {
   const { authLoaded, authState } = useAuth();

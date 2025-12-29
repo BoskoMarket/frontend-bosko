@@ -1,5 +1,4 @@
-import React from "react";
-import ServiceFormScreen from "@/screens/ServiceFormScreen";
+import ServiceFormScreen from "@/src/ticketing/screens/ServiceFormScreen";
 
 export default function AddServices() {
   return <ServiceFormScreen />;
