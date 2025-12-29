@@ -2,7 +2,7 @@
 import { Tabs, useRouter } from "expo-router";
 import { View, Pressable, Text, StyleSheet } from "react-native";
 // import { useUser } from "@/hooks/useUser";
-import { TOKENS } from "@/theme/tokens";
+import { TOKENS } from "@/core/design-system/tokens";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function TabsLayout() {

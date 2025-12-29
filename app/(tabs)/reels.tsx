@@ -1,10 +1,3 @@
-import { View, Text } from "react-native";
-import React from "react";
+import ReelsScreen from "@/reels/screens/ReelsScreen";
 
-export default function reels() {
-  return (
-    <View>
-      <Text>reels</Text>
-    </View>
-  );
-}
+export default ReelsScreen;
