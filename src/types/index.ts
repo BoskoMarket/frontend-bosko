@@ -1,4 +1,5 @@
-import { ServiceProvider } from "@/constants/serviceProviders";
+import { ServiceProvider } from "@/features/servicesUser/constants/serviceProviders";
+
 export type { ServiceProvider };
 
 export interface Photo {

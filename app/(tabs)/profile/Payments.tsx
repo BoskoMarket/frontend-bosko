@@ -1,10 +1,3 @@
-import { View, Text } from "react-native";
-import React from "react";
+import PaymentsScreen from "@/features/payments/screens/PaymentsScreen";
 
-export default function Payments() {
-  return (
-    <View>
-      <Text>Payments</Text>
-    </View>
-  );
-}
+export default PaymentsScreen;

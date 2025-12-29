@@ -1,6 +1,3 @@
-import React from "react";
-import { ProfilePage } from "@/src/features/profile/ProfilePage";
+import ProfileScreen from "@/users/screens/ProfileScreen";
 
-export default function ProfileScreen() {
-  return <ProfilePage />;
-}
+export default ProfileScreen;

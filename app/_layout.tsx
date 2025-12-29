@@ -1,17 +1,17 @@
 import React from "react";
 import { Redirect, Tabs } from "expo-router";
-import { AuthProvider } from "@/context/AuthContext";
-import { OrdersProvider } from "@/context/OdersContext";
-import { PaymentsProvider } from "@/context/PaymentContext";
-import { PostsProvider } from "@/context/PostsContext";
-import { ReviewsProvider } from "@/context/ReviewsContext";
-import { ServicesProvider } from "@/context/ServicesContext";
-import { UserProvider } from "@/context/UserContext";
-import { BoskoDataProvider } from "@/src/shared/state/DataContext";
+import { AuthProvider } from "@/features/auth/state/AuthContext";
+import { OrdersProvider } from "@/features/orders/state/OdersContext";
+import { PaymentsProvider } from "@/features/payments/state/PaymentContext";
+import { PostsProvider } from "@/features/servicesUser/state/PostsContext";
+import { ReviewsProvider } from "@/features/servicesUser/state/ReviewsContext";
+import { ServicesProvider } from "@/features/servicesUser/state/ServicesContext";
 import {
   configureReanimatedLogger,
   ReanimatedLogLevel,
 } from "react-native-reanimated";
+import { BoskoDataProvider } from "@/shared/state/DataContext";
+import { UserProvider } from "@/features/users/state/UserContext";
 
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
