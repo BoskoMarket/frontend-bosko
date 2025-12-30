@@ -21,7 +21,7 @@ import { useAuth } from "@/features/auth/state/AuthContext";
 import { globalStyles } from "@/core/design-system/global-styles";
 
 export default function RegisterView({ toLogin }: { toLogin: () => void }) {
-  const { register } = useAuth();
+  const { registerUser } = useAuth();
   const ref = React.useRef<ICarouselInstance>(null);
   const progress = useSharedValue<number>(0);
   const [currentIndex, setCurrentIndex] = React.useState(0);
@@ -73,15 +73,16 @@ export default function RegisterView({ toLogin }: { toLogin: () => void }) {
   };
 
   const handleFinish = async () => {
-    const response = await register(formData);
+    try {
+      const response = await registerUser(formData);
 
-    if (response.data) {
-      // Registro exitoso, redirigir al login
-      router.push("/(tabs)");
-    } else {
-      console.error("Error al registrar usuario");
+      console.log("Registration successful, navigating to tabs");
+      // Navigation will happen automatically when authState updates
+      // OnBoarding will detect the token and redirect
+      router.replace("/(tabs)");
+    } catch (error) {
+      console.error("Error al registrar usuario:", error);
     }
-    // router.push("/confirmar-registro");
   };
 
   return (
@@ -122,8 +123,8 @@ export default function RegisterView({ toLogin }: { toLogin: () => void }) {
                   item.field === "email"
                     ? "email-address"
                     : item.field === "phone"
-                    ? "phone-pad"
-                    : "default"
+                      ? "phone-pad"
+                      : "default"
                 }
                 autoCapitalize="none"
               />

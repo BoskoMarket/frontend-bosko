@@ -38,7 +38,7 @@ export default function ServicesScreen() {
     loadProviders,
   } = useProviders();
 
-  console.log(categories);
+
   useEffect(() => {
     if (providers.length === 0) {
       loadProviders().catch((err) => console.error(err));

@@ -1,57 +1,101 @@
+/**
+ * ButtonBosko - Botón principal con diseño moderno y animaciones de alta calidad
+ * Incluye efecto de escala al presionar y sombras difuminadas (glow)
+ */
+
 import {
-  View,
   Text,
-  Pressable,
   StyleSheet,
-  PressableProps,
+  Pressable,
 } from "react-native";
 import React from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { globalStyles } from "@/core/design-system/global-styles";
+import Colors from "@/core/design-system/Colors";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
-interface ButtonBoskoProps extends PressableProps {
+interface ButtonBoskoProps {
   title: string;
   onPress: () => void;
+  isLoading?: boolean;
 }
 
-export default function ButtonBosko({ title, onPress }: ButtonBoskoProps) {
+export default function ButtonBosko({ title, onPress, isLoading }: ButtonBoskoProps) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.95);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
+
   return (
-    <LinearGradient
-      colors={[globalStyles.colorPrimary, globalStyles.colorPrimary]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={styles.buttonContainer}
-    >
-      <Pressable onPress={onPress}>
-        <Text style={styles.buttonText}>{title}</Text>
+    <Animated.View style={[styles.container, animatedStyle]}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={styles.pressable}
+      >
+        <LinearGradient
+          // Gradiente más rico con un toque de brillo
+          colors={[globalStyles.colorPrimary, "#a0032a", Colors.colorPrimaryDark]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.gradient}
+        >
+          <Text style={styles.text}>
+            {isLoading ? "Cargando..." : title}
+          </Text>
+        </LinearGradient>
       </Pressable>
-    </LinearGradient>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  buttonContainer: {
-    // maxWidth: 200,
+  container: {
     width: "100%",
+    maxWidth: 200,
+    borderRadius: 30,
 
-    maxWidth: 180,
-    borderRadius: 55,
-    padding: 12,
-    paddingHorizontal: 40,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
+    // Sombra "Glow" moderna
+    shadowColor: Colors.colorPrimary,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 8,
     },
-    shadowOpacity: 0.85,
-    shadowRadius: 3.84,
-    elevation: 15,
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  buttonText: {
+  pressable: {
+    width: "100%",
+    borderRadius: 30,
+    overflow: "hidden", // Para que el gradiente respete el borde
+  },
+  gradient: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 30, // Asegura que el gradiente tenga border radius
+  },
+  text: {
     color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "bold",
+    fontSize: 17,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+    textTransform: "uppercase", // Estilo moderno tipo botón de acción
   },
 });

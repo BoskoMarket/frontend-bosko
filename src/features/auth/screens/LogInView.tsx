@@ -35,17 +35,14 @@ export default function LogInView({ toLogin }: { toLogin: () => void }) {
     setIsLoading(true);
 
     try {
-      const response = await login(formData);
+      await login(formData);
 
-      // response.data = 1;
-      // if (response.data) {
-      //   // Registro exitoso, redirigir al login
-      //   router.push("/(tabs)");
-      // }
-      router.push("/(tabs)");
+      console.log("Login successful, navigating to tabs");
+      // Use replace to prevent going back to login
+      router.replace("/(tabs)");
     } catch (error) {
-      setError("Error al registrar usuario. Por favor intenta nuevamente.");
-      console.error("Register error:", error);
+      setError("Error al iniciar sesión. Por favor intenta nuevamente.");
+      console.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }

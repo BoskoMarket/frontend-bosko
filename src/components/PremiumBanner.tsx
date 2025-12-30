@@ -6,10 +6,12 @@ import { useRouter } from "expo-router";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/core/design-system/Colors";
+import { useProfile } from "@/features/profile/state/ProfileContext";
 
 export const PremiumBanner = () => {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { profile } = useProfile()
 
   return (
     <View style={styles.container}>
@@ -21,13 +23,13 @@ export const PremiumBanner = () => {
       >
         <View style={styles.headerContent}>
           <View>
-            <Text style={styles.greeting}>Hola, Frank</Text>
+            <Text style={styles.greeting}>Hola, {profile?.firstName}</Text>
             <Text style={styles.subGreeting}>¿Qué necesitas hoy?</Text>
           </View>
           <View style={styles.actionsRow}>
             <Pressable
               style={styles.iconButton}
-              onPress={() => router.push("/(tabs)/search")}
+              onPress={() => router.push("/search")}
             >
               <Ionicons
                 name="search-outline"

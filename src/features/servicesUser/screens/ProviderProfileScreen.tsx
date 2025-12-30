@@ -12,42 +12,119 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { MotiView } from "moti";
 
-import { SERVICE_CATEGORIES } from "@/features/servicesUser/constants/serviceCategories";
-import {
-  SERVICE_PROVIDERS,
-  ServiceProvider,
-} from "@/features/servicesUser/constants/serviceProviders";
+
+import { Provider } from "@/src/interfaces/provider";
+import { useProviders } from "@/contexts/ProvidersContext";
+import { useCategories } from "@/contexts/CategoriesContext";
 import { TOKENS } from "@/core/design-system/tokens";
+import { Service } from "@/src/interfaces/service";
+import ServiceCard from "../components/ServiceCard";
+import { ServiceSummary } from "@/types/services";
+import { ServiceDetailModal } from "../components/ServiceDetailModal";
 
 export default function ProviderProfileScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
+  const { fetchProvider, findProvider, loadProviderServices } = useProviders();
+  const { categories } = useCategories();
 
-  const [provider, setProvider] = useState<ServiceProvider | undefined>();
+  const [provider, setProvider] = useState<Provider | undefined>();
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const [selectedService, setSelectedService] = useState<ServiceSummary | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     const providerId = typeof params.id === "string" ? params.id : undefined;
-    const foundProvider = SERVICE_PROVIDERS.find(
-      (item) => item.id === providerId
-    );
-    setProvider(foundProvider);
-  }, [params.id]);
+    console.log(providerId, "providerId en providerProfileScreen");
+
+    if (!providerId) return;
+
+    let isMounted = true;
+
+    const loadData = async () => {
+      const foundProvider = await findProvider(providerId);
+      console.log(foundProvider, "foundProvider en providerProfileScreen");
+
+
+      if (foundProvider) {
+        if (isMounted) setProvider(foundProvider);
+      } else {
+        if (isMounted) setLoading(true);
+        try {
+          const data = await fetchProvider(providerId);
+          console.log(data, "data provider en providerProfileScreen");
+          if (data && isMounted) setProvider(data);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          if (isMounted) setLoading(false);
+        }
+      }
+    };
+
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [params.id, findProvider, fetchProvider]);
+
+  // Fetch services for the provider
+  useEffect(() => {
+    if (!provider?.id) return;
+
+    let isMounted = true;
+
+    loadProviderServices(provider.id)
+      .then(data => {
+        if (isMounted && data) {
+          setServices(data);
+        }
+      })
+      .catch(err => console.error("Error loading services:", err));
+
+    return () => { isMounted = false; };
+  }, [provider?.id, loadProviderServices]);
 
   function handleBack() {
     router.back();
   }
 
-  function formatRate(rate: ServiceProvider["rate"]) {
+  function formatRate(rate: Provider["rate"]) {
+    if (!rate) return "Consultar";
     const symbol =
       rate.currency === "ARS"
         ? "$"
         : rate.currency === "USD"
-        ? "US$"
-        : `${rate.currency} `;
+          ? "US$"
+          : `${rate.currency} `;
     return `${symbol}${rate.amount} / ${rate.unit}`;
   }
 
   if (!provider) {
+    if (loading) {
+      return (
+        <SafeAreaView style={styles.safeArea}>
+          <Stack.Screen options={{ headerShown: false }} />
+          <View style={styles.emptyState}>
+            <MotiView
+              from={{ opacity: 0.5, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{
+                type: "timing",
+                duration: 800,
+                loop: true,
+              }}
+            >
+              <Text style={styles.emptyTitle}>Cargando perfil...</Text>
+            </MotiView>
+          </View>
+        </SafeAreaView>
+      )
+    }
     return (
       <SafeAreaView style={styles.safeArea}>
         <Stack.Screen options={{ headerShown: false }} />
@@ -64,19 +141,13 @@ export default function ProviderProfileScreen() {
     );
   }
 
-  const category = SERVICE_CATEGORIES.find(
-    (item) => item.id === provider.categoryId
+  const category = categories.find(
+    (item) => item.id === (provider.categoryId as string)
   );
-  const accentColor = category?.accent ?? "#E8ECF2";
+  const accentColor = category?.id ? TOKENS.color.primary : "#E8ECF2"; // Fallback color logic
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* <Stack.Screen
-        options={{
-          title: provider.name,
-          headerLargeTitle: false,
-        }}
-      /> */}
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -104,7 +175,7 @@ export default function ProviderProfileScreen() {
               <Text style={styles.heroSummary}>{provider.summary}</Text>
               <View style={styles.heroStats}>
                 <Text style={styles.heroRating}>
-                  ★ {provider.rating.toFixed(1)}
+                  ★ {provider.rating ? provider.rating : "N/D"}
                 </Text>
                 <View style={styles.dot} />
                 <Text style={styles.heroReviews}>
@@ -124,6 +195,48 @@ export default function ProviderProfileScreen() {
           </ImageBackground>
         </View>
 
+        {services.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Servicios disponibles</Text>
+            <View style={styles.servicesList}>
+              {services.map((service) => {
+                // Map Service to ServiceSummary fallback
+                // We create a temporary fallback object because ServiceCard expects ServiceSummary
+                // and Service interface might differ slightly.
+                const fallback: ServiceSummary = {
+                  id: service.id,
+                  title: service.title,
+                  name: provider.name || "", // Provider name
+                  thumbnail: service.image || "",
+                  providerId: provider.id || service.providerId || "",
+                  location: service.location || provider.location || "",
+                  categoryId: (service.categoryId as string) || (provider.categoryId as string) || "",
+                  summary: service.description || "",
+                  averageRating: service.rating ?? 0,
+                  reviewsCount: service.reviewCount ?? 0,
+                  rate: {
+                    amount: service.price || 0,
+                    currency: service.currency || 'USD',
+                    unit: 'fixed' // Defaulting to fixed as Service doesn't have unit
+                  }
+                };
+
+                return (
+                  <ServiceCard
+                    key={service.id}
+                    serviceId={service.id}
+                    fallback={fallback}
+                    onPress={() => {
+                      setSelectedService(fallback);
+                      setModalVisible(true);
+                    }}
+                  />
+                );
+              })}
+            </View>
+          </View>
+        )}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Sobre el servicio</Text>
           <Text style={styles.sectionBody}>{provider.bio}</Text>
@@ -132,7 +245,7 @@ export default function ProviderProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Especialidades</Text>
           <View style={styles.tagsRow}>
-            {provider.tags.map((tag) => (
+            {provider.tags?.map((tag) => (
               <View
                 key={tag}
                 style={[styles.tag, { backgroundColor: accentColor }]}
@@ -146,9 +259,9 @@ export default function ProviderProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Trabajos recientes</Text>
           <View style={styles.worksList}>
-            {provider.recentWorks.map((work, index) => (
+            {provider.recentWorks?.map((work, index) => (
               <MotiView
-                key={work.id}
+                key={work.id as string}
                 from={{ opacity: 0, translateY: 16 }}
                 animate={{ opacity: 1, translateY: 0 }}
                 transition={{
@@ -168,6 +281,12 @@ export default function ProviderProfileScreen() {
           </View>
         </View>
       </ScrollView>
+
+      <ServiceDetailModal
+        visible={modalVisible}
+        service={selectedService}
+        onClose={() => setModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -317,6 +436,10 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 12,
     color: TOKENS.color.text,
+  },
+  servicesList: {
+    gap: 16,
+    paddingTop: 8,
   },
   worksList: {
     gap: 12,

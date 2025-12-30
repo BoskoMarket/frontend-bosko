@@ -1,74 +1,94 @@
+/**
+ * OnBoardingSlide - Componente individual de cada slide del carrusel de onboarding
+ * Muestra el título, animación Lottie y subtítulo de cada pantalla de bienvenida
+ * Con animaciones de entrada suaves usando react-native-reanimated
+ */
+
 import { View, Text, StyleSheet } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import LottieView from "lottie-react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { globalStyles } from "@/core/design-system/global-styles";
+import Colors from "@/core/design-system/Colors";
 
-export default function OnBoardingSlide({
-  item,
-}: {
-  item: { image?: any; title: string; subtitle: string };
-}) {
+interface OnBoardingSlideProps {
+  item: {
+    image?: any;
+    title: string;
+    subtitle: string;
+  };
+}
+
+export default function OnBoardingSlide({ item }: OnBoardingSlideProps) {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(20);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 600 });
+    translateY.value = withSpring(0, { damping: 15 });
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
   return (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-      <Text style={[globalStyles.title, { textAlign: "center" }]}>
-        {item.title}
-      </Text>
-      {item.image ? (
-        <LottieView
-          source={item.image}
-          autoPlay
-          loop
-          style={{ width: 300, height: 300 }}
-        />
-      ) : null}
+    <Animated.View style={[styles.container, animatedStyle]}>
+      <Text style={styles.title}>{item.title}</Text>
 
-      <Text
-        style={[globalStyles.subtitle, { textAlign: "center", maxWidth: 300 }]}
-      >
-        {item.subtitle}
-      </Text>
-    </View>
+      {item.image && (
+        <View style={styles.lottieContainer}>
+          <LottieView
+            source={item.image}
+            autoPlay
+            loop
+            style={styles.lottie}
+          />
+        </View>
+      )}
+
+      <Text style={styles.subtitle}>{item.subtitle}</Text>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  input: {
-    borderColor: "gray",
-    borderWidth: 2,
-    maxWidth: 200,
-    width: "100%",
-    textAlign: "center",
-    borderRadius: 10,
-    padding: 10,
-  },
-  progressBarWrapper: {
-    position: "absolute",
-    bottom: 20,
-    left: 20,
-    right: 20,
-    height: 10,
-    backgroundColor: "#e0e0e0",
-    borderRadius: 5,
-  },
-  progressBarFill: {
-    height: "100%",
-    backgroundColor: "#3b82f6",
-    borderRadius: 5,
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 30,
   },
   title: {
-    fontSize: 44,
+    fontSize: 32,
     fontWeight: "bold",
     textAlign: "center",
-
-    marginTop: 30,
-    lineHeight: 50,
-
-    letterSpacing: 0.1,
-    color: globalStyles.colorPrimary,
+    color: Colors.colorPrimary,
+    marginBottom: 20,
+    letterSpacing: 0.5,
+  },
+  lottieContainer: {
+    width: 320,
+    height: 320,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  lottie: {
+    width: "100%",
+    height: "100%",
   },
   subtitle: {
     fontSize: 16,
     textAlign: "center",
+    color: "#555",
+    lineHeight: 24,
+    maxWidth: 300,
     marginTop: 10,
   },
 });
