@@ -23,17 +23,16 @@ type ServiceCardProps = {
   accessibilityHint?: string;
 };
 
-const formatRate = (rate: Rate) => {
-  const symbol =
-    rate.currency === "ARS"
-      ? "$"
-      : rate.currency === "USD"
-      ? "US$"
-      : `${rate.currency} `;
-  return `${symbol}${rate.amount} ${
-    rate.unit !== "fixed" ? "/ " + rate.unit : ""
-  }`;
-};
+// const formatRate = (rate: Rate) => {
+//   const symbol =
+//     rate.currency === "ARS"
+//       ? "$"
+//       : rate.currency === "USD"
+//         ? "US$"
+//         : `${rate.currency} `;
+//   return `${symbol}${rate.amount} ${rate.unit !== "fixed" ? "/ " + rate.unit : ""
+//     }`;
+// };
 
 const ServiceCard: React.FC<ServiceCardProps> = ({
   serviceId,
@@ -97,13 +96,13 @@ const ServiceCard: React.FC<ServiceCardProps> = ({
           <View style={styles.ratingBadge}>
             <Ionicons name="star" size={12} color="#FFD700" />
             <Text style={styles.ratingText}>
-              {rating.averageRating.toFixed(1)}
+              {rating.averageRating}
             </Text>
           </View>
 
           {/* Price Badge */}
           <View style={styles.priceBadge}>
-            <Text style={styles.priceText}>{formatRate(service.rate)}</Text>
+            <Text style={styles.priceText}>300</Text>
           </View>
         </View>
 

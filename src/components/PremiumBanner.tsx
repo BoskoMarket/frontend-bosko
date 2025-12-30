@@ -27,7 +27,7 @@ export const PremiumBanner = () => {
           <View style={styles.actionsRow}>
             <Pressable
               style={styles.iconButton}
-              onPress={() => router.push("/(tabs)/search")}
+              onPress={() => router.push("/search")}
             >
               <Ionicons
                 name="search-outline"

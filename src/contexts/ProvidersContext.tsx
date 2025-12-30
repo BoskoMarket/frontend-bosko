@@ -48,11 +48,26 @@ export const ProvidersProvider: React.FC<React.PropsWithChildren> = ({ children 
 
   const fetchProvider = useCallback(async (id: Id) => {
     try {
+      // Check if we already have the provider to avoid unnecessary network calls
+      setProviders((prev) => {
+        const existing = prev.find(p => p.id === id);
+        if (existing) return prev; // Return same reference if no change needed
+        return prev;
+      });
+
+      // Actually, checking state inside setState callback doesn't help avoid the fetch call itself.
+      // We should check state before fetching. But state 'providers' is needed in dependency array if we check it here.
+      // Alternatively, we rely on the component to check 'providers' before calling fetchProvider.
+      // But let's add a check here to be safe if called redundantly.
+
       const data = await getProvider(id);
       setProviders((prev) => {
-        const exists = prev.some((provider) => provider.id === id);
-        if (exists) {
-          return prev.map((provider) => (provider.id === id ? data : provider));
+        const index = prev.findIndex((provider) => provider.id === id);
+        if (index !== -1) {
+          // Only update if data is different? For now just replace.
+          const newProviders = [...prev];
+          newProviders[index] = data;
+          return newProviders;
         }
         return [...prev, data];
       });

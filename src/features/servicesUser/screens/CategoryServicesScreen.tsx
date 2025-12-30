@@ -18,17 +18,28 @@ import { useServices } from "../state/ServicesContext";
 export default function CategoryServicesScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
-  const { fetchServicesByCategory } = useServices();
+  const {
+    fetchServicesByCategory,
+    getServicesForCategory,
+    categories,
+    servicesStatus,
+  } = useServices();
 
   const categoryId = typeof params.id === "string" ? params.id : undefined;
+
+  // Retrieve category info from loaded categories
+  const category = categories.find((c) => c.id === categoryId);
+  const services = categoryId ? getServicesForCategory(categoryId) : [];
+  const status = categoryId ? servicesStatus[categoryId] : undefined;
+
+  const isLoading = status?.loading && !services.length;
 
   useEffect(() => {
     // Load services for the given category
     if (categoryId) {
-      const category = fetchServicesByCategory(categoryId);
-      console.log(category);
+      fetchServicesByCategory(categoryId).catch((err) => console.error(err));
     }
-  }, [categoryId]);
+  }, []);
 
   function handleBack() {
     router.back();
@@ -36,18 +47,19 @@ export default function CategoryServicesScreen() {
 
   function handleProviderPress(provider: ServiceProvider) {
     router.push({
-      pathname: "../provider/[id]",
+      pathname: "/(tabs)/services/provider/[id]",
       params: { id: provider.id },
     });
   }
 
   function formatRate(rate: ServiceProvider["rate"]) {
+    if (!rate) return "Consultar";
     const symbol =
       rate.currency === "ARS"
         ? "$"
         : rate.currency === "USD"
-        ? "US$"
-        : `${rate.currency} `;
+          ? "US$"
+          : `${rate.currency} `;
     return `${symbol}${rate.amount} / ${rate.unit}`;
   }
 
@@ -65,68 +77,99 @@ export default function CategoryServicesScreen() {
           <Text style={styles.backIcon}>←</Text>
         </Pressable>
         <View style={styles.heroCopy}>
-          <Text style={styles.heroTitle}>{category?.title ?? "Servicios"}</Text>
+          <Text style={styles.heroTitle}>{category?.name ?? "Servicios"}</Text>
           <Text style={styles.heroSubtitle}>
             {category?.description ?? "Descubrí profesionales disponibles."}
           </Text>
         </View>
       </View>
-
-      <FlatList
-        data={services}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        renderItem={({ item, index }) => (
+      {isLoading ? (
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
           <MotiView
-            from={{ opacity: 0, translateY: 28 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ type: "timing", duration: 420, delay: index * 70 }}
-            style={styles.serviceWrapper}
+            from={{ opacity: 0.5, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{
+              type: "timing",
+              duration: 800,
+              loop: true,
+            }}
           >
-            <Pressable
-              onPress={() => handleProviderPress(item)}
-              style={styles.serviceCard}
-              android_ripple={{ color: "rgba(0,0,0,0.04)" }}
-            >
-              <Image
-                source={{ uri: item.photo }}
-                style={styles.avatar}
-                resizeMode="cover"
-              />
-              <View style={styles.serviceInfo}>
-                <View style={styles.nameRow}>
-                  <Text style={styles.serviceName}>{item.name}</Text>
-                  <Text style={styles.serviceRating}>
-                    ★ {item.rating.toFixed(1)}
-                  </Text>
-                </View>
-                <Text style={styles.serviceHeadline}>{item.title}</Text>
-                <View style={styles.metaRow}>
-                  <Text style={styles.servicePrice}>
-                    Desde {formatRate(item.rate)}
-                  </Text>
-                  <View style={styles.dot} />
-                  <Text style={styles.serviceReviews}>
-                    {item.reviews} reseñas
-                  </Text>
-                </View>
-                <Text style={styles.serviceLocation}>{item.location}</Text>
-              </View>
-            </Pressable>
+            <Text style={{ color: TOKENS.color.primary, fontWeight: "600" }}>
+              Cargando servicios...
+            </Text>
           </MotiView>
-        )}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>
-              Pronto habrá profesionales aquí
-            </Text>
-            <Text style={styles.emptySubtitle}>
-              Estamos sumando especialistas en esta categoría.
-            </Text>
-          </View>
-        }
-      />
+        </View>
+      ) : (
+        <FlatList
+          data={services}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item, index }) => {
+            const service = item as any;
+            return (
+              <MotiView
+                from={{ opacity: 0, translateY: 28 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{
+                  type: "timing",
+                  duration: 420,
+                  delay: index * 70,
+                }}
+                style={styles.serviceWrapper}
+              >
+                <Pressable
+                  onPress={() =>
+                    handleProviderPress({
+                      ...service,
+                      id: service.providerId || service.id,
+                    })
+                  }
+                  style={styles.serviceCard}
+                  android_ripple={{ color: "rgba(0,0,0,0.04)" }}
+                >
+                  <Image
+                    source={{ uri: service.photo }}
+                    style={styles.avatar}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.serviceInfo}>
+                    <View style={styles.nameRow}>
+                      <Text style={styles.serviceName}>{service.name}</Text>
+                      <Text style={styles.serviceRating}>
+                        ★ {service.rating ? service.rating.toFixed(1) : "N/D"}
+                      </Text>
+                    </View>
+                    <Text style={styles.serviceHeadline}>{service.title}</Text>
+                    <View style={styles.metaRow}>
+                      <Text style={styles.servicePrice}>
+                        Desde {formatRate(service.rate)}
+                      </Text>
+                      <View style={styles.dot} />
+                      <Text style={styles.serviceReviews}>
+                        {service.reviews} reseñas
+                      </Text>
+                    </View>
+                    <Text style={styles.serviceLocation}>
+                      {service.location}
+                    </Text>
+                  </View>
+                </Pressable>
+              </MotiView>
+            );
+          }}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>
+                Pronto habrá profesionales aquí
+              </Text>
+              <Text style={styles.emptySubtitle}>
+                Estamos sumando especialistas en esta categoría.
+              </Text>
+            </View>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }

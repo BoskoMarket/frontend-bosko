@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MotiView } from 'moti';
-import Colors from '@/constants/Colors';
+import Colors from '@/core/design-system/Colors';
+
 
 const { width } = Dimensions.get('window');
 

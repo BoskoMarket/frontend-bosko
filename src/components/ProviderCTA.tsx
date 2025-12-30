@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { MotiView } from 'moti';
 import Svg, { Path } from 'react-native-svg';
-import Colors from '@/constants/Colors';
+import Colors from '@/core/design-system/Colors';
 import { PremiumButton } from '@/src/components/PremiumButton';
 
 const { width } = Dimensions.get('window');

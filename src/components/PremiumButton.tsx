@@ -115,7 +115,7 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
   };
 
   // Primary gradient colors
-  const defaultGradient = [Colors.colorPrimary, "#5c0117"]; // Deep red/burgundy gradient from palette
+  const defaultGradient: readonly [string, string, ...string[]] = [Colors.colorPrimary, "#5c0117"]; // Deep red/burgundy gradient from palette
   // Alternative Gold Gradient if needed: [Colors.premium.gold, '#B8860B']
 
   // We render content inside a function to reuse it
