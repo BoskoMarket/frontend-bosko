@@ -20,6 +20,7 @@ import { TOKENS } from "@/core/design-system/tokens";
 import { Service } from "@/src/interfaces/service";
 import ServiceCard from "../components/ServiceCard";
 import { ServiceSummary } from "@/types/services";
+import { ServiceDetailModal } from "../components/ServiceDetailModal";
 
 export default function ProviderProfileScreen() {
   const params = useLocalSearchParams();
@@ -30,6 +31,9 @@ export default function ProviderProfileScreen() {
   const [provider, setProvider] = useState<Provider | undefined>();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const [selectedService, setSelectedService] = useState<ServiceSummary | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     const providerId = typeof params.id === "string" ? params.id : undefined;
@@ -222,7 +226,10 @@ export default function ProviderProfileScreen() {
                     key={service.id}
                     serviceId={service.id}
                     fallback={fallback}
-                    onPress={() => console.log("Service pressed:", service.id)}
+                    onPress={() => {
+                      setSelectedService(fallback);
+                      setModalVisible(true);
+                    }}
                   />
                 );
               })}
@@ -274,6 +281,12 @@ export default function ProviderProfileScreen() {
           </View>
         </View>
       </ScrollView>
+
+      <ServiceDetailModal
+        visible={modalVisible}
+        service={selectedService}
+        onClose={() => setModalVisible(false)}
+      />
     </SafeAreaView>
   );
 }
