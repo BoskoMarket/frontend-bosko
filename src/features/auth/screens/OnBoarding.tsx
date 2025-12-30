@@ -1,16 +1,31 @@
-import { View, StyleSheet } from "react-native";
+/**
+ * OnBoarding - Pantalla de bienvenida con carrusel de slides
+ * Se muestra solo la primera vez que el usuario abre la app
+ * Guarda el estado de completado en AsyncStorage y redirige según el estado de autenticación
+ */
+
+import { View, StyleSheet, Dimensions, Text } from "react-native";
 import React from "react";
 import { Redirect, router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Carousel, {
   ICarouselInstance,
-  Pagination,
 } from "react-native-reanimated-carousel";
 import OnBoardingSlide from "@/features/auth/components/OnBoardingSlide";
-import { useSharedValue } from "react-native-reanimated";
+import { Image } from "expo-image";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  SharedValue,
+} from "react-native-reanimated";
 import { globalStyles } from "@/core/design-system/global-styles";
 import ButtonBosko from "@/shared/components/ButtonBosko";
 import { useAuth } from "@/features/auth/state/AuthContext";
+import { LinearGradient } from "expo-linear-gradient";
+import Colors from "@/core/design-system/Colors";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export default function OnBoarding() {
   const progress = useSharedValue<number>(0);
@@ -20,26 +35,16 @@ export default function OnBoarding() {
 
   const ref = React.useRef<ICarouselInstance>(null);
 
-  const onPressPagination = (index: number) => {
-    ref.current?.scrollTo({
-      /**
-       * Calculate the difference between the current index and the target index
-       * to ensure that the carousel scrolls to the nearest index
-       */
-      count: index - progress.value,
-      animated: true,
-    });
-  };
   const slides = [
     {
-      title: "Hola!",
+      title: "¡Hola!",
       subtitle:
         "Bienvenido a Bosko, donde podrás encontrar u ofrecer empleo fácilmente",
-      image: require("@/assets/images/bosko-logo.svg"),
+      image: require("@/assets/lotties/ltUPpJrUU2.json"),
     },
     {
       title: "Servicios en segundos",
-      subtitle: "Desde plomeria hasta clases particulares, todo en un lugar",
+      subtitle: "Desde plomería hasta clases particulares, todo en un lugar",
       image: require("@/assets/lotties/pantalla-empleo.json"),
     },
     {
@@ -55,40 +60,67 @@ export default function OnBoarding() {
       image: require("@/assets/lotties/hombre-escribiendo.json"),
     },
     {
-      title: "¡Registrate ahora!",
+      title: "¡Regístrate ahora!",
       subtitle:
         "Crea tu cuenta y comienza a explorar las oportunidades laborales",
       image: require("@/assets/lotties/register2.json"),
     },
   ];
 
-  // Check if onboarding was completed on mount
-  React.useEffect(() => {
-    const checkOnboarding = async () => {
-      try {
-        const completed = await AsyncStorage.getItem("onboardingComplete");
-        setOnboardingComplete(completed === "true");
-      } catch (error) {
-        console.error("Error checking onboarding status:", error);
-        setOnboardingComplete(false);
-      }
-    };
-    checkOnboarding();
-  }, []);
+  // Componente de paginación personalizada con puntos deslizantes
+  const PaginationDot = ({ index, animValue }: { index: number; animValue: SharedValue<number> }) => {
+    const animatedStyle = useAnimatedStyle(() => {
+      // Interpolar el ancho del punto según la posición actual
+      // Si la diferencia es menor a 0.5, es el punto activo
+      const isActive = Math.abs(animValue.value - index) < 0.5;
 
-  // Show nothing while checking onboarding status
-  if (onboardingComplete === null) {
-    return null;
-  }
+      return {
+        width: withSpring(isActive ? 30 : 10),
+        backgroundColor: isActive ? Colors.colorPrimary : "rgba(0, 0, 0, 0.2)",
+      };
+    });
 
-  // If onboarding is complete, redirect based on auth state
+    return (
+      <Animated.View
+        style={[
+          {
+            height: 10,
+            borderRadius: 5,
+            marginHorizontal: 5,
+          },
+          animatedStyle,
+        ]}
+      />
+    );
+  };
+
+  // Verificar si el onboarding ya fue completado al montar el componente
+  // React.useEffect(() => {
+  //   const checkOnboarding = async () => {
+  //     try {
+  //       const completed = await AsyncStorage.getItem("onboardingComplete");
+  //       setOnboardingComplete(completed === "true");
+  //     } catch (error) {
+  //       console.error("Error checking onboarding status:", error);
+  //       setOnboardingComplete(false);
+  //     }
+  //   };
+  //   checkOnboarding();
+  // }, []);
+
+  // Mostrar pantalla vacía mientras se verifica el estado del onboarding
+  // if (onboardingComplete === null) {
+  //   return null;
+  // }
+
+  // Si el onboarding está completo, redirigir según el estado de autenticación
   if (onboardingComplete) {
     if (authLoaded && authState.token) {
       return <Redirect href="/(tabs)" />;
     } else if (authLoaded) {
       return <Redirect href="/login" />;
     }
-    return null; // Still loading auth
+    return null;
   }
 
   const handleOnboardingComplete = async () => {
@@ -102,124 +134,111 @@ export default function OnBoarding() {
   };
 
   return (
-    <View style={{ flex: 1, alignItems: "center", top: 50 }}>
-      <Carousel
-        style={{ marginTop: 30 }}
-        loop={false}
-        width={400}
-        height={600}
-        autoPlay={false}
-        data={slides}
-        renderItem={({ item }) => <OnBoardingSlide item={item} />}
-        ref={ref}
-        onProgressChange={(offsetProgress, absoluteProgress) => {
-          progress.value = absoluteProgress;
-          const newIndex = Math.round(absoluteProgress);
-
-          setCurrentIndex(newIndex);
-        }}
-      />
-      <Pagination.Basic
-        progress={progress}
-        data={slides}
-        size={14}
-        dotStyle={{
-          width: 14,
-          borderRadius: 14,
-          backgroundColor: "gray",
-        }}
-        activeDotStyle={{
-          borderRadius: 14,
-          overflow: "hidden",
-          backgroundColor: globalStyles.colorPrimary,
-        }}
-        containerStyle={[
-          {
-            gap: 5,
-            marginBottom: 10,
-          },
-        ]}
-        horizontal
-        onPress={onPressPagination}
-      />
-
-      {currentIndex === slides.length - 1 ? (
-        <ButtonBosko
-          onPress={handleOnboardingComplete}
-          title="Iniciar Sesión"
+    <LinearGradient
+      colors={["#f0f4ff", "#e8f0ff", "#fef3ff"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
+      {/* Header con Logo y Nombre */}
+      <View style={styles.header}>
+        {/* Usamos un texto estilizado y si es posible la imagen del logo */}
+        <Image
+          source={require("@/assets/images/bosko-logo.png")}
+          style={styles.logo}
+          contentFit="contain"
         />
-      ) : (
-        <ButtonBosko
-          onPress={() => {
-            ref.current?.scrollTo({
-              count: 1,
-              animated: true,
-            });
+        <Text style={styles.headerTitle}>Bosko</Text>
+      </View>
+
+      <View style={styles.carouselContainer}>
+        <Carousel
+          loop={false}
+          width={SCREEN_WIDTH}
+          height={600}
+          autoPlay={false}
+          data={slides}
+          renderItem={({ item }) => <OnBoardingSlide item={item} />}
+          ref={ref}
+          onProgressChange={(offsetProgress, absoluteProgress) => {
+            progress.value = absoluteProgress;
+            const newIndex = Math.round(absoluteProgress);
+            setCurrentIndex(newIndex);
           }}
-          title="Siguiente"
         />
-      )}
-    </View>
+
+        {/* Paginación Personalizada */}
+        <View style={styles.paginationContainer}>
+          {slides.map((_, index) => (
+            <PaginationDot key={index} index={index} animValue={progress} />
+          ))}
+        </View>
+
+        <View style={styles.buttonContainer}>
+          {currentIndex === slides.length - 1 ? (
+            <ButtonBosko
+              onPress={handleOnboardingComplete}
+              title="Iniciar Sesión"
+            />
+          ) : (
+            <ButtonBosko
+              onPress={() => {
+                ref.current?.scrollTo({
+                  count: 1,
+                  animated: true,
+                });
+              }}
+              title="Siguiente"
+            />
+          )}
+        </View>
+      </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: 20,
-  },
-  subtitle: {
-    fontSize: 18,
-    textAlign: "center",
-    marginBottom: 40,
-    paddingHorizontal: 20,
-  },
-  button: {
-    backgroundColor: "#007AFF",
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 10,
-    minWidth: 200,
-    alignItems: "center",
-    justifyContent: "center",
-    position: "absolute",
-    bottom: 150,
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  input: {
-    borderColor: "gray",
-    borderWidth: 2,
-    maxWidth: 200,
-    width: "100%",
-    textAlign: "center",
-    borderRadius: 10,
-    padding: 10,
-    marginVertical: 5,
-  },
   container: {
-    width: "90%",
-    justifyContent: "center",
+    flex: 1,
+  },
+  header: {
+    paddingTop: 60,
+    flexDirection: "row",
     alignItems: "center",
-    padding: 20,
+    justifyContent: "center",
     gap: 10,
   },
-  errorText: {
-    color: "#FF3B30",
-    fontSize: 14,
-    textAlign: "center",
+  logo: {
+    width: 40,
+    height: 40,
+    backgroundColor: "white",
+    borderRadius: 100,
+    borderColor: Colors.colorPrimary,
+    borderWidth: 1,
   },
-  text: {
-    fontFamily: "System",
-    fontWeight: "200",
-    fontSize: 18,
-    color: "#000",
-    textAlign: "center",
+  headerTitle: {
+    fontSize: 28, // Más grande y visible
+    fontWeight: "bold",
+    color: "#222",
+    letterSpacing: 0.5,
+  },
+  carouselContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  paginationContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 40,
+    height: 20,
+    gap: 8,
+  },
+  buttonContainer: {
+    width: "100%",
+    alignItems: "center",
+    paddingHorizontal: 40,
+    marginBottom: 60,
   },
 });
