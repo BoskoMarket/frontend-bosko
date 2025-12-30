@@ -1,12 +1,14 @@
 import {
-  AuthResponse,
   checkUsernameAvailabilityService,
-  Credentials,
   loginService,
-  RegisterUserPayload,
   registerUserService,
+  refreshTokenService,
 } from "@/features/auth/services/auth";
-import { refreshTokenService } from "@/features/auth/services/auth";
+import {
+  AuthResponse,
+  Credentials,
+  RegisterUserPayload,
+} from "@/features/auth/types";
 import { router } from "expo-router";
 import { deleteItemAsync, getItemAsync, setItemAsync } from "expo-secure-store";
 import { createContext, useContext, useEffect, useState } from "react";
@@ -24,7 +26,7 @@ interface AuthContextType {
     token: string | null;
     refreshToken: string | null;
     userEmail: string | null;
-    user: AuthResponse | null;
+    user: any | null;
   };
   clearError: () => void;
   logout: () => Promise<void>;
@@ -80,9 +82,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await setItemAsync("token", response.accessToken);
       await setItemAsync("refreshToken", response.refreshToken);
       await setItemAsync("userEmail", email);
-      if (response.user) {
-        await setItemAsync("user", JSON.stringify(response.user));
-      }
 
       // Update authState so ProfileContext and other contexts can react
       console.log("✅ [AuthContext] Session persisted, updating authState");
@@ -90,7 +89,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         token: response.accessToken,
         refreshToken: response.refreshToken,
         userEmail: email,
-        user: response.user || null,
+        user: null, // API auth does not return user object
       });
     }
   };
@@ -166,6 +165,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
+
     const checkAuth = async () => {
       console.log("🔍 [AuthContext] Checking auth on mount...");
       try {

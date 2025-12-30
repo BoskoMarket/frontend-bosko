@@ -1,6 +1,7 @@
 import { View, StyleSheet } from "react-native";
 import React from "react";
 import { Redirect, router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import Carousel, {
   ICarouselInstance,
   Pagination,
@@ -15,6 +16,7 @@ export default function OnBoarding() {
   const progress = useSharedValue<number>(0);
   const [currentIndex, setCurrentIndex] = React.useState(0);
   const { authLoaded, authState } = useAuth();
+  const [onboardingComplete, setOnboardingComplete] = React.useState<boolean | null>(null);
 
   const ref = React.useRef<ICarouselInstance>(null);
 
@@ -59,9 +61,45 @@ export default function OnBoarding() {
       image: require("@/assets/lotties/register2.json"),
     },
   ];
-  if (authLoaded && authState.token) {
-    return <Redirect href="/(tabs)" />;
+
+  // Check if onboarding was completed on mount
+  React.useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const completed = await AsyncStorage.getItem("onboardingComplete");
+        setOnboardingComplete(completed === "true");
+      } catch (error) {
+        console.error("Error checking onboarding status:", error);
+        setOnboardingComplete(false);
+      }
+    };
+    checkOnboarding();
+  }, []);
+
+  // Show nothing while checking onboarding status
+  if (onboardingComplete === null) {
+    return null;
   }
+
+  // If onboarding is complete, redirect based on auth state
+  if (onboardingComplete) {
+    if (authLoaded && authState.token) {
+      return <Redirect href="/(tabs)" />;
+    } else if (authLoaded) {
+      return <Redirect href="/login" />;
+    }
+    return null; // Still loading auth
+  }
+
+  const handleOnboardingComplete = async () => {
+    try {
+      await AsyncStorage.setItem("onboardingComplete", "true");
+      router.push("/login");
+    } catch (error) {
+      console.error("Error saving onboarding status:", error);
+      router.push("/login");
+    }
+  };
 
   return (
     <View style={{ flex: 1, alignItems: "center", top: 50 }}>
@@ -107,7 +145,7 @@ export default function OnBoarding() {
 
       {currentIndex === slides.length - 1 ? (
         <ButtonBosko
-          onPress={() => router.push("/login")}
+          onPress={handleOnboardingComplete}
           title="Iniciar Sesión"
         />
       ) : (
