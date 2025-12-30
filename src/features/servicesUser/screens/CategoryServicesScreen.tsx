@@ -10,12 +10,25 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { MotiView } from "moti";
 import { TOKENS } from "@/core/design-system/tokens";
+import { ServiceProvider } from "@/types";
+import Colors from "@/core/design-system/Colors";
+import { useEffect } from "react";
+import { useServices } from "../state/ServicesContext";
 
 export default function CategoryServicesScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
+  const { fetchServicesByCategory } = useServices();
 
   const categoryId = typeof params.id === "string" ? params.id : undefined;
+
+  useEffect(() => {
+    // Load services for the given category
+    if (categoryId) {
+      const category = fetchServicesByCategory(categoryId);
+      console.log(category);
+    }
+  }, [categoryId]);
 
   function handleBack() {
     router.back();
@@ -42,7 +55,7 @@ export default function CategoryServicesScreen() {
     <SafeAreaView style={styles.safeArea}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      <View style={[styles.hero, { backgroundColor: accentColor }]}>
+      <View style={[styles.hero, { backgroundColor: Colors.colorPrimary }]}>
         <Pressable
           onPress={handleBack}
           accessibilityRole="button"

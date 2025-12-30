@@ -1,60 +1,41 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, Button, Alert, ScrollView } from "react-native";
-import { useBoskoData } from "@/src/shared/state/DataContext";
-import { ServiceCard } from "@/src/shared/ui/ServiceCard";
-import { ServiceForm } from "@/src/features/services/components/ServiceForm";
+import React, { useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { t } from "@/src/shared/i18n";
 import { SettingsButton } from "@/src/shared/ui/SettingsButton";
 import { useRouter } from "expo-router";
+import { useProfile } from "@/features/profile/state/ProfileContext";
 
 export const ProfilePage = () => {
-  const { serviceManager, currentUser } = useBoskoData();
-  const [editing, setEditing] = useState(false);
+  const { profile, isLoading, refreshProfile } = useProfile();
   const router = useRouter();
 
-  const onDelete = () => {
-    Alert.alert(t("deleteService"), t("confirmDeleteService"), [
-      { text: t("cancel"), style: "cancel" },
-      {
-        text: t("deleteService"),
-        style: "destructive",
-        onPress: () => serviceManager.remove(),
-      },
-    ]);
-  };
+  useEffect(() => {
+    refreshProfile();
+  }, [refreshProfile]);
+
+  if (isLoading && !profile) return null;
+  if (!profile) return null;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 16 }}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ padding: 16 }}
+    >
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>{t("profileHeaderTitle")}</Text>
-          <Text style={styles.subtitle}>{currentUser.user?.name}</Text>
+          <Text style={styles.subtitle}>
+            {[profile.firstName, profile.lastName].filter(Boolean).join(" ") ||
+              profile.username ||
+              ""}
+          </Text>
         </View>
-        <SettingsButton onPress={() => router.push("/(tabs)/settings")} />
+        <SettingsButton
+          onPress={() => router.push("/(tabs)/profile/EditProfile")}
+        />
       </View>
 
-      {serviceManager.service ? (
-        <View>
-          <ServiceCard service={serviceManager.service} />
-          <Button title={t("editService")} onPress={() => setEditing((prev) => !prev)} />
-          <View style={{ height: 8 }} />
-          <Button title={t("deleteService")} color="#b91c1c" onPress={onDelete} />
-        </View>
-      ) : (
-        <Button title={t("createService")} onPress={() => setEditing(true)} />
-      )}
-
-      {editing && (
-        <View style={styles.formContainer}>
-          <ServiceForm
-            initialService={serviceManager.service}
-            onSubmit={async (payload) => {
-              await serviceManager.createOrUpdate(payload);
-              setEditing(false);
-            }}
-          />
-        </View>
-      )}
+      <Text style={styles.subtitle}>{profile.bio || ""}</Text>
     </ScrollView>
   );
 };
@@ -75,11 +56,5 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: "#6b7280",
-  },
-  formContainer: {
-    marginTop: 16,
-    backgroundColor: "#fff",
-    padding: 16,
-    borderRadius: 16,
   },
 });

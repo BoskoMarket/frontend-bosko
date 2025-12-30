@@ -1,40 +1,74 @@
-import React, { useState } from "react";
-import { Text, TextInput, StyleSheet, Button, ScrollView, View } from "react-native";
-import { useBoskoData } from "@/src/shared/state/DataContext";
+import React, { useEffect, useState } from "react";
+import {
+  Text,
+  TextInput,
+  StyleSheet,
+  Button,
+  ScrollView,
+  View,
+} from "react-native";
 import { t } from "@/src/shared/i18n";
+import { useProfile } from "@/features/profile/state/ProfileContext";
 
 export const SettingsPage = () => {
-  const { currentUser } = useBoskoData();
+  const { profile, isLoading, refreshProfile, updateProfile } = useProfile();
   const [form, setForm] = useState({
-    name: currentUser.user?.name ?? "",
-    avatar: currentUser.user?.avatar ?? "",
-    bio: currentUser.user?.bio ?? "",
+    firstName: "",
+    lastName: "",
+    avatarUrl: "",
+    bio: "",
   });
+
+  useEffect(() => {
+    refreshProfile();
+  }, [refreshProfile]);
+
+  useEffect(() => {
+    if (!profile) return;
+    setForm({
+      firstName: profile.firstName || "",
+      lastName: profile.lastName || "",
+      avatarUrl: profile.avatarUrl || "",
+      bio: profile.bio || "",
+    });
+  }, [profile]);
 
   const onChange = (key: keyof typeof form, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
   const onSave = async () => {
-    await currentUser.update(form);
+    await updateProfile({
+      firstName: form.firstName,
+      lastName: form.lastName,
+      avatarUrl: form.avatarUrl,
+      bio: form.bio,
+    });
   };
+
+  if (isLoading && !profile) return null;
+  if (!profile) return null;
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>{t("settingsTitle")}</Text>
-      {[{ label: t("userName"), key: "name" }, { label: t("avatarUrl"), key: "avatar" }, { label: t("bio"), key: "bio" }].map(
-        (item) => (
-          <View key={item.key}>
-            <Text style={styles.label}>{item.label}</Text>
-            <TextInput
-              style={styles.input}
-              value={form[item.key]}
-              onChangeText={(value) => onChange(item.key, value)}
-              accessibilityLabel={item.label}
-              multiline={item.key === "bio"}
-            />
-          </View>
-        )
-      )}
+      {[
+        { label: t("userName"), key: "name" },
+        { label: t("avatarUrl"), key: "avatar" },
+        { label: t("bio"), key: "bio" },
+      ].map((item) => (
+        <View key={item.key}>
+          <Text style={styles.label}>{item.label}</Text>
+          <TextInput
+            style={styles.input}
+            value={(form as any)[item.key]}
+            onChangeText={(value) =>
+              onChange(item.key as keyof typeof form, value)
+            }
+            accessibilityLabel={item.label}
+            multiline={item.key === "bio"}
+          />
+        </View>
+      ))}
       <Button title={t("save")} onPress={onSave} />
     </ScrollView>
   );
