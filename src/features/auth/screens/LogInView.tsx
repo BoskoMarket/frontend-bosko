@@ -3,17 +3,21 @@ import {
   Text,
   TouchableWithoutFeedback,
   Keyboard,
-  Pressable,
   KeyboardAvoidingView,
   Platform,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
 } from "react-native";
 import React, { useState } from "react";
-import { TextInput } from "react-native-paper";
 import { useAuth } from "@/features/auth/state/AuthContext";
 import { router } from "expo-router";
-import { globalStyles } from "@/core/design-system/global-styles";
 import Colors from "@/core/design-system/Colors";
 import { Image } from "expo-image";
+import ButtonBosko from "@/shared/components/ButtonBosko";
+import { BlurView } from "expo-blur";
+import { Ionicons } from "@expo/vector-icons";
+import { globalStyles } from "@/core/design-system/global-styles";
 
 export default function LogInView({ toLogin }: { toLogin: () => void }) {
   const { login } = useAuth();
@@ -36,9 +40,6 @@ export default function LogInView({ toLogin }: { toLogin: () => void }) {
 
     try {
       await login(formData);
-
-      console.log("Login successful, navigating to tabs");
-      // Use replace to prevent going back to login
       router.replace("/(tabs)");
     } catch (error) {
       setError("Error al iniciar sesión. Por favor intenta nuevamente.");
@@ -47,114 +48,135 @@ export default function LogInView({ toLogin }: { toLogin: () => void }) {
       setIsLoading(false);
     }
   };
+
   return (
-    <TouchableWithoutFeedback
-      onPress={() => {
-        // Dismiss keyboard on press outside of input
-        Keyboard.dismiss();
-      }}
-      style={{ flex: 1 }}
-    >
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={80} // ajustá si tenés header
       >
-        <View
-          style={{
-            alignItems: "center",
-            paddingVertical: "30%",
-            flex: 1,
-          }}
-        >
+        <View style={styles.formContainer}>
           <Image
             source={require("@/assets/images/bosko-logo.png")}
-            style={{
-              width: 180,
-              height: 180,
-              marginBottom: 20,
-            }}
+            style={globalStyles.logo}
             contentFit="contain"
           />
-          <TextInput
-            placeholder="E-mail"
-            value={formData.email}
-            placeholderTextColor={"gray"}
-            onChangeText={(text) => {
-              setFormData((prev) => ({ ...prev, email: text }));
-              setError("");
-            }}
-            style={globalStyles.input}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="next"
-            error={!!error}
-            onSubmitEditing={() => {
-              // Focus next input on submit
-              Keyboard.dismiss();
-            }}
-            left={<TextInput.Icon icon="email" color="gray" />}
-          />
 
-          <TextInput
-            placeholder="Contraseña"
-            value={formData.password}
-            placeholderTextColor={"gray"}
-            onChangeText={(text) => {
-              setFormData((prev) => ({ ...prev, password: text }));
-              setError("");
-            }}
-            style={globalStyles.input}
-            secureTextEntry
-            right={<TextInput.Icon icon="eye" />}
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="done"
-            error={!!error}
-            onSubmitEditing={() => {
-              // Dismiss keyboard on submit
-              Keyboard.dismiss();
-            }}
-            left={<TextInput.Icon icon="lock" color="gray" />}
-          />
-          {error ? <Text style={{ color: "red" }}>{error}</Text> : null}
-
-          <Pressable
-            onPress={handleLogin}
-            disabled={isLoading}
-            style={({ pressed }) => [
-              { opacity: pressed || isLoading ? 0.7 : 1 },
-            ]}
-          >
-            <Text>{isLoading ? "Registrando..." : "Registrarse"}</Text>
-          </Pressable>
-          <Text
-            style={{
-              marginTop: 20,
-            }}
-            onPress={() => toLogin()}
-          >
-            ¿No tienes cuenta?
-            <Pressable
-              style={{
-                flexDirection: "row",
-                alignContent: "center",
-                justifyContent: "center",
+          <View style={styles.inputWrapper}>
+            <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFill} />
+            <Ionicons name="mail-outline" size={24} color="#FFF" style={styles.icon} />
+            <TextInput
+              placeholder="E-mail"
+              placeholderTextColor="rgba(255,255,255,0.7)"
+              value={formData.email}
+              onChangeText={(text) => {
+                setFormData((prev) => ({ ...prev, email: text }));
+                setError("");
               }}
-              onPress={() => router.push("/login/RegisterView")}
-            >
-              <Text
-                style={{
-                  color: Colors.colorPrimary,
-                }}
-              >
-                Regístrate aquí
-              </Text>
-            </Pressable>
-          </Text>
+              style={styles.input}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+
+          <View style={styles.inputWrapper}>
+            <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFill} />
+            <Ionicons name="lock-closed-outline" size={24} color="#FFF" style={styles.icon} />
+            <TextInput
+              placeholder="Contraseña"
+              placeholderTextColor="rgba(255,255,255,0.7)"
+              value={formData.password}
+              onChangeText={(text) => {
+                setFormData((prev) => ({ ...prev, password: text }));
+                setError("");
+              }}
+              style={styles.input}
+              secureTextEntry
+              autoCapitalize="none"
+            />
+          </View>
+
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+          <View style={styles.buttonContainer}>
+            <ButtonBosko
+              onPress={handleLogin}
+              title="Iniciar Sesión"
+              isLoading={isLoading}
+            />
+          </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>¿No tienes cuenta? </Text>
+            <TouchableOpacity onPress={toLogin}>
+              <Text style={styles.linkText}>Regístrate aquí</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  formContainer: {
+    alignItems: "center",
+    width: "100%",
+  },
+
+  inputWrapper: {
+    width: "100%",
+    height: 60,
+    borderRadius: 15,
+    marginBottom: 15,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 15,
+    overflow: "hidden", // Important for BlurView to respect borderRadius
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+  },
+  icon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    color: "#FFF",
+    fontSize: 16,
+    height: "100%",
+  },
+  errorText: {
+    color: "#ff4d4d",
+    marginBottom: 10,
+    textAlign: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    padding: 5,
+    borderRadius: 5,
+  },
+  buttonContainer: {
+    width: "100%",
+    alignItems: "center",
+    marginTop: 20,
+    marginBottom: 30,
+  },
+  footer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  footerText: {
+    color: "#FFF",
+    fontSize: 16,
+  },
+  linkText: {
+    color: "#FFF",
+    fontWeight: "bold",
+    fontSize: 16,
+    textDecorationLine: "underline",
+  },
+});

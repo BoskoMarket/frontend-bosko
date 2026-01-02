@@ -13,6 +13,7 @@ import Carousel, {
 } from "react-native-reanimated-carousel";
 import OnBoardingSlide from "@/features/auth/components/OnBoardingSlide";
 import { Image } from "expo-image";
+import { ResizeMode, Video } from "expo-av";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -134,12 +135,24 @@ export default function OnBoarding() {
   };
 
   return (
-    <LinearGradient
-      colors={["#f0f4ff", "#e8f0ff", "#fef3ff"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.container}
-    >
+    <View style={styles.container}>
+      <Video
+        source={{
+          uri: "https://www.pexels.com/es-es/download/video/6177737/",
+        }}
+        style={StyleSheet.absoluteFill}
+        resizeMode={ResizeMode.COVER}
+        isLooping
+        shouldPlay
+        isMuted
+      />
+      <LinearGradient
+        colors={["rgba(240, 244, 255, 0.85)", "rgba(232, 240, 255, 0.9)"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+
       {/* Header con Logo y Nombre */}
       <View style={styles.header}>
         {/* Usamos un texto estilizado y si es posible la imagen del logo */}
@@ -193,7 +206,7 @@ export default function OnBoarding() {
           )}
         </View>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
