@@ -26,11 +26,11 @@ type Slide = { key: string; title: string; subtitle: string; lottie: any };
 
 // Copy sin cambios respecto al OnBoarding.tsx actual — solo cambia el chrome visual.
 const SLIDES: Slide[] = [
-  { key: "1", title: "¡Bienvenido a Bosko!", subtitle: "El marketplace donde encontrarás u ofrecerás servicios fácilmente", lottie: require("@/assets/lotties/welcome.json") },
-  { key: "2", title: "Servicios en segundos", subtitle: "Desde plomería hasta clases particulares, todo en un lugar", lottie: require("@/assets/lotties/services.json") },
-  { key: "3", title: "20+ Categorías", subtitle: "Hogar, reparaciones, clases y mucho más disponibles ahora mismo", lottie: require("@/assets/lotties/categories.json") },
-  { key: "4", title: "Profesionales verificados", subtitle: "Lee reseñas reales y precios claros. Elige con confianza", lottie: require("@/assets/lotties/verified.json") },
-  { key: "5", title: "¡Empieza ya!", subtitle: "Crea tu cuenta y descubre las oportunidades que te esperan", lottie: require("@/assets/lotties/start.json") },
+  { key: "1", title: "¡Bienvenido a Bosko!", subtitle: "El marketplace donde encontrarás u ofrecerás servicios fácilmente", lottie: require("../../../../assets/lotties/welcome.json") },
+  { key: "2", title: "Servicios en segundos", subtitle: "Desde plomería hasta clases particulares, todo en un lugar", lottie: require("../../../../assets/lotties/services.json") },
+  { key: "3", title: "20+ Categorías", subtitle: "Hogar, reparaciones, clases y mucho más disponibles ahora mismo", lottie: require("../../../../assets/lotties/categories.json") },
+  { key: "4", title: "Profesionales verificados", subtitle: "Lee reseñas reales y precios claros. Elige con confianza", lottie: require("../../../../assets/lotties/verified.json") },
+  { key: "5", title: "¡Empieza ya!", subtitle: "Crea tu cuenta y descubre las oportunidades que te esperan", lottie: require("../../../../assets/lotties/start.json") },
 ];
 
 export default function OnBoarding() {

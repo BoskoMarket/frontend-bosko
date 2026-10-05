@@ -1,6 +1,6 @@
 import React from "react";
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
-import LogInView from "@/app/login/LogInView";
+import LogInView from "@/features/auth/screens/LogInView";
 import { router } from "expo-router";
 
 const mockLogin = jest.fn();
@@ -25,13 +25,16 @@ jest.mock("expo-router", () => ({
 describe("LogInView", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
   });
+
+  afterEach(() => { jest.clearAllTimers(); jest.useRealTimers(); });
 
   it("permite iniciar sesión y navegar al área protegida", async () => {
     mockLogin.mockResolvedValueOnce({});
 
     const { getByTestId, getByText } = render(
-      <LogInView toLogin={jest.fn()} />
+      <LogInView toRegister={jest.fn()} />
     );
 
     fireEvent.changeText(getByTestId("login-email"), "user@example.com");
@@ -60,7 +63,7 @@ describe("LogInView", () => {
     });
 
     const { getByTestId, getByText, findByText } = render(
-      <LogInView toLogin={jest.fn()} />
+      <LogInView toRegister={jest.fn()} />
     );
 
     fireEvent.changeText(getByTestId("login-email"), "user@example.com");

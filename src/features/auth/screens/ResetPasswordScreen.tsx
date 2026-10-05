@@ -18,12 +18,13 @@ import {
   Dimensions,
 } from 'react-native';
 import { BlurView } from '@/core/components/BlurView';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { Input } from '@/core/components/Input';
 import { Button, TOKENS, MOTION } from '@/core/design-system';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
-import api from '@/core/api/axiosinstance';
+import { resetPasswordService } from '@/features/auth/services/auth';
 
 const { width } = Dimensions.get('window');
 
@@ -80,7 +81,7 @@ export default function ResetPasswordScreen() {
     setError('');
     setLoading(true);
     try {
-      await api.post('/auth/reset-password', { email, code, newPassword });
+      await resetPasswordService(email, code, newPassword);
       Animated.timing(formExitAnim, {
         toValue: 0,
         duration: MOTION.modalFadeOut.duration,
@@ -104,6 +105,7 @@ export default function ResetPasswordScreen() {
   if (success) {
     return (
       <View style={styles.background}>
+        <AnimatedBackground variant="minimal" />
         <View style={styles.successContainer}>
           <Animated.View
             style={[
@@ -135,6 +137,7 @@ export default function ResetPasswordScreen() {
 
   return (
     <View style={styles.background}>
+      <AnimatedBackground variant="minimal" />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <Pressable onPress={() => safeBack(router, '/login')} hitSlop={12} style={styles.backBtn}>

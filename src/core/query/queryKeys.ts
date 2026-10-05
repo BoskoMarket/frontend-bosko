@@ -35,4 +35,6 @@ export const QUERY_KEYS = {
   reelsFeed:        (page = 1) => ['reels', page]                        as const,
 
   search:           (query: string) => ['search', query]                 as const,
+
+  appConfig:        ['app', 'config']                                    as const,
 } as const;

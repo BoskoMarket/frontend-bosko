@@ -1,16 +1,11 @@
+import type { components } from '@/core/api/generated/schema';
 // ── Tipos del módulo de autenticación ───────────────────────────────────────
 
 /** Credenciales para iniciar sesión */
-export interface Credentials {
-  email:    string;
-  password: string;
-}
+export type Credentials = components['schemas']['LoginDto'];
 
 /** Payload para registrar un nuevo usuario */
-export interface RegisterUserPayload extends Credentials {
-  firstName: string;
-  lastName:  string;
-}
+export type RegisterUserPayload = components['schemas']['RegisterDto'];
 
 /** Respuesta del endpoint POST /auth/register */
 export interface RegisterResponse {

@@ -10,7 +10,7 @@ import { View, StyleSheet, Pressable, Text } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { router } from 'expo-router';
 
-const VIDEO_SRC = require('@/assets/videos/bosko-logo-loading.mp4');
+const VIDEO_SRC = require('../../../../assets/videos/bosko-logo-loading.mp4');
 
 // Red de seguridad por si el evento playToEnd no llega (fallo de carga, etc.)
 const FALLBACK_TIMEOUT_MS = 8000;

@@ -139,9 +139,8 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
     try {
       await registerUser({ firstName, lastName, email, password: formData.password });
       router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Error al registrar la cuenta';
-      Alert.alert('Error', Array.isArray(msg) ? msg.join('\n') : msg);
+    } catch (err) {
+      Alert.alert('Error', getUserErrorMessage(err));
     }
   };
 

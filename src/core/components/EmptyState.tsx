@@ -3,15 +3,8 @@ import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { TOKENS } from '@/core/design-system/tokens';
-
-const C = {
-  primary: TOKENS.color.primary,
-  dark:    TOKENS.color.primaryDark,
-  text:    '#1A1A1A',
-  sub:     '#6B7280',
-  accent:  '#FFF0F3',
-  border:  '#EDEDF0',
-};
+import { GRADIENTS } from '@/core/design-system/gradients';
+import { useThemeColors } from '@/stores/theme.store';
 
 interface EmptyStateProps {
   icon: React.ComponentProps<typeof Ionicons>['name'];
@@ -35,9 +28,12 @@ export function EmptyState({
   subtitle,
   cta,
   secondaryCta,
-  iconColor = C.primary,
-  iconBg = C.accent,
+  iconColor,
+  iconBg,
 }: EmptyStateProps) {
+  const tc = useThemeColors();
+  const resolvedIconColor = iconColor ?? tc.signal;
+  const resolvedIconBg = iconBg ?? tc.accent;
   const scale  = useRef(new Animated.Value(0.7)).current;
   const fade   = useRef(new Animated.Value(0)).current;
   const slideY = useRef(new Animated.Value(16)).current;
@@ -55,13 +51,13 @@ export function EmptyState({
   return (
     <Animated.View style={[s.root, { opacity: fade, transform: [{ translateY: slideY }] }]}>
       {/* Icon */}
-      <Animated.View style={[s.iconWrap, { backgroundColor: iconBg, transform: [{ scale }] }]}>
-        <Ionicons name={icon} size={36} color={iconColor} />
+      <Animated.View style={[s.iconWrap, { backgroundColor: resolvedIconBg, transform: [{ scale }] }]}>
+        <Ionicons name={icon} size={36} color={resolvedIconColor} />
       </Animated.View>
 
       {/* Text */}
-      <Text style={s.title}>{title}</Text>
-      <Text style={s.subtitle}>{subtitle}</Text>
+      <Text style={[s.title, { color: tc.text }]}>{title}</Text>
+      <Text style={[s.subtitle, { color: tc.textSub }]}>{subtitle}</Text>
 
       {/* CTAs */}
       {cta && (
@@ -70,10 +66,10 @@ export function EmptyState({
           onPressOut={() => Animated.spring(btnScale, { toValue: 1, useNativeDriver: true }).start()}
           onPress={cta.onPress}
         >
-          <View style={s.ctaShadow}>
+          <View style={[s.ctaShadow, TOKENS.shadow.glow]}>
             <Animated.View style={[s.ctaWrap, { transform: [{ scale: btnScale }] }]}>
               <LinearGradient
-                colors={[C.dark, C.primary, '#c0002f']}
+                colors={GRADIENTS.brand}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={s.ctaBtn}
@@ -87,7 +83,7 @@ export function EmptyState({
 
       {secondaryCta && (
         <Pressable onPress={secondaryCta.onPress} style={s.secondaryBtn}>
-          <Text style={s.secondaryText}>{secondaryCta.label}</Text>
+          <Text style={[s.secondaryText, { color: tc.textSub }]}>{secondaryCta.label}</Text>
         </Pressable>
       )}
     </Animated.View>
@@ -114,13 +110,11 @@ const s = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: C.text,
     textAlign: 'center',
     letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 14,
-    color: C.sub,
     textAlign: 'center',
     lineHeight: 20,
     maxWidth: 280,
@@ -128,11 +122,6 @@ const s = StyleSheet.create({
   ctaShadow: {
     borderRadius: 13,
     marginTop: 4,
-    shadowColor: C.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 5,
   },
   ctaWrap: {
     borderRadius: 13,
@@ -155,7 +144,6 @@ const s = StyleSheet.create({
   },
   secondaryText: {
     fontSize: 14,
-    color: C.sub,
     fontWeight: '500',
   },
 });

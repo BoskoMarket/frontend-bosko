@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Button, GRADIENTS, TOKENS } from '@/core/design-system';
 import { safeBack } from '@/core/navigation/safeBack';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const SECTIONS = [
   {
@@ -32,6 +33,7 @@ export default function TermsAndConditionsScreen() {
 
   return (
     <View style={styles.background}>
+      <AnimatedBackground variant="minimal" />
       <LinearGradient colors={GRADIENTS.brandDeep} style={styles.header}>
         <Pressable onPress={() => safeBack(router, '/login')} hitSlop={12} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={22} color="#fff" />

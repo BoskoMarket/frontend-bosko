@@ -1,6 +1,6 @@
 import React from "react";
 import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
-import RegisterView from "@/app/login/RegisterView";
+import RegisterView from "@/features/auth/screens/RegisterView";
 import { router } from "expo-router";
 
 const mockRegisterUser = jest.fn();
@@ -25,7 +25,10 @@ jest.mock("expo-router", () => ({
 describe("RegisterView", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers();
   });
+
+  afterEach(() => { jest.clearAllTimers(); jest.useRealTimers(); });
 
   it("permite completar los 4 pasos y registrar al usuario", async () => {
     mockRegisterUser.mockResolvedValueOnce({});
@@ -74,7 +77,7 @@ describe("RegisterView", () => {
     );
 
     await waitFor(() =>
-      expect(router.replace).toHaveBeenCalledWith(
+      expect(router.push).toHaveBeenCalledWith(
         "/auth/verify-email?email=nuevo%40bosko.com"
       )
     );

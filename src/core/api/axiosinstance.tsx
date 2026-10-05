@@ -1,134 +1,81 @@
-/**
- * axiosinstance — Cliente HTTP centralizado de la aplicación.
- *
- * Interceptores:
- *  1. Request: adjunta Bearer token (desde cache en memoria), headers anti-caché.
- *  2. Response: unwrap { success, data }, refresh automático con cola para
- *     requests concurrentes, logout forzado si el refresh falla.
- */
-
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { API_URL } from '@/core/config/env';
 import { tokenStorage } from '@/core/auth/tokenStorage';
-import { ApiResponse, AuthResponse } from '@/features/auth/types';
+import type { ApiResponse, AuthResponse } from '@/features/auth/types';
 
-const REQUEST_TIMEOUT_MS = 30_000;
+const TIMEOUT = 30_000;
+type SessionConfig = InternalAxiosRequestConfig & { _retry?: boolean; _sessionVersion?: number };
+const api = axios.create({ baseURL: API_URL, timeout: TIMEOUT });
+let refreshing: { version: number; promise: Promise<string> } | null = null;
 
-// ── Cola de refresh (evita múltiples refreshes concurrentes) ──────────────────
-let isRefreshing = false;
-let refreshQueue: {
-  resolve: (token: string) => void;
-  reject: (error: unknown) => void;
-}[] = [];
-
-const resolveRefreshQueue = (token: string) => {
-  refreshQueue.forEach(({ resolve }) => resolve(token));
-  refreshQueue = [];
-};
-
-const rejectRefreshQueue = (error: unknown) => {
-  refreshQueue.forEach(({ reject }) => reject(error));
-  refreshQueue = [];
-};
-
-// ── Instancia base ────────────────────────────────────────────────────────────
-const api = axios.create({
-  baseURL: API_URL,
-  timeout: REQUEST_TIMEOUT_MS,
-  validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
-});
-
-// ── Tipos ─────────────────────────────────────────────────────────────────────
-type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
-
-const AUTH_ROUTES = ['/auth/login', '/auth/register', '/auth/refresh-token'];
-
-// ── Interceptor de solicitudes ─────────────────────────────────────────────────
-api.interceptors.request.use((config) => {
-  const token = tokenStorage.getAccessToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+export function unwrapResponse<T>(response: AxiosResponse<T>): AxiosResponse<T> {
+  const body = response.data;
+  if (body && typeof body === 'object' && 'success' in body && 'data' in body) {
+    return { ...response, data: body.data as T };
   }
+  return response;
+}
+
+export async function refreshSession(): Promise<string> {
+  const version = tokenStorage.getSessionVersion();
+  if (refreshing?.version === version) return refreshing.promise;
+  const refreshToken = tokenStorage.getRefreshToken();
+  if (!refreshToken) {
+    tokenStorage.triggerForceLogout();
+    throw new Error('La sesión expiró. Iniciá sesión nuevamente.');
+  }
+  const promise = (async () => {
+    try {
+      const { data } = await axios.post<ApiResponse<AuthResponse>>(
+        `${API_URL}/auth/refresh-token`, { refreshToken }, { timeout: TIMEOUT },
+      );
+      const refreshed = data.data;
+      if (!refreshed?.accessToken || !refreshed?.refreshToken) throw new Error('Respuesta de sesión inválida.');
+      if (version !== tokenStorage.getSessionVersion()) throw new axios.CanceledError('La sesión cambió.');
+      await tokenStorage.save(refreshed.accessToken, refreshed.refreshToken);
+      if (version !== tokenStorage.getSessionVersion()) throw new axios.CanceledError('La sesión cambió.');
+      return refreshed.accessToken;
+    } catch (error) {
+      const status = (error as AxiosError).response?.status;
+      if (version === tokenStorage.getSessionVersion() && (status === 401 || status === 403)) {
+        // La UI se cierra inmediatamente, aunque falle el almacenamiento del dispositivo.
+        tokenStorage.triggerForceLogout();
+        await tokenStorage.clear();
+      }
+      throw error;
+    } finally {
+      if (refreshing?.version === version) refreshing = null;
+    }
+  })();
+  refreshing = { version, promise };
+  return promise;
+}
+
+api.interceptors.request.use((config: SessionConfig) => {
+  const version = tokenStorage.getSessionVersion();
+  if (config._sessionVersion !== undefined && config._sessionVersion !== version) {
+    throw new axios.CanceledError('La sesión cambió.');
+  }
+  config._sessionVersion = version;
+  const token = tokenStorage.getAccessToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  else delete config.headers.Authorization;
   config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
-  config.headers['Pragma'] = 'no-cache';
   return config;
 });
 
-// ── Interceptor de respuestas ─────────────────────────────────────────────────
-// Desempaqueta el wrapper del servidor { success, timestamp, data: T }
-const unwrapResponse = (response: any) => {
-  if (
-    response?.data &&
-    typeof response.data === 'object' &&
-    'success' in response.data &&
-    'data' in response.data
-  ) {
-    return { ...response, data: response.data.data };
-  }
-  return response;
-};
-
-api.interceptors.response.use(
-  (response) => unwrapResponse(response),
-
-  async (error: AxiosError) => {
-    const original = error.config as RetryableConfig | undefined;
-    if (!original) return Promise.reject(error);
-
-    const isAuthRoute = AUTH_ROUTES.some((url) => original.url?.includes(url));
-    if (isAuthRoute) return Promise.reject(error);
-
-    if (error.response?.status !== 401 || original._retry) {
-      return Promise.reject(error);
-    }
-
-    // Si ya hay un refresh en curso, encolar esta request
-    if (isRefreshing) {
-      return new Promise((resolve, reject) => {
-        refreshQueue.push({
-          resolve: (token: string) => {
-            original.headers.Authorization = `Bearer ${token}`;
-            original._retry = true;
-            resolve(api(original));
-          },
-          reject,
-        });
-      });
-    }
-
-    original._retry = true;
-    isRefreshing = true;
-
-    try {
-      const refreshToken = tokenStorage.getRefreshToken();
-      if (!refreshToken) throw new Error('No refresh token');
-
-      const { data: refreshRaw } = await axios.post<ApiResponse<AuthResponse>>(
-        `${API_URL}/auth/refresh-token`,
-        { refreshToken },
-      );
-      const refreshed = refreshRaw.data;
-
-      await tokenStorage.save(refreshed.accessToken, refreshed.refreshToken);
-
-      resolveRefreshQueue(refreshed.accessToken);
-
-      original.headers.Authorization = `Bearer ${refreshed.accessToken}`;
-      return api(original);
-    } catch (refreshError) {
-      rejectRefreshQueue(refreshError);
-
-      const status = (refreshError as any)?.response?.status;
-      if (status === 401 || status === 403) {
-        await tokenStorage.clear();
-        tokenStorage.triggerForceLogout();
-      }
-
-      return Promise.reject(refreshError);
-    } finally {
-      isRefreshing = false;
-    }
-  },
-);
-
+api.interceptors.response.use(response => {
+  const config = response.config as SessionConfig;
+  if (config._sessionVersion !== tokenStorage.getSessionVersion()) throw new axios.CanceledError('La sesión cambió.');
+  return unwrapResponse(response);
+}, async (error: AxiosError) => {
+  const original = error.config as SessionConfig | undefined;
+  if (!original || original.url?.startsWith('/auth/') || error.response?.status !== 401 || original._retry) throw error;
+  if (original._sessionVersion !== tokenStorage.getSessionVersion()) throw new axios.CanceledError('La sesión cambió.');
+  original._retry = true;
+  const token = tokenStorage.getAccessToken();
+  // Una respuesta 401 tardía de la credencial anterior no rota por segunda vez.
+  if (!token || original.headers.Authorization === `Bearer ${token}`) await refreshSession();
+  return api(original);
+});
 export default api;

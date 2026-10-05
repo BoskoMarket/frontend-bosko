@@ -18,7 +18,14 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import { router } from 'expo-router';
+import { ActivityIndicator, Button, Text, View } from 'react-native';
+import axios from 'axios';
+import { API_URL } from '@/core/config/env';
+import { socketService } from '@/features/chat/services/socket.service';
+import { useChatStore } from '@/stores/chat.store';
+import { useFavoritesStore } from '@/stores/favorites.store';
+import { QUERY_KEYS } from '@/core/query/queryKeys';
+import { useThemeColors } from '@/stores/theme.store';
 import { useQueryClient } from '@tanstack/react-query';
 import { tokenStorage } from '@/core/auth/tokenStorage';
 import {
@@ -68,43 +75,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Logout forzado desde axios ─────────────────────────────────────────
-  // Registrar una sola vez: cuando el interceptor detecta refresh token
-  // expirado, limpia el estado y redirige al login sin importar la pantalla actual.
+  const tc = useThemeColors();
+  const [sessionError, setSessionError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const clearLocalState = useCallback(() => {
+    socketService.disconnect();
+    useChatStore.getState().reset();
+    void useFavoritesStore.getState().setAccount(null);
+    void qc.cancelQueries();
+    qc.clear();
+    setAuthState(EMPTY_STATE);
+  }, [qc]);
+
   useEffect(() => {
-    tokenStorage.setForceLogoutCallback(() => {
-      qc.clear();
-      setAuthState(EMPTY_STATE);
-      router.replace('/login');
+    tokenStorage.setForceLogoutCallback(clearLocalState);
+    const unsubscribe = tokenStorage.subscribe(() => {
+      const token = tokenStorage.getAccessToken();
+      if (!token) { clearLocalState(); return; }
+      setAuthState(current => current.token ? {
+        ...current, token, refreshToken: tokenStorage.getRefreshToken(),
+      } : current);
     });
-  }, []);
+    return () => { unsubscribe(); tokenStorage.setForceLogoutCallback(null); socketService.disconnect(); };
+  }, [clearLocalState]);
 
-  // ── Restaurar sesión al arrancar ──────────────────────────────────────
+  // /users/me valida la sesión; Axios refresca el token si hace falta.
   useEffect(() => {
-
+    let active = true;
+    setSessionError(null);
     (async () => {
       try {
-        // Hidratar el cache en memoria con los tokens guardados en SecureStore
         await tokenStorage.hydrate();
-
-        const token = tokenStorage.getAccessToken();
-        const refreshToken = tokenStorage.getRefreshToken();
-        const userEmail = tokenStorage.getUserEmail();
-
-        if (token && refreshToken) {
-          // Sesión válida encontrada: restaurar estado
-          setAuthState({ token, refreshToken, userEmail, user: null });
+        if (tokenStorage.getAccessToken() && tokenStorage.getRefreshToken()) {
+          const { data: user } = await api.get<AuthUser>('/users/me');
+          if (!user?.id || !user.email) throw new Error('No se pudo validar el perfil de la sesión.');
+          if (!active) return;
+          await tokenStorage.save(tokenStorage.getAccessToken()!, tokenStorage.getRefreshToken()!, user.email);
+          if (!active) return;
+          qc.setQueryData(QUERY_KEYS.profile, user);
+          setAuthState({ token: tokenStorage.getAccessToken(), refreshToken: tokenStorage.getRefreshToken(), userEmail: user.email, user });
+        } else {
+          await tokenStorage.clear();
         }
+        if (active) setAuthLoaded(true);
       } catch (err) {
-        // Si falla la lectura, dejamos la sesión en blanco (usuario deberá re-loguearse)
-        console.error('[AuthContext] Error al restaurar sesión:', err);
-        await tokenStorage.clear();
-      } finally {
-        // Señal para que las pantallas sepan que la verificación inicial terminó
-        setAuthLoaded(true);
+        if (!active) return;
+        if (!tokenStorage.getAccessToken()) setAuthLoaded(true);
+        else setSessionError(getUserErrorMessage(err));
       }
     })();
-  }, []);
+    return () => { active = false; };
+  }, [attempt, qc]);
+
+  useEffect(() => {
+    if (authState.token) socketService.connect(authState.token);
+  }, [authState.token]);
+  useEffect(() => {
+    void useFavoritesStore.getState().setAccount(authState.user?.id ?? null);
+  }, [authState.user?.id]);
 
   // ── Login ──────────────────────────────────────────────────────────────
   const login = useCallback(async (credentials: Credentials): Promise<AuthResponse> => {
@@ -211,21 +239,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── Logout ─────────────────────────────────────────────────────────────
   const logout = useCallback(async (): Promise<void> => {
+    const accessToken = tokenStorage.getAccessToken();
     const refreshToken = tokenStorage.getRefreshToken();
-    try {
-      await api.post('/auth/logout', { refreshToken });
-    } catch {
-      // Si falla el servidor igual limpiamos localmente
-    }
-    await tokenStorage.clear();
-    qc.clear();
-    setAuthState(EMPTY_STATE);
-  }, [qc]);
+    const config = { headers: { Authorization: `Bearer ${accessToken}` }, timeout: 5000 };
+    const revoke = accessToken ? Promise.allSettled([
+      axios.delete(`${API_URL}/notifications/token`, config),
+      axios.post(`${API_URL}/auth/logout`, { refreshToken }, config),
+    ]) : Promise.resolve();
+    clearLocalState();
+    setSessionError(null);
+    setAuthLoaded(true);
+    try { await tokenStorage.clear(); } finally { await revoke; }
+  }, [clearLocalState]);
 
   const clearError = useCallback(() => setError(null), []);
 
   // `isAuthenticated` es un booleano derivado, más cómodo para las guardas.
   const isAuthenticated = !!authState.token;
+
+  if (!authLoaded) return (
+    <View style={{ flex: 1, backgroundColor: tc.bg, justifyContent: 'center', padding: 24, gap: 16 }}>
+      {sessionError ? <>
+        <Text style={{ color: tc.text, textAlign: 'center' }}>{sessionError}</Text>
+        <Button title="Reintentar conexión" onPress={() => setAttempt(value => value + 1)} />
+        <Button title="Cerrar sesión" onPress={() => { void logout(); }} />
+      </> : <ActivityIndicator accessibilityLabel="Validando sesión" color={tc.text} />}
+    </View>
+  );
 
   return (
     <AuthContext.Provider

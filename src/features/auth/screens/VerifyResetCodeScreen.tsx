@@ -26,7 +26,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { Button, TOKENS, MOTION } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
-import api from '@/core/api/axiosinstance';
+import { forgotPasswordService } from '@/features/auth/services/auth';
 
 const { width } = Dimensions.get('window');
 const CODE_LENGTH = 6;
@@ -125,7 +125,7 @@ export default function VerifyResetCodeScreen() {
     setResending(true);
     setError('');
     try {
-      await api.post('/auth/forgot-password', { email: String(email).toLowerCase() });
+      await forgotPasswordService(String(email).toLowerCase());
       setCooldown(RESEND_COOLDOWN);
     } catch {
       setError('No pudimos reenviar el código. Intentá de nuevo.');

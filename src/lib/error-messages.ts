@@ -10,7 +10,8 @@
 const AUTH = {
   INVALID_CREDENTIALS: "Email o contraseña incorrectos",
   INVALID_REFRESH_TOKEN: "Tu sesión expiró. Volvé a iniciar sesión",
-  TOKEN_REVOKED: "Tu sesión fue cerrada. Volvé a iniciar sesión",
+  TOKEN_REUSE_DETECTED:
+    "Detectamos un uso sospechoso de tu sesión. Volvé a iniciar sesión",
   AUTHENTICATION_FAILED: "No pudimos autenticarte. Volvé a intentarlo",
   INVALID_FIREBASE_TOKEN: "Error al verificar con Firebase. Reintentá",
   MISSING_PHONE_NUMBER: "No se pudo obtener tu número de teléfono",
@@ -18,6 +19,7 @@ const AUTH = {
 
 const REGISTER = {
   EMAIL_ALREADY_IN_USE: "Ese email ya está registrado. ¿Querés iniciar sesión?",
+  USERNAME_ALREADY_IN_USE: "Ese nombre de usuario ya está ocupado",
 } as const;
 
 const VERIFICATION = {
@@ -29,6 +31,8 @@ const VERIFICATION = {
   EMAIL_ALREADY_VERIFIED: "Tu email ya fue verificado",
   INVALID_RESET_CODE:
     "El código de recuperación es inválido o ya expiró. Pedí uno nuevo",
+  MAX_RESET_ATTEMPTS_EXCEEDED:
+    "Demasiados intentos de recuperación. Pedí un nuevo código",
 
   // Identity verification
   IDENTITY_ALREADY_VERIFIED: "Tu identidad ya fue verificada",
@@ -69,6 +73,7 @@ const GENERAL_INPUT = {
   NO_FILE_UPLOADED: "Tenés que seleccionar un archivo",
   NO_FILES_UPLOADED: "Tenés que seleccionar al menos una imagen",
   UNSUPPORTED_FILE_TYPE: "El tipo de archivo no está permitido",
+  UNKNOWN_FILE_TYPE: "No se pudo detectar el tipo de archivo",
   FILE_SIZE_EXCEEDED: "El archivo es demasiado grande",
   UNSUPPORTED_IMAGE_TYPE: "El formato de imagen no está permitido",
 } as const;
@@ -92,6 +97,7 @@ const NOT_FOUND = {
 
 const FORBIDDEN = {
   NOT_ORDER_PARTICIPANT: "No sos parte de esta orden",
+  NOT_ORDER_PROVIDER: "Solo el proveedor puede realizar esta acción",
   NOT_CONVERSATION_PARTICIPANT:
     "No sos parte de esta conversación",
   NOT_REVIEWED_PROVIDER:
@@ -108,21 +114,30 @@ const FORBIDDEN = {
 } as const;
 
 const ORDER = {
+  SERVICE_NOT_ACTIVE: "Este servicio ya no está activo",
+  CANNOT_ORDER_OWN_SERVICE: "No podés contratar tu propio servicio",
   ORDER_NOT_COMPLETED:
     "La orden debe estar completada antes de realizar esta acción",
   ORDER_NOT_ACCEPTED:
     "La orden debe ser aceptada por el proveedor antes de pagar",
   ORDER_DISPUTED: "No se puede liberar el pago de una orden en disputa",
+  INVALID_ORDER_STATUS_TRANSITION: "Ese cambio de estado no está permitido",
+  ORDER_STATUS_STALE:
+    "La orden cambió mientras se procesaba. Actualizá y volvé a intentar",
 } as const;
 
 const PAYMENT = {
+  INSUFFICIENT_BALANCE: "El balance es insuficiente para esta operación",
   PAYMENT_NOT_PAID: "El pago aún no fue realizado",
   PAYMENT_GATEWAY_ERROR:
     "Error al procesar el pago. Intentá de nuevo en unos minutos",
+  EXTERNAL_PROVIDER_ERROR:
+    "Un servicio externo no respondió. Intentá de nuevo en unos minutos",
   INVALID_WEBHOOK_SIGNATURE:
     "Firma de webhook inválida. Verificá la configuración del proveedor de pagos",
   INVALID_WEBHOOK_PAYLOAD:
     "El webhook recibido no contiene los datos esperados",
+  UNIDENTIFIABLE_WEBHOOK: "No se pudo identificar el evento del webhook",
 } as const;
 
 const PLAN = {
@@ -134,9 +149,26 @@ const SOCIAL = {
   CANNOT_FOLLOW_SELF: "No podés seguirte a vos mismo",
   ALREADY_REVIEWED: "Ya dejaste una reseña para este pedido",
   REVIEW_ALREADY_HAS_REPLY: "Esta reseña ya tiene una respuesta",
+  CANNOT_REPORT_OWN_REVIEW: "No podés reportar tu propia reseña",
+} as const;
+
+/** Códigos genéricos que agrupan errores no clasificados por status HTTP. */
+const GENERIC = {
+  BAD_REQUEST: "La solicitud no es válida",
+  DOMAIN_ERROR: "No se pudo completar la operación",
+  HTTP_ERROR: "La solicitud fue rechazada",
+  UNAUTHORIZED: "Necesitás iniciar sesión para continuar",
+  FORBIDDEN: "No tenés permiso para realizar esta acción",
+  NOT_FOUND: "No se encontró el recurso solicitado",
+  CONFLICT: "Hay un conflicto con el estado actual. Actualizá e intentá de nuevo",
+  UNPROCESSABLE_ENTITY: "No se pudo procesar la solicitud",
+  PAYLOAD_TOO_LARGE: "El archivo o solicitud es demasiado grande",
+  RATE_LIMITED: "Hiciste demasiadas solicitudes. Esperá un momento e intentá de nuevo",
+  INTERNAL_ERROR: "Ocurrió un error en el servidor. Intentá de nuevo más tarde",
 } as const;
 
 export const ERROR_MESSAGES: Record<string, string> = {
+  ...GENERIC,
   ...AUTH,
   ...REGISTER,
   ...VERIFICATION,

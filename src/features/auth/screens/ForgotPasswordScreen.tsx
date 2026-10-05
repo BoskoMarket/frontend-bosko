@@ -27,7 +27,7 @@ import { Button, TOKENS, MOTION } from '@/core/design-system';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
-import api from '@/core/api/axiosinstance';
+import { forgotPasswordService } from '@/features/auth/services/auth';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const { width } = Dimensions.get('window');
@@ -81,7 +81,7 @@ export default function ForgotPasswordScreen() {
 
     try {
       // Validamos que el email exista antes de avanzar al paso del código
-      await api.post('/auth/forgot-password', { email: trimmedEmail });
+      await forgotPasswordService(trimmedEmail);
       setIsLoading(false);
 
       Animated.timing(formExitAnim, {

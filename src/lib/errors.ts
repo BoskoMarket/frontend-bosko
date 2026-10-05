@@ -1,14 +1,21 @@
 import { AxiosError } from "axios";
 import { ERROR_MESSAGES, DEFAULT_ERROR_MESSAGE, type ErrorCode } from "./error-messages";
 
-/** Respuesta de error del backend Bosko */
+/** Detalle de error de validación por campo (ver frontend-error-contract.md) */
+export interface ApiErrorDetail {
+  field: string;
+  message: string;
+}
+
+/** Respuesta de error del backend Bosko (frontend-error-contract.md) */
 interface BackendErrorResponse {
   success: false;
   statusCode: number;
   code: string;
   message: string;
+  details?: ApiErrorDetail[];
   timestamp: string;
-  path: string;
+  requestId?: string;
 }
 
 export interface ApiError {
@@ -18,10 +25,14 @@ export interface ApiError {
   serverMessage: string;
   /** Status HTTP */
   statusCode: number;
+  /** Errores de validación por campo (solo en VALIDATION_ERROR) */
+  details?: ApiErrorDetail[];
+  /** ID de trazabilidad para soporte — nunca mostrar como mensaje al usuario */
+  requestId?: string;
 }
 
 /**
- * Extrae { code, serverMessage, statusCode } del error,
+ * Extrae { code, serverMessage, statusCode, details, requestId } del error,
  * sin traducir — la traducción la hace `getUserErrorMessage()`.
  */
 export function extractApiError(error: unknown): ApiError {
@@ -34,6 +45,8 @@ export function extractApiError(error: unknown): ApiError {
         code: data.code,
         serverMessage: data.message || axiosError.message,
         statusCode: data.statusCode || axiosError.response?.status || 500,
+        details: data.details,
+        requestId: data.requestId,
       };
     }
 
@@ -62,9 +75,36 @@ export function extractApiError(error: unknown): ApiError {
 
 /**
  * Devuelve el mensaje en español listo para mostrar al usuario.
- * Busca el `code` en el mapa de mensajes; si no existe, devuelve un mensaje genérico.
+ *
+ * - `VALIDATION_ERROR` con `details[]`: arma un mensaje combinando cada
+ *   `{field, message}` (el backend puede agregar campos que el cliente
+ *   todavía no conoce sin romper el mapeo).
+ * - `UNKNOWN_ERROR` (throw local, no viene del backend): usa el mensaje
+ *   propio del `Error` en vez del genérico, porque ese texto lo escribió
+ *   la app, no el server — no aplica la regla de "no confiar en message".
+ * - `NETWORK_ERROR`: sin respuesta del server (offline, timeout).
+ * - Resto: busca `code` en el catálogo; si no está, mensaje genérico.
  */
 export function getUserErrorMessage(error: unknown): string {
-  const { code } = extractApiError(error);
+  const { code, serverMessage, details } = extractApiError(error);
+
+  if (code === "VALIDATION_ERROR" && details?.length) {
+    return details.map((d) => `${d.field}: ${d.message}`).join("\n");
+  }
+
+  if (code === "NETWORK_ERROR") {
+    return "No hay conexión con el servidor. Verificá tu internet e intentá de nuevo";
+  }
+
+  if (code === "UNKNOWN_ERROR") {
+    return serverMessage || DEFAULT_ERROR_MESSAGE;
+  }
+
   return ERROR_MESSAGES[code as ErrorCode] ?? DEFAULT_ERROR_MESSAGE;
+}
+
+/** Detalles de validación por campo, para asociarlos a inputs de un form. */
+export function getFieldErrors(error: unknown): ApiErrorDetail[] {
+  const { code, details } = extractApiError(error);
+  return code === "VALIDATION_ERROR" ? (details ?? []) : [];
 }

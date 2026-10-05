@@ -37,3 +37,15 @@ export async function loginWithGoogleService(firebaseIdToken: string): Promise<A
   return data;
 }
 
+export async function changePasswordService(currentPassword: string, newPassword: string): Promise<void> {
+  await api.patch('/users/me/password', { currentPassword, newPassword });
+}
+
+export async function forgotPasswordService(email: string): Promise<void> {
+  await api.post('/auth/forgot-password', { email });
+}
+
+export async function resetPasswordService(email: string, code: string, newPassword: string): Promise<void> {
+  await api.post('/auth/reset-password', { email, code, newPassword });
+}
+

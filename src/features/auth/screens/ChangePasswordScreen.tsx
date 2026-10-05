@@ -18,10 +18,11 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
-import api from '@/core/api/axiosinstance';
+import { changePasswordService } from '@/features/auth/services/auth';
 import { TOKENS, GRADIENTS, useThemeColors } from '@/core/design-system';
 import { Ionicons } from '@expo/vector-icons';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { getUserErrorMessage } from '@/lib/errors';
 
 const { width } = Dimensions.get('window');
 const PRIMARY = TOKENS.color.signal;
@@ -80,8 +81,8 @@ function FieldInput({
   onChange: (t: string) => void;
   show: boolean;
   toggleShow: () => void;
-  inputRef?: React.RefObject<TextInput>;
-  nextRef?: React.RefObject<TextInput>;
+  inputRef?: React.RefObject<TextInput | null>;
+  nextRef?: React.RefObject<TextInput | null>;
   last?: boolean;
   focused?: boolean;
   onFocus?: () => void;
@@ -161,13 +162,12 @@ export default function ChangePasswordScreen() {
     }
     setIsLoading(true);
     try {
-      await api.patch('/users/me/password', { currentPassword, newPassword });
+      await changePasswordService(currentPassword, newPassword);
       Alert.alert('¡Listo!', 'Tu contraseña fue actualizada exitosamente.', [
         { text: 'OK', onPress: () => safeBack(router, '/(tabs)/profile') },
       ]);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || 'Error al cambiar la contraseña';
-      setError(Array.isArray(msg) ? msg.join('\n') : msg);
+    } catch (err) {
+      setError(getUserErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
