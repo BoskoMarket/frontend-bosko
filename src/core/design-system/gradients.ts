@@ -9,9 +9,9 @@ export const GRADIENTS = {
   // 3-stop — hero, splash, banners grandes
   brandDeep: [TOKENS.color.signal, TOKENS.color.primary, TOKENS.color.primaryDark] as const,
 
-  // Overlays sobre imagen/video (reels, hero)
-  overlayFadeDown: ['transparent', 'rgba(0,0,0,0.75)'] as const,
-  overlayFadeUp: ['rgba(0,0,0,0.35)', 'transparent'] as const,
+  // Overlays sobre imagen/video (reels, hero) — derivados de TOKENS.scrim
+  overlayFadeDown: ['transparent', TOKENS.scrim.strong] as const,
+  overlayFadeUp: [TOKENS.scrim.light, 'transparent'] as const,
 } as const;
 
 export function wash(tc: { bg: string; surface2: string }): readonly [string, string, string] {

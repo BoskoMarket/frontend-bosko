@@ -1,57 +1,61 @@
 // Fuente única de la paleta dark/light — "Señal Nocturna".
-// Cambios vs. la paleta actual: bg más profundo, superficies pasan a vidrio
-// translúcido (para backdrop-blur / BlurView), se agrega signal + mint.
+// Todo derivado de BRAND.colors (sin literales): un rebrand edita brand/brand.ts.
+import { BRAND } from './brand/brand';
+import { withAlpha } from './color';
+
+const C = BRAND.colors;
+
 export const PALETTE = {
   dark: {
     // Fondos
-    bg:           '#0A0910',   // antes #0B0A0F
-    bgGlow:       'rgba(255,45,111,0.18)',   // antes bordo — ahora rosa señal
-    bgGlowFade:   'rgba(255,45,111,0.0)',
-    surface:      '#131118',
-    surface2:     'rgba(255,255,255,0.06)',  // antes sólido #1C1925 — ahora vidrio
-    card:         'rgba(255,255,255,0.045)', // antes sólido #18151F — ahora vidrio + blur
-    cardBorder:   'rgba(255,255,255,0.09)',
+    bg:           C.dark.bg,
+    bgGlow:       withAlpha(C.signal, 0.18),
+    bgGlowFade:   withAlpha(C.signal, 0),
+    surface:      C.dark.surface,
+    surface2:     withAlpha(C.white, 0.06),  // vidrio
+    card:         withAlpha(C.white, 0.045), // vidrio + blur
+    cardBorder:   withAlpha(C.white, 0.09),
 
     // Texto
-    text:         '#EDEAF5',   // antes #F2F0F8
-    textSub:      'rgba(237,234,245,0.55)',
-    textMuted:    'rgba(237,234,245,0.30)',
+    text:         C.dark.text,
+    textSub:      withAlpha(C.dark.text, 0.55),
+    textMuted:    withAlpha(C.dark.text, 0.30),
 
     // UI
-    border:       'rgba(255,255,255,0.10)',
-    divider:      'rgba(255,255,255,0.06)',
-    overlay:      'rgba(5,4,9,0.78)',
-    accent:       'rgba(255,45,111,0.14)',   // antes bordo — ahora rosa señal
+    border:       withAlpha(C.white, 0.10),
+    divider:      withAlpha(C.white, 0.06),
+    overlay:      withAlpha(C.dark.overlayBase, 0.78),
+    accent:       withAlpha(C.signal, 0.14),
 
     // Brand
-    primary:      '#850021',
-    primaryLight: '#FF2D6F',   // antes #C0002F
-    signal:       '#FF2D6F',   // NUEVO
-    mint:         '#00E5A0',   // NUEVO
+    primary:      C.primary,
+    primaryLight: C.signal,
+    signal:       C.signal,
+    mint:         C.mint,
   },
   light: {
-    bg:           '#F7F5FB',
-    bgGlow:       'rgba(255,45,111,0.08)',
-    bgGlowFade:   'rgba(255,45,111,0.0)',
-    surface:      '#FFFFFF',
-    surface2:     '#F0EDF5',
-    card:         '#FFFFFF',
-    cardBorder:   'rgba(10,9,16,0.08)',
+    bg:           C.light.bg,
+    bgGlow:       withAlpha(C.signal, 0.08),
+    bgGlowFade:   withAlpha(C.signal, 0),
+    surface:      C.light.surface,
+    surface2:     C.light.surface2,
+    card:         C.light.surface,
+    cardBorder:   withAlpha(C.light.ink, 0.08),
 
-    text:         '#14111C',
-    textSub:      'rgba(20,17,28,0.55)',
-    textMuted:    'rgba(20,17,28,0.32)',
+    text:         C.light.text,
+    textSub:      withAlpha(C.light.text, 0.55),
+    textMuted:    withAlpha(C.light.text, 0.32),
 
-    border:       'rgba(10,9,16,0.10)',
-    divider:      'rgba(10,9,16,0.06)',
-    overlay:      'rgba(10,9,16,0.45)',
-    accent:       'rgba(255,45,111,0.10)',
+    border:       withAlpha(C.light.ink, 0.10),
+    divider:      withAlpha(C.light.ink, 0.06),
+    overlay:      withAlpha(C.light.ink, 0.45),
+    accent:       withAlpha(C.signal, 0.10),
 
-    primary:      '#850021',
-    primaryLight: '#FF2D6F',
-    signal:       '#FF2D6F',
-    mint:         '#00E5A0',
+    primary:      C.primary,
+    primaryLight: C.signal,
+    signal:       C.signal,
+    mint:         C.mint,
   },
-} as const;
+};
 
 export type PaletteColors = typeof PALETTE.dark;

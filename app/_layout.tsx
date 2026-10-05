@@ -6,13 +6,8 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Stack, router, useSegments, useRootNavigationState } from "expo-router";
 import * as Notifications from "expo-notifications";
 import * as SplashScreen from "expo-splash-screen";
-import {
-  useFonts,
-  Archivo_600SemiBold,
-  Archivo_700Bold,
-  Archivo_800ExtraBold,
-} from "@expo-google-fonts/archivo";
-import { JetBrainsMono_500Medium } from "@expo-google-fonts/jetbrains-mono";
+import { useFonts } from "expo-font";
+import { FONT_ASSETS } from "@/core/design-system/brand/fonts";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/core/query/queryClient";
 import { setupQueryNetworkFocus } from "@/core/query/networkFocus";
@@ -117,12 +112,7 @@ function ThemedRoot() {
 }
 
 export default function _layout() {
-  const [fontsLoaded, fontError] = useFonts({
-    Archivo_600SemiBold,
-    Archivo_700Bold,
-    Archivo_800ExtraBold,
-    JetBrainsMono_500Medium,
-  });
+  const [fontsLoaded, fontError] = useFonts(FONT_ASSETS);
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
