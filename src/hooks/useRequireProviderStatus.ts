@@ -9,7 +9,7 @@
 
 import { useEffect } from 'react';
 import { router } from 'expo-router';
-import { useProviderStatus, type ProviderStatus } from './useProviderStatus';
+import { useProviderStatus, type ProviderStatus } from '@/hooks/useProviderStatus';
 
 const RANK: Record<ProviderStatus, number> = { client: 0, pending: 1, provider: 2 };
 

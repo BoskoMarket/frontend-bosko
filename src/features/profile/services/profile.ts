@@ -12,6 +12,8 @@ export interface UserProfile {
     avatarUrl?: string;
     bannerUrl?: string;
     location?: string;
+    lat?: number;
+    lng?: number;
     isVerified: boolean;
     backgroundCheckStatus?: string;
     role?: 'user' | 'admin';
@@ -22,13 +24,7 @@ export interface UserProfile {
 }
 
 // Solo los campos que acepta PATCH /users/me
-export interface UpdateProfilePayload {
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    bio?: string;
-    isAvailable?: boolean;
-}
+export type UpdateProfilePayload = import('@/core/api/generated/schema').components['schemas']['UpdateProfileDto'] & { isAvailable?: boolean };
 
 export async function getCurrentUserProfile(): Promise<UserProfile> {
     const { data } = await api.get<UserProfile>("/users/me");
@@ -38,8 +34,8 @@ export async function getCurrentUserProfile(): Promise<UserProfile> {
 export async function updateUserProfile(
     payload: UpdateProfilePayload
 ): Promise<UserProfile> {
-    const { firstName, lastName, phone, bio, isAvailable } = payload;
-    const { data } = await api.patch<UserProfile>("/users/me", { firstName, lastName, phone, bio, isAvailable });
+    const { firstName, lastName, phone, bio, isAvailable, lat, lng } = payload;
+    const { data } = await api.patch<UserProfile>("/users/me", { firstName, lastName, phone, bio, isAvailable, lat, lng });
     return data;
 }
 
@@ -74,4 +70,9 @@ export async function getUserStats(): Promise<UserStats> {
 
 export async function verifyPhoneWithFirebase(firebaseIdToken: string): Promise<void> {
     await api.post('/users/me/verify-phone', { firebaseIdToken });
+}
+
+/** Eliminar cuenta — DELETE /users/me */
+export async function deleteAccountService(password: string): Promise<void> {
+    await api.delete('/users/me', { data: { password } });
 }

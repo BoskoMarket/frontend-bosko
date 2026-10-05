@@ -10,7 +10,7 @@
  * - 'provider' → profile.isProvider === true (aprobado)
  */
 
-import { useProfile } from '../state/ProfileContext';
+import { useProfile } from '@/features/profile/state/ProfileContext';
 import { useKYC } from '@/features/kyc/state/KYCContext';
 import type { KYCStatus } from '@/features/kyc/types/kyc.types';
 

@@ -17,6 +17,7 @@ export type Category = {
 export type ServiceSummary = {
   id: string;
   categoryId: string;
+  categoryName?: string;
   providerId: string;
   name: string;
   title: string;
@@ -34,6 +35,7 @@ export type ProviderProfile = {
   id: string;
   serviceId: string;
   categoryId: string;
+  categoryName?: string;
   name: string;
   title: string;
   summary: string;
