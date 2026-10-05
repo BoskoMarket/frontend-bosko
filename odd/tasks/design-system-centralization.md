@@ -71,7 +71,7 @@ Forecast: muy por encima de ~400 líneas → PRs encadenados, una tarea (o featu
 |----|-------|------|--------|
 | T0 | Regla en `CLAUDE.md` + memoria; este plan | inline | ✅ |
 | T1 | Capa de marca: `brand/brand.ts` + `fonts.ts`; `palette`/`tokens`/`gradients`/`premium`/`typography` derivan de brand; marcar `TOKENS.color.bg/text/sub` como `@deprecated` (129 usos en ~25 archivos → se eliminan en cada feature, borrado final en T13); agregar semánticos faltantes (`onPrimary`, `onMedia`, `scrim.*`); `app/_layout.tsx` usa `fonts.ts` | delegada (2+ archivos no triviales) | ✅ `23c9164` |
-| T2 | Guardia ESLint en `warn` + script de conteo de violaciones (baseline registrado aquí) | inline | ⬜ |
+| T2 | Guardia ESLint en `warn` + script de conteo de violaciones (baseline registrado aquí) | inline | ✅ `5cb9cb7` |
 | T3 | Inventario y alta de componentes faltantes en el DS: `Input` (mover desde `core/components`), `GradientButton`/variante brand de `Button`, `Chip`, `Badge/StatusPill`, `Avatar`, `OtpInput`, `AuthCard`, `EmptyState`, `Toast`, banners, `BrandMark` | delegada | ⬜ |
 | T4 | Migrar `features/auth` (~14 pantallas) | delegada | ⬜ |
 | T5 | Migrar `src/components` + `src/core/components` compartidos (TabBar, ThemeToggle, ProviderCTA, Premium*, banners) | delegada | ⬜ |
@@ -117,6 +117,15 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 - 2026-10-05: auditoría y plan.
 - 2026-10-05 T1 ✅ `23c9164`: `brand/brand.ts` (`BRAND`), `brand/fonts.ts` (`FONT_ASSETS`), `color.ts` (`withAlpha`); palette/tokens/premium/typography/gradients sin literales (test lo verifica); nuevos `TOKENS.color.onPrimary`, `TOKENS.onMedia`, `TOKENS.scrim`; `TOKENS.color.bg/text/sub` `@deprecated`. Checks: `tsc` limpio, `lint` limpio, `designSystemBrand.test.ts` 7/7, `npm test` 9 suites / 33 tests OK. Diferencias solo de formato (`'#fff'`→`'#FFFFFF'`, rgba sin espacios, `0.0`→`0`); `PALETTE`/`TOKENS` perdieron `as const` (tipos `string`). RDD: off (global) → sin review nativa.
 
+- 2026-10-05 T2 ✅ `5cb9cb7`: `no-restricted-syntax` en `warn` para `src/**` + `app/**` (excluye `src/core/design-system/**`): hex, `rgb/rgba/hsl` (literal y template), nombres de color en props `*color`/`tint`, `fontFamily` literal. Script `npm run lint:ds` (`scripts/count-ds-violations.mjs`). **Baseline: 1095 violaciones en 78 archivos.** `npm run lint` sigue en 0 errores (solo warnings). Top: ReelsScreen 67, DashboardScreen 58, ProfileScreen 48, OrderDetailScreen 40, DeleteAccountScreen 37.
+- Nota para el nav-map: existe `scripts/generate-routes.cjs` (`npm run routes:generate`) → usarlo para listar "Rutas existentes".
+
+## Conteo de violaciones (`npm run lint:ds`)
+
+| Después de | Total | Archivos |
+|---|---|---|
+| T2 (baseline) | 1095 | 78 |
+
 ## Próximo paso
 
-T2: guardia ESLint en `warn` + script `npm run lint:ds` con conteo baseline.
+T3: inventario de patrones UI repetidos y alta de componentes faltantes en el DS.
