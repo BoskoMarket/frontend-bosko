@@ -11,6 +11,7 @@
     "test": "jest --watchAll=false --runInBand --watchman=false",
     "typecheck": "npm run routes:generate && tsc --noEmit",
     "lint": "eslint src app __tests__",
+    "lint:ds": "node scripts/count-ds-violations.mjs",
     "contracts:generate": "openapi-typescript docs/backend-openapi.json -o src/core/api/generated/schema.ts",
     "contracts:check": "npm run contracts:generate && git diff --exit-code -- src/core/api/generated/schema.ts",
     "build:check": "expo export --platform android --platform ios --output-dir dist-check",
