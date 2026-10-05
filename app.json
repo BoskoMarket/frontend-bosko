@@ -2,7 +2,7 @@
   "expo": {
     "name": "Bosko",
     "slug": "Bosko",
-    "owner": "gonzachabit",
+    "owner": "apps-frank",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/bosko-logo.png",
@@ -27,21 +27,22 @@
       },
       "edgeToEdgeEnabled": true,
       "googleServicesFile": "./google-services.json",
-      "androidNavigationBar": {
-        "backgroundColor": "#000000",
-        "barStyle": "light"
-      },
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
         "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT"
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ],
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
       ]
     },
     "ios": {
@@ -96,22 +97,37 @@
       ],
       "expo-asset",
       "@sentry/react-native",
-      "expo-navigation-bar"
+      "expo-navigation-bar",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Bosko usa tu ubicación para ubicar tu perfil cuando vos lo solicites."
+        }
+      ],
+      "./plugins/withBouncyCastleFix",
+      "./plugins/withManifestBackupFix"
     ],
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/481e79c0-a1dd-409f-a1d0-af9bd2881eb8"
+      "url": "https://u.expo.dev/e1513092-becc-4c7c-9524-a3ede8d34829"
     },
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "router": {},
+      "expo-navigation-bar": {
+        "backgroundColor": "#000000"
+      },
       "eas": {
-        "projectId": "481e79c0-a1dd-409f-a1d0-af9bd2881eb8"
+        "projectId": "e1513092-becc-4c7c-9524-a3ede8d34829"
       }
+    },
+    "androidNavigationBar": {
+      "backgroundColor": "#000000",
+      "barStyle": "light"
     }
   }
 }
