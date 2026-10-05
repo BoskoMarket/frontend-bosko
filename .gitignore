@@ -19,3 +19,7 @@ expo-env.d.ts
 android/
 ios/
 android/local.properties
+
+# Local verification output
+dist-check/
+coverage/

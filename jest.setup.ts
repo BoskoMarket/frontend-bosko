@@ -1,4 +1,5 @@
 import "react-native-gesture-handler/jestSetup";
+process.env.EXPO_PUBLIC_API_URL = 'https://example.test/api/v1';
 
 jest.mock("@react-native-async-storage/async-storage", () =>
   require("@react-native-async-storage/async-storage/jest/async-storage-mock")

@@ -1,0 +1,31 @@
+name: Frontend checks
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+permissions:
+  contents: read
+concurrency:
+  group: frontend-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EXPO_PUBLIC_API_URL: https://api.boskoapp.site/api/v1
+      CI: '1'
+      SENTRY_DISABLE_AUTO_UPLOAD: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run contracts:check
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npx expo config --type public > /tmp/expo-config.json
+      - run: npm run build:check
