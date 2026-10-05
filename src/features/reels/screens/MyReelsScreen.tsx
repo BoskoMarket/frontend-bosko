@@ -23,7 +23,8 @@ import { safeBack } from '@/core/navigation/safeBack';
 import { EmptyState } from '@/core/components/EmptyState';
 import { GRADIENTS } from '@/core/design-system/gradients';
 import { useThemeColors } from '@/stores/theme.store';
-import { useRequireProviderStatus } from '@/features/profile/hooks/useRequireProviderStatus';
+import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useMyReels, useUpdateReel, useDeleteReel } from '@/hooks/queries/useReelsQuery';
 import { getUserErrorMessage } from '@/lib/errors';
 import { toast } from '@/core/components/Toast';
@@ -216,6 +217,8 @@ export default function MyReelsScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
+      <AnimatedBackground variant="minimal" />
+
       <View style={styles.headerRow}>
         <Pressable
           style={[styles.backBtn, { backgroundColor: tc.surface }]}
@@ -225,7 +228,9 @@ export default function MyReelsScreen() {
           <Ionicons name="chevron-back" size={22} color={tc.text} />
         </Pressable>
         <Text style={[styles.header, { color: tc.text }]}>Mis reels</Text>
-        <View style={{ width: 36 }} />
+        <Pressable accessibilityLabel="Publicar reel" onPress={() => router.push('/(tabs)/profile/upload-reel')} hitSlop={12}>
+          <Ionicons name="add" size={26} color={tc.text} />
+        </Pressable>
       </View>
 
       {reels.length > 0 && (
