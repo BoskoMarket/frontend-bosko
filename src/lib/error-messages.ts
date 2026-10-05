@@ -2,7 +2,7 @@
  * Mapa de códigos de error del backend → mensajes para el usuario en español.
  *
  * Cada código corresponde al campo `code` que devuelve el backend en la respuesta
- * de error: { success: false, statusCode, code, message, timestamp, path }.
+ * de error: { success: false, statusCode, code, message, details?, timestamp, requestId? }.
  *
  * Si un código no está mapeado, se usa un mensaje genérico.
  */

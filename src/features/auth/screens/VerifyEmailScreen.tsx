@@ -28,6 +28,7 @@ import { useAuth } from '@/features/auth/state/AuthContext';
 import { Button, TOKENS } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { WELCOME_VIDEO_PENDING_KEY } from '@/features/auth/constants';
+import { extractApiError, getUserErrorMessage } from '@/lib/errors';
 
 const { width } = Dimensions.get('window');
 const CODE_LENGTH = 6;
@@ -107,18 +108,15 @@ export default function VerifyEmailScreen() {
       await verifyEmail(email, code);
       await AsyncStorage.setItem(WELCOME_VIDEO_PENDING_KEY, 'true');
       setSuccess(true);
-    } catch (err: any) {
-      const errorCode = err?.response?.data?.code;
+    } catch (err) {
+      // Decidir por `code`, nunca por el texto de `message` (frontend-error-contract.md)
+      const { code: errorCode } = extractApiError(err);
       if (errorCode === 'INVALID_VERIFICATION_CODE') {
         setError('Código incorrecto o expirado. Verificá y volvé a intentar.');
-      } else if (errorCode === 'BAD_REQUEST') {
-        const msg = err.response.data.message ?? '';
-        if (msg.includes('already verified')) setError('Este email ya fue verificado.');
-        else setError('Código incorrecto. Verificá y volvé a intentar.');
       } else if (errorCode === 'NOT_FOUND') {
         setError('Usuario no encontrado.');
       } else {
-        setError('Error al verificar. Intentá de nuevo.');
+        setError(getUserErrorMessage(err));
       }
     } finally {
       setLoading(false);

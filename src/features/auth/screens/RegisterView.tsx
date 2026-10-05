@@ -31,7 +31,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useGoogleSignIn } from '@/features/auth/hooks/useGoogleSignIn';
-import { getUserErrorMessage } from '@/lib/errors';
+import { getFormErrors, getUserErrorMessage } from '@/lib/errors';
 import { BrandMark } from '@/components/BrandMark';
 
 const { width } = Dimensions.get('window');
@@ -58,6 +58,8 @@ const STEPS: Step[] = [
   { label: 'Email',      placeholder: 'tucorreo@ejemplo.com', field: 'email',     keyboardType: 'email-address', icon: 'mail-outline'  },
   { label: 'Contraseña', placeholder: 'Mínimo 8 caracteres',  field: 'password',  secure: true,                  icon: 'lock-closed-outline' },
 ];
+
+const REGISTER_FIELDS = STEPS.map(s => s.field);
 
 export default function RegisterView({ toRegister }: { toRegister?: () => void }) {
   const { registerUser, isLoading, error, clearError } = useAuth();
@@ -140,7 +142,16 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
       await registerUser({ firstName, lastName, email, password: formData.password });
       router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
     } catch (err) {
-      Alert.alert('Error', getUserErrorMessage(err));
+      // VALIDATION_ERROR: volver al primer paso con error y mostrarlo en su input
+      const { fields, general } = getFormErrors(err, REGISTER_FIELDS);
+      const firstInvalid = STEPS.findIndex(s => fields[s.field]);
+      if (firstInvalid >= 0) {
+        clearError(); // el error ya se muestra en su campo; evita que reaparezca al cambiar de paso
+        setStep(firstInvalid);
+        setFieldError(fields[STEPS[firstInvalid].field]!);
+        Animated.timing(progress, { toValue: (firstInvalid + 1) / STEPS.length, duration: 300, useNativeDriver: false }).start();
+      }
+      if (general) Alert.alert('Error', general);
     }
   };
 

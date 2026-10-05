@@ -50,11 +50,18 @@ export function extractApiError(error: unknown): ApiError {
       };
     }
 
-    // Error de red o respuesta sin el formato esperado
+    const status = axiosError.response?.status;
+
+    // Sin respuesta del server: offline, timeout o DNS
+    if (!status) {
+      return { code: "NETWORK_ERROR", serverMessage: axiosError.message, statusCode: 0 };
+    }
+
+    // Respuesta sin el envelope esperado (proxy, gateway, rate limiter externo)
     return {
-      code: "NETWORK_ERROR",
+      code: status === 429 ? "RATE_LIMITED" : status >= 500 ? "INTERNAL_ERROR" : "HTTP_ERROR",
       serverMessage: axiosError.message,
-      statusCode: axiosError.response?.status ?? 0,
+      statusCode: status,
     };
   }
 
@@ -82,7 +89,8 @@ export function extractApiError(error: unknown): ApiError {
  * - `UNKNOWN_ERROR` (throw local, no viene del backend): usa el mensaje
  *   propio del `Error` en vez del genérico, porque ese texto lo escribió
  *   la app, no el server — no aplica la regla de "no confiar en message".
- * - `NETWORK_ERROR`: sin respuesta del server (offline, timeout).
+ * - `NETWORK_ERROR`: sin respuesta del server (offline, timeout). Un 5xx o
+ *   429 sin envelope se normaliza a `INTERNAL_ERROR` / `RATE_LIMITED`.
  * - Resto: busca `code` en el catálogo; si no está, mensaje genérico.
  */
 export function getUserErrorMessage(error: unknown): string {
@@ -107,4 +115,63 @@ export function getUserErrorMessage(error: unknown): string {
 export function getFieldErrors(error: unknown): ApiErrorDetail[] {
   const { code, details } = extractApiError(error);
   return code === "VALIDATION_ERROR" ? (details ?? []) : [];
+}
+
+export interface FormErrors<F extends string> {
+  /** Mensaje por input conocido del formulario. */
+  fields: Partial<Record<F, string>>;
+  /** Mensaje general: errores que no son de campo o campos que el form no conoce. */
+  general: string | null;
+}
+
+/**
+ * Asocia `details[]` de un `VALIDATION_ERROR` a los inputs del formulario.
+ * Los campos que el cliente todavía no conoce se agrupan en `general`, así el
+ * backend puede sumar validaciones sin romper el form (frontend-error-contract.md).
+ */
+export function getFormErrors<F extends string>(
+  error: unknown,
+  knownFields: readonly F[],
+): FormErrors<F> {
+  const details = getFieldErrors(error);
+  if (!details.length) return { fields: {}, general: getUserErrorMessage(error) };
+
+  const fields: Partial<Record<F, string>> = {};
+  const unknown: string[] = [];
+  for (const { field, message } of details) {
+    if ((knownFields as readonly string[]).includes(field)) {
+      fields[field as F] ??= message;
+    } else {
+      unknown.push(`${field}: ${message}`);
+    }
+  }
+  return { fields, general: unknown.length ? unknown.join("\n") : null };
+}
+
+/** Status que nunca se reintentan: repetir el request no cambia el resultado. */
+const NON_RETRYABLE_STATUS = [400, 401, 403, 404, 409, 422];
+const MAX_RETRY_DELAY_MS = 30_000;
+
+/** Política de reintento para queries (operaciones seguras): red, 429 y 5xx. */
+export function shouldRetryRequest(failureCount: number, error: unknown): boolean {
+  const status = (error as AxiosError)?.response?.status;
+  if (status && NON_RETRYABLE_STATUS.includes(status)) return false;
+  return failureCount < 2;
+}
+
+/** Lee `Retry-After` (segundos o fecha HTTP) de un 429/503. */
+export function getRetryAfterMs(error: unknown): number | null {
+  const header = (error as AxiosError)?.response?.headers?.["retry-after"];
+  if (header == null) return null;
+  const value = String(header).trim();
+  const seconds = Number(value);
+  if (value !== "" && Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
+  const date = Date.parse(value);
+  return Number.isNaN(date) ? null : Math.max(0, date - Date.now());
+}
+
+/** Backoff exponencial; respeta `Retry-After` cuando el server lo manda. */
+export function getRetryDelayMs(attemptIndex: number, error: unknown): number {
+  const delay = getRetryAfterMs(error) ?? 1000 * 2 ** attemptIndex;
+  return Math.min(delay, MAX_RETRY_DELAY_MS);
 }
