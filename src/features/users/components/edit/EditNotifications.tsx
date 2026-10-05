@@ -1,27 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, Switch, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { deletePushToken } from '@/features/notifications/services/notifications.service';
+import { usePushPreference } from '@/hooks/queries/usePushPreference';
 import { TOKENS } from '@/core/design-system/tokens';
 import { getUserErrorMessage } from '@/lib/errors';
 
 export default function EditNotifications() {
-  const [pushEnabled, setPushEnabled] = useState(true);
-  const [saving, setSaving] = useState(false);
-
+  const { query, mutation } = usePushPreference();
+  const pushEnabled = query.data ?? false;
+  const saving = query.isLoading || mutation.isPending;
   const handlePushToggle = async (value: boolean) => {
-    setSaving(true);
-    try {
-      if (!value) {
-        await deletePushToken();
-      }
-      // Habilitar: el token se re-registra automáticamente en NotificationsContext
-      // cuando el usuario vuelve a autenticarse.
-      setPushEnabled(value);
-    } catch (err) {
-      Alert.alert('Error', getUserErrorMessage(err));
-    } finally {
-      setSaving(false);
-    }
+    try { await mutation.mutateAsync(value); }
+    catch (error) { Alert.alert('Error', getUserErrorMessage(error)); }
   };
 
   return (

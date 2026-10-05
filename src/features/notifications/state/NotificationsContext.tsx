@@ -11,6 +11,7 @@ import {
   useMarkAllNotificationsRead,
   useDeleteNotification,
 } from '@/hooks/queries/useNotificationsQuery';
+import { getUserErrorMessage } from '@/lib/errors';
 
 const isExpoGo = Constants.appOwnership === 'expo';
 
@@ -49,7 +50,7 @@ export function useNotifications() {
     notifications: notifQ.data?.data ?? [],
     unreadCount: unreadQ.data ?? 0,
     loading: notifQ.isLoading,
-    error: notifQ.error?.message ?? '',
+    error: notifQ.error ? getUserErrorMessage(notifQ.error) : '',
     load: async () => { await notifQ.refetch(); },
     markRead: (id: string) => markReadM.mutateAsync(id),
     markAllRead: () => markAllM.mutateAsync(),
