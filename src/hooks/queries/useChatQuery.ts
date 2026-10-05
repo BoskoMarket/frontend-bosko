@@ -8,8 +8,10 @@ import {
   markAsRead,
 } from '@/features/chat/services/chat.service';
 import { useChatStore } from '@/stores/chat.store';
+import { useAuth } from '@/features/auth/state/AuthContext';
 
 export function useConversationsQuery() {
+  const { isAuthenticated } = useAuth();
   const setConversations = useChatStore((s) => s.setConversations);
 
   return useQuery({
@@ -17,9 +19,11 @@ export function useConversationsQuery() {
     queryFn: async () => {
       const data = await fetchConversations();
       setConversations(data);
+      useChatStore.getState().setUnreadTotal(data.reduce((total, row) => total + row.unreadCount, 0));
       return data;
     },
     staleTime: 30_000,
+    enabled: isAuthenticated,
   });
 }
 

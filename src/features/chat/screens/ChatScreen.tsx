@@ -42,7 +42,9 @@ import {
   setAudioModeAsync,
 } from 'expo-audio';
 import { BlurView } from '@/core/components/BlurView';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { MaterialIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import {
@@ -57,11 +59,26 @@ import {
 } from '../services/chat.service';
 import { socketService } from '../services/socket.service';
 import { useChatStore } from '@/stores/chat.store';
-import { useThemeColors } from '@/stores/theme.store';
+import { useThemeColors, useIsDark } from '@/stores/theme.store';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
+import { useOrder } from '@/hooks/queries/useOrdersQuery';
+import type { OrderStatus } from '@/features/orders/types/orders.types';
 import { TOKENS } from '@/core/design-system/tokens';
+import { GRADIENTS } from '@/core/design-system/gradients';
+import { FONT_FAMILY } from '@/core/design-system/typography';
 import { toast } from '@/core/components/Toast';
+
+const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
+  pending: 'Pendiente',
+  accepted: 'Aceptada',
+  in_progress: 'En progreso',
+  completed: 'Completada',
+  cancelled: 'Cancelada',
+  disputed: 'En disputa',
+};
+
+const QUICK_REPLIES = ['Hola, ¿estás disponible?', '¿Cuánto sale el trabajo?'];
 
 const POLL_INTERVAL = 10000;
 const TYPING_THROTTLE = 2000;
@@ -209,7 +226,11 @@ const MessageBubble = React.memo(function MessageBubble({ msg, myUserId }: { msg
           </View>
         )}
         <Pressable
-          style={[styles.mediaThumbnail, mediaBorderStyle]}
+          style={[
+            styles.mediaThumbnail,
+            mediaBorderStyle,
+            { borderColor: isMine ? 'rgba(255,255,255,0.25)' : tc.border },
+          ]}
           onPress={() => setLightboxOpen(true)}
         >
           {isVideo ? (
@@ -228,6 +249,28 @@ const MessageBubble = React.memo(function MessageBubble({ msg, myUserId }: { msg
     );
   }
 
+  const bubbleContent = (
+    <>
+      {msg.messageType === 'audio' ? (
+        <AudioBubble msg={msg} isMine={isMine} />
+      ) : msg.messageType === 'file' && msg.mediaUrl ? (
+        <DocumentBubble msg={msg} isMine={isMine} />
+      ) : (
+        <Text style={[styles.bubbleText, { color: isMine ? '#fff' : tc.text }, isMine && styles.bubbleTextMine]}>
+          {msg.content}
+        </Text>
+      )}
+      <Text style={[styles.bubbleTime, { color: isMine ? 'rgba(255,255,255,0.7)' : tc.textSub }, isMine && styles.bubbleTimeMine]}>
+        {timestamp}
+        {isMine && (
+          <Text style={msg.isRead ? styles.statusRead : styles.statusSent}>
+            {statusText}
+          </Text>
+        )}
+      </Text>
+    </>
+  );
+
   return (
     <View style={[styles.bubbleRow, isMine && styles.bubbleRowMine]}>
       {!isMine && (
@@ -237,30 +280,15 @@ const MessageBubble = React.memo(function MessageBubble({ msg, myUserId }: { msg
           </Text>
         </View>
       )}
-      <View style={[styles.bubble, isMine ? styles.bubbleMine : [styles.bubbleOther, { backgroundColor: tc.surface }]]}>
-        {msg.messageType === 'audio' ? (
-          <AudioBubble msg={msg} isMine={isMine} />
-        ) : msg.messageType === 'file' && msg.mediaUrl ? (
-          <DocumentBubble msg={msg} isMine={isMine} />
-        ) : (
-          <Text style={[styles.bubbleText, { color: isMine ? '#fff' : tc.text }, isMine && styles.bubbleTextMine]}>
-            {msg.content}
-          </Text>
-        )}
-        <Text style={[styles.bubbleTime, { color: isMine ? 'rgba(255,255,255,0.7)' : tc.textSub }, isMine && styles.bubbleTimeMine]}>
-          {timestamp}
-          {isMine && (
-            <Text style={msg.isRead
-              ? styles.statusRead
-              : msg.isDelivered
-                ? styles.statusDelivered
-                : styles.statusSent
-            }>
-              {statusText}
-            </Text>
-          )}
-        </Text>
-      </View>
+      {isMine ? (
+        <LinearGradient colors={GRADIENTS.brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.bubble, styles.bubbleMine]}>
+          {bubbleContent}
+        </LinearGradient>
+      ) : (
+        <View style={[styles.bubble, styles.bubbleOther, { backgroundColor: tc.surface2, borderColor: tc.border }]}>
+          {bubbleContent}
+        </View>
+      )}
     </View>
   );
 });
@@ -317,7 +345,7 @@ function TypingBubble() {
 
   return (
     <View style={styles.typingBubbleRow}>
-      <View style={[styles.typingBubble, { backgroundColor: tc.surface }]}>
+      <View style={[styles.typingBubble, { backgroundColor: tc.surface2, borderColor: tc.border }]}>
         {dots.map((dot, i) => (
           <Animated.View key={i} style={[styles.typingDot, { backgroundColor: tc.textSub }, { transform: [{ translateY: dot }] }]} />
         ))}
@@ -343,6 +371,7 @@ async function compressImage(uri: string, mimeType: string): Promise<{ uri: stri
 // ── Pantalla principal ────────────────────────────────────────────────────────
 export default function ChatScreen() {
   const tc = useThemeColors();
+  const isDark = useIsDark();
   const params = useLocalSearchParams<{ id: string }>();
   const { data: profile } = useProfile();
   const { authState } = useAuth();
@@ -350,8 +379,10 @@ export default function ChatScreen() {
   const insets = useSafeAreaInsets();
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
+  const { data: order } = useOrder(conversation?.orderId);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
+  const [inputFocused, setInputFocused] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -435,12 +466,14 @@ export default function ChatScreen() {
   }, [loadingMore]);
 
   useEffect(() => {
-    const token = authState.token;
-    if (!token) return;
-    socketService.connect(token);
+    setSocketReady(socketService.isConnected);
     const unsub = socketService.onConnectionChange(setSocketReady);
     return () => unsub();
   }, [authState.token]);
+
+  useEffect(() => socketService.onMessageNotification(notification => {
+    if (notification.conversationId === convIdRef.current) void loadMessages(notification.conversationId);
+  }), [loadMessages]);
 
   useEffect(() => {
     const sub = Keyboard.addListener('keyboardDidShow', () => {
@@ -451,6 +484,7 @@ export default function ChatScreen() {
 
   useEffect(() => {
     if (!convId || !socketReady) return;
+    void loadMessages(convId);
     socketService.joinConversation(convId);
     return () => { socketService.leaveConversation(convId); };
   }, [socketReady, convId]);
@@ -756,6 +790,7 @@ export default function ChatScreen() {
   if (loading) {
     return (
       <View style={[styles.background, styles.centered, { backgroundColor: tc.bg }]}>
+        <AnimatedBackground variant="minimal" />
         <ActivityIndicator color={TOKENS.color.signal} size="large" />
       </View>
     );
@@ -767,8 +802,9 @@ export default function ChatScreen() {
       keyboardVerticalOffset={Platform.OS === 'android' ? 0 : 0}
       style={[styles.background, { backgroundColor: tc.bg }]}
     >
+      <AnimatedBackground variant="minimal" />
       {/* Header */}
-      <BlurView intensity={25} tint="light" style={[styles.header, { borderBottomColor: tc.divider }]}>
+      <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={[styles.header, { borderBottomColor: tc.divider }]}>
         <Pressable onPress={() => safeBack(router, '/(tabs)/chat')} hitSlop={12} style={[styles.backButton, { backgroundColor: tc.surface }]}>
           <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
@@ -776,25 +812,41 @@ export default function ChatScreen() {
           {other?.avatarUrl ? (
             <Image source={{ uri: other.avatarUrl }} style={styles.headerAvatar} />
           ) : (
-            <View style={styles.headerAvatarPlaceholder}>
+            <LinearGradient colors={GRADIENTS.brand} style={styles.headerAvatarPlaceholder}>
               <Text style={styles.headerAvatarText}>
                 {(other?.firstName || '?').charAt(0).toUpperCase()}
               </Text>
-            </View>
+            </LinearGradient>
           )}
           <View>
             <Text style={[styles.headerName, { color: tc.text }]} numberOfLines={1}>{otherName}</Text>
           </View>
         </View>
         {conversation?.orderId && (
-          <Pressable
-            hitSlop={12}
-            onPress={() => router.push({ pathname: '/orders/[id]', params: { id: conversation.orderId } })}
-          >
-            <MaterialIcons name="assignment" size={24} color={TOKENS.color.signal} />
-          </Pressable>
+          <View style={[styles.headerOrderBtn, { backgroundColor: tc.accent }]}>
+            <MaterialIcons name="description" size={19} color={TOKENS.color.signal} />
+          </View>
         )}
       </BlurView>
+
+      {/* Barra de contexto de la orden — el chat siempre pertenece a una orden */}
+      {conversation?.orderId && order && (
+        <Pressable
+          style={[styles.orderBar, { backgroundColor: tc.accent, borderBottomColor: tc.border }]}
+          onPress={() => router.push({ pathname: '/orders/[id]', params: { id: conversation.orderId } })}
+        >
+          <MaterialIcons name="work-outline" size={16} color={TOKENS.color.signal} />
+          <View style={styles.orderBarText}>
+            <Text style={[styles.orderBarTitle, { color: tc.text }]} numberOfLines={1}>
+              {order.service?.title ?? order.title}
+            </Text>
+            <Text style={styles.orderBarMeta}>
+              ORDEN #{order.id.slice(-5).toUpperCase()} · {ORDER_STATUS_LABEL[order.status].toUpperCase()}
+            </Text>
+          </View>
+          <MaterialIcons name="chevron-right" size={18} color={TOKENS.color.signal} />
+        </Pressable>
+      )}
 
       {/* Mensajes */}
       <FlatList
@@ -814,10 +866,23 @@ export default function ChatScreen() {
         onEndReachedThreshold={0.2}
         ListFooterComponent={loadingMore ? <ActivityIndicator color={TOKENS.color.signal} style={{ padding: 12 }} /> : null}
         ListEmptyComponent={
-          <View style={styles.emptyChat}>
-            <MaterialIcons name="chat" size={48} color="rgba(133,0,33,0.15)" />
-            <Text style={[styles.emptyChatText, { color: tc.text }]}>Todavía no hay mensajes</Text>
+          <View style={[styles.emptyChat, { transform: [{ scaleY: -1 }] }]}>
+            <View style={[styles.emptyChatIconWrap, { backgroundColor: tc.accent }]}>
+              <MaterialIcons name="forum" size={34} color={TOKENS.color.signal} />
+            </View>
+            <Text style={[styles.emptyChatText, { color: tc.text }]}>Conversación iniciada</Text>
             <Text style={[styles.emptyChatSubtext, { color: tc.textSub }]}>Enviá el primer mensaje para empezar</Text>
+            <View style={styles.quickRepliesRow}>
+              {QUICK_REPLIES.map((reply) => (
+                <Pressable
+                  key={reply}
+                  style={[styles.quickReplyChip, { backgroundColor: tc.surface2, borderColor: tc.border }]}
+                  onPress={() => setInput(reply)}
+                >
+                  <Text style={[styles.quickReplyText, { color: tc.text }]}>{reply}</Text>
+                </Pressable>
+              ))}
+            </View>
           </View>
         }
         style={styles.messagesList}
@@ -827,29 +892,40 @@ export default function ChatScreen() {
 
       {/* Menú de adjuntar */}
       {showAttachMenu && (
-        <View style={styles.attachMenu}>
+        <View style={[styles.attachMenu, { backgroundColor: tc.surface, borderTopColor: tc.divider }]}>
           <Pressable onPress={handleCameraPhoto} style={styles.attachOption}>
-            <MaterialIcons name="camera-alt" size={20} color="#fff" />
-            <Text style={styles.attachOptionText}>Foto</Text>
+            <LinearGradient colors={GRADIENTS.brand} style={styles.attachIcon}>
+              <MaterialIcons name="camera-alt" size={20} color="#fff" />
+            </LinearGradient>
+            <Text style={[styles.attachOptionText, { color: tc.textSub }]}>Foto</Text>
           </Pressable>
           <Pressable onPress={handleCameraVideo} style={styles.attachOption}>
-            <MaterialIcons name="videocam" size={20} color="#fff" />
-            <Text style={styles.attachOptionText}>Video</Text>
+            <LinearGradient colors={GRADIENTS.brand} style={styles.attachIcon}>
+              <MaterialIcons name="videocam" size={20} color="#fff" />
+            </LinearGradient>
+            <Text style={[styles.attachOptionText, { color: tc.textSub }]}>Video</Text>
           </Pressable>
           <Pressable onPress={handlePickMedia} style={styles.attachOption}>
-            <MaterialIcons name="photo-library" size={20} color="#fff" />
-            <Text style={styles.attachOptionText}>Galería</Text>
+            <LinearGradient colors={GRADIENTS.brand} style={styles.attachIcon}>
+              <MaterialIcons name="photo-library" size={20} color="#fff" />
+            </LinearGradient>
+            <Text style={[styles.attachOptionText, { color: tc.textSub }]}>Galería</Text>
           </Pressable>
           <Pressable onPress={handlePickDocument} style={styles.attachOption}>
-            <MaterialIcons name="insert-drive-file" size={20} color="#fff" />
-            <Text style={styles.attachOptionText}>Documento</Text>
+            <LinearGradient colors={GRADIENTS.brand} style={styles.attachIcon}>
+              <MaterialIcons name="insert-drive-file" size={20} color="#fff" />
+            </LinearGradient>
+            <Text style={[styles.attachOptionText, { color: tc.textSub }]}>Documento</Text>
           </Pressable>
         </View>
       )}
 
       {/* Input bar */}
-      <BlurView intensity={25} tint="light" style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12), borderTopColor: tc.divider }]}>
-        <View style={[styles.inputWrapper, { backgroundColor: tc.surface2, borderColor: tc.border }]}>
+      <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12), borderTopColor: tc.divider }]}>
+        <View style={[
+          styles.inputWrapper,
+          { borderColor: inputFocused ? TOKENS.color.signal : tc.border },
+        ]}>
           {/* Botón izquierdo */}
           {isRecording || recordingLocked ? (
             <Pressable onPress={cancelRecording} hitSlop={8} style={styles.leftBtn}>
@@ -875,6 +951,8 @@ export default function ChatScreen() {
               style={[styles.input, { color: tc.text }]}
               value={input}
               onChangeText={handleInputChange}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
               placeholder="Escribí un mensaje..."
               placeholderTextColor={tc.textSub}
               multiline
@@ -896,6 +974,9 @@ export default function ChatScreen() {
               disabled={!input.trim() || sending}
               style={[styles.rightBtn, (!input.trim() || sending) && { backgroundColor: tc.surface2 }]}
             >
+              {!!input.trim() && !sending && (
+                <LinearGradient colors={GRADIENTS.brand} style={styles.rightBtnGradient} />
+              )}
               {sending ? <ActivityIndicator color="#fff" size="small" /> : <MaterialIcons name="send" size={20} color="#fff" />}
             </Pressable>
           ) : (
@@ -936,6 +1017,7 @@ export default function ChatScreen() {
                 if (!recordingLockedRef.current && isRecordingRef.current) cancelRecording();
               }}
             >
+              {!isRecording && <LinearGradient colors={GRADIENTS.brand} style={styles.rightBtnGradient} />}
               <MaterialIcons name="mic" size={20} color="#fff" />
             </View>
           )}
@@ -963,12 +1045,26 @@ const styles = StyleSheet.create({
   headerAvatar: { width: 40, height: 40, borderRadius: 20 },
   headerAvatarPlaceholder: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: TOKENS.color.signal,
     alignItems: 'center', justifyContent: 'center',
   },
-  headerAvatarText: { fontSize: 16, fontWeight: '700', color: '#fff' },
-  headerName: { fontSize: 16, fontWeight: '700' },
+  headerAvatarText: { fontSize: 16, fontWeight: '700', fontFamily: FONT_FAMILY.display, color: '#fff' },
+  headerName: { fontSize: 16, fontWeight: '700', fontFamily: FONT_FAMILY.heading },
   headerOrder: { fontSize: 12, marginTop: 1 },
+  headerOrderBtn: {
+    width: 38, height: 38, borderRadius: 13,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  orderBar: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 14, paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
+  orderBarText: { flex: 1, minWidth: 0 },
+  orderBarTitle: { fontSize: 13, fontWeight: '700', fontFamily: FONT_FAMILY.heading },
+  orderBarMeta: {
+    fontSize: 10, fontWeight: '700', fontFamily: FONT_FAMILY.mono,
+    letterSpacing: 0.8, textTransform: 'uppercase', color: TOKENS.color.signal,
+  },
   messagesList: { flex: 1 },
   messagesContent: { paddingHorizontal: 16, paddingVertical: 16, gap: 8, flexGrow: 1 },
   systemMessage: {
@@ -986,18 +1082,23 @@ const styles = StyleSheet.create({
   },
   bubbleAvatarText: { fontSize: 11, fontWeight: '700', color: '#fff' },
   bubble: { maxWidth: '75%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, gap: 4 },
-  bubbleMine: { backgroundColor: TOKENS.color.signal, borderBottomRightRadius: 4 },
+  bubbleMine: {
+    borderBottomRightRadius: 4,
+    shadowColor: TOKENS.color.signal,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    elevation: 3,
+  },
   bubbleOther: {
     borderBottomLeftRadius: 4,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+    borderWidth: 1,
   },
   mediaThumbnail: {
     width: 220, height: 165,
     overflow: 'hidden',
     backgroundColor: '#111',
-    borderWidth: 2.5,
-    borderColor: TOKENS.color.signal,
+    borderWidth: 1,
   },
   mediaTimestampOverlay: {
     position: 'absolute', bottom: 6, right: 8,
@@ -1040,22 +1141,24 @@ const styles = StyleSheet.create({
   // Attach menu
   attachMenu: {
     flexDirection: 'row',
-    backgroundColor: '#1a1a2e',
     paddingVertical: 10,
     paddingHorizontal: 16,
     gap: 8,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
   },
   attachOption: {
     flex: 1,
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
     paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  attachOptionText: { color: '#fff', fontSize: 11, fontWeight: '500' },
+  attachIcon: {
+    width: 44, height: 44, borderRadius: 15,
+    alignItems: 'center', justifyContent: 'center',
+    ...TOKENS.shadow.glow,
+  },
+  attachOptionText: { fontSize: 11, fontWeight: '500' },
   // Input bar
   inputBar: {
     padding: 12,
@@ -1070,6 +1173,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    backgroundColor: 'transparent',
   },
   leftBtn: { padding: 4 },
   input: { flex: 1, fontSize: 15, maxHeight: 100, paddingTop: 4 },
@@ -1077,20 +1181,36 @@ const styles = StyleSheet.create({
     width: 36, height: 36, borderRadius: 18,
     backgroundColor: TOKENS.color.signal,
     alignItems: 'center', justifyContent: 'center',
+    overflow: 'hidden',
   },
+  rightBtnGradient: { ...StyleSheet.absoluteFillObject },
   rightBtnRecording: { backgroundColor: '#dc2626' },
   rightBtnSend: { backgroundColor: '#22c55e' },
   rightBtnDisabled: {},
   rightBtnPressed: { opacity: 0.85, transform: [{ scale: 0.95 }] },
   // Recording
   recordingBar: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  recordingDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#dc2626' },
-  recordingTimer: { fontSize: 15, fontWeight: '700', color: '#dc2626', minWidth: 36 },
+  recordingDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: TOKENS.color.error },
+  recordingTimer: { fontSize: 15, fontWeight: '700', color: TOKENS.color.error, minWidth: 36 },
   recordingHint: { flex: 1, fontSize: 12 },
   // Empty + typing
-  emptyChat: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 8 },
-  emptyChatText: { fontSize: 16, fontWeight: '700' },
-  emptyChatSubtext: { fontSize: 14 },
+  emptyChat: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 8, paddingHorizontal: 32 },
+  emptyChatIconWrap: {
+    width: 76, height: 76, borderRadius: 30,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 4,
+  },
+  emptyChatText: { fontSize: 16, fontWeight: '800', fontFamily: FONT_FAMILY.display },
+  emptyChatSubtext: { fontSize: 14, textAlign: 'center' },
+  quickRepliesRow: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: 8,
+    justifyContent: 'center', marginTop: 8,
+  },
+  quickReplyChip: {
+    borderWidth: 1, borderRadius: 99,
+    paddingHorizontal: 14, paddingVertical: 8,
+  },
+  quickReplyText: { fontSize: 13, fontWeight: '500' },
   typingBubbleRow: { paddingHorizontal: 16, paddingVertical: 4 },
   typingBubble: {
     flexDirection: 'row',
@@ -1112,7 +1232,6 @@ const styles = StyleSheet.create({
     height: 7,
     borderRadius: 4,
   },
-  statusSent:      { color: 'rgba(255,255,255,0.5)' },
-  statusDelivered: { color: 'rgba(255,255,255,0.7)' },
-  statusRead:      { color: '#60c8ff' },
+  statusSent: { color: 'rgba(255,255,255,0.7)' },
+  statusRead: { color: 'rgba(0,229,160,0.85)' },
 });

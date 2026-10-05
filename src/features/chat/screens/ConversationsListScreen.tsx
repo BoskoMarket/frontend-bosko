@@ -20,8 +20,10 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { EmptyState } from '@/core/components/EmptyState';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { Animated } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -30,19 +32,25 @@ import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { useChatStore, useConversationsList } from '@/stores/chat.store';
 import { useThemeColors } from '@/stores/theme.store';
 import { TOKENS } from '@/core/design-system/tokens';
+import { GRADIENTS } from '@/core/design-system/gradients';
+import { FONT_FAMILY } from '@/core/design-system/typography';
 
-function formatLastMessage(content?: string | null): string {
-  if (!content) return 'Conversación iniciada';
-  if (content.startsWith('🎤') || content.startsWith('🖼') || content.startsWith('📷') ||
-      content.startsWith('🎥') || content.startsWith('📎')) return content;
+type MessagePreview = { icon?: React.ComponentProps<typeof Ionicons>['name']; label: string };
+
+function getMessagePreview(content?: string | null): MessagePreview {
+  if (!content) return { label: 'Conversación iniciada' };
+  if (content.startsWith('🎤')) return { icon: 'mic-outline', label: 'Mensaje de voz' };
+  if (content.startsWith('🖼') || content.startsWith('📷')) return { icon: 'image-outline', label: 'Foto' };
+  if (content.startsWith('🎥')) return { icon: 'videocam-outline', label: 'Video' };
+  if (content.startsWith('📎')) return { icon: 'document-outline', label: 'Documento' };
   if (content.startsWith('http://') || content.startsWith('https://')) {
-    if (/\.(mp3|m4a|aac|ogg|wav)/i.test(content)) return '🎤 Mensaje de voz';
-    if (/\.(mp4|mov|avi|webm)/i.test(content)) return '🎥 Video';
-    if (/\.(pdf|doc|docx|xls|xlsx)/i.test(content)) return '📎 Documento';
-    if (/\.(jpg|jpeg|png|gif|webp)/i.test(content)) return '📷 Foto';
-    return '📎 Archivo';
+    if (/\.(mp3|m4a|aac|ogg|wav)/i.test(content)) return { icon: 'mic-outline', label: 'Mensaje de voz' };
+    if (/\.(mp4|mov|avi|webm)/i.test(content)) return { icon: 'videocam-outline', label: 'Video' };
+    if (/\.(pdf|doc|docx|xls|xlsx)/i.test(content)) return { icon: 'document-outline', label: 'Documento' };
+    if (/\.(jpg|jpeg|png|gif|webp)/i.test(content)) return { icon: 'image-outline', label: 'Foto' };
+    return { icon: 'attach-outline', label: 'Archivo' };
   }
-  return content;
+  return { label: content };
 }
 
 function timeAgo(dateStr: string): string {
@@ -66,29 +74,54 @@ function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
     : 'Usuario';
   const hasUnread = item.unreadCount > 0;
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const pulse = React.useRef(new Animated.Value(1)).current;
 
   React.useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
   }, []);
 
+  React.useEffect(() => {
+    if (!hasUnread) return;
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 0.45, duration: 900, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 900, useNativeDriver: true }),
+      ]),
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [hasUnread]);
+
+  const preview = getMessagePreview(item.lastMessage?.content);
+
   return (
     <Animated.View style={{ opacity: fadeAnim }}>
       <Pressable
-        style={({ pressed }) => [styles.item, { backgroundColor: tc.card, borderColor: tc.cardBorder }, pressed && styles.itemPressed]}
+        style={({ pressed }) => [
+          styles.item,
+          { backgroundColor: tc.card, borderColor: hasUnread ? 'rgba(255,45,111,0.3)' : tc.cardBorder },
+          pressed && styles.itemPressed,
+        ]}
         onPress={() => router.push({ pathname: '/chat/[id]', params: { id: item.orderId } })}
       >
         {/* Avatar */}
         <View style={styles.avatarContainer}>
           {other?.avatarUrl ? (
             <Image source={{ uri: other.avatarUrl }} style={[styles.avatar, { backgroundColor: tc.surface2 }]} />
+          ) : hasUnread ? (
+            <LinearGradient colors={GRADIENTS.brand} style={styles.avatarPlaceholder}>
+              <Text style={styles.avatarInitial}>{(other?.firstName || 'U').charAt(0).toUpperCase()}</Text>
+            </LinearGradient>
           ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarInitial}>
+            <View style={[styles.avatarPlaceholder, { backgroundColor: tc.accent, borderWidth: 1, borderColor: 'rgba(255,45,111,0.25)' }]}>
+              <Text style={[styles.avatarInitial, { color: TOKENS.color.primary }]}>
                 {(other?.firstName || 'U').charAt(0).toUpperCase()}
               </Text>
             </View>
           )}
-          {hasUnread && <View style={styles.onlineDot} />}
+          {hasUnread && (
+            <Animated.View style={[styles.onlineDot, { backgroundColor: tc.mint, borderColor: tc.card, opacity: pulse }]} />
+          )}
         </View>
 
         {/* Contenido */}
@@ -103,12 +136,17 @@ function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
           </View>
 
           <View style={styles.itemFooter}>
-            <Text
-              style={[styles.itemPreview, { color: hasUnread ? tc.text : tc.textSub }, hasUnread && { fontWeight: '600' }]}
-              numberOfLines={1}
-            >
-              {formatLastMessage(item.lastMessage?.content)}
-            </Text>
+            <View style={styles.itemPreviewRow}>
+              {preview.icon && (
+                <Ionicons name={preview.icon} size={14} color={hasUnread ? tc.text : tc.textSub} />
+              )}
+              <Text
+                style={[styles.itemPreview, { color: hasUnread ? tc.text : tc.textSub }, hasUnread && { fontWeight: '600' }]}
+                numberOfLines={1}
+              >
+                {preview.label}
+              </Text>
+            </View>
             {hasUnread && (
               <View style={styles.unreadBadge}>
                 <Text style={styles.unreadCount}>
@@ -184,6 +222,7 @@ export default function ConversationsListScreen() {
 
   return (
     <View style={[styles.background, { backgroundColor: tc.bg }]}>
+      <AnimatedBackground variant="minimal" />
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: tc.divider, paddingTop: insets.top + 20 }]}>
         <Text style={[styles.headerTitle, { color: tc.text }]}>Mensajes</Text>
@@ -254,9 +293,10 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: '800',
+    fontFamily: FONT_FAMILY.display,
   },
   headerBadge: {
-    backgroundColor: TOKENS.color.signal,
+    backgroundColor: TOKENS.color.primary,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -295,13 +335,13 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: TOKENS.color.signal,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarInitial: {
     fontSize: 20,
     fontWeight: '700',
+    fontFamily: FONT_FAMILY.display,
     color: '#fff',
   },
   onlineDot: {
@@ -311,9 +351,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#22c55e',
     borderWidth: 2,
-    borderColor: '#fff',
   },
   itemContent: { flex: 1, gap: 3 },
   itemHeader: {
@@ -324,16 +362,26 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 15,
     fontWeight: '500',
+    fontFamily: FONT_FAMILY.heading,
     flex: 1,
   },
   itemNameBold: { fontWeight: '700' },
   itemTime: {
-    fontSize: 12,
+    fontSize: 10,
+    fontFamily: FONT_FAMILY.mono,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
   itemOrder: {
     fontSize: 12,
     color: TOKENS.color.signal,
     fontWeight: '500',
+  },
+  itemPreviewRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
   itemFooter: {
     flexDirection: 'row',
@@ -346,7 +394,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   unreadBadge: {
-    backgroundColor: TOKENS.color.signal,
+    backgroundColor: TOKENS.color.primary,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
