@@ -237,25 +237,3 @@ All of it lives under `src/core/design-system/` — the one folder to check befo
 ### Tests
 
 Jest with `jest-expo` preset. Test files in `__tests__/`. `moti` and `expo-image` mocked in `jest.setup.ts`. `@/` alias works via `moduleNameMapper` in `package.json`.
-
-## Recent Changes
-- **22/6/2026 10:29 p. m.** — Dashboard HTML, App Config (app.json) (18 archivos)
-- **22/6/2026 10:16 p. m.** — Dashboard HTML (16 archivos)
-- **22/6/2026 10:15 p. m.** — Dashboard HTML (16 archivos)
-- **22/6/2026 10:15 p. m.** — Dashboard HTML (16 archivos)
-- **22/6/2026 10:14 p. m.** — Dashboard HTML (16 archivos)
-- **22/6/2026 10:13 p. m.** — Dashboard HTML (16 archivos)
-- **10/6/2026** — Favoritos, UX/Polish, Optimistic UI (5 archivos): botón favorito en DashboardScreen grid, toast éxito/error perfil, ErrorBanner en Home, toast.error chat texto, Optimistic UI en 6 mutations de órdenes (onMutate/onError/onSettled + rollback + toast)
-- **4/6/2026 08:03 p. m.** — Dashboard HTML (1 archivos)
-- **30/5/2026 09:29 a. m.** — Dashboard HTML (1 archivos)
-- **30/5/2026 12:52 a. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML (35 archivos)
-- **29/5/2026 11:19 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML (35 archivos)
-- **29/5/2026 11:13 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML (35 archivos)
-- **29/5/2026 11:09 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML (35 archivos)
-- **29/5/2026 10:53 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML (35 archivos)
-- **29/5/2026 10:52 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML (35 archivos)
-- **29/5/2026 10:51 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md, Dashboard HTML (35 archivos)
-- **29/5/2026 10:45 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md (34 archivos)
-- **29/5/2026 10:41 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md (34 archivos)
-- **29/5/2026 10:40 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace, Documentación CLAUDE.md (34 archivos)
-- **29/5/2026 10:37 p. m.** — App Layout / Providers, Navegación / Tabs, Chat / Mensajería, Perfil, KYC / Antecedentes, Órdenes, Pagos, Notificaciones Push, Favoritos, Contextos Globales, Usuarios, Servicios / Marketplace (33 archivos)

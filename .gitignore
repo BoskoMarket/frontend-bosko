@@ -23,3 +23,6 @@ android/local.properties
 # Local verification output
 dist-check/
 coverage/
+
+# Tooling caches
+.atl/
