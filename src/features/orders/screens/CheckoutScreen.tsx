@@ -21,6 +21,9 @@ import { usePayments } from '@/features/payments/state/PaymentContext';
 import type { Order } from '../types/orders.types';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors } from '@/stores/theme.store';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { paymentBreakdown } from '@/features/payments/services/mockPayments';
+import { getUserErrorMessage } from '@/lib/errors';
 
 function useC() {
   const tc = useThemeColors();
@@ -76,7 +79,7 @@ export function CheckoutScreen() {
 
   useEffect(() => {
     (async () => {
-      if (!params.orderId) return;
+      if (!params.orderId) { setLoading(false); return; }
       const data = await getOrder(params.orderId);
       setOrder(data);
       setLoading(false);
@@ -91,17 +94,18 @@ export function CheckoutScreen() {
     if (!order?.id) return;
     setPaying(true);
     try {
-      await initiate(order.id);
+      const payment = await initiate(order.id);
+      if (payment.status !== 'paid' || !payment.simulated) throw new Error('No se pudo confirmar la simulación.');
       router.replace({
         pathname: '/orders/payment-success',
         params: {
           orderId:     order.id,
-          amount:      String(order.agreedPrice ?? 0),
+          amount:      String(payment.amount),
           serviceName: order.service?.title ?? 'Servicio',
         },
       });
-    } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'No se pudo procesar el pago. Intentá de nuevo.');
+    } catch (err) {
+      Alert.alert('Error', getUserErrorMessage(err));
     } finally {
       setPaying(false);
     }
@@ -131,11 +135,12 @@ export function CheckoutScreen() {
     : 'Proveedor';
 
   const subtotal = order.agreedPrice ?? 0;
-  const fee      = Math.round(subtotal * 0.05);
-  const total    = subtotal + fee;
+  const validPrice = Number.isFinite(subtotal) && subtotal > 0;
+  const { fee, total } = validPrice ? paymentBreakdown(subtotal) : { fee: 0, total: 0 };
 
   return (
     <View style={[s.root, { paddingTop: insets.top, backgroundColor: C.bg }]}>
+      <AnimatedBackground variant="minimal" />
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
@@ -143,7 +148,7 @@ export function CheckoutScreen() {
         <Pressable onPress={() => safeBack(router, '/(tabs)/orders')} hitSlop={12} style={s.backBtn}>
           <Ionicons name="arrow-back" size={22} color={C.text} />
         </Pressable>
-        <Text style={[s.headerTitle, { color: C.text }]}>Confirmar pago</Text>
+        <Text style={[s.headerTitle, { color: C.text }]}>Simular pago</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -215,8 +220,8 @@ export function CheckoutScreen() {
               <Ionicons name="shield-checkmark" size={20} color={C.primary} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[s.methodTitle, { color: C.text }]}>Pago seguro Bosko</Text>
-              <Text style={[s.methodSub, { color: C.sub }]}>El monto queda en garantía hasta que el trabajo sea completado</Text>
+              <Text style={[s.methodTitle, { color: C.text }]}>Modo de prueba</Text>
+              <Text style={[s.methodSub, { color: C.sub }]}>Esta simulación no cobra dinero ni modifica el pago de la orden real.</Text>
             </View>
           </View>
 
@@ -231,7 +236,7 @@ export function CheckoutScreen() {
             onPressIn={() => Animated.spring(btnScale, { toValue: 0.97, useNativeDriver: true }).start()}
             onPressOut={() => Animated.spring(btnScale, { toValue: 1, useNativeDriver: true }).start()}
             onPress={handlePay}
-            disabled={paying}
+            disabled={paying || !validPrice || order.status !== 'accepted'}
             style={s.payBtnWrap}
           >
             <LinearGradient
@@ -245,7 +250,7 @@ export function CheckoutScreen() {
               ) : (
                 <>
                   <Ionicons name="lock-closed" size={16} color="#fff" />
-                  <Text style={s.payBtnText}>Confirmar y pagar</Text>
+                  <Text style={s.payBtnText}>{!validPrice ? 'Falta acordar precio' : order.status !== 'accepted' ? 'Esperando aceptación' : 'Simular pago'}</Text>
                 </>
               )}
             </LinearGradient>

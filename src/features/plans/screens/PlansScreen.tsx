@@ -26,7 +26,8 @@ import { TOKENS } from '@/core/design-system/tokens';
 import { GRADIENTS } from '@/core/design-system/gradients';
 import { getUserErrorMessage } from '@/lib/errors';
 import { useThemeColors, wash } from '@/core/design-system';
-import { useRequireProviderStatus } from '@/features/profile/hooks/useRequireProviderStatus';
+import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 function formatPrice(price: number, currency: string) {
   return new Intl.NumberFormat('es-AR', {
@@ -97,7 +98,7 @@ export default function PlansScreen() {
     setSubscribing(planId);
     try {
       await subscribe(planId);
-      Alert.alert('¡Suscripción activada!', 'Ahora disfrutás de los beneficios del plan.');
+      Alert.alert('Simulación completada', 'No se cobró dinero ni se activaron beneficios reales.');
       load();
     } catch (err: any) {
       Alert.alert('Error', getUserErrorMessage(err));
@@ -109,7 +110,7 @@ export default function PlansScreen() {
   const handleCancel = () => {
     Alert.alert(
       'Cancelar suscripción',
-      '¿Estás seguro? Podés seguir usando el plan hasta el final del período facturado.',
+      '¿Estás seguro? Esta acción cancela la simulación en este dispositivo.',
       [
         { text: 'No, mantener', style: 'cancel' },
         {
@@ -117,7 +118,7 @@ export default function PlansScreen() {
           onPress: async () => {
             try {
               await cancelSubscription();
-              Alert.alert('Suscripción cancelada', 'Al final del período se desactivarán los beneficios.');
+              Alert.alert('Suscripción cancelada', 'Se canceló la simulación. No hubo movimientos de dinero.');
               load();
             } catch (err: any) {
               Alert.alert('Error', getUserErrorMessage(err));
@@ -138,12 +139,14 @@ export default function PlansScreen() {
       end={{ x: 1, y: 1 }}
       style={s.bg}
     >
+      <AnimatedBackground variant="minimal" />
+
       {/* Header */}
       <View style={[s.header, { backgroundColor: tc.surface, borderBottomColor: tc.cardBorder }]}>
         <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.card }]}>
           <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
-        <Text style={[s.headerTitle, { color: tc.text }]}>Planes</Text>
+        <Text style={[s.headerTitle, { color: tc.text }]}>Planes · simulación</Text>
         <View style={{ width: 40 }} />
       </View>
 

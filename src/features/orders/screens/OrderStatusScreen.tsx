@@ -24,6 +24,7 @@ import { useOrders } from '../state/OrdersContext';
 import { Order, OrderStatus } from '../types/orders.types';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors } from '@/stores/theme.store';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const POLL_INTERVAL = 10000;
 
@@ -122,7 +123,7 @@ export default function OrderStatusScreen() {
 
   const [order, setOrder] = useState<Order | undefined>();
   const [loading, setLoading] = useState(true);
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -146,6 +147,7 @@ export default function OrderStatusScreen() {
   if (loading) {
     return (
       <LinearGradient colors={['#fdf2f4', '#fef7ff', '#f0f4ff']} style={styles.bg}>
+        <AnimatedBackground variant="minimal" />
         <View style={styles.center}>
           <ActivityIndicator color={TOKENS.color.primary} size="large" />
         </View>
@@ -156,6 +158,7 @@ export default function OrderStatusScreen() {
   if (!order) {
     return (
       <LinearGradient colors={['#fdf2f4', '#fef7ff', '#f0f4ff']} style={styles.bg}>
+        <AnimatedBackground variant="minimal" />
         <View style={styles.center}>
           <MaterialIcons name="search-off" size={48} color={tc.textSub} />
           <Text style={[styles.notFound, { color: tc.textSub }]}>Orden no encontrada</Text>
@@ -179,6 +182,7 @@ export default function OrderStatusScreen() {
       end={{ x: 1, y: 1 }}
       style={styles.bg}
     >
+      <AnimatedBackground variant="minimal" />
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
@@ -278,7 +282,7 @@ export default function OrderStatusScreen() {
             style={({ pressed }) => [styles.actionBtn, pressed && styles.btnPressed]}
             onPress={() => router.push({ pathname: '/chat/[id]', params: { id: order.id } })}
           >
-            <MaterialIcons name="chat-outline" size={20} color={TOKENS.color.primary} />
+            <MaterialIcons name="chat-bubble-outline" size={20} color={TOKENS.color.primary} />
             <Text style={styles.actionBtnText}>Ir al chat</Text>
           </Pressable>
         </MotiView>

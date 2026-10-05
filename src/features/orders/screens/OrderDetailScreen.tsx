@@ -32,8 +32,10 @@ import { useOrders } from '../state/OrdersContext';
 import { useOrder } from '@/hooks/queries/useOrdersQuery';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { OrderStatus } from '../types/orders.types';
+import { getUserErrorMessage } from '@/lib/errors';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors } from '@/stores/theme.store';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 // Pasos del timeline en orden
 const TIMELINE_STEPS: { status: OrderStatus; label: string; icon: string }[] = [
@@ -155,9 +157,8 @@ export default function OrderDetailScreen() {
     try {
       await action();
       await refetchOrder(); // Refresca los datos
-    } catch (err: any) {
-      const msg = err?.response?.data?.message || `Error al ${label.toLowerCase()}`;
-      Alert.alert('Error', Array.isArray(msg) ? msg.join('\n') : msg);
+    } catch (err) {
+      Alert.alert(`Error al ${label.toLowerCase()}`, getUserErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
@@ -178,6 +179,7 @@ export default function OrderDetailScreen() {
   if (loading) {
     return (
       <View style={[styles.background, styles.centered, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
+        <AnimatedBackground variant="minimal" />
         <ActivityIndicator color={TOKENS.color.signal} size="large" />
       </View>
     );
@@ -186,6 +188,7 @@ export default function OrderDetailScreen() {
   if (!order) {
     return (
       <View style={[styles.background, styles.centered, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
+        <AnimatedBackground variant="minimal" />
         <Text style={[styles.notFoundText, { color: tc.textSub }]}>No se encontró la orden</Text>
         <Pressable onPress={() => safeBack(router, '/(tabs)/orders')} style={styles.backLink}>
           <Text style={styles.backLinkText}>← Volver</Text>
@@ -200,6 +203,7 @@ export default function OrderDetailScreen() {
 
   return (
     <View style={[styles.background, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
+      <AnimatedBackground variant="minimal" />
       <ScrollView
         contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}

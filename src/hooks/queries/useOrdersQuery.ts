@@ -20,6 +20,7 @@ import type {
   OrderStatus,
 } from '@/features/orders/types/orders.types';
 import { toast } from '@/core/components/Toast';
+import { getUserErrorMessage } from '@/lib/errors';
 
 export function useClientOrders() {
   return useQuery({
@@ -70,10 +71,10 @@ export function useAcceptOrder() {
       }
       return { prevList, prevOrder };
     },
-    onError: (_err, id, ctx) => {
+    onError: (err, id, ctx) => {
       if (ctx?.prevList)  qc.setQueryData(QUERY_KEYS.providerOrders, ctx.prevList);
       if (ctx?.prevOrder) qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
-      toast.error('No se pudo aceptar la orden', 'Intenta de nuevo');
+      toast.error('No se pudo aceptar la orden', getUserErrorMessage(err));
     },
     onSettled: (_data, _err, id) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.providerOrders });
@@ -100,10 +101,10 @@ export function useRejectOrder() {
       }
       return { prevList, prevOrder };
     },
-    onError: (_err, { id }, ctx) => {
+    onError: (err, { id }, ctx) => {
       if (ctx?.prevList)  qc.setQueryData(QUERY_KEYS.providerOrders, ctx.prevList);
       if (ctx?.prevOrder) qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
-      toast.error('No se pudo rechazar la orden', 'Intenta de nuevo');
+      toast.error('No se pudo rechazar la orden', getUserErrorMessage(err));
     },
     onSettled: (_data, _err, { id }) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.providerOrders });
@@ -129,10 +130,10 @@ export function useStartOrder() {
       }
       return { prevList, prevOrder };
     },
-    onError: (_err, id, ctx) => {
+    onError: (err, id, ctx) => {
       if (ctx?.prevList)  qc.setQueryData(QUERY_KEYS.providerOrders, ctx.prevList);
       if (ctx?.prevOrder) qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
-      toast.error('No se pudo iniciar la orden', 'Intenta de nuevo');
+      toast.error('No se pudo iniciar la orden', getUserErrorMessage(err));
     },
     onSettled: (_data, _err, id) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.providerOrders });
@@ -161,11 +162,11 @@ export function useCompleteOrder() {
       }
       return { prevClient, prevProvider, prevOrder };
     },
-    onError: (_err, id, ctx) => {
+    onError: (err, id, ctx) => {
       if (ctx?.prevClient)   qc.setQueryData(QUERY_KEYS.clientOrders, ctx.prevClient);
       if (ctx?.prevProvider) qc.setQueryData(QUERY_KEYS.providerOrders, ctx.prevProvider);
       if (ctx?.prevOrder)    qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
-      toast.error('No se pudo completar la orden', 'Intenta de nuevo');
+      toast.error('No se pudo completar la orden', getUserErrorMessage(err));
     },
     onSettled: (_data, _err, id) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.clientOrders });
@@ -196,11 +197,11 @@ export function useCancelOrder() {
       }
       return { prevClient, prevProvider, prevOrder };
     },
-    onError: (_err, { id }, ctx) => {
+    onError: (err, { id }, ctx) => {
       if (ctx?.prevClient)   qc.setQueryData(QUERY_KEYS.clientOrders, ctx.prevClient);
       if (ctx?.prevProvider) qc.setQueryData(QUERY_KEYS.providerOrders, ctx.prevProvider);
       if (ctx?.prevOrder)    qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
-      toast.error('No se pudo cancelar la orden', 'Intenta de nuevo');
+      toast.error('No se pudo cancelar la orden', getUserErrorMessage(err));
     },
     onSettled: (_data, _err, { id }) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.clientOrders });
@@ -223,9 +224,9 @@ export function useDisputeOrder() {
       }
       return { prevOrder };
     },
-    onError: (_err, { id }, ctx) => {
+    onError: (err, { id }, ctx) => {
       if (ctx?.prevOrder) qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
-      toast.error('No se pudo abrir la disputa', 'Intenta de nuevo');
+      toast.error('No se pudo abrir la disputa', getUserErrorMessage(err));
     },
     onSettled: (_data, _err, { id }) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.orderById(id) });

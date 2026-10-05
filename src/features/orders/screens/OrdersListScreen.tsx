@@ -26,6 +26,7 @@ import { Order, OrderStatus } from '../types/orders.types';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors } from '@/stores/theme.store';
 import { EmptyState } from '@/core/components/EmptyState';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 type TabType = 'client' | 'provider';
 
@@ -146,6 +147,7 @@ export default function OrdersListScreen() {
 
   return (
     <View style={[styles.background, { backgroundColor: tc.bg }]}>
+      <AnimatedBackground variant="minimal" />
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
         <Text style={[styles.headerTitle, { color: tc.text }]}>Mis órdenes</Text>

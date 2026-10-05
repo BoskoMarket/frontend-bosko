@@ -3,7 +3,7 @@
  * Conectado a los endpoints reales de /payments/*.
  */
 
-import api from '@/core/api/axiosinstance';
+import { simulatePayment, getSimulatedPayment, simulatedHistory } from './mockPayments';
 
 export type PaymentStatus = 'pending' | 'paid' | 'released' | 'refunded' | 'failed';
 
@@ -15,6 +15,7 @@ export interface Payment {
   amount: number;
   currency: string;
   status: PaymentStatus;
+  simulated?: boolean;
   externalId?: string;
   createdAt: string;
   updatedAt: string;
@@ -44,14 +45,12 @@ export interface PaginatedResponse<T> {
 
 /** Iniciar pago de una orden — POST /payments/initiate */
 export async function initiatePayment(orderId: string): Promise<Payment> {
-  const { data } = await api.post<Payment>('/payments/initiate', { orderId });
-  return data;
+  return simulatePayment(orderId);
 }
 
 /** Estado del pago de una orden — GET /payments/order/:orderId */
-export async function getOrderPayment(orderId: string): Promise<Payment> {
-  const { data } = await api.get<Payment>(`/payments/order/${orderId}`);
-  return data;
+export async function getOrderPayment(orderId: string): Promise<PaymentHistoryItem | null> {
+  return getSimulatedPayment(orderId);
 }
 
 /** Historial de pagos del usuario — GET /payments/history */
@@ -59,10 +58,7 @@ export async function fetchPaymentHistory(
   page = 1,
   limit = 20
 ): Promise<PaginatedResponse<PaymentHistoryItem>> {
-  const { data } = await api.get<PaginatedResponse<PaymentHistoryItem>>('/payments/history', {
-    params: { page, limit },
-  });
-  return data;
+  return simulatedHistory(page, limit);
 }
 
 /** Ganancias del proveedor autenticado — GET /payments/providers/me/earnings */
@@ -70,8 +66,5 @@ export async function fetchEarnings(
   page = 1,
   limit = 20
 ): Promise<PaginatedResponse<EarningsItem>> {
-  const { data } = await api.get<PaginatedResponse<EarningsItem>>('/payments/providers/me/earnings', {
-    params: { page, limit },
-  });
-  return data;
+  return { data: [], total: 0, page, limit };
 }

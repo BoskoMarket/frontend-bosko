@@ -12,6 +12,7 @@ import {
   useCancelOrder,
   useDisputeOrder,
 } from '@/hooks/queries/useOrdersQuery';
+import { getUserErrorMessage } from '@/lib/errors';
 
 export const OrdersProvider = ({ children }: { children: React.ReactNode }) => (
   <>{children}</>
@@ -32,7 +33,11 @@ export const useOrders = () => {
     clientOrders: clientQ.data ?? [],
     providerOrders: providerQ.data ?? [],
     loading: clientQ.isLoading || providerQ.isLoading,
-    error: clientQ.error?.message ?? providerQ.error?.message ?? null,
+    error: clientQ.error
+      ? getUserErrorMessage(clientQ.error)
+      : providerQ.error
+        ? getUserErrorMessage(providerQ.error)
+        : null,
 
     loadClientOrders: async () => { await clientQ.refetch(); },
     loadProviderOrders: async () => { await providerQ.refetch(); },

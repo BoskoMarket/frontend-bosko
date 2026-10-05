@@ -1,3 +1,4 @@
+import { readCollection } from '@/core/api/collections';
 /**
  * Servicio de órdenes.
  * Encapsula todas las llamadas al backend relacionadas con órdenes.
@@ -21,19 +22,19 @@ interface FetchOrdersParams {
 /** Obtener todas las órdenes del usuario autenticado (como cliente y proveedor) */
 export async function fetchOrders(params?: FetchOrdersParams): Promise<Order[]> {
   const { data } = await api.get<any>('/orders', { params });
-  return (data as any)?.data ?? (Array.isArray(data) ? data : []);
+  return readCollection(data);
 }
 
 /** Obtener órdenes donde el usuario es cliente */
 export async function fetchOrdersAsClient(params?: FetchOrdersParams): Promise<Order[]> {
   const { data } = await api.get<any>('/orders/client', { params });
-  return (data as any)?.data ?? (Array.isArray(data) ? data : []);
+  return readCollection(data);
 }
 
 /** Obtener órdenes donde el usuario es proveedor */
 export async function fetchOrdersAsProvider(params?: FetchOrdersParams): Promise<Order[]> {
   const { data } = await api.get<any>('/orders/provider', { params });
-  return (data as any)?.data ?? (Array.isArray(data) ? data : []);
+  return readCollection(data);
 }
 
 /** Obtener detalle de una orden por ID */

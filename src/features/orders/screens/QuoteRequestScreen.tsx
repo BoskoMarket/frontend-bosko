@@ -28,6 +28,7 @@ import { useOrders } from '../state/OrdersContext';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
 import { getUserErrorMessage } from '@/lib/errors';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const { width } = Dimensions.get('window');
 
@@ -76,6 +77,7 @@ export default function QuoteRequestScreen() {
 
   return (
     <View style={[styles.background, { backgroundColor: tc.bg }]}>
+      <AnimatedBackground variant="minimal" />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}

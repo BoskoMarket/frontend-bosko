@@ -1,3 +1,4 @@
+import type { components } from '@/core/api/generated/schema';
 /**
  * Tipos de dominio para el módulo de órdenes.
  * Reflejan exactamente el contrato del backend (ver endpoints.md).
@@ -62,21 +63,12 @@ export interface Order {
 }
 
 /** Payload para crear una nueva orden (POST /orders) */
-export interface CreateOrderPayload {
-  serviceId: string;
-  message: string;
-  scheduledDate?: string;
-  address?: string;
-}
+export type CreateOrderPayload = components['schemas']['CreateOrderDto'];
 
 /** Payload para rechazar o cancelar con motivo */
-export interface RejectOrderPayload {
-  reason: string;
-}
+export type RejectOrderPayload = components['schemas']['RejectOrderDto'];
 
-export interface DisputeOrderPayload {
-  reason: string;
-}
+export type DisputeOrderPayload = components['schemas']['DisputeDto'];
 
 /** Respuesta paginada genérica */
 export interface PaginatedResponse<T> {

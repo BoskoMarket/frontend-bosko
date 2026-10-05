@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   View,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +14,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors } from '@/stores/theme.store';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { useOrderPayment } from '@/hooks/queries/usePaymentsQuery';
 
 function useC() {
   const tc = useThemeColors();
@@ -41,6 +44,8 @@ export function PaymentSuccessScreen() {
     serviceName: string;
   }>();
   const C = useC();
+  const paymentQuery = useOrderPayment(params.orderId);
+  const payment = paymentQuery.data;
 
   // Animations
   const bgScale   = useRef(new Animated.Value(0)).current;
@@ -84,8 +89,17 @@ export function PaymentSuccessScreen() {
 
   const goHome = () => router.replace('/(tabs)');
 
+  if (paymentQuery.isLoading) return <View style={[s.root, { backgroundColor: C.bg, justifyContent: 'center' }]}><ActivityIndicator /></View>;
+  if (!payment?.simulated || payment.status !== 'paid') return (
+    <View style={[s.root, { backgroundColor: C.bg, justifyContent: 'center', padding: 24 }]}>
+      <Text style={{ color: C.text }}>No encontramos una simulación confirmada para esta orden.</Text>
+      <Pressable onPress={goHome}><Text style={{ color: C.primary, marginTop: 24 }}>Volver al inicio</Text></Pressable>
+    </View>
+  );
+
   return (
     <View style={[s.root, { backgroundColor: C.bg, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <AnimatedBackground variant="minimal" />
       <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
 
       {/* ── Success icon ────────────────────────────────────────────────── */}
@@ -118,13 +132,13 @@ export function PaymentSuccessScreen() {
           { opacity: contentFade, transform: [{ translateY: contentY }] },
         ]}
       >
-        <Text style={[s.title, { color: C.text }]}>¡Pago exitoso!</Text>
-        <Text style={[s.subtitle, { color: C.sub }]}>Tu pago fue procesado y el proveedor ya fue notificado</Text>
+        <Text style={[s.title, { color: C.text }]}>Simulación completada</Text>
+        <Text style={[s.subtitle, { color: C.sub }]}>No se cobró dinero ni se notificó un pago al proveedor.</Text>
 
         {/* Amount pill */}
         <View style={[s.amountPill, { backgroundColor: C.card }]}>
-          <Text style={[s.amountLabel, { color: C.sub }]}>Monto pagado</Text>
-          <Text style={s.amountValue}>{formatCurrency(params.amount)}</Text>
+          <Text style={[s.amountLabel, { color: C.sub }]}>Monto simulado</Text>
+          <Text style={s.amountValue}>{formatCurrency(String(payment.amount))}</Text>
         </View>
 
         {/* Service card */}
@@ -135,7 +149,7 @@ export function PaymentSuccessScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[s.detailLabel, { color: C.sub }]}>Servicio</Text>
-              <Text style={[s.detailValue, { color: C.text }]}>{params.serviceName}</Text>
+              <Text style={[s.detailValue, { color: C.text }]}>{payment.order?.title ?? 'Servicio'}</Text>
             </View>
           </View>
 
@@ -147,13 +161,13 @@ export function PaymentSuccessScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[s.detailLabel, { color: C.sub }]}>Estado del pago</Text>
-              <Text style={[s.detailValue, { color: C.green }]}>En garantía hasta completar</Text>
+              <Text style={[s.detailValue, { color: C.green }]}>Simulado · sin movimiento de dinero</Text>
             </View>
           </View>
         </View>
 
         <Text style={[s.escrowNote, { color: C.sub }]}>
-          El dinero se liberará al proveedor cuando marques el trabajo como completado
+          La orden conserva su estado real. Este comprobante corresponde únicamente a una prueba en este dispositivo.
         </Text>
       </Animated.View>
 

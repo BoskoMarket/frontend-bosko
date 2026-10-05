@@ -17,6 +17,7 @@ import { usePayments } from '../state/PaymentContext';
 import { PaymentHistoryItem, EarningsItem, PaymentStatus } from '../services/payments';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors, wash } from '@/core/design-system';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 type Tab = 'history' | 'earnings';
 
@@ -133,19 +134,21 @@ export default function PaymentsScreen() {
       end={{ x: 1, y: 1 }}
       style={s.bg}
     >
+      <AnimatedBackground variant="minimal" />
+
       {/* Header */}
       <View style={s.header}>
         <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.surface }]}>
           <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
-        <Text style={[s.headerTitle, { color: tc.text }]}>Pagos</Text>
+        <Text style={[s.headerTitle, { color: tc.text }]}>Pagos simulados</Text>
         <View style={{ width: 40 }} />
       </View>
 
       {/* Tabs */}
       <View style={[s.tabBar, { backgroundColor: tc.surface, borderColor: tc.cardBorder }]}>
         {([
-          { key: 'history', label: 'Historial', icon: 'history' },
+          { key: 'history', label: 'Simulaciones', icon: 'history' },
           { key: 'earnings', label: 'Ganancias', icon: 'trending-up' },
         ] as const).map(t => (
           <Pressable
