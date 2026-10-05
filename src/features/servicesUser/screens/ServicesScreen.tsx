@@ -18,12 +18,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
-import { useServices } from '../state/ServicesContext';
+import { useCategories } from '@/hooks/queries/useMarketplaceQuery';
 import type { Category } from '@/types/services';
 import { EmptyState } from '@/core/components/EmptyState';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
 import { FeaturedCard } from '../components/FeaturedCard';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const { width: W } = Dimensions.get('window');
 const CARD_GAP   = 12;
@@ -143,7 +144,7 @@ function SearchBar({ anim }: { anim: Animated.Value }) {
   const tc = useThemeColors();
   return (
     <Animated.View style={[s.searchWrap, { opacity: anim, transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }]}>
-      <Pressable style={[s.searchBar, { backgroundColor: tc.surface }]} onPress={() => router.push('/search')}>
+      <Pressable style={[s.searchBar, { backgroundColor: tc.surface, borderColor: tc.cardBorder }]} onPress={() => router.push('/search')}>
         <Ionicons name="search-outline" size={16} color={tc.textMuted} />
         <Text style={[s.searchPlaceholder, { color: tc.textMuted }]}>Buscar servicios o profesionales…</Text>
         <View style={[s.searchFilter, { backgroundColor: tc.accent }]}>
@@ -159,13 +160,10 @@ export default function ServicesScreen() {
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();
   const isDark = useIsDark();
-  const { categories, categoriesStatus, fetchCategories } = useServices();
+  const categoriesQuery = useCategories();
+  const categories = categoriesQuery.data ?? [];
 
-  const loading = categoriesStatus.loading && categories.length === 0;
-
-  useEffect(() => {
-    fetchCategories().catch(() => {});
-  }, []);
+  const loading = categoriesQuery.isLoading && categories.length === 0;
 
   // Header animations
   const headerAnim = useRef(new Animated.Value(0)).current;
@@ -189,6 +187,7 @@ export default function ServicesScreen() {
   return (
     <View style={[s.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={tc.bg} />
+      <AnimatedBackground variant="minimal" />
 
       <Header titleAnim={headerAnim} />
       <SearchBar anim={searchAnim} />
@@ -293,6 +292,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     gap: 10,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,

@@ -46,7 +46,7 @@ export function useStartKYC() {
   return useMutation({
     mutationFn: async () => {
       const response = await startVerification();
-      if (response.alreadyProvider) return;
+      if ('alreadyProvider' in response && response.alreadyProvider === true) return;
       if (!response.sessionToken) throw new Error('No se recibió token de verificación del servidor');
       const outcome = await launchDidit(response.sessionToken);
       if (outcome === 'cancelled') await cancelVerification();

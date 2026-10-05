@@ -17,6 +17,7 @@ import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useFavorites } from '../state/FavoritesContext';
 import { EmptyState } from '@/core/components/EmptyState';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 import type { ServiceSummary } from '@/types/services';
 import { TOKENS } from '@/core/design-system/tokens';
 import { GRADIENTS } from '@/core/design-system/gradients';
@@ -124,6 +125,7 @@ export function FavoritesScreen() {
 
   return (
     <View style={[s.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
+      <AnimatedBackground variant="minimal" />
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={tc.bg} />
 
       {/* Header */}

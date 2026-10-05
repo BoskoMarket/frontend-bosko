@@ -172,7 +172,7 @@ export const SearchPage = () => {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={[s.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
-        <StatusBar barStyle={tc.bg === '#ffffff' || tc.bg === '#f8f9fa' ? 'dark-content' : 'light-content'} />
+        <StatusBar barStyle={tc.bg === '#F7F5FB' ? 'dark-content' : 'light-content'} />
 
         {/* Header */}
         <View style={[s.header, { borderBottomColor: tc.border }]}>

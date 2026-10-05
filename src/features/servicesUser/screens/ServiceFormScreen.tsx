@@ -20,16 +20,18 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { safeBack } from '@/core/navigation/safeBack';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useServices } from "@/features/servicesUser/state/ServicesContext";
 import type { Service, ServicePayload } from "@/features/servicesUser/services/service";
 import { uploadServiceImages } from "@/features/servicesUser/services/service";
-import { useCategories } from "@/contexts/CategoriesContext";
+import { useCategories, useMyServices, useUpdateService } from "@/hooks/queries/useMarketplaceQuery";
+import { useAddServiceWithPlanLimit } from "@/features/servicesUser/hooks/useAddServiceWithPlanLimit";
 import { fetchServiceById } from "../services/services";
 import { TOKENS } from '@/core/design-system/tokens';
 import { GRADIENTS } from '@/core/design-system/gradients';
 import { useThemeColors } from '@/stores/theme.store';
 import { getUserErrorMessage } from '@/lib/errors';
-import { useRequireProviderStatus } from '@/features/profile/hooks/useRequireProviderStatus';
+import { toast } from '@/core/components/Toast';
+import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const BRAND = TOKENS.color.signal;
 const MIN_DESCRIPTION = 20;
@@ -62,8 +64,13 @@ export default function ServiceFormScreen() {
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();
   const params = useLocalSearchParams<{ serviceId?: string }>();
-  const { services, myServices, loading, loadMyServices, loadServices, addService, editService } = useServices();
-  const { categories, loading: categoriesLoading, loadCategories } = useCategories();
+  const myServicesQuery = useMyServices();
+  const myServices = myServicesQuery.data ?? [];
+  const addServiceM = useAddServiceWithPlanLimit();
+  const updateServiceM = useUpdateService();
+  const categoriesQuery = useCategories();
+  const categories = categoriesQuery.data ?? [];
+  const categoriesLoading = categoriesQuery.isLoading;
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -76,18 +83,6 @@ export default function ServiceFormScreen() {
   const isEditing = !!selectedService;
 
   useEffect(() => {
-    if (categories.length === 0) {
-      loadCategories().catch((err) => console.error(err));
-    }
-  }, [categories.length, loadCategories]);
-
-  useEffect(() => {
-    if (params.serviceId && myServices.length === 0) {
-      loadMyServices().catch((err) => console.error(err));
-    }
-  }, [params.serviceId]);
-
-  useEffect(() => {
     if (!params.serviceId) {
       setSelectedService(null);
       setForm({ ...EMPTY_FORM, categoryId: categories[0]?.id });
@@ -95,9 +90,7 @@ export default function ServiceFormScreen() {
       return;
     }
 
-    const found =
-      myServices.find((s) => s.id === params.serviceId) ||
-      services.find((s) => s.id === params.serviceId);
+    const found = myServices.find((s) => s.id === params.serviceId);
     if (found) {
       const catId =
         typeof found.category === "object" ? found.category?.id : found.category;
@@ -128,7 +121,7 @@ export default function ServiceFormScreen() {
         })
         .catch((err) => console.error(err));
     }
-  }, [params.serviceId, myServices, services, categories]);
+  }, [params.serviceId, myServices, categories]);
 
   const handlePickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -187,7 +180,7 @@ export default function ServiceFormScreen() {
       const payload = await buildPayload();
       if (isEditing && selectedService?.id) {
         const { categoryId: _cat, ...editPayload } = payload;
-        await editService(selectedService.id, editPayload);
+        await updateServiceM.mutateAsync({ id: selectedService.id, payload: editPayload });
         if (imageUri?.startsWith("file")) {
           try {
             await uploadServiceImages(selectedService.id, [imageUri]);
@@ -195,9 +188,9 @@ export default function ServiceFormScreen() {
             // Upload fallback — la edición ya fue guardada, el proveedor puede reintentar la foto después
           }
         }
-        Alert.alert("Servicio actualizado", "Los cambios fueron guardados.");
+        toast.success("Servicio actualizado", "Los cambios fueron guardados.");
       } else {
-        const service = await addService(payload);
+        const service = await addServiceM.mutateAsync(payload);
         // Upload main photo if selected
         if (service.id && imageUri) {
           try {
@@ -215,14 +208,14 @@ export default function ServiceFormScreen() {
             // Ídem — galería no es bloqueante para la creación del servicio
           }
         }
-        Alert.alert("¡Publicado!", "Tu servicio ya está disponible.");
+        toast.success("¡Publicado!", "Tu servicio ya está disponible.");
       }
       safeBack(router, '/(tabs)/profile');
     } catch (err: any) {
-      if ((err as any)?.response?.data?.code === "SERVICE_LIMIT_REACHED") {
-        Alert.alert("Plan Bosko", "Actualizá a plan Plus para publicar más servicios.");
+      if (err?.code === "SERVICE_LIMIT_REACHED" || err?.response?.data?.code === "SERVICE_LIMIT_REACHED") {
+        toast.warning("Límite de tu plan", "Actualizá a plan Plus para publicar más servicios.");
       } else {
-        Alert.alert("Error", getUserErrorMessage(err));
+        toast.error("Error", getUserErrorMessage(err));
       }
     } finally {
       setSubmitting(false);
@@ -231,6 +224,8 @@ export default function ServiceFormScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: tc.bg }]}>
+      <AnimatedBackground variant="minimal" />
+
       {/* Header */}
       <LinearGradient colors={GRADIENTS.brandDeep} style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <Pressable style={styles.backBtn} onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={10}>

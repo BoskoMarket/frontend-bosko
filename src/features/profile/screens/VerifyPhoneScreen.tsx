@@ -24,10 +24,12 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useProfile } from '@/features/profile/state/ProfileContext';
-import { verifyPhoneWithFirebase } from '@/features/servicesUser/services/profile';
+import { verifyPhoneWithFirebase } from '@/features/profile/services/profile';
+import { getUserErrorMessage } from '@/lib/errors';
 import { TOKENS } from '@/core/design-system/tokens';
 import { GRADIENTS } from '@/core/design-system/gradients';
 import { useThemeColors, useIsDark, wash } from '@/core/design-system';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 type Step = 'phone' | 'code';
 
@@ -85,6 +87,8 @@ export default function VerifyPhoneScreen() {
     } catch (err: any) {
       if (err?.code === 'auth/invalid-verification-code') {
         Alert.alert('Error', 'Código incorrecto. Intentá de nuevo.');
+      } else if (err?.isAxiosError) {
+        Alert.alert('Error', getUserErrorMessage(err));
       } else {
         Alert.alert('Error', err?.message || 'No se pudo verificar el código.');
       }
@@ -107,6 +111,8 @@ export default function VerifyPhoneScreen() {
         end={{ x: 1, y: 1 }}
         style={styles.bg}
       >
+        <AnimatedBackground variant="minimal" />
+
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.flex}

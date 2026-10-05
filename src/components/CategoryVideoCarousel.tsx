@@ -11,8 +11,8 @@ import {
 import { Video, ResizeMode } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 
-import { useCategories } from "@/src/contexts/CategoriesContext";
-import { Category } from "@/src/interfaces/category";
+import { useCategories } from "@/hooks/queries/useMarketplaceQuery";
+import { Category } from "@/interfaces/category";
 import { PREMIUM } from "@/core/design-system";
 
 const CARD_WIDTH = 160;
@@ -88,7 +88,7 @@ export const CategoryVideoCarousel = ({
 }: {
   onSelectCategory?: (id: string) => void;
 }) => {
-  const { categories } = useCategories();
+  const { data: categories = [] } = useCategories();
 
   const displayCategories = categories.slice(0, 6);
 

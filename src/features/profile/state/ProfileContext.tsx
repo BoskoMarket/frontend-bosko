@@ -4,7 +4,8 @@ import {
   useUpdateProfile,
   useToggleAvailability,
 } from '@/hooks/queries/useProfileQuery';
-import type { UpdateProfilePayload } from '@/features/servicesUser/services/profile';
+import type { UpdateProfilePayload } from '@/features/profile/services/profile';
+import { getUserErrorMessage } from '@/lib/errors';
 
 export const ProfileProvider = ({ children }: { children: React.ReactNode }) => (
   <>{children}</>
@@ -18,7 +19,7 @@ export const useProfile = () => {
   return {
     profile: query.data ?? null,
     isLoading: query.isLoading,
-    error: query.error?.message ?? null,
+    error: query.error ? getUserErrorMessage(query.error) : null,
     refreshProfile: async () => { await query.refetch(); },
     updateProfile: async (payload: UpdateProfilePayload) => {
       await updateMutation.mutateAsync(payload);

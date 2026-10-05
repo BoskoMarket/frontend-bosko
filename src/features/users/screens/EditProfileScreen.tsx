@@ -23,11 +23,14 @@ import { MotiView } from '@/core/components/MotiView';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
+import { useUploadAvatar } from '@/hooks/queries/useProfileQuery';
 import { useProfile } from '@/features/profile/state/ProfileContext';
-import { uploadAvatar } from '@/features/servicesUser/services/profile';
+
 import { TOKENS } from '@/core/design-system/tokens';
 import { Button, useThemeColors, useIsDark, wash } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 export default function EditProfileScreen() {
   const tc = useThemeColors();
@@ -39,7 +42,9 @@ export default function EditProfileScreen() {
   const [username] = useState('');
   const [phone, setPhone] = useState(profile?.phone || '');
   const [bio, setBio] = useState(profile?.bio || '');
-  const [location, setLocation] = useState(profile?.location || '');
+  const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState(false);
+  const { mutateAsync: uploadAvatar } = useUploadAvatar();
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -77,7 +82,7 @@ export default function EditProfileScreen() {
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
-      await updateProfile({ firstName, lastName, bio, location });
+      await updateProfile({ firstName, lastName, bio, phone, ...(coordinates ?? {}) });
       Alert.alert('Perfil actualizado', 'Tus datos se guardaron correctamente.', [
         { text: 'OK', onPress: () => safeBack(router, '/(tabs)/profile') },
       ]);
@@ -86,13 +91,13 @@ export default function EditProfileScreen() {
     } finally {
       setSaving(false);
     }
-  }, [firstName, lastName, bio, location, updateProfile]);
+  }, [firstName, lastName, bio, phone, coordinates, updateProfile]);
 
   const hasChanges =
     firstName !== profile?.firstName ||
     lastName !== profile?.lastName ||
     bio !== profile?.bio ||
-    location !== profile?.location;
+    phone !== (profile?.phone ?? '') || coordinates !== null;
 
   const displayUri = avatarUri || profile?.avatarUrl;
 
@@ -103,6 +108,8 @@ export default function EditProfileScreen() {
       end={{ x: 1, y: 1 }}
       style={styles.bg}
     >
+      <AnimatedBackground variant="minimal" />
+
       {/* Header */}
       <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={[styles.header, { borderBottomColor: tc.border }]}>
         <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
@@ -223,13 +230,19 @@ export default function EditProfileScreen() {
             {/* Ubicación */}
             <View style={styles.fieldGroup}>
               <Text style={[styles.label, { color: tc.text }]}>Ubicación</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: tc.surface, borderColor: tc.border, color: tc.text }]}
-                value={location}
-                onChangeText={setLocation}
-                placeholder="Ciudad, País"
-                placeholderTextColor={tc.textMuted}
-              />
+              <Text style={{ color: tc.textSub, marginBottom: 8 }}>
+                {coordinates ? 'Ubicación seleccionada. Guardá el perfil para confirmarla.' : profile?.location || 'Usá tu ubicación actual para ubicar tu perfil.'}
+              </Text>
+              <Button label={locating ? 'Buscando ubicación…' : 'Usar mi ubicación actual'} disabled={locating} onPress={async () => {
+                setLocating(true);
+                try {
+                  const permission = await Location.requestForegroundPermissionsAsync();
+                  if (permission.status !== 'granted') throw new Error('Permití el acceso a tu ubicación en los ajustes del dispositivo.');
+                  const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+                  setCoordinates({ lat: position.coords.latitude, lng: position.coords.longitude });
+                } catch (err) { Alert.alert('Ubicación', getUserErrorMessage(err)); }
+                finally { setLocating(false); }
+              }} />
             </View>
 
             {/* Bio */}

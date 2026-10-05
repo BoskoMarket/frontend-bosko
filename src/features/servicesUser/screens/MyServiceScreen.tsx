@@ -15,13 +15,15 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import { safeBack } from '@/core/navigation/safeBack';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useServices } from "@/features/servicesUser/state/ServicesContext";
+import { useMyServices, useDeleteService } from "@/hooks/queries/useMarketplaceQuery";
 import type { Service } from "@/features/servicesUser/services/service";
 import { EmptyState } from '@/core/components/EmptyState';
+import { getUserErrorMessage } from '@/lib/errors';
 import { TOKENS } from '@/core/design-system/tokens';
 import { GRADIENTS } from '@/core/design-system/gradients';
 import { useThemeColors } from '@/stores/theme.store';
-import { useRequireProviderStatus } from '@/features/profile/hooks/useRequireProviderStatus';
+import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const SIGNAL = TOKENS.color.signal;
 
@@ -86,7 +88,10 @@ export default function MyServiceScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();
-  const { myServices: services, myServicesLoading: loading, loadMyServices: loadServices, removeService } = useServices();
+  const myServicesQuery = useMyServices();
+  const services = myServicesQuery.data ?? [];
+  const loading = myServicesQuery.isLoading;
+  const deleteServiceM = useDeleteService();
 
   const handleEdit = (service: Service) => {
     router.push({
@@ -107,15 +112,11 @@ export default function MyServiceScreen() {
           onPress: async () => {
             try {
               if (service.id) {
-                await removeService(service.id);
+                await deleteServiceM.mutateAsync(service.id);
                 Alert.alert("Servicio eliminado", "Se eliminó correctamente.");
               }
-            } catch (error: any) {
-              Alert.alert(
-                "Error",
-                error?.response?.data?.message ||
-                  "No se pudo eliminar el servicio"
-              );
+            } catch (error) {
+              Alert.alert("Error", getUserErrorMessage(error));
             }
           },
         },
@@ -125,8 +126,9 @@ export default function MyServiceScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      loadServices().catch((err) => console.error(err));
-    }, [loadServices])
+      myServicesQuery.refetch();
+      
+    }, [])
   );
 
   const renderService = ({ item }: { item: Service }) => (
@@ -140,6 +142,8 @@ export default function MyServiceScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
+      <AnimatedBackground variant="minimal" />
+
       {/* Header con back */}
       <View style={styles.headerRow}>
         <Pressable style={[styles.backBtn, { backgroundColor: tc.surface }]} onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={10}>
@@ -183,9 +187,7 @@ export default function MyServiceScreen() {
           refreshControl={
             <RefreshControl
               refreshing={loading}
-              onRefresh={() =>
-                loadServices().catch((err) => console.error(err))
-              }
+              onRefresh={() => myServicesQuery.refetch()}
             />
           }
         />

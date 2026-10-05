@@ -37,14 +37,14 @@ export default function EditPayments() {
     return (
       <View style={styles.centered}>
         <MaterialIcons name="receipt-long" size={40} color={TOKENS.color.sub} />
-        <Text style={styles.empty}>No tenés pagos registrados aún.</Text>
+        <Text style={styles.empty}>No tenés simulaciones registradas en este dispositivo.</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Historial de pagos</Text>
+      <Text style={styles.title}>Historial de pagos simulados</Text>
       <FlatList
         data={history}
         keyExtractor={(item) => item.id}

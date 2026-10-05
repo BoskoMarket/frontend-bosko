@@ -26,6 +26,7 @@ import type { ServiceSummary } from '@/types/services';
 import { TOKENS } from '@/core/design-system/tokens';
 import { GRADIENTS } from '@/core/design-system/gradients';
 import { useThemeColors } from '@/stores/theme.store';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 interface ReviewItem {
   id: string;
@@ -243,6 +244,7 @@ export default function ProviderProfileScreen() {
     <View style={[s.root, { backgroundColor: c.bg, paddingTop: insets.top }]}>
       <Stack.Screen options={{ headerShown: false }} />
       <StatusBar barStyle="dark-content" backgroundColor={c.bg} />
+      <AnimatedBackground variant="minimal" />
 
       {/* Back button flotante */}
       <Pressable onPress={goBack} style={[s.backBtn, s.backBtnFloat, { backgroundColor: c.card }]}>

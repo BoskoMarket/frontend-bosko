@@ -3,7 +3,7 @@
  * Muestra reseñas con opción de responder (POST /reviews/:id/reply).
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -23,13 +23,15 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { MotiView } from '@/core/components/MotiView';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
-import api from '@/core/api/axiosinstance';
-import { replyToReview } from '@/features/reviews/services/review.service';
+import { useServiceReviews } from '@/hooks/queries/useMarketplaceQuery';
+import { useReplyToReview } from '@/hooks/mutations/useReviewMutations';
+import { getUserErrorMessage } from '@/lib/errors';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { TOKENS } from '@/core/design-system/tokens';
 import { GRADIENTS } from '@/core/design-system/gradients';
 import { Button, Text as AppText, useThemeColors, useIsDark, wash } from '@/core/design-system';
-import { useRequireProviderStatus } from '@/features/profile/hooks/useRequireProviderStatus';
+import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 interface ReviewItem {
   id: string;
@@ -45,49 +47,29 @@ export default function MyReviewsScreen() {
   const tc = useThemeColors();
   const isDark = useIsDark();
   const { profile } = useProfile();
-  const [reviews, setReviews] = useState<ReviewItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const reviewsQuery = useServiceReviews(profile?.id);
+  const reviews = (reviewsQuery.data ?? []) as unknown as ReviewItem[];
+  const loading = reviewsQuery.isLoading;
   const [refreshing, setRefreshing] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
-  const [sendingReply, setSendingReply] = useState(false);
-
-  const loadReviews = useCallback(async () => {
-    if (!profile?.id) return;
-    try {
-      const { data } = await api.get<any>(`/reviews/providers/${profile.id}/reviews`);
-      const list = (data as any)?.data ?? (Array.isArray(data) ? data : []);
-      setReviews(list);
-    } catch (err) {
-      console.error('Error loading reviews:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [profile?.id]);
-
-  useEffect(() => { loadReviews(); }, [loadReviews]);
+  const replyM = useReplyToReview();
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadReviews();
+    await reviewsQuery.refetch();
     setRefreshing(false);
   };
 
   const handleReply = async (reviewId: string) => {
     if (!replyText.trim()) return;
-    setSendingReply(true);
     try {
-      await replyToReview(reviewId, replyText.trim());
-      setReviews(prev => prev.map(r =>
-        r.id === reviewId ? { ...r, reply: replyText.trim() } : r
-      ));
+      await replyM.mutateAsync({ reviewId, reply: replyText.trim() });
       setReplyingTo(null);
       setReplyText('');
       Alert.alert('Respuesta enviada', 'Tu respuesta se publicó correctamente.');
-    } catch (err: any) {
-      Alert.alert('Error', err?.response?.data?.message || 'No se pudo enviar la respuesta');
-    } finally {
-      setSendingReply(false);
+    } catch (err) {
+      Alert.alert('Error', getUserErrorMessage(err));
     }
   };
 
@@ -113,6 +95,8 @@ export default function MyReviewsScreen() {
       end={{ x: 1, y: 1 }}
       style={styles.bg}
     >
+      <AnimatedBackground variant="minimal" />
+
       <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={[styles.header, { borderBottomColor: tc.cardBorder }]}>
         <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.card }]}>
           <MaterialIcons name="arrow-back" size={24} color={tc.text} />
@@ -206,7 +190,7 @@ export default function MyReviewsScreen() {
                         size="sm"
                         onPress={() => handleReply(item.id)}
                         disabled={!replyText.trim()}
-                        loading={sendingReply}
+                        loading={replyM.isPending}
                       />
                     </View>
                   </KeyboardAvoidingView>

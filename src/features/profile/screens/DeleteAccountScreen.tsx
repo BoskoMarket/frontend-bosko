@@ -15,9 +15,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useAuth } from '@/features/auth/state/AuthContext';
-import api from '@/core/api/axiosinstance';
+import { deleteAccountService } from '@/features/profile/services/profile';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors, wash } from '@/core/design-system';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const CONFIRM_WORD = 'ELIMINAR';
 
@@ -94,7 +95,7 @@ export default function DeleteAccountScreen() {
             setError('');
             setLoading(true);
             try {
-              await api.delete('/users/me', { data: { password } });
+              await deleteAccountService(password);
               await logout();
               router.replace('/login');
             } catch (err: any) {
@@ -119,6 +120,8 @@ export default function DeleteAccountScreen() {
       end={{ x: 1, y: 1 }}
       style={s.bg}
     >
+      <AnimatedBackground variant="minimal" />
+
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Header */}
         <View style={s.header}>

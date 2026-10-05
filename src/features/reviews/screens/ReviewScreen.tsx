@@ -25,6 +25,7 @@ import { extractApiError, getUserErrorMessage } from '@/lib/errors';
 import { TOKENS } from '@/core/design-system/tokens';
 import { Button } from '@/core/design-system';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const LABELS = ['Pésimo', 'Malo', 'Regular', 'Bueno', 'Excelente'];
 
@@ -71,6 +72,8 @@ export default function ReviewScreen() {
 
   return (
     <View style={[styles.bg, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
+      <AnimatedBackground variant="minimal" />
+
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
         keyboardShouldPersistTaps="handled"

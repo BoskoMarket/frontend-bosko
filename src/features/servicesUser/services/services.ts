@@ -1,3 +1,4 @@
+import { readCollection } from '@/core/api/collections';
 /**
  * Service related API calls.
  *
@@ -26,7 +27,7 @@ export async function fetchAllServices(
   params?: Record<string, any>
 ): Promise<Service[]> {
   const { data } = await api.get<any>("/services", { params });
-  return (data as any)?.data ?? (Array.isArray(data) ? data : []);
+  return readCollection(data);
 }
 
 /**
@@ -48,5 +49,5 @@ export async function fetchServiceById(id: string): Promise<Service> {
 
 export async function fetchFeaturedServices(): Promise<ServiceSummary[]> {
   const { data } = await api.get<any>('/services/featured');
-  return (data as any)?.data ?? (Array.isArray(data) ? data : []);
+  return readCollection(data);
 }

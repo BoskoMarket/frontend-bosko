@@ -2,7 +2,7 @@
  * Rebrand "Señal Nocturna" — CategoryServicesScreen: misma lógica, estado y navegación que
  * el archivo original. Mismo hero + lista infinita + skeleton shimmer que el original — stop bordo intermedio → signal, emoji de ícono/empty → Ionicons, precio a signal.
  */
-import React, { memo, useCallback, useEffect, useRef } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -21,13 +21,14 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useServices } from '../state/ServicesContext';
+import { useCategories, useServicesByCategory } from '@/hooks/queries/useMarketplaceQuery';
 import type { ServiceSummary } from '@/types/services';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { TOKENS } from '@/core/design-system/tokens';
 import { GRADIENTS } from '@/core/design-system/gradients';
 import { useThemeColors } from '@/stores/theme.store';
 import { RadialBlob } from '@/core/components/RadialBlob';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const { width: W } = Dimensions.get('window');
 
@@ -39,7 +40,7 @@ function useC() {
 }
 
 // ── Shimmer skeleton ──────────────────────────────────────────────────────────
-function Shimmer({ width, height, radius = 12 }: { width: number | string; height: number; radius?: number }) {
+function Shimmer({ width, height, radius = 12 }: { width: import('react-native').DimensionValue; height: number; radius?: number }) {
   const tc = useThemeColors();
   const anim = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -249,30 +250,23 @@ export default function CategoryServicesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams();
-  const {
-    fetchServicesByCategory,
-    loadMoreServicesByCategory,
-    getServicesForCategory,
-    categories,
-    servicesStatus,
-    servicesHasMore,
-    servicesLoadingMore,
-  } = useServices();
 
   const categoryId    = typeof params.id === 'string' ? params.id : undefined;
   const fromHome      = params.from === 'home';
   const fromFavorites = params.from === 'favorites';
   const fromSearch    = params.from === 'search';
-  const category      = categories.find(c => c.id === categoryId);
-  const services      = categoryId ? getServicesForCategory(categoryId) : [];
-  const status        = categoryId ? servicesStatus[categoryId] : undefined;
-  const isLoading     = Boolean(status?.loading && services.length === 0);
-  const isLoadingMore = categoryId ? (servicesLoadingMore[categoryId] ?? false) : false;
-  const hasMore       = categoryId ? (servicesHasMore[categoryId] ?? false) : false;
 
-  useEffect(() => {
-    if (categoryId) fetchServicesByCategory(categoryId).catch(() => {});
-  }, [categoryId]);
+  const categoriesQuery = useCategories();
+  const category = (categoriesQuery.data ?? []).find(c => c.id === categoryId);
+
+  const servicesQuery = useServicesByCategory(categoryId ?? null);
+  const services      = useMemo(
+    () => servicesQuery.data?.pages.flatMap(p => p.data) ?? [],
+    [servicesQuery.data],
+  );
+  const isLoading     = Boolean(servicesQuery.isLoading && services.length === 0);
+  const isLoadingMore = servicesQuery.isFetchingNextPage;
+  const hasMore       = Boolean(servicesQuery.hasNextPage);
 
   const handleProviderPress = useCallback((item: ServiceSummary) => {
     router.push({
@@ -282,10 +276,10 @@ export default function CategoryServicesScreen() {
   }, [router]);
 
   const handleEndReached = useCallback(() => {
-    if (categoryId && hasMore && !isLoadingMore) {
-      loadMoreServicesByCategory(categoryId).catch(() => {});
+    if (hasMore && !isLoadingMore) {
+      servicesQuery.fetchNextPage();
     }
-  }, [categoryId, hasMore, isLoadingMore, loadMoreServicesByCategory]);
+  }, [hasMore, isLoadingMore, servicesQuery]);
 
   const c = useC();
 
@@ -333,6 +327,7 @@ export default function CategoryServicesScreen() {
     <View style={[s.root, { backgroundColor: c.bg, paddingTop: insets.top }]}>
       <Stack.Screen options={{ headerShown: false }} />
       <StatusBar barStyle="dark-content" backgroundColor={c.bg} />
+      <AnimatedBackground variant="minimal" />
 
       <FlatList
         data={isLoading ? [] : services}

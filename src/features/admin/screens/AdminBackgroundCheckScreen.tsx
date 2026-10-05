@@ -21,6 +21,7 @@ import { adminReview } from '@/features/kyc/services/background-check.service';
 import { TOKENS } from '@/core/design-system/tokens';
 import { GRADIENTS } from '@/core/design-system/gradients';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const C = {
   primary: TOKENS.color.primary,
@@ -99,7 +100,7 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
                 {
                   text: 'Rechazar',
                   style: 'destructive',
-                  onPress: async (notes) => {
+                  onPress: async (notes?: string) => {
                     try {
                       await adminReview(item.id, false, notes);
                       onReview(item.id);
@@ -172,6 +173,7 @@ export default function AdminBackgroundCheckScreen() {
 
   return (
     <View style={[s.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
+      <AnimatedBackground variant="minimal" />
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={tc.bg} />
 
       <View style={s.header}>

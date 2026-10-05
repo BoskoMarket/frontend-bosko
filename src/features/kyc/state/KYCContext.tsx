@@ -5,6 +5,7 @@ import {
   useRetryKYC,
 } from '@/hooks/queries/useKYCQuery';
 import type { KYCVerification, DocumentType } from '../types/kyc.types';
+import { getUserErrorMessage } from '@/lib/errors';
 
 interface SubmitDocumentsPayload {
   documentType: DocumentType;
@@ -27,10 +28,11 @@ export const useKYC = () => {
     startMutation.isPending ||
     retryMutation.isPending;
 
-  const error =
-    startMutation.error?.message ??
-    retryMutation.error?.message ??
-    null;
+  const error = startMutation.error
+    ? getUserErrorMessage(startMutation.error)
+    : retryMutation.error
+      ? getUserErrorMessage(retryMutation.error)
+      : null;
 
   return {
     verification: query.data ?? null,

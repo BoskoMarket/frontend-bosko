@@ -19,15 +19,16 @@ import { router } from 'expo-router';
 
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from './state/ProfileContext';
-import { useProviderStatus } from './hooks/useProviderStatus';
+import { useProviderStatus } from '@/hooks/useProviderStatus';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
-import { getUserStats, UpdateProfilePayload, UserStats } from '@/features/servicesUser/services/profile';
+import { getUserStats, UpdateProfilePayload, UserStats } from '@/features/profile/services/profile';
 import { EditProfileModal } from './components/EditProfileModal';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors, useIsDark } from '@/stores/theme.store';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { toast } from '@/core/components/Toast';
 import { openNotifications } from '@/stores/notificationsUI.store';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const { width: W } = Dimensions.get('window');
 
@@ -336,6 +337,7 @@ export const ProfileScreen: React.FC = () => {
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
       <StatusBar barStyle="light-content" />
+      <AnimatedBackground variant="app" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

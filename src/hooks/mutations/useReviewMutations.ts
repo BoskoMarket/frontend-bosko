@@ -5,6 +5,7 @@ import {
   replyToReview,
   type ReviewPayload,
 } from '@/features/reviews/services/review.service';
+import { maybePromptReview } from '@/lib/reviewPrompt';
 
 export function useCreateReview() {
   const qc = useQueryClient();
@@ -13,6 +14,7 @@ export function useCreateReview() {
     onSuccess: (review) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.serviceReviews(review.providerId) });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.orderById(review.orderId) });
+      maybePromptReview();
     },
   });
 }

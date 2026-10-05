@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
 import { PREMIUM } from '@/core/design-system';
-import { PremiumButton } from '@/src/components/PremiumButton';
+import { PremiumButton } from '@/components/PremiumButton';
 
 const { width } = Dimensions.get('window');
 const CURVE_HEIGHT = 60;

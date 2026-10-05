@@ -33,7 +33,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { useIsProvider } from '@/hooks/queries/useProfileQuery';
-import { useServices } from '@/features/servicesUser/state/ServicesContext';
+import { useCategories } from '@/hooks/queries/useMarketplaceQuery';
 import { useNotifications } from '@/features/notifications/state/NotificationsContext';
 import { openNotifications } from '@/stores/notificationsUI.store';
 import { fetchFeaturedServices } from '@/features/servicesUser/services/services';
@@ -249,7 +249,8 @@ export default function DashboardScreen() {
 
   const { authState } = useAuth();
   const { profile } = useProfile();
-  const { categories, categoriesStatus, fetchCategories, getServicesForCategory } = useServices();
+  const categoriesQuery = useCategories();
+  const categories = categoriesQuery.data ?? [];
 
   const { unreadCount } = useNotifications();
   const isProvider = useIsProvider();
@@ -313,7 +314,7 @@ export default function DashboardScreen() {
     return () => { if (heroTimerRef.current) clearInterval(heroTimerRef.current); };
   }, [advanceHero]);
 
-  useEffect(() => { fetchCategories().catch(() => {}); }, []);
+
 
   const loadFeatured = useCallback(() => {
     setFeaturedLoading(true);
@@ -378,14 +379,14 @@ export default function DashboardScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 90 }]}>
         <Animated.View style={[s.section, sectionStyle(1)]}>
           <SectionHeader title="Categorías" onPress={() => router.push('/(tabs)/services')} />
-          {categoriesStatus.loading && !categories.length ? (
+          {categoriesQuery.isLoading && !categories.length ? (
             <View style={s.categoryGrid}>
               {[0, 1, 2, 3, 4, 5].map(i => (
                 <View key={i} style={[s.categoryTileSkeleton, { backgroundColor: C.surface2 }]} />
               ))}
             </View>
-          ) : categoriesStatus.error && !categories.length ? (
-            <ErrorBanner message="No se pudieron cargar las categorías" onRetry={() => fetchCategories().catch(() => {})} C={C} />
+          ) : categoriesQuery.isError && !categories.length ? (
+            <ErrorBanner message="No se pudieron cargar las categorías" onRetry={() => categoriesQuery.refetch()} C={C} />
           ) : (
             <View style={s.categoryGrid}>
               {categories.slice(0, 6).map((cat, idx) => (
@@ -596,9 +597,9 @@ function makeStyles(C: CPalette) { return StyleSheet.create({
   searchWrap: { paddingHorizontal: 20, paddingBottom: 12 },
   searchBar: {
     flexDirection: 'row', alignItems: 'center', borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, gap: 10,
-    backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: C.card, borderWidth: 1, borderColor: C.border,
   },
-  searchPlaceholder: { flex: 1, fontSize: 14, color: 'rgba(237,234,245,0.4)' },
+  searchPlaceholder: { flex: 1, fontSize: 14, color: C.sub },
   searchFilter: { width: 28, height: 28, borderRadius: 9, backgroundColor: C.signal, alignItems: 'center', justifyContent: 'center' },
 
   scroll: { paddingTop: 4 },

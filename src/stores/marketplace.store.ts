@@ -26,3 +26,6 @@ export const useMarketplaceStore = create<MarketplaceUIState>((set) => ({
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   setDebouncedQuery: (debouncedQuery) => set({ debouncedQuery }),
 }));
+
+export const useSelectedCategory = () => useMarketplaceStore((s) => s.selectedCategoryId);
+export const useActiveFilters = () => useMarketplaceStore((s) => s.activeFilters);

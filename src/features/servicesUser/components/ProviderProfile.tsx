@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -9,10 +9,10 @@ import {
   View,
 } from "react-native";
 
-import { useServices } from "@/features/servicesUser/state/ServicesContext";
+import { useCategories, useProviderProfile } from "@/hooks/queries/useMarketplaceQuery";
 import type { Rate } from "@/types/services";
 import { TOKENS } from "@/core/design-system/tokens";
-import { PremiumButton } from "@/src/components/PremiumButton";
+import { PremiumButton } from "@/components/PremiumButton";
 
 const formatRate = (rate: Rate) => {
   const symbol = rate.currency === "ARS" ? "$" : rate.currency === "USD" ? "US$" : `${rate.currency} `;
@@ -30,30 +30,21 @@ const ProviderProfile: React.FC<ProviderProfileProps> = ({
   onBack,
   onRequestQuote,
 }) => {
-  const {
-    categories,
-    providersStatus,
-    fetchProviderProfile,
-    getProviderById,
-    getProviderRating,
-  } = useServices();
+  const categoriesQuery = useCategories();
+  const providerQuery = useProviderProfile(providerId);
 
-  const provider = getProviderById(providerId);
-  const rating = useMemo(() => getProviderRating(providerId), [getProviderRating, providerId]);
-  const status = providersStatus[providerId];
-
-  useEffect(() => {
-    if (!provider && !status?.loading) {
-      fetchProviderProfile(providerId).catch((err) => console.error(err));
-    }
-  }, [fetchProviderProfile, provider, providerId, status?.loading]);
+  const provider = providerQuery.data;
+  const rating = {
+    averageRating: provider?.averageRating ?? 0,
+    reviewsCount: provider?.reviewsCount ?? 0,
+  };
 
   const categoryAccent = useMemo(() => {
-    const category = categories.find((item) => item.id === provider?.categoryId);
+    const category = (categoriesQuery.data ?? []).find((item) => item.id === provider?.categoryId);
     return category?.accent ?? "#E8ECF2";
-  }, [categories, provider?.categoryId]);
+  }, [categoriesQuery.data, provider?.categoryId]);
 
-  if (!provider && status?.loading) {
+  if (!provider && providerQuery.isLoading) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator />

@@ -7,7 +7,7 @@ import {
   toggleAvailabilityService,
   getUserStats,
   type UpdateProfilePayload,
-} from '@/features/servicesUser/services/profile';
+} from '@/features/profile/services/profile';
 import { useAuth } from '@/features/auth/state/AuthContext';
 
 export function useProfile() {

@@ -6,9 +6,12 @@ import EditDescription from "../components/edit/EditDescription";
 import EditPayments from "../components/edit/EditPayments";
 import EditNotifications from "../components/edit/EditNotifications";
 import EditEmail from "../components/edit/EditMail";
+import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { useThemeColors } from '@/stores/theme.store';
 
 export default function ProfileEditScreen() {
   const { type } = useLocalSearchParams<{ type: string }>();
+  const tc = useThemeColors();
 
   const renderComponent = () => {
     switch (type) {
@@ -27,9 +30,14 @@ export default function ProfileEditScreen() {
     }
   };
 
-  return <View style={styles.container}>{renderComponent()}</View>;
+  return (
+    <View style={[styles.container, { backgroundColor: tc.bg }]}>
+      <AnimatedBackground variant="minimal" />
+      {renderComponent()}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", padding: 16 },
+  container: { flex: 1, padding: 16 },
 });

@@ -19,7 +19,7 @@ import {
   BottomSheetScrollView,
   BottomSheetBackdropProps,
 } from "@gorhom/bottom-sheet";
-import { UpdateProfilePayload, uploadAvatar } from "@/features/servicesUser/services/profile";
+import { UpdateProfilePayload, uploadAvatar } from "@/features/profile/services/profile";
 import { PREMIUM } from "@/core/design-system";
 import { useProfile } from "../state/ProfileContext";
 

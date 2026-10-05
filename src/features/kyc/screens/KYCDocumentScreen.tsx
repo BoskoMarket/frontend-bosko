@@ -18,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useKYC } from '../state/KYCContext';
 import { DocumentType } from '../types/kyc.types';
 import { TOKENS, GRADIENTS, useThemeColors } from '@/core/design-system';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const DOCUMENT_TYPES: { value: DocumentType; label: string }[] = [
   { value: 'DNI', label: 'DNI (Argentina)' },
@@ -135,6 +136,7 @@ export default function KYCDocumentScreen() {
 
   return (
     <View style={[s.background, { backgroundColor: tc.bg }]}>
+      <AnimatedBackground variant="minimal" />
       <ScrollView contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={s.header}>

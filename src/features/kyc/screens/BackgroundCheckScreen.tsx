@@ -28,7 +28,8 @@ import {
   getBackgroundCheckStatus,
   uploadBackgroundCheck,
 } from '../services/background-check.service';
-import { useRequireProviderStatus } from '@/features/profile/hooks/useRequireProviderStatus';
+import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 function makeC(tc: ReturnType<typeof useThemeColors>) {
   return {
@@ -156,6 +157,7 @@ export default function BackgroundCheckScreen() {
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
+      <AnimatedBackground variant="minimal" />
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
 
       {/* Header */}

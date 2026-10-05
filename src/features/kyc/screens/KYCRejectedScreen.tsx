@@ -14,6 +14,7 @@ import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useKYC } from '../state/KYCContext';
 import { TOKENS, wash, useThemeColors } from '@/core/design-system';
+import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const MAX_ATTEMPTS = 3;
 
@@ -67,6 +68,7 @@ export default function KYCRejectedScreen() {
       end={{ x: 1, y: 1 }}
       style={s.bg}
     >
+      <AnimatedBackground variant="minimal" />
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={s.header}>
