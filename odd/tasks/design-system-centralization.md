@@ -135,6 +135,7 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 - **Siempre**: registrar en "Hallazgos" bugs, UX rotos, código muerto o pantallas sin entrada de navegación (archivo:línea + 1 línea de descripción).
 - **Arreglar en el momento** solo lo trivial y local (≤ ~10 líneas, sin decisión de producto): typo, color que falla en light/dark, `key` faltante, import muerto. Va en un commit `fix(...)` separado del de migración.
 - **Mapa de navegación**: por cada pantalla migrada, registrar todas sus salidas (push/replace/back, `Link`, `Redirect`, guards, modales, URLs externas) en `odd/nav-map.md` y validar que el destino exista en `app/`. Rotos → sección "Enlaces rotos" de ese archivo (no se arreglan en la migración salvo que sea trivial).
+- **Backlog de correcciones** (decisión del usuario 2026-10-05): todo lo que **no se usa, está roto, no navega o es un stub** va a `odd/backlog-fixes.md` con ID `Bnn`, archivo:línea + símbolo exacto, qué hace hoy y qué debería hacer (marcar *(propuesto)* si es inferencia). No se corrige en la migración salvo trivial; se corrige después. Verificar antes de anotar (ej. buscar importadores) — no inventar.
 - **No** mezclar en la migración: cambios de comportamiento, navegación nueva, prototipos o refactors grandes. La migración tiene que ser visualmente equivalente para poder verificarla; lo demás se convierte en tarea propia al final.
 
 ## Hallazgos
