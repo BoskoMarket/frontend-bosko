@@ -23,7 +23,7 @@ export interface IconCircleProps {
  * Círculo con ícono — hero / estado / éxito. Cuatro variantes fijas:
  * - `neutral`: accent bg + ícono signal. Intro, cambiar contraseña, verificar teléfono.
  * - `brand`: brand-gradient + glow. CTA fuerte, reseña, calificación.
- * - `success`: gradiente menta + ringPop de entrada. Pago exitoso, email verificado.
+ * - `success`: gradiente menta + ringPop de entrada. Email verificado.
  * - `danger`: status-cancelled-bg + borde. Eliminar cuenta, rechazos.
  */
 export function IconCircle({ name, variant = 'neutral', size = 80, iconSize, iconColor, style }: IconCircleProps) {

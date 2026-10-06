@@ -6,7 +6,7 @@ export const MOTION = {
   fadeUp: { duration: 450 },
   /** Stagger entre bloques consecutivos que entran con fadeUp (ms). */
   fadeUpStagger: 60,
-  /** Confirmaciones instantáneas: pago exitoso, email verificado/enviado, reseña. */
+  /** Confirmaciones instantáneas: email verificado/enviado, reseña. */
   ringPop: { friction: 5, tension: 60 },
   /** Ícono "esperando/en vivo": OrderStatus en progreso, KYCStatus en revisión. */
   iconPulse: { duration: 1000 }, // half-cycle de un loop de 2s

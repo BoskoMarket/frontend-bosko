@@ -20,7 +20,7 @@ export default function EditNotifications() {
       <View style={styles.row}>
         <View style={styles.rowText}>
           <Text style={styles.label}>Notificaciones push</Text>
-          <Text style={styles.sublabel}>Recibí alertas de órdenes, pagos y mensajes</Text>
+          <Text style={styles.sublabel}>Recibí alertas de órdenes y mensajes</Text>
         </View>
         {saving
           ? <ActivityIndicator size="small" color={TOKENS.color.primary} />
@@ -50,3 +50,4 @@ const styles = StyleSheet.create({
   label: { fontSize: 15, fontWeight: '500', color: TOKENS.color.text },
   sublabel: { fontSize: 13, color: TOKENS.color.sub, marginTop: 2 },
 });
+

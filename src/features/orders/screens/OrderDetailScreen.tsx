@@ -47,10 +47,6 @@ const TIMELINE_STEPS: { status: OrderStatus; label: string; icon: string }[] = [
 
 const STATUS_ORDER: OrderStatus[] = ['pending', 'accepted', 'in_progress', 'completed'];
 
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
-}
-
 function Timeline({ currentStatus }: { currentStatus: OrderStatus }) {
   const tc = useThemeColors();
   // Si está cancelada o en disputa, no mostramos el timeline normal
@@ -140,17 +136,6 @@ export default function OrderDetailScreen() {
   const isClient   = profile?.id === order?.clientId;
   const isProvider = profile?.id === order?.providerId;
 
-
-  const paymentPending = order?.paymentStatus === 'pending' || order?.paymentStatus === undefined;
-  const needsPayment = isClient && paymentPending && ['accepted', 'in_progress', 'completed'].includes(order?.status || '');
-
-  const handlePay = () => {
-    if (!order?.id) return;
-    router.push({
-      pathname: '/orders/checkout',
-      params: { orderId: order.id },
-    });
-  };
 
   const runAction = async (label: string, action: () => Promise<void>) => {
     setActionLoading(label);
@@ -271,21 +256,6 @@ export default function OrderDetailScreen() {
           <MaterialIcons name="chevron-right" size={18} color={TOKENS.color.signal} />
         </Pressable>
 
-        {/* Banner de reembolso */}
-        {order.paymentStatus === 'refunded' && (
-          <View style={styles.refundBanner}>
-            <MaterialIcons name="assignment-return" size={22} color="#6b21a8" />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.refundTitle}>
-                Reembolsado{order.agreedPrice ? ` — ${formatCurrency(order.agreedPrice)}` : ''}
-              </Text>
-              <Text style={styles.refundSub}>
-                {order.disputeReason || order.cancellationReason || 'El monto fue devuelto a tu método de pago original.'}
-              </Text>
-            </View>
-          </View>
-        )}
-
         {/* Banner de orden completada */}
         {order.status === 'completed' && (
           <View style={styles.completedBanner}>
@@ -363,17 +333,6 @@ export default function OrderDetailScreen() {
                 'Ingresá el motivo de la cancelación',
                 reason => cancelOrder(order.id, { reason }),
               )}
-            />
-          )}
-
-          {/* CLIENTE: pagar si hay saldo pendiente */}
-          {needsPayment && (
-            <ActionButton
-              label="Pagar orden"
-              icon="payment"
-              color="#16a34a"
-              loading={actionLoading === 'Pagar'}
-              onPress={handlePay}
             />
           )}
 
@@ -633,26 +592,6 @@ const styles = StyleSheet.create({
     color: '#15803d',
     marginTop: 2,
   },
-  refundBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#f3e8ff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#e9d5ff',
-  },
-  refundTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#6b21a8',
-  },
-  refundSub: {
-    fontSize: 13,
-    color: '#7e22ce',
-    marginTop: 2,
-  },
   cancelledBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -780,3 +719,4 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
 });
+

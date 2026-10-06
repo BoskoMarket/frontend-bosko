@@ -17,9 +17,6 @@ export const QUERY_KEYS = {
   providerOrders:   ['orders', 'provider']                               as const,
   orderById:        (id: string) => ['orders', id]                       as const,
 
-  paymentHistory:   (page = 1) => ['payments', 'history', page]          as const,
-  earnings:         (page = 1) => ['payments', 'earnings', page]          as const,
-  orderPayment:     (orderId: string) => ['payments', 'order', orderId]   as const,
 
   conversations:    ['conversations']                                    as const,
   conversationByOrder: (orderId: string) =>
@@ -38,3 +35,4 @@ export const QUERY_KEYS = {
 
   appConfig:        ['app', 'config']                                    as const,
 } as const;
+

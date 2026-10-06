@@ -21,7 +21,7 @@ const DEFAULT_ICON: Record<NoticeBannerVariant, React.ComponentProps<typeof Ioni
 /**
  * Banner de aviso — dos variantes fijas:
  * - `info`: accent bg + ícono signal. QuoteRequest, KYCIntro, Términos.
- * - `trust`: status-done-bg + borde mint. Privacidad (KYCIntro), garantía (Checkout).
+ * - `trust`: status-done-bg + borde mint. Privacidad (KYCIntro).
  */
 export function NoticeBanner({ variant = 'info', icon, children, style }: NoticeBannerProps) {
   const resolvedIcon = icon ?? DEFAULT_ICON[variant];

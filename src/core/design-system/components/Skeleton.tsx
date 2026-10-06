@@ -11,7 +11,7 @@ export interface SkeletonProps {
 
 /**
  * Bloque skeleton con shimmer rosa translúcido en loop — solo para la cola
- * "cargando más" de una lista (Favoritos, Mis reseñas, Pagos, panel Admin),
+ * "cargando más" de una lista (Favoritos, Mis reseñas, panel Admin),
  * nunca para reemplazar la lista entera.
  */
 export function Skeleton({ width = '100%', height = 14, radius = 8 }: SkeletonProps) {
