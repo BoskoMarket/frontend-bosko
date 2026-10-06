@@ -70,7 +70,30 @@ Forecast: muy por encima de ~400 líneas → PRs encadenados, una tarea (o featu
 | Slice | Rama | Base del PR | Commits | Estado |
 |---|---|---|---|---|
 | 1 — regla, brand layer, guardia | `feat/design-system-centralization` | `dev` | `570e447` `23c9164` `5cb9cb7` `4ce0c02` | listo para PR |
-| 2 — componentes DS (T3) | `feat/ds-t3-components` | `feat/design-system-centralization` | — | 🟡 |
+| 2 — componentes DS (T3) | `feat/ds-t3-components` | `feat/design-system-centralization` | ver Progreso | listo para PR |
+
+## Inventario de componentes (T3)
+
+Muestra (rg + lectura parcial de LogInView, VerifyEmailScreen, ProfileScreen, ConversationsListScreen, DashboardScreen, CategoryChips, KYCStatusScreen, FavoritesScreen). Conteos aproximados sobre `src/** app/**`.
+
+| Patrón repetido a mano | Ocurrencias | Decisión |
+|---|---|---|
+| Tarjeta de vidrio de auth (wrapper `cardGlow` + `cardShadow` + BlurView + borde) | login/register/forgot/reset/verify-email/verify-reset (~6 pantallas, estilo copiado idéntico) | **`AuthCard`** (nuevo) |
+| Casillas de código OTP (`TextInput` x6 + refs + backspace) | VerifyEmail, VerifyResetCode, VerifyPhone (3) | **`OtpInput`** (nuevo, controlado, soporta pegar) |
+| Avatar foto o inicial con gradiente + punto online | Conversations, Profile, Chat, Search, Dashboard, ProfesionalCard, Reviews, Admin (~12 archivos) | **`Avatar`** (nuevo) |
+| Pill de estado con `TOKENS.status.*` fg/bg | 16 archivos (KYC, órdenes, favoritos, planes, admin…) | **`Badge`** (nuevo; `tone` = clave de `TOKENS.status` | brand | neutral) |
+| Chips de filtro/categoría | ~15 archivos (CategoryChips, Search, Dashboard, ServiceForm…) | **`Chip`** (nuevo) |
+| Fila de ajustes (ícono + label + chevron / badge) | ProfileScreen (3), Search, Favorites, RoleSelectionModal… (8 archivos con chevron-forward) | **`ListRow`** (nuevo) |
+| Título de sección + link "Ver todo" | 10 archivos (`sectionTitle`/`sectionLink`) | **`SectionHeader`** (nuevo) |
+| Separador `height: 1` | 7 archivos | **`Divider`** (nuevo) |
+| `TextInput` suelto | 21 archivos (varios son multilínea/búsqueda/chat) | `Input` movido al DS; los `TextInput` de chat/search/multilínea no se fuerzan: se migran caso a caso en T4–T11 |
+| CTA con gradiente de marca (`LinearGradient colors={GRADIENTS.brand}`) | 29 archivos | **`Button` primary ya cubre el botón**; las tarjetas-CTA (ProviderCTA, PromoBanner) son composiciones propias → se dejan, solo tokens |
+| Empty state, toast | 8 y 7 usos | **`EmptyState`**, **`toast`/`ToastRoot`** movidos al DS (ruta vieja re-exporta) |
+| `OfflineBanner` / `UpdateBanner` | 1 uso c/u (`_layout`) | **No se mueven**: dependen de infra (`onlineManager`, `useAppUpdates`). Se quedan en `core/components`, solo se les sacaron los literales |
+| `ErrorBoundary`, `BiometricLockGate`, `BlurView`, `MotiView`, `AppBackground`, `RadialBlob` | infra / wrappers de plataforma | **No se mueven** (infra o shim de plataforma, no UI genérica) |
+| `BrandMark` (logo) | no hay patrón repetido en la muestra | **Diferido**: se crea en T12 junto con `BRAND.name` |
+
+Cambios al DS existente en esta tarea: sacados todos los literales de `Button`, `Card`, `IconCircle`, `NoticeBanner`, `StepTimeline`, `ScreenHeader`, `Skeleton` (ahora theme-aware vía `tc.*`; en dark el resultado es el mismo, en light dejan de verse "siempre oscuros"). Nuevo token `BRAND.colors.mintDeep` → `TOKENS.color.mintDeep` + `GRADIENTS.success`. `Toast` pasa de los verdes/rojos propios (#22C55E/#EF4444/#F59E0B) a `TOKENS.status.*` (cambio visual menor). `EmptyState` usa `Button` en vez de su CTA a mano (cambio visual menor).
 
 ## Tareas
 
@@ -79,7 +102,7 @@ Forecast: muy por encima de ~400 líneas → PRs encadenados, una tarea (o featu
 | T0 | Regla en `CLAUDE.md` + memoria; este plan | inline | ✅ |
 | T1 | Capa de marca: `brand/brand.ts` + `fonts.ts`; `palette`/`tokens`/`gradients`/`premium`/`typography` derivan de brand; marcar `TOKENS.color.bg/text/sub` como `@deprecated` (129 usos en ~25 archivos → se eliminan en cada feature, borrado final en T13); agregar semánticos faltantes (`onPrimary`, `onMedia`, `scrim.*`); `app/_layout.tsx` usa `fonts.ts` | delegada (2+ archivos no triviales) | ✅ `23c9164` |
 | T2 | Guardia ESLint en `warn` + script de conteo de violaciones (baseline registrado aquí) | inline | ✅ `5cb9cb7` |
-| T3 | Inventario y alta de componentes faltantes en el DS: `Input` (mover desde `core/components`), `GradientButton`/variante brand de `Button`, `Chip`, `Badge/StatusPill`, `Avatar`, `OtpInput`, `AuthCard`, `EmptyState`, `Toast`, banners, `BrandMark` | delegada | ⬜ |
+| T3 | Inventario y alta de componentes faltantes en el DS: `Input` (mover desde `core/components`), `GradientButton`/variante brand de `Button`, `Chip`, `Badge/StatusPill`, `Avatar`, `OtpInput`, `AuthCard`, `EmptyState`, `Toast`, banners, `BrandMark` | delegada | ✅ |
 | T4 | Migrar `features/auth` (~14 pantallas) | delegada | ⬜ |
 | T5 | Migrar `src/components` + `src/core/components` compartidos (TabBar, ThemeToggle, ProviderCTA, Premium*, banners) | delegada | ⬜ |
 | T6 | Migrar `features/servicesUser` (~16 archivos, incl. Dashboard, ServiceForm, ProviderProfile) | delegada | ⬜ |
@@ -127,12 +150,15 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 - 2026-10-05 T2 ✅ `5cb9cb7`: `no-restricted-syntax` en `warn` para `src/**` + `app/**` (excluye `src/core/design-system/**`): hex, `rgb/rgba/hsl` (literal y template), nombres de color en props `*color`/`tint`, `fontFamily` literal. Script `npm run lint:ds` (`scripts/count-ds-violations.mjs`). **Baseline: 1095 violaciones en 78 archivos.** `npm run lint` sigue en 0 errores (solo warnings). Top: ReelsScreen 67, DashboardScreen 58, ProfileScreen 48, OrderDetailScreen 40, DeleteAccountScreen 37.
 - Nota para el nav-map: existe `scripts/generate-routes.cjs` (`npm run routes:generate`) → usarlo para listar "Rutas existentes".
 
+- 2026-10-05 T3 ✅: Input/EmptyState/Toast movidos a `design-system/components` (rutas viejas = re-export); nuevos `Divider`, `SectionHeader`, `Badge`, `Chip`, `Avatar`, `OtpInput`, `AuthCard`, `ListRow`; componentes existentes sin literales; `designSystemComponents.test.tsx` (34 tests, incluye guardia fs+regex de `components/**`). Inventario arriba. Ningún screen migrado.
+
 ## Conteo de violaciones (`npm run lint:ds`)
 
 | Después de | Total | Archivos |
 |---|---|---|
 | T2 (baseline) | 1095 | 78 |
+| T3 | 1067 | 73 |
 
 ## Próximo paso
 
-T3: inventario de patrones UI repetidos y alta de componentes faltantes en el DS.
+T4: migrar `features/auth` usando `AuthCard`, `Input`, `OtpInput`, `Button`, `IconCircle`.
