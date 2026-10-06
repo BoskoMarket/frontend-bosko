@@ -9,6 +9,7 @@ export const PALETTE = {
   dark: {
     // Fondos
     bg:           C.dark.bg,
+    bgWine:       C.dark.wine, // tinte vino: parada media del backdrop de auth/onboarding
     bgGlow:       withAlpha(C.signal, 0.18),
     bgGlowFade:   withAlpha(C.signal, 0),
     surface:      C.dark.surface,
@@ -35,6 +36,7 @@ export const PALETTE = {
   },
   light: {
     bg:           C.light.bg,
+    bgWine:       C.light.wine,
     bgGlow:       withAlpha(C.signal, 0.08),
     bgGlowFade:   withAlpha(C.signal, 0),
     surface:      C.light.surface,

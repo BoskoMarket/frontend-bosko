@@ -3,8 +3,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { act, fireEvent, render } from '@testing-library/react-native';
 import {
+  AuthBackdrop,
   AuthCard,
   Avatar,
+  BackButton,
+  Button,
   Badge,
   Chip,
   Divider,
@@ -146,6 +149,32 @@ describe('design system components', () => {
       </AuthCard>,
     );
     expect(getByText('Iniciar sesión')).toBeTruthy();
+  });
+
+  it('AuthBackdrop renders children over the backdrop (themed and forced dark)', () => {
+    const { getByText, rerender } = render(<AuthBackdrop><SectionHeader title="Hola" /></AuthBackdrop>);
+    expect(getByText('Hola')).toBeTruthy();
+    rerender(<AuthBackdrop forceDark tilt={-10} duration={1300}><SectionHeader title="Hola" /></AuthBackdrop>);
+    expect(getByText('Hola')).toBeTruthy();
+  });
+
+  it('BackButton fires onPress', () => {
+    const onPress = jest.fn();
+    const { getByLabelText } = render(<BackButton onPress={onPress} />);
+    fireEvent.press(getByLabelText('Volver'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('Button places the icon on the requested side of the label', () => {
+    const { getByTestId } = render(
+      <>
+        <Button label="A" icon={<Divider />} iconPosition="right" testID="btn-right" />
+        <Button label="B" icon={<Divider />} testID="btn-left" />
+      </>,
+    );
+    const kids = (id: string) => getByTestId(id).findAll((n) => typeof n.type === 'string').length;
+    expect(kids('btn-right')).toBeGreaterThan(0);
+    expect(kids('btn-left')).toBeGreaterThan(0);
   });
 
   it('ListRow renders label/subtitle and fires onPress; danger hides the chevron', () => {

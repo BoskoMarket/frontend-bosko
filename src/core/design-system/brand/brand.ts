@@ -30,6 +30,7 @@ export const BRAND = {
       surface: '#131118',
       text: '#EDEAF5',
       overlayBase: '#050409',
+      wine: '#1A000D', // mid-stop of the auth/onboarding backdrop gradient
     },
 
     // Light theme neutrals
@@ -39,6 +40,7 @@ export const BRAND = {
       surface2: '#F0EDF5',
       text: '#14111C',
       ink: '#0A0910',
+      wine: '#F4E6EE',
     },
 
     // Legacy light-only values (kept for TOKENS.color.bg/text/sub, deprecated)

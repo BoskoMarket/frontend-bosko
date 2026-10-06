@@ -14,6 +14,8 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
 export interface ButtonProps extends Omit<PressableProps, 'style'> {
   label: string;
   icon?: React.ReactNode;
+  /** Where `icon` sits relative to the label (default: left). */
+  iconPosition?: 'left' | 'right';
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
@@ -34,6 +36,7 @@ const SIZE_PAD = { sm: SPACING.md, md: SPACING.lg, lg: SPACING.xl } as const;
 export function Button({
   label,
   icon,
+  iconPosition = 'left',
   variant = 'primary',
   size = 'md',
   loading = false,
@@ -65,8 +68,9 @@ export function Button({
     <ActivityIndicator color={textColor} />
   ) : (
     <>
-      {icon}
+      {iconPosition === 'left' ? icon : null}
       <Text variant="button" color={textColor}>{label}</Text>
+      {iconPosition === 'right' ? icon : null}
     </>
   );
 
@@ -127,7 +131,15 @@ export function Button({
           borderColor: tc.border,
         }, style]}
       >
-        {loading ? <ActivityIndicator color={tc.text} /> : <>{icon}<Text variant="button" color={tc.text}>{label}</Text></>}
+        {loading ? (
+          <ActivityIndicator color={tc.text} />
+        ) : (
+          <>
+            {iconPosition === 'left' ? icon : null}
+            <Text variant="button" color={tc.text}>{label}</Text>
+            {iconPosition === 'right' ? icon : null}
+          </>
+        )}
       </Pressable>
     );
   }
