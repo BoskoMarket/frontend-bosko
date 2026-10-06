@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useMemo, useRef, useEffect } from "react";
 import {
     View,
     Text,
@@ -14,8 +14,8 @@ import { BlurView } from "@/core/components/BlurView";
 import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { ServiceSummary } from "@/types/services";
-import { PREMIUM } from "@/core/design-system";
-import { TOKENS } from "@/core/design-system/tokens";
+import { GRADIENTS, TOKENS, useIsDark, usePremiumColors, withAlpha } from "@/core/design-system";
+import type { PremiumColors } from "@/core/design-system";
 import { LinearGradient } from "expo-linear-gradient";
 
 interface ServiceDetailModalProps {
@@ -31,6 +31,9 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
     onClose,
     service,
 }) => {
+    const pc = usePremiumColors();
+    const isDark = useIsDark();
+    const styles = useMemo(() => createStyles(pc), [pc]);
     const slideAnim = useRef(new Animated.Value(600)).current;
 
     useEffect(() => {
@@ -68,14 +71,14 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                 <Animated.View
                     style={[styles.modalContainer, { transform: [{ translateY: slideAnim }] }]}
                 >
-                    <BlurView intensity={80} tint="dark" style={styles.modalBlur}>
+                    <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={styles.modalBlur}>
                         <View style={styles.header}>
                             <Pressable
                                 onPress={onClose}
                                 style={styles.closeButton}
                                 hitSlop={20}
                             >
-                                <Ionicons name="close" size={24} color="#fff" />
+                                <Ionicons name="close" size={24} color={TOKENS.onMedia.icon} />
                             </Pressable>
                         </View>
 
@@ -94,18 +97,18 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                                     />
                                 ) : (
                                     <LinearGradient
-                                        colors={[PREMIUM.colorPrimary, PREMIUM.colorPrimaryDark]}
+                                        colors={[pc.primary, pc.primaryDark]}
                                         style={styles.placeholderImage}
                                     >
                                         <Ionicons
                                             name="briefcase-outline"
                                             size={60}
-                                            color="rgba(255,255,255,0.3)"
+                                            color={withAlpha(TOKENS.color.onPrimary, 0.3)}
                                         />
                                     </LinearGradient>
                                 )}
                                 <LinearGradient
-                                    colors={["transparent", "rgba(0,0,0,0.8)"]}
+                                    colors={GRADIENTS.overlayFadeDown}
                                     style={styles.imageOverlay}
                                 />
 
@@ -117,7 +120,7 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                                             </View>
                                         )}
                                         <View style={styles.ratingChip}>
-                                            <Ionicons name="star" size={12} color="#FFD700" />
+                                            <Ionicons name="star" size={12} color={pc.goldFill} />
                                             <Text style={styles.ratingText}>{service.averageRating ? Number(service.averageRating).toFixed(1) : 'New'}</Text>
                                         </View>
                                     </View>
@@ -138,12 +141,12 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
 
                                 <Text style={styles.sectionTitle}>Detalles</Text>
                                 <View style={styles.detailRow}>
-                                    <Ionicons name="person-outline" size={20} color={Variables.iconColor} />
+                                    <Ionicons name="person-outline" size={20} color={pc.textSecondary} />
                                     <Text style={styles.detailText}>{service.name}</Text>
                                 </View>
                                 {service.location && (
                                     <View style={styles.detailRow}>
-                                        <Ionicons name="location-outline" size={20} color={Variables.iconColor} />
+                                        <Ionicons name="location-outline" size={20} color={pc.textSecondary} />
                                         <Text style={styles.detailText}>{service.location}</Text>
                                     </View>
                                 )}
@@ -167,7 +170,7 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
                                 }}
                             >
                                 <Text style={styles.hireButtonText}>Solicitar Servicio</Text>
-                                <Ionicons name="arrow-forward" size={20} color={PREMIUM.textPrimary} />
+                                <Ionicons name="arrow-forward" size={20} color={TOKENS.color.onPrimary} />
                             </Pressable>
                         </View>
                     </BlurView>
@@ -177,14 +180,10 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
     );
 };
 
-const Variables = {
-    iconColor: "rgba(255,255,255,0.7)",
-}
-
-const styles = StyleSheet.create({
+const createStyles = (pc: PremiumColors) => StyleSheet.create({
     overlay: {
         flex: 1,
-        backgroundColor: "rgba(0,0,0,0.6)",
+        backgroundColor: TOKENS.scrim.medium,
         justifyContent: "flex-end",
     },
     backdrop: {
@@ -192,11 +191,11 @@ const styles = StyleSheet.create({
     },
     modalContainer: {
         height: "85%",
-        backgroundColor: PREMIUM.background,
+        backgroundColor: pc.background,
         borderTopLeftRadius: 32,
         borderTopRightRadius: 32,
         overflow: "hidden",
-        shadowColor: "#000",
+        shadowColor: TOKENS.color.shadow,
         shadowOffset: { width: 0, height: -4 },
         shadowOpacity: 0.3,
         shadowRadius: 10,
@@ -215,7 +214,7 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: "rgba(0,0,0,0.5)",
+        backgroundColor: TOKENS.scrim.medium,
         alignItems: "center",
         justifyContent: "center",
     },
@@ -255,70 +254,55 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     categoryChip: {
-        backgroundColor: PREMIUM.colorPrimary,
+        backgroundColor: pc.primary,
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 8,
     },
     categoryText: {
-        color: '#fff',
+        color: TOKENS.color.onPrimary,
         fontSize: 12,
         fontWeight: '600',
     },
     ratingChip: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.6)',
+        backgroundColor: TOKENS.scrim.medium,
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 8,
         gap: 4,
     },
     ratingText: {
-        color: '#FFD700',
+        color: pc.goldFill,
         fontSize: 12,
         fontWeight: 'bold',
     },
     title: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#fff',
-        textShadowColor: 'rgba(0,0,0,0.5)',
+        color: TOKENS.onMedia.text,
+        textShadowColor: TOKENS.scrim.medium,
         textShadowOffset: { width: 0, height: 1 },
         textShadowRadius: 4,
     },
     body: {
         padding: 24,
     },
-    priceRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    priceLabel: {
-        fontSize: 16,
-        color: PREMIUM.textSecondary,
-    },
-    priceValue: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: PREMIUM.colorPrimary,
-    },
     divider: {
         height: 1,
-        backgroundColor: "rgba(255,255,255,0.1)",
+        backgroundColor: pc.borderSubtle,
         marginVertical: 20,
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: PREMIUM.textPrimary,
+        color: pc.textPrimary,
         marginBottom: 12,
     },
     description: {
         fontSize: 15,
-        color: PREMIUM.textSecondary,
+        color: pc.textSecondary,
         lineHeight: 24,
     },
     detailRow: {
@@ -329,7 +313,7 @@ const styles = StyleSheet.create({
     },
     detailText: {
         fontSize: 15,
-        color: PREMIUM.textPrimary,
+        color: pc.textPrimary,
     },
     footer: {
         position: 'absolute',
@@ -338,19 +322,19 @@ const styles = StyleSheet.create({
         right: 0,
         padding: 20,
         paddingBottom: 30,
-        backgroundColor: PREMIUM.background, // Fallback
+        backgroundColor: pc.background, // Fallback
         borderTopWidth: 1,
-        borderTopColor: "rgba(255,255,255,0.1)",
+        borderTopColor: pc.borderSubtle,
     },
     hireButton: {
-        backgroundColor: PREMIUM.colorPrimary,
+        backgroundColor: pc.primary,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 16,
         borderRadius: 16,
         gap: 8,
-        shadowColor: PREMIUM.colorPrimary,
+        shadowColor: pc.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.4,
         shadowRadius: 10,
@@ -359,6 +343,6 @@ const styles = StyleSheet.create({
     hireButtonText: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: PREMIUM.textPrimary,
+        color: TOKENS.color.onPrimary,
     },
 });

@@ -18,7 +18,8 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import { ActivityIndicator, Button, Text, View } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
+import { Button, SPACING, Text } from '@/core/design-system';
 import axios from 'axios';
 import { API_URL } from '@/core/config/env';
 import { socketService } from '@/features/chat/services/socket.service';
@@ -258,11 +259,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isAuthenticated = !!authState.token;
 
   if (!authLoaded) return (
-    <View style={{ flex: 1, backgroundColor: tc.bg, justifyContent: 'center', padding: 24, gap: 16 }}>
+    <View style={{ flex: 1, backgroundColor: tc.bg, justifyContent: 'center', padding: SPACING.xxl, gap: SPACING.lg }}>
       {sessionError ? <>
-        <Text style={{ color: tc.text, textAlign: 'center' }}>{sessionError}</Text>
-        <Button title="Reintentar conexión" onPress={() => setAttempt(value => value + 1)} />
-        <Button title="Cerrar sesión" onPress={() => { void logout(); }} />
+        <Text center>{sessionError}</Text>
+        <Button label="Reintentar conexión" onPress={() => setAttempt(value => value + 1)} />
+        <Button label="Cerrar sesión" variant="secondary" onPress={() => { void logout(); }} />
       </> : <ActivityIndicator accessibilityLabel="Validando sesión" color={tc.text} />}
     </View>
   );

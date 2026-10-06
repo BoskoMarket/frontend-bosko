@@ -11,7 +11,7 @@ import {
   useThemeColors,
   useIsDark,
 } from '@/stores/theme.store';
-import { TOKENS } from '@/core/design-system/tokens';
+import { TOKENS, withAlpha } from '@/core/design-system';
 
 const TRACK_W = 52;
 const TRACK_H = 28;
@@ -34,7 +34,7 @@ export function ThemeToggle() {
     }).start();
   }, [isDark]);
 
-  const trackColor = isDark ? '#2D2A3A' : colors.primary;
+  const trackColor = colors.switchTrack;
 
   return (
     <Pressable
@@ -50,7 +50,7 @@ export function ThemeToggle() {
           <Ionicons
             name={isDark ? 'moon' : 'sunny'}
             size={14}
-            color={isDark ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.9)'}
+            color={withAlpha(TOKENS.color.onPrimary, isDark ? 0.6 : 0.9)}
           />
         </View>
         <Animated.View
@@ -62,7 +62,7 @@ export function ThemeToggle() {
           <Ionicons
             name={isDark ? 'moon' : 'sunny'}
             size={14}
-            color={isDark ? '#C084FC' : '#F59E0B'}
+            color={isDark ? TOKENS.status.progress.fg : TOKENS.color.warning}
           />
         </Animated.View>
       </View>
@@ -85,8 +85,8 @@ export function ThemeToggleRow({
 
   return {
     icon: isDark ? 'moon-outline' : 'sunny-outline' as 'moon-outline' | 'sunny-outline',
-    iconBg: iconBg ?? (isDark ? 'rgba(192,132,252,0.12)' : 'rgba(245,158,11,0.12)'),
-    iconColor: iconColor ?? (isDark ? '#C084FC' : '#F59E0B'),
+    iconBg: iconBg ?? withAlpha(isDark ? TOKENS.status.progress.fg : TOKENS.color.warning, 0.12),
+    iconColor: iconColor ?? (isDark ? TOKENS.status.progress.fg : TOKENS.color.warning),
     label: isDark ? 'Modo Oscuro' : 'Modo Claro',
     accessory: <ThemeToggle />,
     onPress: undefined as (() => void) | undefined,
@@ -115,10 +115,10 @@ const styles = StyleSheet.create({
     width: THUMB_S,
     height: THUMB_S,
     borderRadius: THUMB_S / 2,
-    backgroundColor: '#fff',
+    backgroundColor: TOKENS.color.onPrimary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: TOKENS.color.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,

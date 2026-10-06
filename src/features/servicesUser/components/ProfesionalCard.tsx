@@ -1,7 +1,8 @@
 // /components/ProfessionalCard.tsx
+import { useMemo } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
-import { TOKENS } from "@/core/design-system/tokens";
-import { PREMIUM } from "@/core/design-system";
+import { PREMIUM_SHADOWS, TOKENS, useThemeColors } from "@/core/design-system";
+import type { ThemeColors } from "@/core/design-system";
 
 export function ProfessionalCard({
   item,
@@ -14,6 +15,8 @@ export function ProfessionalCard({
     avatar: string;
   };
 }) {
+  const tc = useThemeColors();
+  const styles = useMemo(() => createStyles(tc), [tc]);
   return (
     <View style={styles.card}>
       <Image source={{ uri: item.avatar }} style={styles.avatar} />
@@ -23,24 +26,24 @@ export function ProfessionalCard({
           {item.role} • ★ {item.rating}
         </Text>
         <TouchableOpacity style={styles.cta}>
-          <Text style={{ color: "#fff", fontWeight: "700" }}>Reservar</Text>
+          <Text style={styles.ctaText}>Reservar</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
-const styles = StyleSheet.create({
+const createStyles = (tc: ThemeColors) => StyleSheet.create({
   card: {
     flexDirection: "row",
-    backgroundColor: "rgba(255,255,255,1)",
+    backgroundColor: tc.surface,
     borderRadius: 18,
     padding: 12,
     marginHorizontal: 16,
-    ...PREMIUM.shadows.global,
+    ...PREMIUM_SHADOWS.global,
   },
   avatar: { width: 56, height: 56, borderRadius: 12 },
-  name: { fontWeight: "800", color: TOKENS.color.text },
-  role: { color: TOKENS.color.sub, marginVertical: 4 },
+  name: { fontWeight: "800", color: tc.text },
+  role: { color: tc.textSub, marginVertical: 4 },
   cta: {
     alignSelf: "flex-start",
     backgroundColor: TOKENS.color.primary,
@@ -48,4 +51,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 12,
   },
+  ctaText: { color: TOKENS.color.onPrimary, fontWeight: "700" },
 });

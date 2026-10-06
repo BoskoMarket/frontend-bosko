@@ -1,16 +1,16 @@
 import React from 'react';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { View, Text, StyleSheet } from 'react-native';
-import { FONT_FAMILY } from '@/core/design-system/typography';
+import { FONT_FAMILY, TOKENS, useThemeColors } from '@/core/design-system';
 
 type Props = {
   /** 'lockup' = insignia + wordmark (default), 'mark' = solo insignia, 'wordmark' = solo texto */
   variant?: 'lockup' | 'mark' | 'wordmark';
   /** Alto de la insignia en px; el wordmark escala a partir de esto */
   size?: number;
-  /** Versión de una sola tinta (para fondos claros/oscuros no estándar) */
+  /** Versión de una sola tinta (para fondos de color no estándar) */
   mono?: boolean;
-  /** Color de tinta de la "b" y el wordmark en modo mono */
+  /** Color de tinta de la "b" y el wordmark (default: `tc.text`, sigue el tema) */
   color?: string;
   /** Muestra "SERVICIOS EN RED · ARG" debajo del wordmark */
   tagline?: boolean;
@@ -23,7 +23,8 @@ type Props = {
  * de la b (solo asoma una media luna) — nunca al revés, nunca en color plano.
  */
 export function BrandMark({ variant = 'lockup', size = 56, mono = false, color, tagline = false }: Props) {
-  const ink = color ?? (mono ? '#EDEAF5' : '#EDEAF5');
+  const tc = useThemeColors();
+  const ink = color ?? tc.text;
   const width = size * (118 / 120);
 
   const Mark = (
@@ -31,8 +32,8 @@ export function BrandMark({ variant = 'lockup', size = 56, mono = false, color, 
       {!mono && (
         <Defs>
           <LinearGradient id="bkO" x1="0" y1="1" x2="1" y2="0">
-            <Stop offset="0" stopColor="#850021" />
-            <Stop offset="1" stopColor="#FF2D6F" />
+            <Stop offset="0" stopColor={TOKENS.color.primary} />
+            <Stop offset="1" stopColor={TOKENS.color.signal} />
           </LinearGradient>
         </Defs>
       )}
@@ -48,11 +49,11 @@ export function BrandMark({ variant = 'lockup', size = 56, mono = false, color, 
 
   const Word = (
     <View style={{ gap: size * 0.08, alignItems: 'center' }}>
-      <Text style={{ fontFamily: FONT_FAMILY.display, fontSize: size * 0.5, color: color ?? '#EDEAF5', textTransform: 'lowercase', letterSpacing: -0.5, textAlign: 'center' }}>
+      <Text style={{ fontFamily: FONT_FAMILY.display, fontSize: size * 0.5, color: ink, textTransform: 'lowercase', letterSpacing: -0.5, textAlign: 'center' }}>
         bosko
       </Text>
       {tagline && (
-        <Text style={{ fontFamily: FONT_FAMILY.mono, fontSize: 10, letterSpacing: 2.4, textTransform: 'uppercase', color: 'rgba(237,234,245,0.55)', textAlign: 'center' }}>
+        <Text style={{ fontFamily: FONT_FAMILY.mono, fontSize: 10, letterSpacing: 2.4, textTransform: 'uppercase', color: tc.textSub, textAlign: 'center' }}>
           Servicios en red · ARG
         </Text>
       )}

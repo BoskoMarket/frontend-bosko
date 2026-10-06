@@ -1,22 +1,25 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { PREMIUM } from "@/core/design-system";
+import { PREMIUM_SHADOWS, TOKENS, usePremiumColors, withAlpha } from "@/core/design-system";
+import type { PremiumColors } from "@/core/design-system";
 import { useProfile } from "@/features/profile/state/ProfileContext";
 
 export const PremiumBanner = () => {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { profile } = useProfile()
+  const pc = usePremiumColors();
+  const styles = useMemo(() => createStyles(pc), [pc]);
 
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[PREMIUM.colorPrimary, PREMIUM.colorPrimary, "#2d0a0a"]}
+        colors={[pc.primary, pc.primary, pc.primaryDark]}
         start={{ x: 1, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.gradient, { paddingTop: insets.top + 10 }]}
@@ -34,14 +37,14 @@ export const PremiumBanner = () => {
               <Ionicons
                 name="search-outline"
                 size={24}
-                color={PREMIUM.gold}
+                color={pc.goldFill}
               />
             </Pressable>
             <Pressable style={styles.iconButton}>
               <Ionicons
                 name="notifications-outline"
                 size={24}
-                color={PREMIUM.gold}
+                color={pc.goldFill}
               />
             </Pressable>
           </View>
@@ -50,17 +53,17 @@ export const PremiumBanner = () => {
 
       {/* Decorative bottom curve/fade */}
       <LinearGradient
-        colors={["transparent", PREMIUM.background]}
+        colors={["transparent", pc.background]}
         style={styles.bottomFade}
       />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (pc: PremiumColors) => StyleSheet.create({
   container: {
     marginBottom: 20,
-    ...PREMIUM.shadows.global,
+    ...PREMIUM_SHADOWS.global,
     height: 280,
   },
   gradient: {
@@ -68,7 +71,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30, // Reduced padding bottom since no search bar
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-    ...PREMIUM.shadows.global,
+    ...PREMIUM_SHADOWS.global,
     height: 280,
   },
   headerContent: {
@@ -81,12 +84,12 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 28,
     fontWeight: "bold",
-    color: PREMIUM.textPrimary,
+    color: TOKENS.color.onPrimary,
     letterSpacing: -0.5,
   },
   subGreeting: {
     fontSize: 16,
-    color: PREMIUM.textSecondary,
+    color: TOKENS.onMedia.textSub,
     marginTop: 4,
   },
   actionsRow: {
@@ -97,14 +100,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: PREMIUM.inputBackground,
+    backgroundColor: withAlpha(TOKENS.color.onPrimary, 0.05),
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: PREMIUM.borderSubtle,
+    borderColor: withAlpha(TOKENS.color.onPrimary, 0.1),
   },
   bottomFade: {
-    shadowColor: PREMIUM.background,
+    shadowColor: TOKENS.color.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3,

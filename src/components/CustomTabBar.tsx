@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Dimensions, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
@@ -6,7 +6,8 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { StackActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUnreadTotal } from '@/stores/chat.store';
-import { TOKENS } from '@/core/design-system/tokens';
+import { TOKENS, useThemeColors, withAlpha } from '@/core/design-system';
+import type { ThemeColors } from '@/core/design-system';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const BAR_H   = 64;
@@ -17,8 +18,6 @@ const NOTCH_W = BR + 6;
 const NOTCH_D = BR + 4;   // deeper than BR so notch fully receives bubble
 const EASE    = 20;
 const LIFT    = BR;       // center of bubble sits at bar top edge
-
-const C = { bar: '#141414', bordo: TOKENS.color.primary, white: '#FFFFFF' };
 
 const SPRING = { tension: 120, friction: 10, useNativeDriver: true };
 
@@ -55,6 +54,8 @@ function buildPath(W: number, cx: number): string {
 export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const unread = useUnreadTotal();
   const insets   = useSafeAreaInsets();
+  const tc = useThemeColors();
+  const styles = useMemo(() => createStyles(tc), [tc]);
   const [barW, setBarW] = useState(Dimensions.get('window').width - 32);
 
   const tabCount = state.routes.length;
@@ -132,7 +133,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
             viewBox={`0 0 ${barW} ${BAR_H}`}
             style={StyleSheet.absoluteFill}
           >
-            <Path d={pathD} fill={C.bar} />
+            <Path d={pathD} fill={tc.surface} />
           </Svg>
 
           <View style={styles.row}>
@@ -160,7 +161,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
         style={[styles.bubble, { transform: [{ translateX: bubbleAnim }] }]}
       >
         <View style={styles.bubbleInner}>
-          <Ionicons name={activeTab.active} size={26} color={C.white} />
+          <Ionicons name={activeTab.active} size={26} color={TOKENS.color.onPrimary} />
         </View>
         <View style={styles.bubbleRing} />
       </Animated.View>
@@ -173,6 +174,8 @@ function TabSlot({ icon, focused, badge, onPress, onLongPress }: {
   icon: IconName; focused: boolean; badge: number;
   onPress: () => void; onLongPress: () => void;
 }) {
+  const tc = useThemeColors();
+  const styles = useMemo(() => createStyles(tc), [tc]);
   const opacity = useRef(new Animated.Value(focused ? 0 : 0.42)).current;
 
   useEffect(() => {
@@ -192,7 +195,7 @@ function TabSlot({ icon, focused, badge, onPress, onLongPress }: {
       hitSlop={8}
     >
       <Animated.View style={[styles.iconWrap, { opacity }]}>
-        <Ionicons name={icon} size={22} color={C.white} />
+        <Ionicons name={icon} size={22} color={tc.text} />
         {badge > 0 && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{badge > 9 ? '9+' : badge}</Text>
@@ -204,7 +207,7 @@ function TabSlot({ icon, focused, badge, onPress, onLongPress }: {
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
+const createStyles = (tc: ThemeColors) => StyleSheet.create({
   shell: {
     position: 'absolute',
     left: 16,
@@ -223,7 +226,7 @@ const styles = StyleSheet.create({
     height: BAR_H,
     borderRadius: BAR_R,
     elevation: 20,
-    shadowColor: '#000',
+    shadowColor: TOKENS.color.shadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.28,
     shadowRadius: 16,
@@ -260,10 +263,10 @@ const styles = StyleSheet.create({
     width: BUBBLE,
     height: BUBBLE,
     borderRadius: BR,
-    backgroundColor: C.bordo,
+    backgroundColor: TOKENS.color.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: C.bordo,
+    shadowColor: TOKENS.color.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.55,
     shadowRadius: 14,
@@ -277,7 +280,7 @@ const styles = StyleSheet.create({
     height: BUBBLE + 6,
     borderRadius: BR + 3,
     borderWidth: 2,
-    borderColor: 'rgba(133,0,33,0.22)',
+    borderColor: withAlpha(TOKENS.color.primary, 0.22),
   },
   badge: {
     position: 'absolute',
@@ -286,16 +289,16 @@ const styles = StyleSheet.create({
     minWidth: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#ef4444',
+    backgroundColor: TOKENS.color.error,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 3,
     borderWidth: 1.5,
-    borderColor: C.bar,
+    borderColor: tc.surface,
   },
   badgeText: {
     fontSize: 9,
     fontWeight: '800',
-    color: '#fff',
+    color: TOKENS.color.onPrimary,
   },
 });

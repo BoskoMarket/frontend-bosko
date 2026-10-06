@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -13,7 +13,8 @@ import { LinearGradient } from "expo-linear-gradient";
 
 import { useCategories } from "@/hooks/queries/useMarketplaceQuery";
 import { Category } from "@/interfaces/category";
-import { PREMIUM } from "@/core/design-system";
+import { GRADIENTS, PREMIUM_SHADOWS, TOKENS, usePremiumColors } from "@/core/design-system";
+import type { PremiumColors } from "@/core/design-system";
 
 const CARD_WIDTH = 160;
 const CARD_HEIGHT = 300;
@@ -29,6 +30,8 @@ const VideoCategoryCard: React.FC<VideoCategoryCardProps> = ({
   index,
   onPress,
 }) => {
+  const pc = usePremiumColors();
+  const styles = useMemo(() => createStyles(pc), [pc]);
   const video = useRef<Video>(null);
   const scale = useRef(new Animated.Value(1)).current;
 
@@ -70,7 +73,7 @@ const VideoCategoryCard: React.FC<VideoCategoryCardProps> = ({
             isMuted={true}
           />
           <LinearGradient
-            colors={["transparent", "rgba(0,0,0,0.8)"]}
+            colors={GRADIENTS.overlayFadeDown}
             style={styles.gradient}
           />
           <View style={styles.content}>
@@ -89,6 +92,8 @@ export const CategoryVideoCarousel = ({
   onSelectCategory?: (id: string) => void;
 }) => {
   const { data: categories = [] } = useCategories();
+  const pc = usePremiumColors();
+  const styles = useMemo(() => createStyles(pc), [pc]);
 
   const displayCategories = categories.slice(0, 6);
 
@@ -118,7 +123,7 @@ export const CategoryVideoCarousel = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (pc: PremiumColors) => StyleSheet.create({
   container: {
     marginBottom: 24,
   },
@@ -132,11 +137,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: "bold",
-    color: PREMIUM.colorPrimary,
+    color: pc.primary,
   },
   subtitle: {
     fontSize: 12,
-    color: PREMIUM.textPrimary,
+    color: pc.textPrimary,
   },
   scrollContent: {
     paddingHorizontal: 20,
@@ -147,14 +152,14 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     height: CARD_HEIGHT,
     borderRadius: 20,
-    backgroundColor: PREMIUM.card,
-    ...PREMIUM.shadows.global,
+    backgroundColor: pc.card,
+    ...PREMIUM_SHADOWS.global,
   },
   pressable: {
     flex: 1,
     borderRadius: 20,
     overflow: "hidden",
-    backgroundColor: PREMIUM.card,
+    backgroundColor: pc.card,
   },
   videoWrapper: {
     flex: 1,
@@ -174,16 +179,16 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   categoryName: {
-    color: PREMIUM.white,
+    color: TOKENS.onMedia.text,
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 4,
-    textShadowColor: "rgba(0,0,0,0.5)",
+    textShadowColor: TOKENS.scrim.medium,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
   serviceCount: {
-    color: PREMIUM.gold,
+    color: pc.goldFill,
     fontSize: 12,
     fontWeight: "600",
   },
