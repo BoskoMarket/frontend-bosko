@@ -22,6 +22,9 @@ export const TOKENS = {
     sub: C.legacy.sub,
     error: C.error,
     warning: C.warning,
+    info: C.info,
+    /** Star ratings (filled star / score). */
+    rating: C.rating,
     success: C.mint,
     /** Text/icon color on top of the brand gradient (theme-independent). */
     onPrimary: C.white,
@@ -34,7 +37,15 @@ export const TOKENS = {
   onMedia: {
     text: C.white,
     textSub: withAlpha(C.white, 0.75),
+    textMuted: withAlpha(C.white, 0.65),
     icon: C.white,
+    /** Solid light fill (pills / bubbles over media). */
+    solid: C.white,
+    /** Translucent light fills (glass chips, icon wells, decorative bubbles) and their hairline border. */
+    fillFaint: withAlpha(C.white, 0.08),
+    fill: withAlpha(C.white, 0.16),
+    fillStrong: withAlpha(C.white, 0.3),
+    border: withAlpha(C.white, 0.24),
   },
   /** Black scrims over media. Alpha-only variants of the same base. */
   scrim: {

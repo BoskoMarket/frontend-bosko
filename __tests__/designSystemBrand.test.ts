@@ -31,6 +31,11 @@ describe('design system brand layer', () => {
     expect(TOKENS.status.pending.bg).toBe('rgba(255,176,32,0.14)');
     expect(TOKENS.onMedia.text).toBe(BRAND.colors.white);
     expect(TOKENS.scrim.strong).toBe('rgba(0,0,0,0.75)');
+    expect(TOKENS.color.rating).toBe(BRAND.colors.rating);
+    expect(TOKENS.color.info).toBe(BRAND.colors.info);
+    expect(TOKENS.onMedia.solid).toBe(BRAND.colors.white);
+    expect(TOKENS.onMedia.fill).toBe('rgba(255,255,255,0.16)');
+    expect(TOKENS.onMedia.border).toBe('rgba(255,255,255,0.24)');
     expect(TOKENS.shadow.glow.shadowColor).toBe(BRAND.colors.signal);
   });
 
@@ -66,6 +71,8 @@ describe('design system brand layer', () => {
     expect(GRADIENTS.brand).toEqual([BRAND.colors.signal, BRAND.colors.primary]);
     expect(GRADIENTS.overlayFadeDown[1]).toBe(TOKENS.scrim.strong);
     expect(GRADIENTS.overlayFadeUp[0]).toBe(TOKENS.scrim.light);
+    expect(GRADIENTS.aurora).toEqual(BRAND.colors.hero.aurora);
+    expect(GRADIENTS.midnight).toHaveLength(3);
   });
 
   it('auth backdrop gradient wraps bg around the wine tint, glow fades out', () => {

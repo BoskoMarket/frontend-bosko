@@ -19,6 +19,13 @@ export const BRAND = {
     warning: '#FFB020',
     info: '#4C9DFF',
     progress: '#B07CFF',
+    rating: '#F59E0B', // star ratings (filled star / score)
+
+    // Decorative hero-banner ramps (white text on top, same in both themes)
+    hero: {
+      aurora: ['#2D1B69', '#11998E', '#38EF7D'], // indigo -> teal -> lime
+      midnight: ['#1A1A2E', '#16213E', '#0F3460'], // deep navy
+    },
 
     // Absolute
     white: '#FFFFFF',
