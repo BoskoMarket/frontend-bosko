@@ -222,6 +222,7 @@ All of it lives under `src/core/design-system/` — the one folder to check befo
 
 - Fuera de `src/core/design-system/` **no** puede haber literales de diseño: nada de hex (`'#fff'`, `'#850021'`), `rgb()/rgba()`, nombres de color (`'white'`), `fontFamily` literal, arrays de gradiente a mano, ni sombras/radios sueltos. Siempre tokens (`tc.*`, `TOKENS`, `GRADIENTS`, `FONT_FAMILY`, `TYPE_SCALE`, `SPACING`, `PREMIUM`).
 - Siempre usar los componentes del DS (`Button`, `Text`, `Card`, …) antes de armar UI a mano.
+- **Toda pantalla sigue el tema claro/oscuro** (`tc.*` de `useThemeColors()`). Nada de pantallas "siempre dark". Excepción: contenido sobre video/imagen usa `TOKENS.onMedia` / `TOKENS.scrim` por legibilidad.
 - Si falta un token o un componente: **se agrega primero al design system** (y se exporta en el barrel), después se usa. Nunca resolverlo local en la pantalla.
 - Objetivo: rebranding cambiando solo la capa de marca. Plan de migración del código existente: `odd/tasks/design-system-centralization.md`.
 

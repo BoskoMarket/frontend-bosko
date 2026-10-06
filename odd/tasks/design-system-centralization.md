@@ -105,7 +105,7 @@ Cambios al DS existente en esta tarea: sacados todos los literales de `Button`, 
 | T2 | Guardia ESLint en `warn` + script de conteo de violaciones (baseline registrado aquí) | inline | ✅ `5cb9cb7` |
 | T3 | Inventario y alta de componentes faltantes en el DS: `Input` (mover desde `core/components`), `GradientButton`/variante brand de `Button`, `Chip`, `Badge/StatusPill`, `Avatar`, `OtpInput`, `AuthCard`, `EmptyState`, `Toast`, banners, `BrandMark` | delegada | ✅ |
 | T4 | Migrar `features/auth` (~14 pantallas) | delegada | ✅ `f778e7e` `e9b7e49` |
-| T5 | Migrar `src/components` + `src/core/components` compartidos (TabBar, ThemeToggle, ProviderCTA, Premium*, banners) | delegada | ⬜ |
+| T5 | Migrar `src/components` + `src/core/components` compartidos (TabBar, ThemeToggle, ProviderCTA, Premium*, banners) + pasar Splash / Onboarding / WelcomeVideo a theme-aware (regla "todo sigue el tema") | delegada | ⬜ |
 | T6 | Migrar `features/servicesUser` (~16 archivos, incl. Dashboard, ServiceForm, ProviderProfile) | delegada | ⬜ |
 | T7 | Migrar `features/orders` + `features/payments` + `features/plans` | delegada | ⬜ |
 | T8 | Migrar `features/kyc` + `features/admin` | delegada | ⬜ |
@@ -176,6 +176,8 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 | T2 (baseline) | 1095 | 78 |
 | T3 | 1067 | 73 |
 | T4 | 835 | 61 |
+
+- 2026-10-05 **Decisión del usuario:** todas las pantallas siguen tema claro y oscuro (se aprueba el cambio de T4 en auth). Única excepción: texto/íconos **sobre video o imagen** usan `TOKENS.onMedia` / `scrim` por legibilidad, no por tema. Splash, Onboarding y WelcomeVideo (hoy siempre dark) pasan a theme-aware en T5. `PREMIUM` (siempre dark por diseño) contradice la regla → resolver en T5.
 
 ## Próximo paso
 
