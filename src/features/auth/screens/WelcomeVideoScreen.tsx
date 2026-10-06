@@ -9,10 +9,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { router } from 'expo-router';
-import { PALETTE, Text } from '@/core/design-system';
-
-// Pantalla de video a pantalla completa: siempre oscura, independiente del tema.
-const DARK = PALETTE.dark;
+import { Text, TOKENS, useThemeColors, withAlpha } from '@/core/design-system';
 
 const VIDEO_SRC = require('../../../../assets/videos/bosko-logo-loading.mp4');
 
@@ -20,6 +17,7 @@ const VIDEO_SRC = require('../../../../assets/videos/bosko-logo-loading.mp4');
 const FALLBACK_TIMEOUT_MS = 8000;
 
 export default function WelcomeVideoScreen() {
+  const tc = useThemeColors();
   const doneRef = useRef(false);
 
   const player = useVideoPlayer(VIDEO_SRC, (p) => {
@@ -43,15 +41,15 @@ export default function WelcomeVideoScreen() {
   }, [player]);
 
   return (
-    <View style={[styles.root, { backgroundColor: DARK.bg }]}>
+    <View style={[styles.root, { backgroundColor: tc.bg }]}>
       <VideoView
         player={player}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         nativeControls={false}
       />
-      <Pressable onPress={finish} hitSlop={16} style={[styles.skipButton, { backgroundColor: DARK.border, borderColor: DARK.cardBorder }]}>
-        <Text variant="label" color={DARK.text}>Saltar</Text>
+      <Pressable onPress={finish} hitSlop={16} style={[styles.skipButton, { backgroundColor: TOKENS.scrim.medium, borderColor: withAlpha(TOKENS.onMedia.text, 0.2) }]}>
+        <Text variant="label" color={TOKENS.onMedia.text}>Saltar</Text>
       </Pressable>
     </View>
   );

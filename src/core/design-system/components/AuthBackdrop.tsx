@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GRADIENTS } from '../gradients';
-import { PALETTE } from '../palette';
 import { useThemeColors } from '@/stores/theme.store';
 
 export interface AuthBackdropProps {
@@ -11,8 +10,6 @@ export interface AuthBackdropProps {
   tilt?: number;
   /** Half-cycle (ms) of the pulsing glow. */
   duration?: number;
-  /** Always render on the dark palette regardless of the theme toggle (splash). */
-  forceDark?: boolean;
   style?: ViewStyle;
 }
 
@@ -20,9 +17,8 @@ export interface AuthBackdropProps {
  * Full-screen backdrop for auth flows / splash: bg → wine tint → bg gradient plus a
  * pulsing signal-pink glow band. Renders its children on top (it is the screen root).
  */
-export function AuthBackdrop({ children, tilt = -8, duration = 2600, forceDark = false, style }: AuthBackdropProps) {
-  const themed = useThemeColors();
-  const tc = forceDark ? PALETTE.dark : themed;
+export function AuthBackdrop({ children, tilt = -8, duration = 2600, style }: AuthBackdropProps) {
+  const tc = useThemeColors();
   const glow = useRef(new Animated.Value(0.7)).current;
 
   useEffect(() => {
