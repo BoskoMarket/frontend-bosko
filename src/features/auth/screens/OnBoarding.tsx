@@ -1,7 +1,6 @@
 import React, { useRef, useState } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   Dimensions,
   FlatList,
@@ -16,11 +15,13 @@ import LottieView from "lottie-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useThemeColors } from "@/core/design-system";
+import { Button, GRADIENTS, PALETTE, TOKENS, Text } from "@/core/design-system";
 import { BrandMark } from "@/components/BrandMark";
 
 const { width: W, height: H } = Dimensions.get("window");
 const CARD_H = 340;
+// Onboarding is intentionally always dark, regardless of the theme toggle.
+const DARK = PALETTE.dark;
 
 type Slide = { key: string; title: string; subtitle: string; lottie: any };
 
@@ -34,7 +35,6 @@ const SLIDES: Slide[] = [
 ];
 
 export default function OnBoarding() {
-  const tc = useThemeColors();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
   const insets = useSafeAreaInsets();
@@ -43,7 +43,6 @@ export default function OnBoarding() {
   const flatListRef = useRef<FlatList<Slide>>(null);
   const titleOpacity = useRef(new Animated.Value(1)).current;
   const titleTranslate = useRef(new Animated.Value(0)).current;
-  const buttonScale = useRef(new Animated.Value(1)).current;
 
   React.useEffect(() => {
     AsyncStorage.getItem("onboardingComplete")
@@ -88,10 +87,10 @@ export default function OnBoarding() {
   const isLast = currentIndex === SLIDES.length - 1;
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: DARK.bg }]}>
       <StatusBar barStyle="light-content" />
       {/* Fondo: negro profundo con glow rosa señal (antes: bordo oscuro) */}
-      <LinearGradient colors={["#080004", "#1a000d", "#0d0008"]} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={GRADIENTS.backdrop(DARK)} style={StyleSheet.absoluteFill} />
 
       <FlatList
         ref={flatListRef}
@@ -108,14 +107,14 @@ export default function OnBoarding() {
         renderItem={({ item }: ListRenderItemInfo<Slide>) => (
           <View style={styles.slideContainer}>
             <LinearGradient
-              colors={['rgba(255,45,111,0.22)', 'rgba(255,45,111,0.10)', 'rgba(255,45,111,0)']}
+              colors={GRADIENTS.glow}
               locations={[0, 0.55, 1]}
               start={{ x: 0.15, y: 0 }}
               end={{ x: 0.85, y: 1 }}
               style={[styles.glowBlob, styles.glowBlobWide]}
             />
             <LinearGradient
-              colors={['rgba(255,45,111,0.16)', 'rgba(255,45,111,0.07)', 'rgba(255,45,111,0)']}
+              colors={GRADIENTS.glowFaint}
               locations={[0, 0.6, 1]}
               start={{ x: 0.8, y: 0 }}
               end={{ x: 0.2, y: 1 }}
@@ -129,9 +128,9 @@ export default function OnBoarding() {
       />
 
       <View style={[styles.header, { paddingTop: insets.top + 22 }]}>
-        <BrandMark variant="lockup" size={30} color="#fff" />
+        <BrandMark variant="lockup" size={30} color={TOKENS.onMedia.text} />
         <Pressable onPress={complete} hitSlop={14}>
-          <Text style={styles.skipText}>Saltar</Text>
+          <Text variant="bodySmall" weight="500" color={DARK.textSub} style={styles.skipText}>Saltar</Text>
         </Pressable>
       </View>
 
@@ -139,7 +138,8 @@ export default function OnBoarding() {
         style={[
           styles.card,
           {
-            backgroundColor: 'rgba(255,255,255,0.05)', // vidrio — antes tc.card sólido
+            backgroundColor: DARK.card, // vidrio — antes tc.card sólido
+            borderColor: DARK.border,
             height: CARD_H + Math.max(insets.bottom, 16),
             paddingBottom: Math.max(insets.bottom, 16) + 24,
           },
@@ -159,38 +159,30 @@ export default function OnBoarding() {
               outputRange: [0.3, 1, 0.3],
               extrapolate: "clamp",
             });
-            return <Animated.View key={i} style={[styles.dot, { width: dotW, opacity: dotOpacity }]} />;
+            return <Animated.View key={i} style={[styles.dot, { width: dotW, opacity: dotOpacity, backgroundColor: TOKENS.color.signal }]} />;
           })}
         </View>
 
         <Animated.View style={{ flex: 1, justifyContent: "center", opacity: titleOpacity, transform: [{ translateY: titleTranslate }] }}>
-          <Text style={styles.title}>{slide.title}</Text>
-          <Text style={styles.subtitle}>{slide.subtitle}</Text>
+          <Text variant="h3" color={DARK.text} style={styles.title}>{slide.title}</Text>
+          <Text variant="body" color={DARK.textSub} style={styles.subtitle}>{slide.subtitle}</Text>
         </Animated.View>
 
-        <Animated.View style={{ transform: [{ scale: buttonScale }] }}>
-          <View style={styles.btnShadow}>
-            <Pressable
-              onPressIn={() => Animated.spring(buttonScale, { toValue: 0.96, useNativeDriver: true }).start()}
-              onPressOut={() => Animated.spring(buttonScale, { toValue: 1, useNativeDriver: true }).start()}
-              onPress={handleNext}
-              style={styles.btnOuter}
-            >
-              {/* Gradiente actualizado: rosa señal → bordo → profundo (antes bordo → bordo oscuro) */}
-              <LinearGradient colors={['#FF2D6F', '#850021', '#3C0014']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.btn}>
-                <Text style={styles.btnText}>{isLast ? "Comenzar" : "Siguiente"}</Text>
-                <Ionicons name={isLast ? "checkmark" : "arrow-forward"} size={18} color="#fff" style={styles.btnIcon} />
-              </LinearGradient>
-            </Pressable>
-          </View>
-        </Animated.View>
+        <Button
+          label={isLast ? "Comenzar" : "Siguiente"}
+          onPress={handleNext}
+          size="lg"
+          fullWidth
+          iconPosition="right"
+          icon={<Ionicons name={isLast ? "checkmark" : "arrow-forward"} size={18} color={TOKENS.color.onPrimary} />}
+        />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#080004" },
+  root: { flex: 1 },
   slideContainer: { width: W, height: H, alignItems: "center", justifyContent: "flex-start", paddingBottom: CARD_H },
   glowBlob: { position: "absolute", top: H * 0.02, left: -W * 0.08, right: -W * 0.08, height: W * 0.92, opacity: 0.95 },
   glowBlobWide: { transform: [{ rotate: '-9deg' }] },
@@ -199,22 +191,17 @@ const styles = StyleSheet.create({
   lottieWrapper: { flex: 1, alignItems: "center", justifyContent: "center", width: W },
   lottie: { width: W * 0.72, height: W * 0.72 },
   header: { position: "absolute", top: 0, left: 0, right: 0, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 24, zIndex: 10 },
-  skipText: { fontSize: 14, color: "rgba(255,255,255,0.5)", fontWeight: "500", letterSpacing: 0.3 },
+  skipText: { letterSpacing: 0.3 },
   card: {
     position: "absolute", bottom: 0, left: 0, right: 0,
     borderTopLeftRadius: 32, borderTopRightRadius: 32,
     paddingHorizontal: 28, paddingTop: 24, gap: 18,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderBottomWidth: 0,
-    shadowColor: "#000", shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.4, shadowRadius: 30, elevation: 24,
+    borderWidth: 1, borderBottomWidth: 0,
+    ...TOKENS.shadow.card, shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.4, shadowRadius: 30, elevation: 24,
   },
-  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.2)", alignSelf: "center", marginBottom: 6 },
+  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: DARK.textMuted, alignSelf: "center", marginBottom: 6 },
   dotsRow: { flexDirection: "row", alignItems: "center", height: 18, gap: 5 },
-  dot: { height: 7, borderRadius: 3.5, backgroundColor: "#FF2D6F" },
-  title: { fontSize: 26, fontWeight: "800", color: "#EDEAF5", letterSpacing: -0.4, lineHeight: 32 },
-  subtitle: { fontSize: 14, color: "rgba(237,234,245,0.55)", lineHeight: 21, marginTop: 2 },
-  btnShadow: { borderRadius: 16, shadowColor: '#FF2D6F', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 6, marginTop: 4 },
-  btnOuter: { borderRadius: 16, overflow: "hidden" },
-  btn: { flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 17, borderRadius: 16 },
-  btnText: { color: "#fff", fontSize: 16, fontWeight: "700", letterSpacing: 0.4 },
-  btnIcon: { marginLeft: 8 },
+  dot: { height: 7, borderRadius: 3.5 },
+  title: { fontSize: 26, fontWeight: "800", letterSpacing: -0.4, lineHeight: 32 },
+  subtitle: { lineHeight: 21, marginTop: 2 },
 });

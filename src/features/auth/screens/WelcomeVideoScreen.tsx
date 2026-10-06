@@ -6,9 +6,13 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Pressable, Text } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { router } from 'expo-router';
+import { PALETTE, Text } from '@/core/design-system';
+
+// Pantalla de video a pantalla completa: siempre oscura, independiente del tema.
+const DARK = PALETTE.dark;
 
 const VIDEO_SRC = require('../../../../assets/videos/bosko-logo-loading.mp4');
 
@@ -39,22 +43,22 @@ export default function WelcomeVideoScreen() {
   }, [player]);
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: DARK.bg }]}>
       <VideoView
         player={player}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         nativeControls={false}
       />
-      <Pressable onPress={finish} hitSlop={16} style={styles.skipButton}>
-        <Text style={styles.skipText}>Saltar</Text>
+      <Pressable onPress={finish} hitSlop={16} style={[styles.skipButton, { backgroundColor: DARK.border, borderColor: DARK.cardBorder }]}>
+        <Text variant="label" color={DARK.text}>Saltar</Text>
       </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#0A0910' },
+  root: { flex: 1 },
   skipButton: {
     position: 'absolute',
     top: 60,
@@ -62,9 +66,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.16)',
   },
-  skipText: { fontSize: 13, fontWeight: '600', color: '#EDEAF5' },
 });

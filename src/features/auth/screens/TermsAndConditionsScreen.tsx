@@ -5,11 +5,11 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Button, GRADIENTS, TOKENS } from '@/core/design-system';
+import { Button, Card, GRADIENTS, NoticeBanner, SPACING, Text, TOKENS, useThemeColors } from '@/core/design-system';
 import { safeBack } from '@/core/navigation/safeBack';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -29,41 +29,47 @@ const SECTIONS = [
 ];
 
 export default function TermsAndConditionsScreen() {
+  const tc = useThemeColors();
   const [accepted, setAccepted] = useState(false);
 
   return (
-    <View style={styles.background}>
+    <View style={[styles.background, { backgroundColor: tc.bg }]}>
       <AnimatedBackground variant="minimal" />
       <LinearGradient colors={GRADIENTS.brandDeep} style={styles.header}>
         <Pressable onPress={() => safeBack(router, '/login')} hitSlop={12} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={22} color="#fff" />
+          <Ionicons name="chevron-back" size={22} color={TOKENS.onMedia.icon} />
         </Pressable>
         <View style={styles.headerText}>
-          <Text style={styles.headerTitle}>Términos y condiciones</Text>
-          <Text style={styles.headerSubtitle}>Última actualización: 1 de agosto de 2026</Text>
+          <Text variant="title" color={TOKENS.onMedia.text}>Términos y condiciones</Text>
+          <Text variant="caption" color={TOKENS.onMedia.textSub} style={styles.headerSubtitle}>
+            Última actualización: 1 de agosto de 2026
+          </Text>
         </View>
       </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-        <View style={styles.banner}>
-          <Ionicons name="mail-unread-outline" size={17} color={TOKENS.color.signal} />
-          <Text style={styles.bannerText}>
-            Te enviamos un correo de verificación. Revisá tu bandeja mientras leés los términos.
-          </Text>
-        </View>
+        <NoticeBanner icon="mail-unread-outline">
+          Te enviamos un correo de verificación. Revisá tu bandeja mientras leés los términos.
+        </NoticeBanner>
 
         {SECTIONS.map(s => (
-          <View key={s.title} style={styles.card}>
-            <Text style={styles.cardTitle}>{s.title}</Text>
-            <Text style={styles.cardBody}>{s.body}</Text>
-          </View>
+          <Card key={s.title}>
+            <Text variant="bodySmall" weight="700" style={styles.cardTitle}>{s.title}</Text>
+            <Text variant="bodySmall" color={tc.textSub} style={styles.cardBody}>{s.body}</Text>
+          </Card>
         ))}
 
         <Pressable onPress={() => setAccepted(a => !a)} style={styles.acceptRow} hitSlop={8}>
-          <View style={[styles.checkbox, accepted && styles.checkboxChecked]}>
+          <View
+            style={[
+              styles.checkbox,
+              { borderColor: tc.border },
+              accepted && { borderColor: TOKENS.color.signal, backgroundColor: tc.accent },
+            ]}
+          >
             {accepted && <Ionicons name="checkmark" size={14} color={TOKENS.color.signal} />}
           </View>
-          <Text style={styles.acceptText}>Leí y acepto los términos y condiciones</Text>
+          <Text variant="bodySmall">Leí y acepto los términos y condiciones</Text>
         </Pressable>
 
         <View style={styles.btnGap}>
@@ -75,52 +81,29 @@ export default function TermsAndConditionsScreen() {
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1, backgroundColor: '#0A0910' },
+  background: { flex: 1 },
   header: {
     paddingTop: 56,
     paddingHorizontal: 22,
     paddingBottom: 22,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: SPACING.md,
   },
   backBtn: { padding: 2 },
   headerText: { flex: 1 },
-  headerTitle: { fontSize: 17, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: '#fff' },
-  headerSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
-  body: { padding: 20, gap: 14, paddingBottom: 40 },
-  banner: {
-    flexDirection: 'row',
-    gap: 10,
-    backgroundColor: 'rgba(255,45,111,0.14)',
-    borderRadius: 14,
-    padding: 14,
-  },
-  bannerText: { flex: 1, fontSize: 13, color: 'rgba(237,234,245,0.55)', lineHeight: 19 },
-  card: {
-    backgroundColor: 'rgba(255,255,255,0.045)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.09)',
-    borderRadius: 16,
-    padding: 16,
-    gap: 8,
-  },
-  cardTitle: { fontSize: 14, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: '#EDEAF5' },
-  cardBody: { fontSize: 13, color: 'rgba(237,234,245,0.55)', lineHeight: 20 },
-  acceptRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 },
+  headerSubtitle: { marginTop: 2 },
+  body: { padding: SPACING.xl, gap: 14, paddingBottom: SPACING.huge },
+  cardTitle: { marginBottom: SPACING.sm },
+  cardBody: { lineHeight: 20 },
+  acceptRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: SPACING.xs },
   checkbox: {
     width: 22,
     height: 22,
     borderRadius: 6,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkboxChecked: {
-    borderColor: '#FF2D6F',
-    backgroundColor: 'rgba(255,45,111,0.14)',
-  },
-  acceptText: { fontSize: 13, color: '#EDEAF5' },
-  btnGap: { marginTop: 4 },
+  btnGap: { marginTop: SPACING.xs },
 });
