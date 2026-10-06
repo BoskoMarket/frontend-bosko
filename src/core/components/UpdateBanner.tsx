@@ -15,7 +15,7 @@ export function UpdateBanner() {
 
   return (
     <View style={[styles.banner, { paddingBottom: insets.bottom + 12 }]}>
-      <Ionicons name="sparkles" size={16} color="#fff" />
+      <Ionicons name="sparkles" size={16} color={TOKENS.color.onPrimary} />
       <Text variant="caption" style={styles.text}>
         Hay una versión nueva de Bosko
       </Text>
@@ -43,10 +43,10 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   text: {
-    color: '#fff',
+    color: TOKENS.color.onPrimary,
   },
   action: {
-    color: '#fff',
+    color: TOKENS.color.onPrimary,
     fontWeight: '700',
     textDecorationLine: 'underline',
   },

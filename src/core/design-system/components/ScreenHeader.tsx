@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Text } from './Text';
 import { safeBack } from '../../navigation/safeBack';
+import { useThemeColors } from '@/stores/theme.store';
 
 export interface ScreenHeaderProps {
   title: string;
@@ -19,12 +20,13 @@ export interface ScreenHeaderProps {
  * quede realmente centrado, no solo "flex:1 + textAlign:center".
  */
 export function ScreenHeader({ title, onBack, right }: ScreenHeaderProps) {
+  const tc = useThemeColors();
   return (
     <View style={styles.row}>
       <Pressable onPress={onBack ?? (() => safeBack(router, '/(tabs)'))} hitSlop={12} style={styles.side}>
-        <Ionicons name="chevron-back" size={22} color="#EDEAF5" />
+        <Ionicons name="chevron-back" size={22} color={tc.text} />
       </Pressable>
-      <Text variant="title" color="#EDEAF5" style={styles.title} numberOfLines={1}>
+      <Text variant="title" color={tc.text} style={styles.title} numberOfLines={1}>
         {title}
       </Text>
       <View style={[styles.side, styles.right]}>{right}</View>

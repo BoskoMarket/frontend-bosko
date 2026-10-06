@@ -6,6 +6,9 @@ export const GRADIENTS = {
   // 2-stop — botones, chips activos, burbuja de tab
   brand: [TOKENS.color.signal, TOKENS.color.primary] as const,
 
+  // Éxito — verificado / pago OK
+  success: [TOKENS.color.mint, TOKENS.color.mintDeep] as const,
+
   // 3-stop — hero, splash, banners grandes
   brandDeep: [TOKENS.color.signal, TOKENS.color.primary, TOKENS.color.primaryDark] as const,
 

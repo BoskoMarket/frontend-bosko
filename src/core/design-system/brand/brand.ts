@@ -12,6 +12,7 @@ export const BRAND = {
     primaryMid: '#A0032A',
     signal: '#FF2D6F',
     mint: '#00E5A0',
+    mintDeep: '#00B382',
 
     // Status
     error: '#FF4D4D',
