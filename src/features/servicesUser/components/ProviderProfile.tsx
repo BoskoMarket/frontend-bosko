@@ -11,7 +11,8 @@ import {
 
 import { useCategories, useProviderProfile } from "@/hooks/queries/useMarketplaceQuery";
 import type { Rate } from "@/types/services";
-import { TOKENS } from "@/core/design-system/tokens";
+import { TOKENS, useThemeColors } from "@/core/design-system";
+import type { ThemeColors } from "@/core/design-system";
 import { PremiumButton } from "@/components/PremiumButton";
 
 const formatRate = (rate: Rate) => {
@@ -30,6 +31,8 @@ const ProviderProfile: React.FC<ProviderProfileProps> = ({
   onBack,
   onRequestQuote,
 }) => {
+  const tc = useThemeColors();
+  const styles = useMemo(() => createStyles(tc), [tc]);
   const categoriesQuery = useCategories();
   const providerQuery = useProviderProfile(providerId);
 
@@ -41,8 +44,8 @@ const ProviderProfile: React.FC<ProviderProfileProps> = ({
 
   const categoryAccent = useMemo(() => {
     const category = (categoriesQuery.data ?? []).find((item) => item.id === provider?.categoryId);
-    return category?.accent ?? "#E8ECF2";
-  }, [categoriesQuery.data, provider?.categoryId]);
+    return category?.accent ?? tc.surface2;
+  }, [categoriesQuery.data, provider?.categoryId, tc.surface2]);
 
   if (!provider && providerQuery.isLoading) {
     return (
@@ -114,7 +117,7 @@ const ProviderProfile: React.FC<ProviderProfileProps> = ({
                 onPress={() => onRequestQuote && onRequestQuote()}
                 size="small"
                 style={{ backgroundColor: categoryAccent, borderRadius: TOKENS.radius.lg }}
-                textStyle={{ color: TOKENS.color.text }}
+                textStyle={{ color: tc.text }}
               />
             </View>
           </View>
@@ -157,7 +160,7 @@ const ProviderProfile: React.FC<ProviderProfileProps> = ({
 
 export default ProviderProfile;
 
-const styles = StyleSheet.create({
+const createStyles = (tc: ThemeColors) => StyleSheet.create({
   wrapper: {
     gap: 20,
   },
@@ -173,12 +176,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: "600",
-    color: TOKENS.color.text,
+    color: tc.text,
     textAlign: "center",
   },
   emptySubtitle: {
     fontSize: 14,
-    color: TOKENS.color.sub,
+    color: tc.textSub,
     textAlign: "center",
   },
   headerRow: {
@@ -190,14 +193,14 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: TOKENS.radius.lg,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: tc.surface,
     alignItems: "center",
     justifyContent: "center",
     ...TOKENS.shadow.soft,
   },
   backIcon: {
     fontSize: 20,
-    color: TOKENS.color.text,
+    color: tc.text,
   },
   heroCard: {
     borderRadius: TOKENS.radius.xl,
@@ -213,7 +216,7 @@ const styles = StyleSheet.create({
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(17, 24, 39, 0.45)",
+    backgroundColor: TOKENS.scrim.medium,
   },
   heroContent: {
     padding: 24,
@@ -229,15 +232,15 @@ const styles = StyleSheet.create({
   heroName: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#FFFFFF",
+    color: TOKENS.onMedia.text,
   },
   heroTitle: {
     fontSize: 16,
-    color: "#F9FAFB",
+    color: TOKENS.onMedia.text,
   },
   heroSummary: {
     fontSize: 14,
-    color: "#E5E7EB",
+    color: TOKENS.onMedia.textSub,
     textAlign: "center",
   },
   heroStats: {
@@ -248,15 +251,15 @@ const styles = StyleSheet.create({
   heroRating: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#FCD34D",
+    color: TOKENS.color.rating,
   },
   heroReviews: {
     fontSize: 14,
-    color: "#F3F4F6",
+    color: TOKENS.onMedia.text,
   },
   heroLocation: {
     fontSize: 14,
-    color: "#E5E7EB",
+    color: TOKENS.onMedia.textSub,
   },
   heroActions: {
     flexDirection: "row",
@@ -266,12 +269,12 @@ const styles = StyleSheet.create({
   heroRate: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#FFFFFF",
+    color: TOKENS.onMedia.text,
   },
 
   section: {
     gap: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: tc.card,
     padding: 20,
     borderRadius: TOKENS.radius.lg,
     ...TOKENS.shadow.soft,
@@ -279,11 +282,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: TOKENS.color.text,
+    color: tc.text,
   },
   sectionBody: {
     fontSize: 14,
-    color: TOKENS.color.sub,
+    color: tc.textSub,
     lineHeight: 20,
   },
   tagsRow: {
@@ -298,7 +301,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 12,
-    color: TOKENS.color.text,
+    color: tc.text,
   },
   worksList: {
     gap: 12,
@@ -320,16 +323,16 @@ const styles = StyleSheet.create({
   workTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: TOKENS.color.text,
+    color: tc.text,
   },
   workTime: {
     fontSize: 12,
-    color: TOKENS.color.sub,
+    color: tc.textSub,
   },
   dot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.6)",
+    backgroundColor: TOKENS.onMedia.textMuted,
   },
 });

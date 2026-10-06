@@ -1,5 +1,5 @@
-import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
-import { TOKENS } from "@/core/design-system/tokens";
+import { View, StyleSheet } from "react-native";
+import { SPACING } from "@/core/design-system";
 import { PremiumButton } from "@/components/PremiumButton";
 
 export function QuickActions({
@@ -31,5 +31,5 @@ export function QuickActions({
   );
 }
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", gap: 12, paddingHorizontal: 16 },
+  row: { flexDirection: "row", gap: SPACING.md, paddingHorizontal: SPACING.lg },
 });

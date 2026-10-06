@@ -1,6 +1,6 @@
 import React from "react";
-import { FlatList, View, Text, StyleSheet, Dimensions } from "react-native";
-import { TOKENS } from "@/core/design-system/tokens";
+import { FlatList, View, StyleSheet, Dimensions } from "react-native";
+import { SPACING, Text, TOKENS, useThemeColors } from "@/core/design-system";
 import { PremiumButton } from "@/components/PremiumButton";
 import { router } from "expo-router";
 
@@ -11,6 +11,7 @@ export function HeroCarousel({
 }: {
   data: { title: string; subtitle: string; cta: string }[];
 }) {
+  const tc = useThemeColors();
   return (
     <FlatList
       data={data}
@@ -21,8 +22,8 @@ export function HeroCarousel({
       renderItem={({ item }) => (
         <View style={styles.cardShadow}>
           <View style={styles.card}>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.sub}>{item.subtitle}</Text>
+            <Text variant="h3" style={styles.title}>{item.title}</Text>
+            <Text color={tc.textSub} style={styles.sub}>{item.subtitle}</Text>
             <PremiumButton
               title="Explorar"
               onPress={() => router.push("/(tabs)/services")}
@@ -36,23 +37,19 @@ export function HeroCarousel({
 
 const styles = StyleSheet.create({
   cardShadow: {
-    width: width - 32,
-    marginHorizontal: 16,
+    width: width - SPACING.xxxl,
+    marginHorizontal: SPACING.lg,
     height: 200,
-    borderRadius: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    borderRadius: TOKENS.radius.lg,
+    ...TOKENS.shadow.soft,
   },
   card: {
     flex: 1,
-    borderRadius: 20,
+    borderRadius: TOKENS.radius.lg,
     overflow: "hidden",
-    padding: 16,
+    padding: SPACING.lg,
     backgroundColor: "transparent",
   },
-  title: { fontSize: 22, fontWeight: "800", color: TOKENS.color.text },
-  sub: { color: TOKENS.color.sub, marginTop: 6 },
+  title: { fontSize: 22, fontWeight: "800" },
+  sub: { marginTop: SPACING.xs + 2 },
 });

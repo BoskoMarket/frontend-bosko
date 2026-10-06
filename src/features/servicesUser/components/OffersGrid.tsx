@@ -1,6 +1,6 @@
 // /components/OffersGrid.tsx
-import { FlatList, View, Text, StyleSheet } from "react-native";
-import { TOKENS } from "@/core/design-system/tokens";
+import { FlatList } from "react-native";
+import { Card, SPACING, Text, TOKENS } from "@/core/design-system";
 
 export function OffersGrid({
   data,
@@ -12,30 +12,17 @@ export function OffersGrid({
       numColumns={2}
       data={data}
       keyExtractor={(i) => i.id}
-      columnWrapperStyle={{ gap: 12, paddingHorizontal: 16 }}
+      columnWrapperStyle={{ gap: SPACING.md, paddingHorizontal: SPACING.lg }}
       renderItem={({ item }) => (
-        <View style={styles.card}>
-          <Text style={{ fontWeight: "700", color: TOKENS.color.text }}>
-            {item.title}
-          </Text>
-          <Text style={{ color: TOKENS.color.primary, marginTop: 6 }}>
+        <Card padding="md" style={{ flex: 1 }}>
+          <Text variant="subtitle">{item.title}</Text>
+          <Text color={TOKENS.color.primary} style={{ marginTop: SPACING.xs + 2 }}>
             {item.price}
           </Text>
-        </View>
+        </Card>
       )}
       scrollEnabled={false}
-      contentContainerStyle={{ gap: 12 }}
+      contentContainerStyle={{ gap: SPACING.md }}
     />
   );
 }
-const styles = StyleSheet.create({
-  card: {
-    flex: 1,
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.05)",
-    ...TOKENS.shadow.soft,
-  },
-});
