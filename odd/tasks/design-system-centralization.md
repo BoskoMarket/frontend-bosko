@@ -71,7 +71,7 @@ Forecast: muy por encima de ~400 líneas → PRs encadenados, una tarea (o featu
 |---|---|---|---|---|
 | 1 — regla, brand layer, guardia | `feat/design-system-centralization` | `dev` | `570e447` `23c9164` `5cb9cb7` `4ce0c02` `c0caff3` | listo para PR |
 | 2 — componentes DS (T3) | `feat/ds-t3-components` | `feat/design-system-centralization` | `fc05bf3` `4f6cb90` | listo para PR |
-| 3 — migración auth (T4) | `feat/ds-t4-auth` | `feat/ds-t3-components` | — | ⬜ |
+| 3 — migración auth (T4) | `feat/ds-t4-auth` | `feat/ds-t3-components` | `f778e7e` `e9b7e49` `780f080` | listo para PR |
 
 ## Inventario de componentes (T3)
 
@@ -104,7 +104,7 @@ Cambios al DS existente en esta tarea: sacados todos los literales de `Button`, 
 | T1 | Capa de marca: `brand/brand.ts` + `fonts.ts`; `palette`/`tokens`/`gradients`/`premium`/`typography` derivan de brand; marcar `TOKENS.color.bg/text/sub` como `@deprecated` (129 usos en ~25 archivos → se eliminan en cada feature, borrado final en T13); agregar semánticos faltantes (`onPrimary`, `onMedia`, `scrim.*`); `app/_layout.tsx` usa `fonts.ts` | delegada (2+ archivos no triviales) | ✅ `23c9164` |
 | T2 | Guardia ESLint en `warn` + script de conteo de violaciones (baseline registrado aquí) | inline | ✅ `5cb9cb7` |
 | T3 | Inventario y alta de componentes faltantes en el DS: `Input` (mover desde `core/components`), `GradientButton`/variante brand de `Button`, `Chip`, `Badge/StatusPill`, `Avatar`, `OtpInput`, `AuthCard`, `EmptyState`, `Toast`, banners, `BrandMark` | delegada | ✅ |
-| T4 | Migrar `features/auth` (~14 pantallas) | delegada | ⬜ |
+| T4 | Migrar `features/auth` (~14 pantallas) | delegada | ✅ `f778e7e` `e9b7e49` |
 | T5 | Migrar `src/components` + `src/core/components` compartidos (TabBar, ThemeToggle, ProviderCTA, Premium*, banners) | delegada | ⬜ |
 | T6 | Migrar `features/servicesUser` (~16 archivos, incl. Dashboard, ServiceForm, ProviderProfile) | delegada | ⬜ |
 | T7 | Migrar `features/orders` + `features/payments` + `features/plans` | delegada | ⬜ |
@@ -147,7 +147,15 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 | `src/features/chat/screens/ConversationsListScreen.tsx:116` | Borde `rgba(255,45,111,0.25)` hardcodeado | T10 |
 | `src/features/profile/ProfileScreen.tsx:215` | Chevron con `tc.border` → casi invisible | T9: `ListRow` |
 | `src/core/design-system/components/OtpInput` | Borrar un dígito del medio corre los siguientes a la izquierda (`value` string) | Aceptado; pasar a `string[]` si molesta |
-| DS components (`Button`, `Card`, `IconCircle`, …) | En T3 dejaron de forzar look dark en light mode (ahora usan `tc.*`) | **Revisar visualmente en light** en T4 |
+| DS components (`Button`, `Card`, `IconCircle`, …) | En T3 dejaron de forzar look dark en light mode (ahora usan `tc.*`) | **Revisar visualmente en light** en T4 → pendiente de verificación en dispositivo (pantallas auth ahora siguen el tema, ver Progreso T4) |
+| `src/features/auth/components/OnBoardingSlide.tsx` | Componente sin ningún import en `src/` ni `app/` (código muerto; el onboarding real es `screens/OnBoarding.tsx`). Se migró igual a tokens para no dejar violaciones | Borrar en T13 (o ahora si se confirma) |
+| `src/features/auth/screens/VerifyEmailScreen.tsx` (`handleResend`) | Stub: no llama a ningún endpoint (TODO backend `POST /auth/resend-verification`); `resending` y `cooldown` nunca se activan → la UI de "Reenviar en Ns" es inalcanzable | Tarea propia cuando el backend exponga el endpoint |
+| `src/features/auth/screens/VerifyEmailScreen.tsx` | La vista del OTP no monta `AnimatedBackground` (la de éxito sí) → fondo distinto entre ambos estados; las demás pantallas del flujo sí lo tienen | Decidir si se agrega (cambio visual) |
+| `src/features/auth/screens/LoginIndex.tsx` + `app/login/LogInView.tsx` / `RegisterView.tsx` | Rutas duplicadas huérfanas; el prop `toRegister` de `RegisterView` en realidad "vuelve a login" (nombre engañoso) y sin él los botones no hacen nada | Borrar las 2 rutas o renombrar prop (T13 / tarea propia) |
+| `src/features/auth/screens/ForgotPasswordScreen.tsx` | El círculo hero (icono llave) quedaba alineado a la izquierda del bloque (sin `alignSelf`); al migrar a `IconCircle` quedó centrado | Verificar en dispositivo (se asume que era un bug) |
+| `src/features/auth/state/AuthContext.tsx:263-266` | Pantalla de "Reintentar conexión / Cerrar sesión" usa `Button` nativo de RN (sin estilo del DS) y `Text` suelto | T5/T11: `Button` del DS |
+| `src/components/BrandMark.tsx`, `src/components/AnimatedBackground.tsx` | Siguen con literales (`#EDEAF5`, `#850021`, `rgb(255,45,111)`…); las pantallas auth los usan | T5 (`src/components`) |
+| Auth flow (`/auth/*`, `/welcome-video`, `/login/termsAndConditions`) | Sin guard inverso / sin entrada de navegación; detalle en `odd/nav-map.md` → "Enlaces rotos / dudosos" | Tarea de navegación (T14) |
 
 ## Progreso / evidencia
 
@@ -159,13 +167,16 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 
 - 2026-10-05 T3 ✅ `fc05bf3` `4f6cb90`: Input/EmptyState/Toast movidos a `design-system/components` (rutas viejas = re-export); nuevos `Divider`, `SectionHeader`, `Badge`, `Chip`, `Avatar`, `OtpInput`, `AuthCard`, `ListRow`; componentes existentes sin literales; `designSystemComponents.test.tsx` (34 tests, incluye guardia fs+regex de `components/**`). Inventario arriba. Ningún screen migrado. Checks: `tsc` limpio, `lint` 0 errores, `npm test` 10 suites / 67 tests OK. Cambios visuales menores: Toast usa `TOKENS.status.*`, EmptyState usa `Button`; nuevos `BRAND.colors.mintDeep`, `GRADIENTS.success`.
 
+- 2026-10-05 T4 ✅ `f778e7e` `e9b7e49`: las 12 pantallas de `features/auth/screens` + `OnBoardingSlide` migradas (0 violaciones en auth). Nuevo en el DS: `AuthBackdrop` (root con gradiente bg→vino + glow pulsante; `forceDark`), `BackButton`, `GRADIENTS.glow/glowFaint/backdrop(tc)`, `PALETTE.*.bgWine` (+ `BRAND.colors.*.wine`), `Button.iconPosition`; tests en `designSystemComponents`/`designSystemBrand`. Cambios de uso: tarjetas → `AuthCard`, OTP → `OtpInput` (arregla pegar el código en VerifyEmail/VerifyResetCode), inputs de ChangePassword → `Input`, CTAs → `Button` (Google = `variant="secondary"`), heroes → `IconCircle`, banner de Términos → `NoticeBanner`. **Decisión de tema**: Login/Register/Forgot/Verify*/Reset/Terms/ChangePassword ahora siguen el tema (`tc.*`; antes fijos `#0A0910`+blur dark, y el `Input` ya era theme-aware → en light se veía mal); Splash/Onboarding/WelcomeVideo son intencionalmente siempre-dark (`PALETTE.dark` / `TOKENS.onMedia`). Diferencias visuales menores (a verificar en dispositivo): wordmark de login `#EDEAF5` en vez de `#fff`; Splash `#07060C`→`#0A0910` y glow con la misma curva que login; botón Google 56px y con opacidad al cargar; divisor "o" más tenue (`tc.divider`); VerifyResetCode ya no anima caja por caja (fade del bloque OTP); éxito de Reset usa `IconCircle` success (gradiente) en vez del check plano; onboarding: CTA es `Button` (gradiente 2 stops, sin spring propio) y título con Archivo; ChangePassword usa `ScreenHeader` + `Card` y pierde el borde de foco propio (lo da `Input`). Checks: `tsc` limpio, `lint` 0 errores, `npm test` 10 suites / 73 tests (+6 en DS respecto a T3: 67), `lint:ds` **835** (−232, auth = 0). Nav-map: 34 salidas mapeadas, 0 rotas, 5 dudosas (`odd/nav-map.md`).
+
 ## Conteo de violaciones (`npm run lint:ds`)
 
 | Después de | Total | Archivos |
 |---|---|---|
 | T2 (baseline) | 1095 | 78 |
 | T3 | 1067 | 73 |
+| T4 | 835 | 61 |
 
 ## Próximo paso
 
-T4: migrar `features/auth` usando `AuthCard`, `Input`, `OtpInput`, `Button`, `IconCircle`.
+T5: migrar `src/components` + `src/core/components` compartidos (TabBar, ThemeToggle, ProviderCTA, Premium*, banners; incluye `BrandMark` y `AnimatedBackground`, que usan las pantallas auth). Antes: verificar en dispositivo (dark + light) las pantallas auth de T4.
