@@ -72,8 +72,8 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Gate (`/`) | `app/index.tsx` | Auth aún cargando | Render (sin navegar) | `AnimatedSplashScreen` (`onDone` es no-op) | - | ✅ |
 | Gate (`/`) | `app/index.tsx` | Sesión activa | `<Redirect>` | `/(tabs)` | - | ✅ |
 | Gate (`/`) | `app/index.tsx` | Sin sesión | Render inline | `OnBoarding` | - | ✅ |
-| Onboarding (`/`) | `screens/OnBoarding.tsx:80` | "Saltar" / "Comenzar" (último slide) | `router.replace` | `/login` | - | ✅ |
-| Onboarding (`/`) | `screens/OnBoarding.tsx:84` | `onboardingComplete` ya guardado | `<Redirect>` | `/login` | - | ✅ |
+| Onboarding (`/`) | `screens/OnBoarding.tsx:79` | "Saltar" / "Comenzar" (último slide) | `router.replace` | `/login` | - | ✅ |
+| Onboarding (`/`) | `screens/OnBoarding.tsx:83` | `onboardingComplete` ya guardado | `<Redirect>` | `/login` | - | ✅ |
 | Layout login (`/login/*`) | `app/login/_layout.tsx:19` | Usuario ya autenticado (guard inverso) | `<Redirect>` | `/(tabs)` | - | ✅ |
 | Login (`/login`) | `screens/LoginIndex.tsx` | Estado `showRegister` | Cambia vista local (no es ruta) | `LogInView` ⇄ `RegisterView` | - | ✅ |
 | Login (`/login`) | `screens/LogInView.tsx:94` | "Ingresar" ok + flag `WELCOME_VIDEO_PENDING_KEY` | `router.replace` | `/welcome-video` | - | ✅ |
@@ -97,12 +97,27 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Layout auth (`/auth/*`) | `app/auth/_layout.tsx` | - | Stack con `presentation: "modal"` (verify-email, verify-reset-code, reset-password) | - | - | ⚠️ sin guard inverso (usuario autenticado puede abrir `/auth/*` por deep link) |
 | Términos (`/login/termsAndConditions`) | `screens/TermsAndConditionsScreen.tsx:39` | Botón atrás | `safeBack` | `router.back()` o fallback `/login` | - | ✅ |
 | Términos (`/login/termsAndConditions`) | `screens/TermsAndConditionsScreen.tsx:76` | "Volver al inicio" | `router.replace` | `/login` | - | ✅ |
-| Video de bienvenida (`/welcome-video`) | `screens/WelcomeVideoScreen.tsx:33` | `playToEnd`, timeout 8 s o "Saltar" | `router.replace` | `/(tabs)` | - | ✅ |
+| Video de bienvenida (`/welcome-video`) | `screens/WelcomeVideoScreen.tsx:31` | `playToEnd`, timeout 8 s o "Saltar" | `router.replace` | `/(tabs)` | - | ✅ |
 | Cambiar contraseña (`/(tabs)/profile/ChangePassword`) | `screens/ChangePasswordScreen.tsx:129` | Header atrás | `safeBack` | `router.back()` o fallback `/(tabs)/profile` | - | ✅ |
 | Cambiar contraseña (`/(tabs)/profile/ChangePassword`) | `screens/ChangePasswordScreen.tsx:105` | "OK" del `Alert` de éxito | `Alert.alert` → `safeBack` | `router.back()` o fallback `/(tabs)/profile` | - | ✅ |
 | Layout tabs (`/(tabs)/*`) | `app/(tabs)/_layout.tsx:25` | Sin sesión (guard) | `<Redirect>` | `/login` | - | ✅ |
 | Layout raíz | `app/_layout.tsx:70` | Sin sesión y segmento protegido (`(tabs)`, `orders`, `chat`, `admin`, `service-form`, `search`) | `router.replace` (effect) | `/login` | - | ✅ |
 | Rutas duplicadas | `app/login/LogInView.tsx`, `app/login/RegisterView.tsx` | - | Wrappers de ruta que renderizan la vista sin props | - | - | ⚠️ ver "Enlaces rotos / dudosos" |
+| Tab bar (`/(tabs)/*`) | `src/components/CustomTabBar.tsx` (`onPress`) | Tap en un tab no enfocado (Inicio, Servicios, Pedidos, Reels, Mensajes, Perfil) | `navigation.navigate` | `/(tabs)`, `/(tabs)/services`, `/(tabs)/orders`, `/(tabs)/reels`, `/(tabs)/chat`, `/(tabs)/profile` | `route.params` | ✅ los 6 existen en `app/(tabs)/_layout.tsx` |
+| Tab bar (`/(tabs)/*`) | `src/components/CustomTabBar.tsx` (`onPress`) | Tap en el tab ya enfocado con stack anidado | `StackActions.popToTop` | Raíz del stack del tab (ej. `/(tabs)/profile`) | - | ✅ |
+| Perfil (`/(tabs)/profile`) | `src/features/profile/components/EditProfileModal.tsx:145` | "Cambiar contraseña" (bottom sheet "Editar perfil") | cierra el sheet + `router.push` | `/(tabs)/profile/ChangePassword` | - | ✅ |
+| Perfil (`/(tabs)/profile`) | `src/features/profile/components/EditProfileModal.tsx` | Abrir/cerrar "Editar perfil" (lo monta `ProfileScreen`) | `BottomSheetModal` present/dismiss | - (modal, sin ruta) | - | ✅ |
+| Proveedor (`/(tabs)/services/provider/[id]`) | `src/features/servicesUser/components/ServiceDetailModal.tsx:162` | "Solicitar Servicio" (modal de detalle) | cierra el modal + `router.push({ pathname, params })` | `/orders/quote` | `serviceId`, `serviceTitle`, `providerName` (los lee `QuoteRequestScreen`) | ✅ |
+| Proveedor (`/(tabs)/services/provider/[id]`) | `src/features/servicesUser/components/ServiceDetailModal.tsx` | Abrir/cerrar detalle de servicio (lo monta `ProviderProfileScreen`) | `Modal` | - (modal, sin ruta) | - | ✅ |
+| Banner premium (sin uso) | `src/components/PremiumBanner.tsx:35` | Ícono de búsqueda | `router.push` | `/search` | - | ✅ (componente sin importadores) |
+| Banner premium (sin uso) | `src/components/PremiumBanner.tsx` | Ícono de notificaciones | `Pressable` sin `onPress` | - | - | ⚠️ no navega a ningún lado |
+| CTA proveedor (sin uso) | `src/components/ProviderCTA.tsx:78` | "Convertirme en Proveedor" | `onPress={() => {}}` (no-op) | debería ir a `/(tabs)/profile/become-provider` | - | ⚠️ no navega (componente sin importadores) |
+| Promo (sin uso) | `src/features/servicesUser/components/PromoBanner.tsx` | "Suscribirme" | `onPress={() => {}}` (no-op) | debería ir a `/(tabs)/profile/plans` | - | ⚠️ no navega (componente sin importadores) |
+| Tarjeta profesional (sin uso) | `src/features/servicesUser/components/ProfesionalCard.tsx` | "Reservar" | `TouchableOpacity` sin `onPress` | - | - | ⚠️ no navega (solo lo importa `ProfesionalCarousel`, que no tiene importadores) |
+| Carrusel de categorías (sin uso) | `src/components/CategoryVideoCarousel.tsx` | Tap en una categoría | callback `onSelectCategory(id)` | decide el padre (nadie lo monta) | `id` | ⚠️ sin importadores |
+| Splash (`/`, vista del gate) | `src/features/auth/screens/AnimatedSplashScreen.tsx` | Fin de la animación (~2.2 s) | callback `onDone` (el gate pasa un no-op) | - | - | ✅ (ya mapeado en Gate) |
+| Auth gate de carga | `src/features/auth/state/AuthContext.tsx:263` | Error de sesión: "Reintentar conexión" / "Cerrar sesión" | `setAttempt` (re-valida) / `logout()` | - / `/login` (por el guard de `app/_layout.tsx`) | - | ✅ |
+| Infra (`app/_layout.tsx`) | `src/core/components/BiometricLockGate.tsx`, `ErrorBoundary.tsx`, `OfflineBanner.tsx`, `UpdateBanner.tsx` | Bloqueo biométrico, error de render, sin conexión, update disponible | Overlays / `applyUpdate` | - (sin navegación) | - | ✅ |
 
 ## Enlaces rotos / dudosos
 
@@ -113,6 +128,9 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Términos | `app/login/termsAndConditions.tsx` | `/login/termsAndConditions` | Sin entrada: ninguna pantalla enlaza a Términos (ni el registro ni el login). El banner de la pantalla asume que viene post-registro. |
 | Verificar email / reseteo | `app/auth/_layout.tsx` | `/auth/*` | Sin guard inverso: un usuario autenticado puede abrir `/auth/verify-email` o `/auth/reset-password` por deep link. |
 | Video de bienvenida | `app/welcome-video.tsx` | `/welcome-video` | Sin guard: se puede abrir por deep link sin sesión (termina en `/(tabs)` → redirige a `/login`) y sin el flag `WELCOME_VIDEO_PENDING_KEY`. |
+| Banner premium | `src/components/PremiumBanner.tsx` | (ícono de notificaciones) | Botón sin `onPress`; además el componente no tiene importadores. |
+| CTA proveedor / Promo | `src/components/ProviderCTA.tsx:78`, `src/features/servicesUser/components/PromoBanner.tsx` | `become-provider` / `plans` (inferidos) | `PremiumButton` con `onPress` no-op; ninguno de los dos tiene importadores. |
+| Tarjeta profesional | `src/features/servicesUser/components/ProfesionalCard.tsx` | "Reservar" | Sin `onPress`; solo la usa `ProfesionalCarousel`, que no se monta en ningún lado. |
 
 ## Pantallas sin entrada
 

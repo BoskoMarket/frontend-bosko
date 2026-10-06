@@ -220,7 +220,7 @@ All of it lives under `src/core/design-system/` — the one folder to check befo
 
 #### Regla obligatoria: nada hardcodeado (desde 2026-10-05)
 
-- Fuera de `src/core/design-system/` **no** puede haber literales de diseño: nada de hex (`'#fff'`, `'#850021'`), `rgb()/rgba()`, nombres de color (`'white'`), `fontFamily` literal, arrays de gradiente a mano, ni sombras/radios sueltos. Siempre tokens (`tc.*`, `TOKENS`, `GRADIENTS`, `FONT_FAMILY`, `TYPE_SCALE`, `SPACING`, `PREMIUM`).
+- Fuera de `src/core/design-system/` **no** puede haber literales de diseño: nada de hex (`'#fff'`, `'#850021'`), `rgb()/rgba()`, nombres de color (`'white'`), `fontFamily` literal, arrays de gradiente a mano, ni sombras/radios sueltos. Siempre tokens (`tc.*`, `TOKENS`, `GRADIENTS`, `FONT_FAMILY`, `TYPE_SCALE`, `SPACING`, `usePremiumColors()`).
 - Siempre usar los componentes del DS (`Button`, `Text`, `Card`, …) antes de armar UI a mano.
 - **Toda pantalla sigue el tema claro/oscuro** (`tc.*` de `useThemeColors()`). Nada de pantallas "siempre dark". Excepción: contenido sobre video/imagen usa `TOKENS.onMedia` / `TOKENS.scrim` por legibilidad.
 - Si falta un token o un componente: **se agrega primero al design system** (y se exporta en el barrel), después se usa. Nunca resolverlo local en la pantalla.
@@ -237,10 +237,10 @@ All of it lives under `src/core/design-system/` — the one folder to check befo
   - `EmptyState` (icon + copy + brand CTA + text CTA), `ToastRoot` + `toast.success|error|warning` (old path re-exports), `NoticeBanner` (info|trust), `Skeleton`/`SkeletonRow`
   - `Badge` (tone = `TOKENS.status` key | brand | neutral; status pill), `Chip` (filter chip, selected = brand gradient), `Avatar` (photo or gradient initial, online dot), `IconCircle`
   - `ListRow` (settings row: icon tile + label/subtitle + chevron/right slot, `danger`), `SectionHeader` (title + "Ver todo" link), `Divider`, `ScreenHeader`, `StepTimeline`
-  - `AuthCard` (glass auth card with signal glow), `AuthBackdrop` (auth/splash screen root: bg → wine tint gradient + pulsing glow; `forceDark` for always-dark screens), `BackButton` (glass chevron-back), `FullScreenModal`
+  - `AuthCard` (glass auth card with signal glow), `AuthBackdrop` (auth/splash screen root: bg → wine tint gradient + pulsing glow; follows the theme), `BackButton` (glass chevron-back), `FullScreenModal`
 - **Theme hooks** (also re-exported from the barrel): `useThemeColors()` (`tc.bg`, `tc.text`, `tc.surface2`, `tc.border`, etc.), `useIsDark()` (for `BlurView tint`), `useToggleTheme()`.
 - **Convention**: every screen must call `const tc = useThemeColors()` and apply dynamic colors inline (`backgroundColor: tc.bg`, etc.). Never hardcode `#FAFAFC`, `rgba(255,255,255,0.75)`, etc. for backgrounds/text.
-- **`premium.ts`** → `PREMIUM` — gold-on-dark visual treatment for premium/provider-tier UI (`ProviderCTA`, `PremiumButton`, `PremiumBanner`, `EditProfileModal`, `FeaturesSection`, `ProfesionalCard`, `PromoBanner`, `ServiceDetailModal`, `OnBoardingSlide`, `CategoryVideoCarousel`). Deliberately separate from `PALETTE` dark/light — always renders on dark regardless of theme toggle. Replaces the old `Colors.ts` (removed) 1:1, same values.
+- **`premium.ts`** → `PREMIUM_PALETTE.dark / .light` + `PREMIUM_SHADOWS` — gold treatment for premium/provider-tier UI (`ProviderCTA`, `PremiumButton`, `PremiumBanner`, `EditProfileModal`, `FeaturesSection`, `PromoBanner`, `ServiceDetailModal`, `CategoryVideoCarousel`). **Follows the theme** like everything else: consume it with `const pc = usePremiumColors()` (same pattern as `useThemeColors()`, exported from the barrel; `pc.gold` is a darker gold with ≥4.5:1 contrast in light). Gold *fills* are theme-independent: `pc.goldFill` / `pc.goldFillEnd` / `pc.onGold`; over brand-colored surfaces use `TOKENS.color.onPrimary`, not `pc.textPrimary`. `primary`/`primaryDark` are the brand ones. Shadows (`PREMIUM_SHADOWS.*`) are static.
 - **Fonts**: Archivo (`@expo-google-fonts/archivo`) + JetBrains Mono (`@expo-google-fonts/jetbrains-mono`) — loaded once in `app/_layout.tsx` (`useFonts` + `SplashScreen` hold). Body text uses the system font. Always reference them via `FONT_FAMILY` / `TYPE_SCALE`, never by string name.
 - **MotiView**: `src/core/components/MotiView.ios.tsx` / `.android.tsx` — thin re-export of `moti`. Requires dev build (TurboModule).
 
