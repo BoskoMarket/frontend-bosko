@@ -19,9 +19,7 @@ import { useMyServices, useDeleteService } from "@/hooks/queries/useMarketplaceQ
 import type { Service } from "@/features/servicesUser/services/service";
 import { EmptyState } from '@/core/components/EmptyState';
 import { getUserErrorMessage } from '@/lib/errors';
-import { TOKENS } from '@/core/design-system/tokens';
-import { GRADIENTS } from '@/core/design-system/gradients';
-import { useThemeColors } from '@/stores/theme.store';
+import { GRADIENTS, TOKENS, useThemeColors } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -155,7 +153,7 @@ export default function MyServiceScreen() {
           hitSlop={8}
         >
           <LinearGradient colors={GRADIENTS.brand} style={styles.addBtn}>
-            <Ionicons name="add" size={15} color="#fff" />
+            <Ionicons name="add" size={15} color={TOKENS.color.onPrimary} />
             <Text style={styles.addBtnText}>Publicar</Text>
           </LinearGradient>
         </Pressable>
@@ -199,7 +197,6 @@ export default function MyServiceScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
     paddingHorizontal: 20,
   },
   headerRow: {
@@ -211,14 +208,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
   },
   backIcon: {
     fontSize: 28,
-    color: '#111',
     lineHeight: 32,
     marginTop: -2,
   },
@@ -237,55 +232,26 @@ const styles = StyleSheet.create({
     ...TOKENS.shadow.glow,
   },
   addBtnText: {
-    color: '#fff',
+    color: TOKENS.color.onPrimary,
     fontWeight: '700',
     fontSize: 13,
   },
   planMessage: {
     fontSize: 14,
-    color: "#4B5563",
     marginBottom: 16,
   },
   loader: {
     paddingVertical: 40,
     alignItems: "center",
   },
-  emptyState: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    gap: 12,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  emptyDescription: {
-    textAlign: "center",
-    color: "#6B7280",
-    fontSize: 14,
-  },
-  primaryButton: {
-    backgroundColor: SIGNAL,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  primaryButtonText: {
-    color: "#fff",
-    fontWeight: "600",
-  },
   listContent: {
     gap: 16,
     paddingBottom: 40,
   },
   card: {
-    backgroundColor: "#F9FAFB",
     borderRadius: 16,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#E5E7EB",
   },
   cardImage: {
     width: "100%",
@@ -296,11 +262,8 @@ const styles = StyleSheet.create({
     height: 180,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#E5E7EB",
   },
-  imagePlaceholderText: {
-    color: "#6B7280",
-  },
+  imagePlaceholderText: {},
   cardContent: {
     padding: 16,
     gap: 8,
@@ -311,7 +274,6 @@ const styles = StyleSheet.create({
   },
   cardDescription: {
     fontSize: 14,
-    color: "#4B5563",
   },
   cardMeta: {
     flexDirection: "row",
@@ -327,7 +289,6 @@ const styles = StyleSheet.create({
   cardPrice: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#111827",
   },
   cardActions: {
     flexDirection: "row",

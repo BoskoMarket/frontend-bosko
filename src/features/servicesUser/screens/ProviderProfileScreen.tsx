@@ -23,9 +23,7 @@ import api from '@/core/api/axiosinstance';
 import { safeBack } from '@/core/navigation/safeBack';
 import { ServiceDetailModal } from '../components/ServiceDetailModal';
 import type { ServiceSummary } from '@/types/services';
-import { TOKENS } from '@/core/design-system/tokens';
-import { GRADIENTS } from '@/core/design-system/gradients';
-import { useThemeColors } from '@/stores/theme.store';
+import { Button, GRADIENTS, TOKENS, useIsDark, useThemeColors, withAlpha } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 interface ReviewItem {
@@ -37,11 +35,9 @@ interface ReviewItem {
   reviewer: { firstName: string; lastName: string; avatarUrl: string | null };
 }
 
-const AMBER = '#F59E0B';
-
 function useC() {
   const tc = useThemeColors();
-  return { bg: tc.bg, card: tc.card, text: tc.text, sub: tc.textSub, border: tc.border, surface2: tc.surface2, amber: AMBER };
+  return { bg: tc.bg, card: tc.card, text: tc.text, sub: tc.textSub, border: tc.border, surface2: tc.surface2, amber: TOKENS.color.rating };
 }
 
 interface PublicProvider {
@@ -77,9 +73,9 @@ function ServiceRow({ item, onPress }: { item: ServiceSummary; onPress: () => vo
         {item.thumbnail ? (
           <Image source={{ uri: item.thumbnail }} style={[s.serviceThumb, { backgroundColor: c.surface2 }]} contentFit="cover" />
         ) : (
-          <LinearGradient colors={['#f0f0f4', '#e4e4ea']} style={[s.serviceThumb, { backgroundColor: c.surface2 }]}>
+          <View style={[s.serviceThumb, { backgroundColor: c.surface2 }]}>
             <Ionicons name="construct-outline" size={20} color={c.sub} />
-          </LinearGradient>
+          </View>
         )}
         <View style={{ flex: 1 }}>
           <Text style={[s.serviceTitle, { color: c.text }]} numberOfLines={1}>{item.title}</Text>
@@ -97,6 +93,7 @@ function ServiceRow({ item, onPress }: { item: ServiceSummary; onPress: () => vo
 export default function ProviderProfileScreen() {
   const insets = useSafeAreaInsets();
   const c = useC();
+  const isDark = useIsDark();
   const router = useRouter();
   const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
   const goBack = () => {
@@ -220,9 +217,7 @@ export default function ProviderProfileScreen() {
           {loadError ? 'Revisá tu conexión e intentá de nuevo.' : 'Volvé y elegí otro profesional.'}
         </Text>
         {loadError && (
-          <Pressable onPress={() => setLoadKey(k => k + 1)} style={[s.retryBtn, { backgroundColor: TOKENS.color.primary }]}>
-            <Text style={s.retryBtnText}>Reintentar</Text>
-          </Pressable>
+          <Button label="Reintentar" onPress={() => setLoadKey(k => k + 1)} style={s.retryBtn} />
         )}
       </View>
     );
@@ -243,7 +238,7 @@ export default function ProviderProfileScreen() {
   return (
     <View style={[s.root, { backgroundColor: c.bg, paddingTop: insets.top }]}>
       <Stack.Screen options={{ headerShown: false }} />
-      <StatusBar barStyle="dark-content" backgroundColor={c.bg} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={c.bg} />
       <AnimatedBackground variant="minimal" />
 
       {/* Back button flotante */}
@@ -270,7 +265,7 @@ export default function ProviderProfileScreen() {
             {provider.avatarUrl ? (
               <Image source={{ uri: provider.avatarUrl }} style={s.avatar} contentFit="cover" />
             ) : (
-              <LinearGradient colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.15)']} style={s.avatarFallback}>
+              <LinearGradient colors={[TOKENS.onMedia.fillStrong, TOKENS.onMedia.fill]} style={s.avatarFallback}>
                 <Text style={s.avatarInitials}>{initials.toUpperCase()}</Text>
               </LinearGradient>
             )}
@@ -285,7 +280,7 @@ export default function ProviderProfileScreen() {
 
               {provider.location ? (
                 <View style={s.locationRow}>
-                  <Ionicons name="location-outline" size={13} color="rgba(255,255,255,0.75)" />
+                  <Ionicons name="location-outline" size={13} color={TOKENS.onMedia.textSub} />
                   <Text style={s.locationText}>{provider.location}</Text>
                 </View>
               ) : null}
@@ -325,9 +320,9 @@ export default function ProviderProfileScreen() {
               </View>
             )}
 
-            <View style={[s.badge, { backgroundColor: 'rgba(255,215,0,0.12)' }]}>
-              <Ionicons name="star" size={15} color="#FFD700" />
-              <Text style={[s.badgeText, { color: '#FFD700' }]}>
+            <View style={[s.badge, { backgroundColor: withAlpha(TOKENS.color.rating, 0.12) }]}>
+              <Ionicons name="star" size={15} color={TOKENS.color.rating} />
+              <Text style={[s.badgeText, { color: TOKENS.color.rating }]}>
                 {provider.reviewsCount > 0
                   ? `${Number(provider.rating ?? 0).toFixed(1)} · ${provider.reviewsCount} reseñas`
                   : 'Sin reseñas aún'}
@@ -420,7 +415,7 @@ export default function ProviderProfileScreen() {
         <View style={[s.footer, { backgroundColor: c.card, borderTopColor: c.border, paddingBottom: insets.bottom + 12 }]}>
           <Pressable onPress={handleRequest}>
             <LinearGradient colors={GRADIENTS.brand} style={s.ctaBtn}>
-              <Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" />
+              <Ionicons name="chatbubble-ellipses-outline" size={18} color={TOKENS.color.onPrimary} />
               <Text style={s.ctaBtnText}>Solicitar servicio</Text>
             </LinearGradient>
           </Pressable>
@@ -444,7 +439,7 @@ const s = StyleSheet.create({
   backBtn: {
     width: 40, height: 40, borderRadius: 12,
     alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+    shadowColor: TOKENS.color.shadow, shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
   },
   backBtnFloat: {
@@ -458,39 +453,39 @@ const s = StyleSheet.create({
   },
   heroBubble1: {
     position: 'absolute', width: 220, height: 220,
-    borderRadius: 110, backgroundColor: 'rgba(255,255,255,0.07)',
+    borderRadius: 110, backgroundColor: TOKENS.onMedia.fillFaint,
     top: -60, right: -60,
   },
   heroBubble2: {
     position: 'absolute', width: 140, height: 140,
-    borderRadius: 70, backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 70, backgroundColor: TOKENS.onMedia.fillFaint,
     bottom: -40, left: 20,
   },
   heroBody: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   avatar: {
     width: 80, height: 80, borderRadius: 24,
-    borderWidth: 3, borderColor: 'rgba(255,255,255,0.4)',
+    borderWidth: 3, borderColor: TOKENS.onMedia.fillStrong,
   },
   avatarFallback: {
     width: 80, height: 80, borderRadius: 24,
     alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)',
+    borderWidth: 2, borderColor: TOKENS.onMedia.border,
   },
-  avatarInitials: { fontSize: 28, fontWeight: '700', color: '#FFFFFF' },
+  avatarInitials: { fontSize: 28, fontWeight: '700', color: TOKENS.onMedia.text },
   heroInfo: { flex: 1, gap: 6 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-  heroName: { fontSize: 20, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.3 },
+  heroName: { fontSize: 20, fontWeight: '800', color: TOKENS.onMedia.text, letterSpacing: -0.3 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  locationText: { fontSize: 12, color: 'rgba(255,255,255,0.75)' },
+  locationText: { fontSize: 12, color: TOKENS.onMedia.textSub },
   statsRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statText: { fontSize: 13, fontWeight: '700', color: '#FFE082' },
-  statSub: { fontSize: 12, color: 'rgba(255,255,255,0.65)' },
+  statText: { fontSize: 13, fontWeight: '700', color: TOKENS.color.rating },
+  statSub: { fontSize: 12, color: TOKENS.onMedia.textMuted },
   // Footer CTA
   footer: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
     paddingHorizontal: 16, paddingTop: 12,
     borderTopWidth: 1,
-    shadowColor: '#000', shadowOffset: { width: 0, height: -3 },
+    shadowColor: TOKENS.color.shadow, shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.06, shadowRadius: 8, elevation: 8,
   },
   ctaBtn: {
@@ -499,7 +494,7 @@ const s = StyleSheet.create({
     paddingVertical: 15,
     ...TOKENS.shadow.glow,
   },
-  ctaBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  ctaBtnText: { fontSize: 16, fontWeight: '700', color: TOKENS.color.onPrimary },
 
   // Sections
   section: {
@@ -540,7 +535,7 @@ const s = StyleSheet.create({
     width: 36, height: 36, borderRadius: 18,
     alignItems: 'center', justifyContent: 'center',
   },
-  reviewInitial: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  reviewInitial: { fontSize: 15, fontWeight: '700', color: TOKENS.color.onPrimary },
   reviewName: { fontSize: 13, fontWeight: '600' },
   starsRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 },
   reviewDate: { fontSize: 11, marginLeft: 4 },
@@ -554,6 +549,5 @@ const s = StyleSheet.create({
   emptySub: { fontSize: 14, textAlign: 'center' },
   errorTitle: { fontSize: 18, fontWeight: '700', marginTop: 16 },
   errorSub: { fontSize: 14, marginTop: 6 },
-  retryBtn: { marginTop: 20, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
-  retryBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  retryBtn: { marginTop: 20 },
 });

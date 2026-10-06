@@ -13,7 +13,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -21,8 +20,7 @@ import { router } from 'expo-router';
 import { useCategories } from '@/hooks/queries/useMarketplaceQuery';
 import type { Category } from '@/types/services';
 import { EmptyState } from '@/core/components/EmptyState';
-import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors, useIsDark } from '@/stores/theme.store';
+import { Skeleton, TOKENS, useIsDark, useThemeColors } from '@/core/design-system';
 import { FeaturedCard } from '../components/FeaturedCard';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -36,53 +34,18 @@ function resolveCategoryIcon(icon?: string): React.ComponentProps<typeof Ionicon
   return icon as React.ComponentProps<typeof Ionicons>['name'];
 }
 
-// ── Shimmer skeleton ──────────────────────────────────────────────────────────
-function Shimmer({ width, height, radius = 12, style }: {
-  width: number | string; height: number; radius?: number; style?: object;
-}) {
-  const tc = useThemeColors();
-  const shimmer = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.timing(shimmer, { toValue: 1, duration: 1100, useNativeDriver: true })
-    ).start();
-  }, []);
-
-  const translateX = shimmer.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-300, 300],
-  });
-
-  return (
-    <View style={[{ width, height, borderRadius: radius, backgroundColor: tc.surface2, overflow: 'hidden' }, style]}>
-      <Animated.View
-        style={{
-          ...StyleSheet.absoluteFillObject,
-          transform: [{ translateX }],
-        }}
-      >
-        <LinearGradient
-          colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.55)', 'rgba(255,255,255,0)']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={{ flex: 1 }}
-        />
-      </Animated.View>
-    </View>
-  );
-}
-
 function SkeletonScreen() {
   return (
     <View style={sk.wrap}>
       {/* Featured skeleton */}
-      <Shimmer width={W - H_PAD * 2} height={220} radius={24} style={{ marginBottom: 12 }} />
+      <View style={sk.featured}>
+        <Skeleton width={W - H_PAD * 2} height={220} radius={24} />
+      </View>
       {/* 2-col grid */}
       {[0, 1, 2].map(row => (
         <View key={row} style={sk.row}>
-          <Shimmer width={HALF_W} height={160} radius={20} />
-          <Shimmer width={HALF_W} height={160} radius={20} />
+          <Skeleton width={HALF_W} height={160} radius={20} />
+          <Skeleton width={HALF_W} height={160} radius={20} />
         </View>
       ))}
     </View>
@@ -91,6 +54,7 @@ function SkeletonScreen() {
 const sk = StyleSheet.create({
   wrap: { paddingHorizontal: H_PAD, gap: 12 },
   row:  { flexDirection: 'row', gap: CARD_GAP },
+  featured: { marginBottom: CARD_GAP },
 });
 
 // ── Category card — misma FeaturedCard editorial que "servicios populares"
@@ -257,22 +221,19 @@ const s = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#1A1A1A',
     letterSpacing: -0.5,
   },
   headerSub: {
     fontSize: 13,
-    color: '#6B7280',
     marginTop: 2,
   },
   searchIcon: {
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: TOKENS.color.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.07,
     shadowRadius: 8,
@@ -287,13 +248,12 @@ const s = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 12,
     gap: 10,
     borderWidth: 1,
-    shadowColor: '#000',
+    shadowColor: TOKENS.color.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 10,
@@ -302,13 +262,11 @@ const s = StyleSheet.create({
   searchPlaceholder: {
     flex: 1,
     fontSize: 14,
-    color: '#9CA3AF',
   },
   searchFilter: {
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: '#FFF0F3',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -323,79 +281,4 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     gap: CARD_GAP,
   },
-
-  // Card base
-  card: {
-    borderRadius: 20,
-    padding: 18,
-    overflow: 'hidden',
-    justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.22,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  countBadge: {
-    alignSelf: 'flex-end',
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 99,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.25)',
-  },
-  countText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.9)',
-  },
-  iconBg: {
-    width: 54,
-    height: 54,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.20)',
-  },
-  icon: {
-    fontSize: 26,
-  },
-  cardText: {
-    gap: 4,
-  },
-  cardName: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: -0.3,
-  },
-  cardDesc: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.65)',
-    lineHeight: 17,
-  },
-  arrowWrap: {
-    position: 'absolute',
-    bottom: 18,
-    right: 18,
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  // Empty
-  empty: {
-    paddingTop: 80,
-    alignItems: 'center',
-    gap: 10,
-  },
-  emptyIcon: { fontSize: 48 },
-  emptyTitle: { fontSize: 20, fontWeight: '700', color: '#1A1A1A' },
-  emptySub: { fontSize: 14, color: '#6B7280', textAlign: 'center', paddingHorizontal: 40 },
 });
