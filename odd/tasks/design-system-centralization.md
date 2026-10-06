@@ -63,7 +63,14 @@ Arranca en `warn` (no rompe el build durante la migración) y pasa a `error` al 
 
 ## Entrega
 
-Forecast: muy por encima de ~400 líneas → PRs encadenados, una tarea (o feature) por slice. Estrategia de cadena (`stacked-to-main` / `feature-branch-chain`) se decide al empezar la implementación.
+Forecast: muy por encima de ~400 líneas → PRs encadenados, una tarea (o feature) por slice.
+
+**Estrategia (decidida 2026-10-05): `ask-on-risk` → cadena apilada contra `dev`** (no `main`: `dev` está 28 commits adelante de `main`; esos commits ajenos ensuciarían el primer PR). Cada slice es una rama que sale de la anterior; los PRs se abren contra la rama previa (el primero contra `dev`) y se mergean en orden. Abrir PRs / push / merge: decisión del usuario.
+
+| Slice | Rama | Base del PR | Commits | Estado |
+|---|---|---|---|---|
+| 1 — regla, brand layer, guardia | `feat/design-system-centralization` | `dev` | `570e447` `23c9164` `5cb9cb7` `4ce0c02` | listo para PR |
+| 2 — componentes DS (T3) | `feat/ds-t3-components` | `feat/design-system-centralization` | — | 🟡 |
 
 ## Tareas
 
