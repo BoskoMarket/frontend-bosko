@@ -66,7 +66,6 @@ const GENERAL_INPUT = {
   INVALID_LATITUDE: "La latitud debe estar entre -90 y 90",
   INVALID_LONGITUDE: "La longitud debe estar entre -180 y 180",
   INVALID_ORDER_STATUS: "El estado de la orden no es válido",
-  INVALID_PAYMENT_STATUS: "El estado del pago no es válido",
   INVALID_VERIFICATION_STATUS: "El estado de verificación no es válido",
   EMPTY_MESSAGE_CONTENT: "El mensaje no puede estar vacío",
   EMPTY_REPLY_CONTENT: "La respuesta no puede estar vacía",
@@ -84,8 +83,6 @@ const NOT_FOUND = {
   PROVIDER_NOT_FOUND: "Proveedor no encontrado",
   SERVICE_NOT_FOUND: "Servicio no encontrado",
   ORDER_NOT_FOUND: "Orden no encontrada",
-  PAYMENT_NOT_FOUND: "Pago no encontrado",
-  PAID_PAYMENT_NOT_FOUND: "No se encontró un pago realizado para esta orden",
   PLAN_NOT_FOUND: "Plan no encontrado",
   NO_PLAN_AVAILABLE: "No hay ningún plan disponible en este momento",
   NO_ACTIVE_SUBSCRIPTION: "No tenés una suscripción activa",
@@ -104,7 +101,7 @@ const FORBIDDEN = {
     "Solo el proveedor evaluado puede responder esta reseña",
   NOT_REVIEW_AUTHOR: "Solo podés eliminar tus propias reseñas",
   NOT_SERVICE_OWNER: "No sos el dueño de este servicio",
-  NOT_ORDER_CLIENT: "Solo el cliente puede iniciar el pago",
+  NOT_ORDER_CLIENT: "Solo el cliente puede realizar esta acción",
   NOT_REEL_OWNER: "No podés eliminar un reel que no es tuyo",
   PROVIDERS_ONLY:
     "Solo los proveedores tienen acceso al panel de control",
@@ -119,22 +116,18 @@ const ORDER = {
   ORDER_NOT_COMPLETED:
     "La orden debe estar completada antes de realizar esta acción",
   ORDER_NOT_ACCEPTED:
-    "La orden debe ser aceptada por el proveedor antes de pagar",
-  ORDER_DISPUTED: "No se puede liberar el pago de una orden en disputa",
+    "La orden debe ser aceptada por el proveedor antes de continuar",
+  ORDER_DISPUTED: "No se puede realizar esta acción sobre una orden en disputa",
   INVALID_ORDER_STATUS_TRANSITION: "Ese cambio de estado no está permitido",
   ORDER_STATUS_STALE:
     "La orden cambió mientras se procesaba. Actualizá y volvé a intentar",
 } as const;
 
-const PAYMENT = {
-  INSUFFICIENT_BALANCE: "El balance es insuficiente para esta operación",
-  PAYMENT_NOT_PAID: "El pago aún no fue realizado",
-  PAYMENT_GATEWAY_ERROR:
-    "Error al procesar el pago. Intentá de nuevo en unos minutos",
+const INTEGRATION = {
   EXTERNAL_PROVIDER_ERROR:
     "Un servicio externo no respondió. Intentá de nuevo en unos minutos",
   INVALID_WEBHOOK_SIGNATURE:
-    "Firma de webhook inválida. Verificá la configuración del proveedor de pagos",
+    "Firma de webhook inválida. Verificá la configuración del servicio externo",
   INVALID_WEBHOOK_PAYLOAD:
     "El webhook recibido no contiene los datos esperados",
   UNIDENTIFIABLE_WEBHOOK: "No se pudo identificar el evento del webhook",
@@ -177,7 +170,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
   ...NOT_FOUND,
   ...FORBIDDEN,
   ...ORDER,
-  ...PAYMENT,
+  ...INTEGRATION,
   ...PLAN,
   ...SOCIAL,
 };
@@ -186,3 +179,4 @@ export type ErrorCode = keyof typeof ERROR_MESSAGES;
 
 export const DEFAULT_ERROR_MESSAGE =
   "Ocurrió un error inesperado. Intentá de nuevo";
+

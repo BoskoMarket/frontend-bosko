@@ -16,8 +16,9 @@ export const queryClient = new QueryClient({
       refetchOnReconnect: true,
     },
     mutations: {
-      // Nunca reintentar mutaciones solas: en pagos hay que consultar el estado antes de repetir.
+      // Nunca reintentar mutaciones automáticamente: podrían duplicar una operación.
       retry: 0,
     },
   },
 });
+

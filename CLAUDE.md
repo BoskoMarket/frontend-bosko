@@ -142,7 +142,6 @@ src/
     useProfileQuery.ts
     useOrdersQuery.ts
     useMarketplaceQuery.ts
-    usePaymentsQuery.ts
     useKYCQuery.ts
     useNotificationsQuery.ts
     useChatQuery.ts
@@ -164,7 +163,6 @@ src/
 | `servicesUser` | Marketplace: categories, services, provider profiles, reviews, posts | `ServicesProvider` (reducer + fetchQuery) |
 | `users` | User lookup by ID, edit profile | TanStack Query (`usePublicUser`) |
 | `orders` | Order creation, history, status tracking, quote requests | TanStack Query (`useOrdersQuery`) |
-| `payments` | Payment processing | TanStack Query (`usePaymentsQuery`) |
 | `chat` | Real-time messaging (socket.io + REST fallback) | Zustand (`chat.store`) + TanStack Query |
 | `kyc` | KYC / background check flow | TanStack Query (`useKYCQuery`) |
 | `reviews` | Reviews and ratings | TanStack Query hooks |
@@ -237,3 +235,4 @@ All of it lives under `src/core/design-system/` — the one folder to check befo
 ### Tests
 
 Jest with `jest-expo` preset. Test files in `__tests__/`. `moti` and `expo-image` mocked in `jest.setup.ts`. `@/` alias works via `moduleNameMapper` in `package.json`.
+

@@ -636,19 +636,8 @@ export const ProfileScreen: React.FC = () => {
                   badgeBg="#FFF8E1"
                   onPress={() => router.push('/(tabs)/profile/plans')}
                 />
-                <View style={s.rowSep} />
               </>
             )}
-            <SettingsRow
-              icon="card-outline"
-              iconBg={C.border}
-              iconColor={C.sub}
-              label="Métodos de Pago"
-              badge="Próximamente"
-              badgeColor={C.sub}
-              badgeBg={C.border}
-              accessory={<View style={{ width: 1 }} />}
-            />
           </SettingsGroup>
         </Animated.View>
 
@@ -1185,3 +1174,4 @@ function makeStyles(C: CPalette) { return StyleSheet.create({
     lineHeight: 17,
   },
 }); }
+

@@ -82,8 +82,6 @@ Estados reales (`OrderStatus`, `src/features/orders/types/orders.types.ts`): `pe
 |---|---|---|---|
 | `(tabs)/orders` | `OrdersListScreen` | cliente y proveedor (vista distinta, `role` en `Order`) | Lista de órdenes propias |
 | `/orders/quote` | `QuoteRequestScreen` | cliente | Pedir cotización a un proveedor |
-| `/orders/checkout` | `CheckoutScreen` | cliente | Checkout tras acordar precio |
-| `/orders/payment-success` | `PaymentSuccessScreen` | cliente | Confirmación de pago |
 | `/orders/[id]` | `OrderDetailScreen` | ambos | Detalle completo de una orden |
 | `/orders/status` | `OrderStatusScreen` | ambos | Tracking de estado en curso |
 | `/orders/review` | `ReviewScreen` | cliente | Dejar reseña tras `completed` |
@@ -105,11 +103,12 @@ Real-time vía socket.io con poll de respaldo cada 10s si el socket está descon
 
 ---
 
-## 7. Pagos y planes
+Las órdenes mantienen sus precios acordados y acciones de gestión. Bosko no incluye checkout, cobros, historial de pagos ni confirmaciones de pago de órdenes.
+
+## 7. Planes
 
 | Ruta | Screen | Qué hace |
 |---|---|---|
-| `(tabs)/profile/Payments` | `PaymentsScreen` | Métodos de pago / historial |
 | `(tabs)/profile/plans` | `PlansScreen` | Planes/suscripción |
 
 ---
@@ -139,7 +138,7 @@ Real-time vía socket.io con poll de respaldo cada 10s si el socket está descon
 |---|---|---|
 | `(tabs)/profile/index` | `ProfileScreen` (`features/profile/ProfileScreen.tsx`) | Perfil propio — hub de todo lo demás |
 | `(tabs)/profile/EditProfile` | `EditProfileScreen` | Edición de perfil |
-| `(tabs)/profile/edit/[type]` | `ProfileEditScreen` | Edición por campo (foto/descripción/pagos/notificaciones/email — componentes en `features/users/components/edit/`) |
+| `(tabs)/profile/edit/[type]` | `ProfileEditScreen` | Edición por campo (foto/descripción/notificaciones/email — componentes en `features/users/components/edit/`) |
 | `(tabs)/profile/verify-phone` | `VerifyPhoneScreen` | Verificación de teléfono (Firebase) |
 | `(tabs)/profile/delete-account` | `DeleteAccountScreen` | Baja de cuenta — **requerido por Apple**, ya existe ✅ |
 
@@ -152,3 +151,4 @@ Real-time vía socket.io con poll de respaldo cada 10s si el socket está descon
 - No hay estado "primera vez sin datos" documentado explícitamente para `OrdersListScreen`/`MyReviewsScreen`/`FavoritesScreen` — verificar que cada uno tenga `EmptyState` propio y no solo lista vacía sin CTA.
 - `KYCStatus` tiene 3 estados terminales distintos de éxito (`expired`, `declined`, `failed`) además de `rejected` — confirmar que cada uno tenga copy diferenciado en `KYCStatusScreen`/`KYCRejectedScreen` y no un mensaje genérico que confunda "rechazado" con "expiró, reintentá".
 - Cancelación/disputa de orden: confirmar que el modal de motivo (`RejectOrderPayload`/`DisputeOrderPayload`) existe y no es un simple `Alert.alert` de confirmación sin input.
+

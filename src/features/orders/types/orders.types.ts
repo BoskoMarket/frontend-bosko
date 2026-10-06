@@ -12,7 +12,6 @@ export type OrderStatus =
   | 'cancelled'     // Cancelado por cliente o proveedor
   | 'disputed';     // En disputa
 
-export type PaymentStatus = 'pending' | 'paid' | 'released' | 'refunded';
 
 export interface OrderUser {
   id: string;
@@ -44,7 +43,6 @@ export interface Order {
   agreedPrice?: number;
   scheduledDate?: string;
   address?: string;
-  paymentStatus: PaymentStatus;
   cancellationReason?: string;
   cancelledBy?: string;
   disputeReason?: string;
@@ -77,3 +75,4 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
 }
+

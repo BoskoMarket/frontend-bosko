@@ -404,7 +404,7 @@ export function BecomeProviderScreen() {
               <View style={s.benefitsCard}>
                 <Text style={s.benefitsTitle}>¿Por qué convertirte en prestador?</Text>
                 {[
-                  { icon: 'cash-outline' as const,       text: 'Recibí pagos seguros por tus servicios' },
+                  { icon: 'clipboard-outline' as const,  text: 'Gestioná las solicitudes de tus servicios' },
                   { icon: 'people-outline' as const,     text: 'Accedé a miles de clientes en Bosko' },
                   { icon: 'star-outline' as const,       text: 'Construí tu reputación con reseñas' },
                   { icon: 'shield-checkmark-outline' as const, text: 'Badge de prestador verificado en tu perfil' },

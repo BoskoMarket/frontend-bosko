@@ -54,7 +54,7 @@ export const ProviderCTA = () => {
                     <View style={styles.featuresRow}>
                         <View style={styles.featureItem}>
                             <MaterialCommunityIcons name="cash-multiple" size={20} color={PREMIUM.gold} />
-                            <Text style={styles.featureText}>Pagos Rápidos</Text>
+                            <Text style={styles.featureText}>Gestioná tus órdenes</Text>
                         </View>
                         <View style={styles.divider} />
                         <View style={styles.featureItem}>
@@ -170,3 +170,4 @@ const styles = StyleSheet.create({
     },
 
 });
+

@@ -29,7 +29,6 @@ const TYPE_ICON: Record<string, { name: any; color: string; bg: string }> = {
   order_started: { name: 'play-circle', color: TOKENS.status.progress.fg, bg: TOKENS.status.progress.bg },
   order_completed: { name: 'done-all', color: TOKENS.status.done.fg, bg: TOKENS.status.done.bg },
   order_cancelled: { name: 'block', color: TOKENS.status.cancelled.fg, bg: TOKENS.status.cancelled.bg },
-  payment_received: { name: 'attach-money', color: TOKENS.status.done.fg, bg: TOKENS.status.done.bg },
   kyc_approved: { name: 'verified-user', color: TOKENS.color.signal, bg: 'rgba(255,45,111,0.14)' },
   kyc_rejected: { name: 'gpp-bad', color: TOKENS.status.cancelled.fg, bg: TOKENS.status.cancelled.bg },
   message: { name: 'chat-bubble', color: TOKENS.status.progress.fg, bg: TOKENS.status.progress.bg },
@@ -127,7 +126,7 @@ function EmptyState() {
         <MaterialIcons name="notifications-none" size={64} color="rgba(255,45,111,0.25)" />
         <Text style={[s.emptyTitle, { color: tc.text }]}>Sin notificaciones</Text>
         <Text style={[s.emptyText, { color: tc.textSub }]}>
-          Aquí aparecerán tus notificaciones de órdenes, pagos y más.
+          Aquí aparecerán tus notificaciones de órdenes, mensajes y más.
         </Text>
       </Animated.View>
     </View>
@@ -151,8 +150,6 @@ export default function NotificationsScreen() {
       router.push(`/chat/${item.data.conversationId}`);
     } else if (type.startsWith('identity') || type === 'background_check') {
       router.push('/(tabs)/profile/become-provider');
-    } else if (type === 'payment_released') {
-      router.push('/(tabs)/orders');
     }
   };
 
