@@ -33,6 +33,7 @@ export const PALETTE = {
     primaryLight: C.signal,
     signal:       C.signal,
     mint:         C.mint,
+    switchTrack:  C.dark.track,
   },
   light: {
     bg:           C.light.bg,
@@ -57,7 +58,9 @@ export const PALETTE = {
     primaryLight: C.signal,
     signal:       C.signal,
     mint:         C.mint,
+    switchTrack:  C.primary,
   },
 };
 
-export type PaletteColors = typeof PALETTE.dark;
+// Widened to string values so dark and light palettes are interchangeable.
+export type PaletteColors = { [K in keyof typeof PALETTE.dark]: string };

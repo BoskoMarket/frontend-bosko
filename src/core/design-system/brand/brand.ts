@@ -31,6 +31,7 @@ export const BRAND = {
       text: '#EDEAF5',
       overlayBase: '#050409',
       wine: '#1A000D', // mid-stop of the auth/onboarding backdrop gradient
+      track: '#2D2A3A', // theme-switch track
     },
 
     // Light theme neutrals
@@ -50,13 +51,29 @@ export const BRAND = {
       sub: '#6B6B6B',
     },
 
-    // Premium (gold-on-dark) treatment
+    // Premium (gold) treatment. Primary/primaryDark are the brand ones (the legacy
+    // Colors.ts #850221/#5c0117 were a typo). Gold fills are theme-independent; the
+    // theme-specific values drive PREMIUM_PALETTE.dark / .light.
     premium: {
-      primary: '#850221',
-      primaryDark: '#5c0117',
-      background: '#0f0f0f',
-      card: '#1e1e1e',
-      gold: '#FFD700',
+      gold: '#FFD700', // bright gold: fills, and icons/text over dark or brand surfaces
+      goldDeep: '#B8860B', // end stop of the gold gradient
+      onGold: '#1A0505', // ink on gold fills
+      dark: {
+        background: '#0F0F0F',
+        card: '#1E1E1E',
+        cardEnd: '#1A1A1A',
+        panel: '#1A0505', // deep wine panel (provider CTA)
+        panelEnd: '#2D0A0A',
+        goldText: '#FFD700',
+      },
+      light: {
+        background: '#FBF8F1',
+        card: '#FFFFFF',
+        cardEnd: '#F6F0E2',
+        panel: '#FFF3EE',
+        panelEnd: '#F8E3E3',
+        goldText: '#7A5800', // darker gold: >= 4.5:1 contrast on the light backgrounds
+      },
     },
   },
 

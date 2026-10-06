@@ -4,7 +4,7 @@ import { BRAND } from '@/core/design-system/brand/brand';
 import { withAlpha } from '@/core/design-system/color';
 import { PALETTE } from '@/core/design-system/palette';
 import { TOKENS } from '@/core/design-system/tokens';
-import { PREMIUM } from '@/core/design-system/premium';
+import { PREMIUM_PALETTE, PREMIUM_SHADOWS } from '@/core/design-system/premium';
 import { GRADIENTS } from '@/core/design-system/gradients';
 import { FONT_FAMILY } from '@/core/design-system/typography';
 import { FONT_ASSETS } from '@/core/design-system/brand/fonts';
@@ -34,9 +34,32 @@ describe('design system brand layer', () => {
     expect(TOKENS.shadow.glow.shadowColor).toBe(BRAND.colors.signal);
   });
 
-  it('premium resolves to brand primitives', () => {
-    expect(PREMIUM.gold).toBe(BRAND.colors.premium.gold);
-    expect(PREMIUM.goldLight).toBe('rgba(255,215,0,0.1)');
+  it('premium palette resolves to brand primitives and covers both themes', () => {
+    expect(Object.keys(PREMIUM_PALETTE.light).sort()).toEqual(Object.keys(PREMIUM_PALETTE.dark).sort());
+    // brand primary/primaryDark (the legacy #850221/#5c0117 typo is gone)
+    expect(PREMIUM_PALETTE.dark.primary).toBe(BRAND.colors.primary);
+    expect(PREMIUM_PALETTE.light.primaryDark).toBe(BRAND.colors.primaryDark);
+    expect(PREMIUM_PALETTE.dark.goldFill).toBe(BRAND.colors.premium.gold);
+    expect(PREMIUM_PALETTE.dark.goldLight).toBe('rgba(255,215,0,0.1)');
+    expect(PREMIUM_SHADOWS.gold.shadowColor).toBe(BRAND.colors.premium.gold);
+  });
+
+  it('premium gold text keeps >= 4.5:1 contrast on its own light surfaces', () => {
+    const lum = (hex: string) => {
+      const n = parseInt(hex.slice(1), 16);
+      const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
+        const c = v / 255;
+        return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const ratio = (a: string, b: string) => {
+      const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+      return (hi + 0.05) / (lo + 0.05);
+    };
+    const l = PREMIUM_PALETTE.light;
+    for (const bg of [l.background, l.card, l.panel]) expect(ratio(l.gold, bg)).toBeGreaterThanOrEqual(4.5);
+    expect(ratio(PREMIUM_PALETTE.dark.gold, PREMIUM_PALETTE.dark.background)).toBeGreaterThanOrEqual(4.5);
   });
 
   it('gradients use signal + primary and scrim tokens', () => {

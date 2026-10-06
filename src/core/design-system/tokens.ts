@@ -25,7 +25,11 @@ export const TOKENS = {
     success: C.mint,
     /** Text/icon color on top of the brand gradient (theme-independent). */
     onPrimary: C.white,
+    /** Base color of drop shadows (theme-independent). */
+    shadow: C.black,
   },
+  /** Base colors for the Android blur fallback (tint → translucent fill). */
+  blurTint: { dark: C.black, light: C.white },
   /** Fixed colors for text/icons over video/images (theme-independent). */
   onMedia: {
     text: C.white,
