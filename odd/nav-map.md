@@ -118,6 +118,33 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Splash (`/`, vista del gate) | `src/features/auth/screens/AnimatedSplashScreen.tsx` | Fin de la animación (~2.2 s) | callback `onDone` (el gate pasa un no-op) | - | - | ✅ (ya mapeado en Gate) |
 | Auth gate de carga | `src/features/auth/state/AuthContext.tsx:263` | Error de sesión: "Reintentar conexión" / "Cerrar sesión" | `setAttempt` (re-valida) / `logout()` | - / `/login` (por el guard de `app/_layout.tsx`) | - | ✅ |
 | Infra (`app/_layout.tsx`) | `src/core/components/BiometricLockGate.tsx`, `ErrorBoundary.tsx`, `OfflineBanner.tsx`, `UpdateBanner.tsx` | Bloqueo biométrico, error de render, sin conexión, update disponible | Overlays / `applyUpdate` | - (sin navegación) | - | ✅ |
+| Home (`/(tabs)`) | `src/features/servicesUser/screens/DashboardScreen.tsx:364` | Barra "Buscar servicios, profesionales…" | `router.push` | `/search` | - | ✅ |
+| Home (`/(tabs)`) | `DashboardScreen.tsx:375`, `:433` | "Ver todo" de Categorías / Servicios populares | `router.push` | `/(tabs)/services` | - | ✅ |
+| Home (`/(tabs)`) | `DashboardScreen.tsx:334` | Tap en una categoría | `router.push` | `/(tabs)/services/category/[id]` | `id`, `from=home` | ✅ |
+| Home (`/(tabs)`) | `DashboardScreen.tsx:198` | Tap en servicio popular (`FeaturedCard`) | `router.push` | `/(tabs)/services/provider/[id]` | `id` (`providerId ?? id`), `from=home` | ✅ (⚠️ el CTA dice "Cotizar por chat", ver B34) |
+| Home (`/(tabs)`) | `DashboardScreen.tsx:500` | CTA del hero (Explorar / Publicar / Ver pedidos) | `router.push(slide.route)` | `/(tabs)/services`, `/service-form` (solo proveedor), `/(tabs)/orders` | - | ✅ |
+| Home (`/(tabs)`) | `DashboardScreen.tsx:327-330` | Quick actions Buscar / Pedidos / Mensajes / Publicar (solo proveedor) | `router.push` | `/search`, `/(tabs)/orders`, `/(tabs)/chat`, `/service-form` | - | ✅ |
+| Home (`/(tabs)`) | `DashboardScreen.tsx:521` | Banner "¿Ofrecés servicios? Empezar ahora" (solo si `isProvider`) | `router.push` | `/(tabs)/profile` | - | ⚠️ audiencia/destino no coinciden (B33) |
+| Home (`/(tabs)`) | `DashboardScreen.tsx:276` | "Quiero ofrecer servicios" en `RoleSelectionModal` | cierra el modal + `router.push` | `/(tabs)/profile/become-provider` | - | ✅ |
+| Home (`/(tabs)`) | `DashboardScreen.tsx` + `RoleSelectionModal.tsx` | Primera visita del cliente / "Busco un servicio" / cerrar | `FullScreenModal` (flag `BOSKO_ROLE_MODAL_SEEN`) | - (modal, sin ruta) | - | ✅ |
+| Home (`/(tabs)`) | `DashboardScreen.tsx` (`openNotifications`) | Campana del header | abre `NotificationsModalRoot` (store `notificationsUI`) | - (modal global) | - | ✅ |
+| Servicios (`/(tabs)/services`) | `screens/ServicesScreen.tsx:80` | Tap en una categoría (`FeaturedCard`) | `router.push` | `/(tabs)/services/category/[id]` | `id` | ✅ |
+| Servicios (`/(tabs)/services`) | `screens/ServicesScreen.tsx:99`, `:111` | Ícono de lupa / barra de búsqueda | `router.push` | `/search` | - | ✅ |
+| Categoría (`/(tabs)/services/category/[id]`) | `screens/CategoryServicesScreen.tsx:245` | Tap en un profesional | `router.push` | `/(tabs)/services/provider/[id]` | `id` (`providerId ?? id`) | ✅ (⚠️ texto "Cotizar por chat", B34) |
+| Categoría (`/(tabs)/services/category/[id]`) | `screens/CategoryServicesScreen.tsx:266-269` | Flecha atrás del hero | `router.replace` según `from` / `safeBack` | `/(tabs)` (`home`), `/(tabs)/profile/favorites` (`favorites`), `/search` (`search`), fallback `/(tabs)/services` | `from` | ✅ |
+| Proveedor (`/(tabs)/services/provider/[id]`) | `screens/ProviderProfileScreen.tsx:100-103` | Flecha atrás (también en la vista de error) | `router.replace` según `from` / `safeBack` | `/(tabs)` (`home`), `/(tabs)/reels` (`reels`), `/search` (`search`), fallback `/(tabs)/services` | `from` | ✅ |
+| Proveedor (`/(tabs)/services/provider/[id]`) | `screens/ProviderProfileScreen.tsx:228` | "Solicitar servicio" (footer) | `router.push` | `/orders/quote` | `serviceId` (`services[0]`), `providerName`, `serviceTitle` | ⚠️ siempre el primer servicio (B35) |
+| Mis servicios (`/(tabs)/profile/Services`) | `screens/MyServiceScreen.tsx:96` | "Editar" en una tarjeta | `router.push` | `/service-form` | `serviceId` | ✅ |
+| Mis servicios (`/(tabs)/profile/Services`) | `screens/MyServiceScreen.tsx:152`, `:176` | "Publicar" (header) / "Publicar primer servicio" (vacío) | `router.push` | `/service-form` | - | ✅ |
+| Mis servicios (`/(tabs)/profile/Services`) | `screens/MyServiceScreen.tsx:147` | Botón atrás | `safeBack` | `router.back()` o fallback `/(tabs)/profile` | - | ✅ |
+| Mis servicios (`/(tabs)/profile/Services`) | `screens/MyServiceScreen.tsx` (`handleDelete`) | "Eliminar" en una tarjeta | `Alert.alert` de confirmación + mutación | - (modal nativo) | - | ✅ |
+| Mis servicios / Publicar | `MyServiceScreen.tsx:85`, `ServiceFormScreen.tsx:70` (`useRequireProviderStatus('provider')`) | Usuario sin status de proveedor | `router.replace` (guard) | `/(tabs)/profile/become-provider` | - | ✅ |
+| Publicar servicio (`/service-form`) | `screens/ServiceFormScreen.tsx:239` | Botón atrás del header | `safeBack` | `router.back()` o fallback `/(tabs)/profile` | - | ✅ |
+| Publicar servicio (`/service-form`) | `screens/ServiceFormScreen.tsx:221` | Guardar / publicar ok | `safeBack` | `router.back()` o fallback `/(tabs)/profile` | - | ✅ |
+| Publicar servicio (`/service-form`) | `screens/ServiceFormScreen.tsx` (`handlePickImage`, galería) | "Foto principal" / "Agregar" | `ImagePicker` (selector nativo) | - | - | ✅ |
+| Layout servicios (`/(tabs)/services/*`) | `app/(tabs)/services/_layout.tsx` | - | Stack (index, category/[id], provider/[id]) con colores `tc.*` | - | - | ✅ |
+| Hero (sin uso) | `src/features/servicesUser/components/HeroCarousel.tsx:29` | "Explorar" | `router.push` | `/(tabs)/services` | - | ✅ (componente sin importadores, B26) |
+| Ruta huérfana | `app/(tabs)/profile/AddServices.tsx` | - | Registrada solo en `profile/_layout.tsx`; renderiza `ServiceFormScreen` | - | - | ⚠️ nadie navega ahí (B36) |
 
 ## Enlaces rotos / dudosos
 
@@ -131,6 +158,10 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Banner premium | `src/components/PremiumBanner.tsx` | (ícono de notificaciones) | Botón sin `onPress`; además el componente no tiene importadores. |
 | CTA proveedor / Promo | `src/components/ProviderCTA.tsx:78`, `src/features/servicesUser/components/PromoBanner.tsx` | `become-provider` / `plans` (inferidos) | `PremiumButton` con `onPress` no-op; ninguno de los dos tiene importadores. |
 | Tarjeta profesional | `src/features/servicesUser/components/ProfesionalCard.tsx` | "Reservar" | Sin `onPress`; solo la usa `ProfesionalCarousel`, que no se monta en ningún lado. |
+| Home | `DashboardScreen.tsx:521` | `/(tabs)/profile` | Banner "¿Ofrecés servicios?" se muestra solo a proveedores y no lleva a `become-provider` ni a publicar (B33). |
+| Proveedor | `ProviderProfileScreen.tsx:228` | `/orders/quote` | Siempre cotiza `services[0]` (B35). |
+| Home / Categoría | `DashboardScreen.tsx:195`, `CategoryServicesScreen.tsx:141` | `/(tabs)/services/provider/[id]` | CTA "Cotizar por chat" lleva al perfil, no al chat (B34). |
+| Publicar (ruta duplicada) | `app/(tabs)/profile/AddServices.tsx` | `/(tabs)/profile/AddServices` | Sin entrada: nadie enlaza (B36); duplica `/service-form`. |
 
 ## Pantallas sin entrada
 
