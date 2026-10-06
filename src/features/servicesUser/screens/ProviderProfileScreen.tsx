@@ -37,7 +37,7 @@ interface ReviewItem {
 
 function useC() {
   const tc = useThemeColors();
-  return { bg: tc.bg, card: tc.card, text: tc.text, sub: tc.textSub, border: tc.border, surface2: tc.surface2, amber: TOKENS.color.rating };
+  return { bg: tc.bg, card: tc.card, text: tc.text, sub: tc.textSub, border: tc.border, surface2: tc.surface2, muted: tc.textMuted, amber: TOKENS.color.rating };
 }
 
 interface PublicProvider {
@@ -84,7 +84,7 @@ function ServiceRow({ item, onPress }: { item: ServiceSummary; onPress: () => vo
             <Text style={[s.servicePrice, { color: c.sub }]}>{formatRate(item.rate)}</Text>
           ) : null}
         </View>
-        <Ionicons name="chevron-forward" size={16} color={c.border} />
+        <Ionicons name="chevron-forward" size={16} color={c.muted} />
       </Animated.View>
     </Pressable>
   );
@@ -361,7 +361,7 @@ export default function ProviderProfileScreen() {
 
         {services.length === 0 && (
           <View style={[s.section, s.emptyServices, { backgroundColor: c.card, borderColor: c.border }]}>
-            <Ionicons name="construct-outline" size={36} color={c.border} />
+            <Ionicons name="construct-outline" size={36} color={c.muted} />
             <Text style={[s.emptySub, { color: c.sub }]}>Este profesional aún no publicó servicios.</Text>
           </View>
         )}
@@ -390,7 +390,7 @@ export default function ProviderProfileScreen() {
                       <Text style={[s.reviewName, { color: c.text }]}>{name}</Text>
                       <View style={s.starsRow}>
                         {[1,2,3,4,5].map(i => (
-                          <Ionicons key={i} name="star" size={11} color={i <= r.rating ? c.amber : c.border} />
+                          <Ionicons key={i} name="star" size={11} color={i <= r.rating ? c.amber : c.muted} />
                         ))}
                         <Text style={[s.reviewDate, { color: c.sub }]}>{date}</Text>
                       </View>

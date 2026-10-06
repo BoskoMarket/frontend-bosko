@@ -32,7 +32,7 @@ const { width: W } = Dimensions.get('window');
 
 function useC() {
   const tc = useThemeColors();
-  return { bg: tc.bg, card: tc.card, text: tc.text, sub: tc.textSub, border: tc.border, surface2: tc.surface2, amber: TOKENS.color.rating };
+  return { bg: tc.bg, card: tc.card, text: tc.text, sub: tc.textSub, border: tc.border, surface2: tc.surface2, muted: tc.textMuted, amber: TOKENS.color.rating };
 }
 
 function SkeletonList() {
@@ -148,11 +148,11 @@ const ServiceCard = memo(function ServiceCard({
               <Ionicons
                 name={fav ? 'heart' : 'heart-outline'}
                 size={20}
-                color={fav ? TOKENS.color.signal : c.border}
+                color={fav ? TOKENS.color.signal : c.muted}
               />
             </Animated.View>
           </Pressable>
-          <Ionicons name="chevron-forward" size={16} color={c.border} />
+          <Ionicons name="chevron-forward" size={16} color={c.muted} />
         </View>
       </Pressable>
     </Animated.View>
