@@ -71,7 +71,7 @@ Forecast: muy por encima de ~400 líneas → PRs encadenados, una tarea (o featu
 |---|---|---|---|---|
 | 1 — regla, brand layer, guardia | `feat/design-system-centralization` | `dev` | `570e447` `23c9164` `5cb9cb7` `4ce0c02` `c0caff3` | listo para PR |
 | 2 — componentes DS (T3) | `feat/ds-t3-components` | `feat/design-system-centralization` | `fc05bf3` `4f6cb90` | listo para PR |
-| 3 — migración auth (T4) | `feat/ds-t4-auth` | `feat/ds-t3-components` | `f778e7e` `e9b7e49` `780f080` | listo para PR |
+| 3 — migración auth (T4) | `feat/ds-t4-auth` | `feat/ds-t3-components` | `f778e7e` `e9b7e49` `62215d2` | listo para PR |
 
 ## Inventario de componentes (T3)
 
