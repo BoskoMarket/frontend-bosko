@@ -69,8 +69,9 @@ Forecast: muy por encima de ~400 líneas → PRs encadenados, una tarea (o featu
 
 | Slice | Rama | Base del PR | Commits | Estado |
 |---|---|---|---|---|
-| 1 — regla, brand layer, guardia | `feat/design-system-centralization` | `dev` | `570e447` `23c9164` `5cb9cb7` `4ce0c02` | listo para PR |
-| 2 — componentes DS (T3) | `feat/ds-t3-components` | `feat/design-system-centralization` | ver Progreso | listo para PR |
+| 1 — regla, brand layer, guardia | `feat/design-system-centralization` | `dev` | `570e447` `23c9164` `5cb9cb7` `4ce0c02` `c0caff3` | listo para PR |
+| 2 — componentes DS (T3) | `feat/ds-t3-components` | `feat/design-system-centralization` | `fc05bf3` `4f6cb90` | listo para PR |
+| 3 — migración auth (T4) | `feat/ds-t4-auth` | `feat/ds-t3-components` | — | ⬜ |
 
 ## Inventario de componentes (T3)
 
@@ -141,6 +142,12 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 |---|---|---|
 | `src/core/design-system/premium.ts` (`colorPrimary`) | `#850221` / `#5c0117` ≠ brand `#850021` / `#3C0014`; probable typo heredado de `Colors.ts`. Guardados aparte en `BRAND.colors.premium.*` | Decidir en T5 si se unifica (cambio visual mínimo) |
 | `src/core/design-system/tokens.ts` | `TOKENS.color.success` === `mint` (duplicado) | Unificar en T13 |
+| `src/features/auth/screens/VerifyEmailScreen.tsx:80-90` | Cajas OTP con `maxLength={1}`: pegar/autocompletar el código no funciona | T4: reemplazar por `OtpInput` |
+| `src/features/servicesUser/components/CategoryChips.tsx:34` | Fondo blanco + borde `rgba(0,0,0,0.06)` fijos → se rompe en dark | T6: `Chip` |
+| `src/features/chat/screens/ConversationsListScreen.tsx:116` | Borde `rgba(255,45,111,0.25)` hardcodeado | T10 |
+| `src/features/profile/ProfileScreen.tsx:215` | Chevron con `tc.border` → casi invisible | T9: `ListRow` |
+| `src/core/design-system/components/OtpInput` | Borrar un dígito del medio corre los siguientes a la izquierda (`value` string) | Aceptado; pasar a `string[]` si molesta |
+| DS components (`Button`, `Card`, `IconCircle`, …) | En T3 dejaron de forzar look dark en light mode (ahora usan `tc.*`) | **Revisar visualmente en light** en T4 |
 
 ## Progreso / evidencia
 
@@ -150,7 +157,7 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 - 2026-10-05 T2 ✅ `5cb9cb7`: `no-restricted-syntax` en `warn` para `src/**` + `app/**` (excluye `src/core/design-system/**`): hex, `rgb/rgba/hsl` (literal y template), nombres de color en props `*color`/`tint`, `fontFamily` literal. Script `npm run lint:ds` (`scripts/count-ds-violations.mjs`). **Baseline: 1095 violaciones en 78 archivos.** `npm run lint` sigue en 0 errores (solo warnings). Top: ReelsScreen 67, DashboardScreen 58, ProfileScreen 48, OrderDetailScreen 40, DeleteAccountScreen 37.
 - Nota para el nav-map: existe `scripts/generate-routes.cjs` (`npm run routes:generate`) → usarlo para listar "Rutas existentes".
 
-- 2026-10-05 T3 ✅: Input/EmptyState/Toast movidos a `design-system/components` (rutas viejas = re-export); nuevos `Divider`, `SectionHeader`, `Badge`, `Chip`, `Avatar`, `OtpInput`, `AuthCard`, `ListRow`; componentes existentes sin literales; `designSystemComponents.test.tsx` (34 tests, incluye guardia fs+regex de `components/**`). Inventario arriba. Ningún screen migrado.
+- 2026-10-05 T3 ✅ `fc05bf3` `4f6cb90`: Input/EmptyState/Toast movidos a `design-system/components` (rutas viejas = re-export); nuevos `Divider`, `SectionHeader`, `Badge`, `Chip`, `Avatar`, `OtpInput`, `AuthCard`, `ListRow`; componentes existentes sin literales; `designSystemComponents.test.tsx` (34 tests, incluye guardia fs+regex de `components/**`). Inventario arriba. Ningún screen migrado. Checks: `tsc` limpio, `lint` 0 errores, `npm test` 10 suites / 67 tests OK. Cambios visuales menores: Toast usa `TOKENS.status.*`, EmptyState usa `Button`; nuevos `BRAND.colors.mintDeep`, `GRADIENTS.success`.
 
 ## Conteo de violaciones (`npm run lint:ds`)
 
