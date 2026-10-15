@@ -222,3 +222,56 @@ Para archivos de hasta 100 MB conviene una **URL prefirmada** (`POST /reels/uplo
 - **Comportamiento hasta que se despliegue:** `404`, `405` o `501` muestran "La subida de videos todavía no está disponible."; `413` indica el máximo de 100 MB; `400`/`415` piden un MP4 o MOV de hasta 60 s; un corte de red permite reintentar.
 - Archivos: `src/features/reels/services/reels.service.ts` (`uploadReelVideo`), `src/features/reels/constants/reelUploadRules.ts`, `src/features/reels/screens/ReelUploadScreen.tsx`, `__tests__/reelUpload.test.tsx`.
 - **Al desplegar:** probar desde la app con un video de 60 s, uno de 61 s y uno de más de 100 MB, y pasar este pedido a ✅.
+
+---
+
+## BR05 — Eliminar cuenta con período de gracia de 30 días
+
+**Estado:** ⬜ pendiente de backend · **Origen:** G17, G18, G19 (`odd/ux-gaps.md`) · **Frontend:** implementado
+
+### Contexto
+
+Decisión de producto: eliminar la cuenta la **desactiva** durante 30 días. Si la persona vuelve a iniciar sesión en ese plazo, la cuenta se reactiva; pasado el plazo se elimina definitivamente. Además, no se puede eliminar con órdenes activas, y quienes ingresan con Google confirman con Google en lugar de contraseña.
+
+### 1. `DELETE /users/me`
+
+- **Auth:** JWT (Bearer), usuario autenticado.
+- **Body** (uno de los dos):
+  - `{ "password": "…" }`
+  - `{ "googleIdToken": "…" }`: idToken de Google verificado en el servidor; debe corresponder al `sub` de Google de la cuenta y haberse emitido hace menos de 5 minutos.
+- **Si hay órdenes activas** (estado `pending`, `accepted`, `in_progress` o `disputed`, como cliente **o** proveedor): responder `409` con `code: "ACTIVE_ORDERS"` y la lista de ids, sin cambios en la cuenta. Las órdenes `completed` y `cancelled` no bloquean.
+
+```json
+{ "code": "ACTIVE_ORDERS", "orderIds": ["…", "…"] }
+```
+
+- **Si no hay bloqueo:** baja lógica.
+  - `status = 'pending_deletion'` y `deletionScheduledAt = ahora + 30 días`.
+  - Revocar sesiones y refresh tokens.
+  - Ocultar al público el perfil de proveedor, sus servicios y sus reels.
+- **Respuesta `200`:**
+
+```json
+{ "deletionScheduledAt": "2026-11-13T12:00:00.000Z" }
+```
+
+- **Errores:** `401` con `INVALID_PASSWORD` (contraseña incorrecta), `401` con `REAUTH_FAILED` (el idToken de Google no coincide con la cuenta o es más viejo de 5 min), `409` con `ACTIVE_ORDERS`.
+
+### 2. Reactivación al iniciar sesión
+
+Un login (`POST /auth/login` o `/auth/google`) de un usuario en `pending_deletion` dentro de los 30 días **reactiva** la cuenta (`status` vuelve a activo, se limpia `deletionScheduledAt`, se vuelve a mostrar el contenido público) y la respuesta incluye `"reactivated": true`. Sin el campo, la app no muestra nada.
+
+### 3. Perfil
+
+`GET /users/me` debe exponer `authProvider: 'password' | 'google'` (o `hasPassword`). Hasta entonces la app asume `password`.
+
+### 4. Purga programada
+
+Un job elimina definitivamente las cuentas con `deletionScheduledAt` vencido. **Decisión para backend/producto (recomendación):** anonimizar reseñas y mensajes en lugar de borrarlos, para que la contraparte conserve su historial.
+
+### Estado del frontend
+
+- Implementado contra el contrato propuesto: bloqueo con lista de órdenes activas (cliente y proveedor, con enlace al detalle), advertencia de plan Premium, explicación de los 30 días antes de confirmar, mensaje final con la fecha de eliminación (o "en 30 días" si no llega `deletionScheduledAt`), cierre de sesión y aviso "Reactivamos tu cuenta" cuando el login devuelve `reactivated: true`.
+- El `409 ACTIVE_ORDERS` vuelve a cargar las órdenes y muestra el bloqueo. Los usuarios con `authProvider: 'google'` ven "Confirmar con Google".
+- Archivos: `src/features/profile/screens/DeleteAccountScreen.tsx`, `src/features/profile/utils/deleteAccountRules.ts`, `src/features/profile/services/profile.ts`, `src/features/auth/state/AuthContext.tsx`, `__tests__/deleteAccount.test.tsx`.
+- **Al desplegar:** probar con una orden activa, sin órdenes, con una cuenta de Google, y volver a iniciar sesión dentro de los 30 días; luego pasar este pedido a ✅.
