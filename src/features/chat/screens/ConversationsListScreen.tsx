@@ -127,7 +127,7 @@ function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
                 <Ionicons name={preview.icon} size={14} color={hasUnread ? tc.text : tc.textSub} />
               )}
               <Text
-                style={[styles.itemPreview, { color: hasUnread ? tc.text : tc.textSub }, hasUnread && { fontWeight: '600' }]}
+                style={[styles.itemPreview, { color: hasUnread ? tc.text : tc.textSub }, hasUnread && { fontFamily: FONT_FAMILY.headingMedium }]}
                 numberOfLines={1}
               >
                 {preview.label}
@@ -286,7 +286,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: '800',
     fontFamily: FONT_FAMILY.display,
   },
   headerBadge: {
@@ -300,7 +299,7 @@ const styles = StyleSheet.create({
   },
   headerBadgeText: {
     fontSize: 11,
-    fontWeight: '800',
+    fontFamily: FONT_FAMILY.display,
     color: TOKENS.color.onPrimary,
   },
   loader: { flex: 1 },
@@ -338,11 +337,10 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontSize: 15,
-    fontWeight: '500',
     fontFamily: FONT_FAMILY.heading,
     flex: 1,
   },
-  itemNameBold: { fontWeight: '700' },
+  itemNameBold: { fontFamily: FONT_FAMILY.heading },
   itemTime: {
     fontSize: 10,
     fontFamily: FONT_FAMILY.mono,
@@ -352,7 +350,7 @@ const styles = StyleSheet.create({
   itemOrder: {
     fontSize: 12,
     color: TOKENS.color.signal,
-    fontWeight: '500',
+    fontFamily: FONT_FAMILY.bodyMedium,
   },
   itemPreviewRow: {
     flex: 1,
@@ -368,6 +366,7 @@ const styles = StyleSheet.create({
   },
   itemPreview: {
     fontSize: 13,
+    fontFamily: FONT_FAMILY.body,
     flex: 1,
   },
   unreadBadge: {
@@ -381,7 +380,7 @@ const styles = StyleSheet.create({
   },
   unreadCount: {
     fontSize: 11,
-    fontWeight: '800',
+    fontFamily: FONT_FAMILY.display,
     color: TOKENS.color.onPrimary,
   },
 });

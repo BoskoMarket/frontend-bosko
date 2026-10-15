@@ -23,7 +23,7 @@ import { safeBack } from '@/core/navigation/safeBack';
 import { useOrders } from '../state/OrdersContext';
 import { Order, OrderStatus } from '../types/orders.types';
 import { ORDER_STATUS } from '../constants/orderStatus';
-import { ScreenHeader, SPACING, TOKENS, useIsDark, useThemeColors, wash } from '@/core/design-system';
+import { ScreenHeader, SPACING, TOKENS, useIsDark, useThemeColors, wash, FONT_FAMILY } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const POLL_INTERVAL = 10000;
@@ -277,8 +277,8 @@ const styles = StyleSheet.create({
   bg: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: SPACING.md },
   scroll: { paddingTop: 60, paddingBottom: SPACING.huge, paddingHorizontal: SPACING.xl, gap: 14 },
-  notFound: { fontSize: 16 },
-  backLink: { fontSize: 15, fontWeight: '600' },
+  notFound: { fontSize: 16, fontFamily: FONT_FAMILY.body },
+  backLink: { fontSize: 15, fontFamily: FONT_FAMILY.headingMedium },
   heroCardShadow: {
     borderRadius: TOKENS.radius.xl,
     ...TOKENS.shadow.soft,
@@ -290,13 +290,13 @@ const styles = StyleSheet.create({
   heroIcon: {
     width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center',
   },
-  heroLabel: { fontSize: 22, fontWeight: '800', textAlign: 'center' },
-  heroDesc: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
+  heroLabel: { fontSize: 22, fontFamily: FONT_FAMILY.display, textAlign: 'center' },
+  heroDesc: { fontSize: 14, fontFamily: FONT_FAMILY.body, textAlign: 'center', lineHeight: 20 },
   countdownRow: {
     flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: SPACING.xs,
     paddingHorizontal: SPACING.md, paddingVertical: 6, borderRadius: SPACING.sm,
   },
-  countdownText: { fontSize: 12, fontWeight: '500' },
+  countdownText: { fontSize: 12, fontFamily: FONT_FAMILY.bodyMedium },
   timelineWrap: { gap: 0, paddingTop: SPACING.sm },
   timelineItem: { flexDirection: 'row', gap: 14 },
   timelineCol: { alignItems: 'center', width: 32 },
@@ -313,16 +313,16 @@ const styles = StyleSheet.create({
   timelineConnector: { width: 2, height: 28, marginTop: 2 },
   connectorDone: { backgroundColor: TOKENS.color.primary },
   timelineContent: { paddingTop: 6, paddingBottom: SPACING.lg, flex: 1 },
-  stepLabel: { fontSize: 14, fontWeight: '600' },
-  stepDesc: { fontSize: 12, marginTop: 2 },
-  stepActiveDesc: { fontWeight: '500' },
+  stepLabel: { fontSize: 14, fontFamily: FONT_FAMILY.headingMedium },
+  stepDesc: { fontSize: 12, fontFamily: FONT_FAMILY.body, marginTop: 2 },
+  stepActiveDesc: { fontFamily: FONT_FAMILY.bodyMedium },
   terminalBanner: {
     flexDirection: 'row', gap: 14, alignItems: 'center',
     borderRadius: TOKENS.radius.sm, padding: SPACING.lg,
   },
   terminalTextWrap: { flex: 1, gap: SPACING.xs },
-  terminalTitle: { fontSize: 17, fontWeight: '700' },
-  terminalDesc: { fontSize: 13, lineHeight: 18 },
+  terminalTitle: { fontSize: 17, fontFamily: FONT_FAMILY.heading },
+  terminalDesc: { fontSize: 13, fontFamily: FONT_FAMILY.body, lineHeight: 18 },
   cardShadow: {
     borderRadius: TOKENS.radius.lg,
     ...TOKENS.shadow.soft,
@@ -330,15 +330,15 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: TOKENS.radius.lg, overflow: 'hidden', padding: 18, borderWidth: 1.5, gap: SPACING.sm,
   },
-  sectionTitle: { fontSize: 14, fontWeight: '700', marginBottom: 2 },
-  serviceName: { fontSize: 16, fontWeight: '600' },
+  sectionTitle: { fontSize: 14, fontFamily: FONT_FAMILY.heading, marginBottom: 2 },
+  serviceName: { fontSize: 16, fontFamily: FONT_FAMILY.headingMedium },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  infoText: { fontSize: 13, flex: 1 },
+  infoText: { fontSize: 13, fontFamily: FONT_FAMILY.body, flex: 1 },
   actionsWrap: { gap: 10 },
   actionBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm,
     padding: 14, borderRadius: 14, borderWidth: 1,
   },
-  actionBtnText: { fontSize: 14, fontWeight: '600', color: TOKENS.color.signal },
+  actionBtnText: { fontSize: 14, fontFamily: FONT_FAMILY.headingMedium, color: TOKENS.color.signal },
   btnPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
 });

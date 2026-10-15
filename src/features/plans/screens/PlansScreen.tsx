@@ -24,7 +24,7 @@ import {
 import { TOKENS } from '@/core/design-system/tokens';
 import { GRADIENTS, BRAND_RADIAL_FILL } from '@/core/design-system/gradients';
 import { getUserErrorMessage } from '@/lib/errors';
-import { useThemeColors, usePremiumColors, wash, withAlpha, dialog } from '@/core/design-system';
+import { useThemeColors, usePremiumColors, wash, withAlpha, dialog, FONT_FAMILY } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -291,7 +291,7 @@ const s = StyleSheet.create({
     padding: 8,
     borderRadius: 12,
   },
-  headerTitle: { fontSize: 20, fontWeight: '800' },
+  headerTitle: { fontSize: 20, fontFamily: FONT_FAMILY.display },
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scrollContent: { padding: 24, paddingBottom: 40, gap: 20 },
   currentPlanBanner: { borderRadius: 20, overflow: 'hidden' },
@@ -304,12 +304,12 @@ const s = StyleSheet.create({
   currentPlanInfo: { flex: 1, gap: 2 },
   currentPlanLabel: {
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
     opacity: 0.7,
     textTransform: 'uppercase',
   },
-  currentPlanName: { fontSize: 18, fontWeight: '800', color: TOKENS.onMedia.text },
-  currentPlanPeriod: { fontSize: 12, color: TOKENS.onMedia.textMuted },
+  currentPlanName: { fontSize: 18, fontFamily: FONT_FAMILY.display, color: TOKENS.onMedia.text },
+  currentPlanPeriod: { fontSize: 12, fontFamily: FONT_FAMILY.body, color: TOKENS.onMedia.textMuted },
   cancelBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -317,7 +317,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: TOKENS.onMedia.border,
   },
-  cancelBtnText: { fontSize: 12, fontWeight: '600', color: TOKENS.onMedia.textSub },
+  cancelBtnText: { fontSize: 12, fontFamily: FONT_FAMILY.headingMedium, color: TOKENS.onMedia.textSub },
   freeNote: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -326,7 +326,7 @@ const s = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
   },
-  freeNoteText: { flex: 1, fontSize: 13, lineHeight: 18 },
+  freeNoteText: { flex: 1, fontSize: 13, fontFamily: FONT_FAMILY.body, lineHeight: 18 },
   planCardShadow: {
     borderRadius: 24,
     shadowColor: TOKENS.color.shadow,
@@ -352,16 +352,16 @@ const s = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 20,
   },
-  popularText: { fontSize: 12, fontWeight: '800' },
+  popularText: { fontSize: 12, fontFamily: FONT_FAMILY.display },
   planHeader: { gap: 8 },
-  planName: { fontSize: 20, fontWeight: '800' },
+  planName: { fontSize: 20, fontFamily: FONT_FAMILY.display },
     planPrice: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
-  planPriceAmount: { fontSize: 32, fontWeight: '800' },
-    planPriceInterval: { fontSize: 14 },
-  planDescription: { fontSize: 14, lineHeight: 20 },
+  planPriceAmount: { fontSize: 32, fontFamily: FONT_FAMILY.display },
+    planPriceInterval: { fontSize: 14, fontFamily: FONT_FAMILY.body },
+  planDescription: { fontSize: 14, fontFamily: FONT_FAMILY.body, lineHeight: 20 },
   featuresList: { gap: 10 },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  featureText: { fontSize: 14, flex: 1 },
+  featureText: { fontSize: 14, fontFamily: FONT_FAMILY.body, flex: 1 },
   currentBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -370,7 +370,7 @@ const s = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 14,
   },
-  currentBadgeText: { fontSize: 14, fontWeight: '700' },
+  currentBadgeText: { fontSize: 14, fontFamily: FONT_FAMILY.heading },
   subscribeBtn: { paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
-  subscribeBtnText: { fontSize: 16, fontWeight: '700', color: TOKENS.color.onPrimary },
+  subscribeBtnText: { fontSize: 16, fontFamily: FONT_FAMILY.heading, color: TOKENS.color.onPrimary },
 });

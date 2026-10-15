@@ -29,7 +29,7 @@ Every text in the app renders in the Bosko typography (Archivo for UI/body, JetB
 |---|---|---|---|---|
 | T1 | Shared: `src/components/*`, `src/core/components/*` (CustomTabBar, BrandMark, Premium*, ProviderCTA, FeaturesSection, CategoryVideoCarousel, banners, ErrorBoundary, BiometricLockGate) | delegated | ✅ | 5b9334d |
 | T2 | Auth + app gate: `src/features/auth/**`, `src/features/appConfig/**` | delegated | ✅ | feaaa33 |
-| T3 | Marketplace: `src/features/servicesUser/**`, `src/features/search/**` | delegated | ⬜ | |
+| T3 | Marketplace: `src/features/servicesUser/**`, `src/features/search/**` | delegated | ✅ | 8b704a9 |
 | T4 | Orders, payments, plans, chat, notifications | delegated | ⬜ | |
 | T5 | KYC, admin, profile, users, reels, reviews, favorites + guard test (no `fontWeight` and no RN `Text` without `fontFamily` outside DS — at minimum a `fontWeight` guard) | delegated | ⬜ | |
 
@@ -44,3 +44,4 @@ Every text in the app renders in the Bosko typography (Archivo for UI/body, JetB
 - 2026-10-15: document created, branch created. Next: T1.
 - 2026-10-15 T1 done (5b9334d): 8 files; fontWeight -> weight-matched FONT_FAMILY face, size-only styles get FONT_FAMILY.body; sizes/line heights untouched (no preset snapping). tsc/jest(430)/lint:ds = clean.
 - 2026-10-15 T2 done (feaaa33): 5 files (most auth screens already used DS Text/Input). Checks clean.
+- 2026-10-15 T3 done (8b704a9): 16 files. Size-only styles used by DS Text were left alone (variant already sets the family). Checks clean.

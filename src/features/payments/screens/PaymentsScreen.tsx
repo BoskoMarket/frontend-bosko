@@ -22,8 +22,7 @@ import {
   SPACING,
   TOKENS,
   useThemeColors,
-  wash,
-} from '@/core/design-system';
+  wash, FONT_FAMILY } from '@/core/design-system';
 import type { BadgeTone } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -236,7 +235,7 @@ const s = StyleSheet.create({
     paddingVertical: SPACING.md,
     borderRadius: SPACING.md,
   },
-  tabText: { fontSize: 14, fontWeight: '600' },
+  tabText: { fontSize: 14, fontFamily: FONT_FAMILY.headingMedium },
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   listContent: { paddingHorizontal: SPACING.xxl, paddingBottom: SPACING.huge, gap: SPACING.md },
   card: {
@@ -278,8 +277,8 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardTitle: { fontSize: 14, fontWeight: '700' },
-  cardDate: { fontSize: 12, marginTop: 2 },
-  cardAmount: { fontSize: 16, fontWeight: '800' },
-  earningsAmount: { fontSize: 16, fontWeight: '800' },
+  cardTitle: { fontSize: 14, fontFamily: FONT_FAMILY.heading },
+  cardDate: { fontSize: 12, fontFamily: FONT_FAMILY.body, marginTop: 2 },
+  cardAmount: { fontSize: 16, fontFamily: FONT_FAMILY.display },
+  earningsAmount: { fontSize: 16, fontFamily: FONT_FAMILY.display },
 });

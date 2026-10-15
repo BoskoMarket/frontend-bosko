@@ -24,7 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOrders } from '../state/OrdersContext';
 import { Order, OrderStatus } from '../types/orders.types';
 import { ORDER_STATUS } from '../constants/orderStatus';
-import { Badge, EmptyState, TOKENS, useThemeColors } from '@/core/design-system';
+import { Badge, EmptyState, TOKENS, useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 type TabType = 'client' | 'provider';
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
   },
   tabBar: {
     flexDirection: 'row',
@@ -224,10 +224,10 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: FONT_FAMILY.bodyMedium,
   },
   tabTextActive: {
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
   },
   listContent: {
     paddingHorizontal: 20,
@@ -255,16 +255,17 @@ const styles = StyleSheet.create({
   },
   orderTitle: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
     flex: 1,
   },
   orderService: {
     fontSize: 12,
-    fontWeight: '500',
+    fontFamily: FONT_FAMILY.bodyMedium,
     marginTop: -2,
   },
   orderMessage: {
     fontSize: 13,
+    fontFamily: FONT_FAMILY.body,
     lineHeight: 18,
   },
   orderFooter: {
@@ -281,9 +282,11 @@ const styles = StyleSheet.create({
   },
   orderDate: {
     fontSize: 12,
+    fontFamily: FONT_FAMILY.body,
   },
   orderAddress: {
     fontSize: 12,
+    fontFamily: FONT_FAMILY.body,
     flex: 1,
   },
   loader: { flex: 1 },
