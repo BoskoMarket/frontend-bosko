@@ -29,8 +29,7 @@ import {
   SPACING,
   Text,
   TOKENS,
-  useThemeColors,
-} from '@/core/design-system';
+  useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { safeBack } from '@/core/navigation/safeBack';
 import { forgotPasswordService } from '@/features/auth/services/auth';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
@@ -180,7 +179,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   hero: { alignItems: 'center', marginBottom: 10 },
-  title: { fontSize: 24, fontWeight: '800', marginBottom: 10 },
+  title: { fontSize: 24, fontFamily: FONT_FAMILY.display, marginBottom: 10 },
   description: { marginBottom: 28, paddingHorizontal: SPACING.sm },
   cardTitle: { fontSize: 18, marginBottom: SPACING.xl },
   fieldGap: { marginBottom: 14 },

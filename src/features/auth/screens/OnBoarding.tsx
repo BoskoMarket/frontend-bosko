@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Button, GRADIENTS, TOKENS, Text, useIsDark, useThemeColors } from "@/core/design-system";
 import { BrandMark } from "@/components/BrandMark";
+import { FONT_FAMILY } from '@/core/design-system';
 
 const { width: W, height: H } = Dimensions.get("window");
 const CARD_H = 340;
@@ -201,6 +202,6 @@ const styles = StyleSheet.create({
   handle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 6 },
   dotsRow: { flexDirection: "row", alignItems: "center", height: 18, gap: 5 },
   dot: { height: 7, borderRadius: 3.5 },
-  title: { fontSize: 26, fontWeight: "800", letterSpacing: -0.4, lineHeight: 32 },
+  title: { fontSize: 26, fontFamily: FONT_FAMILY.display, letterSpacing: -0.4, lineHeight: 32 },
   subtitle: { lineHeight: 21, marginTop: 2 },
 });
