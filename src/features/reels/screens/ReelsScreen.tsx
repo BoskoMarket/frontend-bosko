@@ -6,7 +6,6 @@ import React, {
 } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   Dimensions,
   FlatList,
@@ -41,7 +40,7 @@ import {
   useReportReel,
 } from '@/hooks/queries/useReelsQuery';
 import { useFollowUser, useUnfollowUser } from '@/hooks/mutations/useFollowMutations';
-import { Avatar, Button, GRADIENTS, TOKENS, toast, useThemeColors, type ReportSheetSubmit } from '@/core/design-system';
+import { Avatar, Button, GRADIENTS, TOKENS, toast, useThemeColors, type ReportSheetSubmit, dialog } from '@/core/design-system';
 import { useReelsAutoplay } from '@/stores/preferences.store';
 import { useConnectionType } from '@/hooks/useConnectionType';
 import { shouldAutoplay } from '@/features/reels/utils/shouldAutoplay';
@@ -189,7 +188,7 @@ function CommentsSheet({
   };
 
   const handleDeleteComment = (commentId: string) => {
-    Alert.alert('Eliminar comentario', '¿Seguro?', [
+    dialog.fromAlert('Eliminar comentario', '¿Seguro?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Eliminar',
@@ -518,7 +517,7 @@ const ReelItem = React.memo(function ReelItem({
         text: 'Eliminar reel',
         style: 'destructive',
         onPress: () =>
-          Alert.alert('Eliminar reel', '¿Seguro que querés eliminarlo?', [
+          dialog.fromAlert('Eliminar reel', '¿Seguro que querés eliminarlo?', [
             { text: 'Cancelar', style: 'cancel' },
             {
               text: 'Eliminar',
@@ -529,7 +528,7 @@ const ReelItem = React.memo(function ReelItem({
       });
     }
     options.push({ text: 'Cancelar', style: 'cancel' });
-    Alert.alert('Opciones', undefined, options);
+    dialog.fromAlert('Opciones', undefined, options);
   }, [reel.id, reel.user.id, currentUserId, deleteReelMutate, onNotInterested]);
 
   const handleCommentPosted = useCallback(() => {

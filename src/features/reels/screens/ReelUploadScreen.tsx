@@ -1,11 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { Button, Input, NoticeBanner, ProgressBar, SPACING, Text, toast, useThemeColors } from '@/core/design-system';
+import { Button, Input, NoticeBanner, ProgressBar, SPACING, Text, toast, useThemeColors, dialog } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import {
   classifyReelUploadError,
@@ -71,10 +71,10 @@ export default function ReelUploadScreen() {
   const publish = async () => {
     if (busyRef.current) return;
     const link = videoUrl.trim();
-    if (useLink && !/^https:\/\/[^\s]+$/.test(link)) { Alert.alert('Video', 'Ingresá un enlace HTTPS público al archivo de video.'); return; }
-    if (!useLink && !video) { Alert.alert('Video', 'Elegí o grabá un video para publicar.'); return; }
+    if (useLink && !/^https:\/\/[^\s]+$/.test(link)) { dialog.fromAlert('Video', 'Ingresá un enlace HTTPS público al archivo de video.'); return; }
+    if (!useLink && !video) { dialog.fromAlert('Video', 'Elegí o grabá un video para publicar.'); return; }
     const tags = [...new Set(tagsText.split(',').map(tag => tag.trim().replace(/^#/, '')).filter(Boolean))];
-    if (tags.length > 8) { Alert.alert('Etiquetas', 'Agregá hasta 8 etiquetas.'); return; }
+    if (tags.length > 8) { dialog.fromAlert('Etiquetas', 'Agregá hasta 8 etiquetas.'); return; }
     busyRef.current = true;
     setSaving(true);
     setProgress(0);
@@ -96,7 +96,7 @@ export default function ReelUploadScreen() {
       if (kind === 'cancelled') { toast.warning('Subida cancelada'); return; }
       if (kind === 'network') {
         setError(REEL_UPLOAD_ERROR_MESSAGES.network);
-        Alert.alert('Sin conexión', REEL_UPLOAD_ERROR_MESSAGES.network, [
+        dialog.fromAlert('Sin conexión', REEL_UPLOAD_ERROR_MESSAGES.network, [
           { text: 'Cancelar', style: 'cancel' },
           { text: 'Reintentar', onPress: () => { publish(); } },
         ]);

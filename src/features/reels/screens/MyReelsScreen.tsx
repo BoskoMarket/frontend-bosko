@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Dimensions,
   FlatList,
   KeyboardAvoidingView,
@@ -20,7 +19,7 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
-import { Button, EmptyState, GRADIENTS, TOKENS, toast, useThemeColors } from '@/core/design-system';
+import { Button, EmptyState, GRADIENTS, TOKENS, toast, useThemeColors, dialog } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useMyReels, useUpdateReel, useDeleteReel } from '@/hooks/queries/useReelsQuery';
@@ -115,7 +114,7 @@ function EditReelSheet({
   };
 
   const handleDelete = () => {
-    Alert.alert('Eliminar reel', '¿Seguro que querés eliminarlo? No se puede deshacer.', [
+    dialog.fromAlert('Eliminar reel', '¿Seguro que querés eliminarlo? No se puede deshacer.', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Eliminar',

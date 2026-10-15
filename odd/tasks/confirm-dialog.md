@@ -33,7 +33,7 @@ Replace the native `Alert.alert` dialogs with a design-system `ConfirmDialog` th
 |---|---|---|---|---|
 | T1 | `ConfirmDialog` + `DialogRoot` + imperative `dialog` API in DS, barrel export, mount in `app/_layout.tsx`, showcase section, tests | delegated (writer trigger: 3+ non-trivial files) | ✅ | e570355 |
 | T2 | Migrate kyc + admin + plans (`BackgroundCheckScreen`, `KYCDocumentScreen`, `AdminBackgroundCheckScreen`, `PlansScreen`) | delegated | ✅ | a6b6d7e |
-| T3 | Migrate orders + reviews + chat + notifications (`QuoteRequestScreen`, `OrderDetailScreen`, `CheckoutScreen`, `ReviewScreen`, `ChatScreen`, `NotificationsScreen`) | delegated | ⬜ | |
+| T3 | Migrate orders + reviews + chat + notifications (`QuoteRequestScreen`, `OrderDetailScreen`, `CheckoutScreen`, `ReviewScreen`, `ChatScreen`, `NotificationsScreen`) | delegated | ✅ | e3c06a4 |
 | T4 | Migrate reels + servicesUser (`ReelUploadScreen`, `ReelsScreen`, `MyReelsScreen`, `ServiceFormScreen`, `MyServiceScreen`, `ProviderProfileScreen`) | delegated | ⬜ | |
 | T5 | Migrate profile + users + auth + lib (`EditProfileScreen`, `ProfileScreen`, `DeleteAccountScreen`, `VerifyPhoneScreen`, `ChangePasswordScreen`, `RegisterView`, `lib/permissionAlert.ts`) + guard test (no `Alert.alert` outside DS) | delegated | ⬜ | |
 
@@ -48,3 +48,4 @@ Replace the native `Alert.alert` dialogs with a design-system `ConfirmDialog` th
 - 2026-10-15: document created, branch created. Next: T1.
 - 2026-10-15: T1 done (e570355). API: `dialog.alert/confirm/choose/fromAlert(title,message?,buttons?,{cancelable,onDismiss})` (fromAlert = drop-in for Alert.alert; async onPress keeps dialog open with spinner) + `ConfirmDialog`/`DialogRoot` in DS barrel, mounted in app/_layout.tsx. Checks: tsc clean, jest 25 suites/429 tests green, lint:ds 0. Review assess: medium, `slice_budget_reached` (528 lines) → status `stop: rdd_disabled` (RDD off; ordinary checks only). Next: user tests showcase on device, then T2.
 - 2026-10-15: T2 done (a6b6d7e). Mechanical Alert.alert -> dialog.fromAlert in BackgroundCheckScreen (6, incl. 3-way picker), KYCDocumentScreen (1), AdminBackgroundCheckScreen (4), PlansScreen (5). Checks: tsc clean, jest 25 suites/429 tests green, lint:ds 0. Note: alerts fired from inside an async onPress queue behind the open dialog.
+- 2026-10-15: T3 done (e3c06a4). Mechanical Alert.alert -> dialog.fromAlert in QuoteRequestScreen (4), OrderDetailScreen (2), CheckoutScreen (1), ReviewScreen (1), ChatScreen (1, message undefined), NotificationsScreen (2). Checks: tsc clean, jest 25/429 green, lint:ds 0. Leftover unused Alert import in OrderDetailScreen (double-quoted import) removed in T4 commit.

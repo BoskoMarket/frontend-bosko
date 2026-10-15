@@ -12,7 +12,6 @@ import {
   ScrollView,
   Pressable,
   ActivityIndicator,
-  Alert,
   RefreshControl,
   Modal,
   KeyboardAvoidingView,

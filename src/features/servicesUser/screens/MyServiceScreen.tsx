@@ -1,7 +1,6 @@
 import React, { useCallback } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Image,
   RefreshControl,
@@ -18,7 +17,7 @@ import { useMyServices, useDeleteService } from "@/hooks/queries/useMarketplaceQ
 import type { Service } from "@/features/servicesUser/services/service";
 import { EmptyState } from '@/core/components/EmptyState';
 import { getUserErrorMessage } from '@/lib/errors';
-import { BRAND_RADIAL_FILL, TOKENS, useThemeColors } from '@/core/design-system';
+import { BRAND_RADIAL_FILL, TOKENS, useThemeColors, dialog } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -98,7 +97,7 @@ export default function MyServiceScreen() {
   };
 
   const handleDelete = (service: Service) => {
-    Alert.alert(
+    dialog.fromAlert(
       "Eliminar servicio",
       "¿Estás seguro de eliminar este servicio?",
       [
@@ -110,10 +109,10 @@ export default function MyServiceScreen() {
             try {
               if (service.id) {
                 await deleteServiceM.mutateAsync(service.id);
-                Alert.alert("Servicio eliminado", "Se eliminó correctamente.");
+                dialog.fromAlert("Servicio eliminado", "Se eliminó correctamente.");
               }
             } catch (error) {
-              Alert.alert("Error", getUserErrorMessage(error));
+              dialog.fromAlert("Error", getUserErrorMessage(error));
             }
           },
         },

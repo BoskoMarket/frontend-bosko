@@ -4,7 +4,6 @@
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Animated,
   Pressable,
   ScrollView,
@@ -24,7 +23,7 @@ import api from '@/core/api/axiosinstance';
 import { safeBack } from '@/core/navigation/safeBack';
 import { ServiceDetailModal } from '../components/ServiceDetailModal';
 import type { ServiceSummary } from '@/types/services';
-import { Button, GRADIENTS, BRAND_RADIAL_FILL, TOKENS, useIsDark, useThemeColors, withAlpha, type ReportSheetSubmit } from '@/core/design-system';
+import { Button, GRADIENTS, BRAND_RADIAL_FILL, TOKENS, useIsDark, useThemeColors, withAlpha, type ReportSheetSubmit, dialog } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { ReportFlow } from '@/features/reports/components/ReportFlow';
@@ -133,7 +132,7 @@ export default function ProviderProfileScreen() {
   );
   const canReportProfile = canReport(id, me?.id);
   const openProfileMenu = () =>
-    Alert.alert('Opciones', undefined, [
+    dialog.fromAlert('Opciones', undefined, [
       { text: 'Reportar perfil', style: 'destructive', onPress: () => setReportTarget({ kind: 'profile' }) },
       { text: 'Cancelar', style: 'cancel' },
     ]);
