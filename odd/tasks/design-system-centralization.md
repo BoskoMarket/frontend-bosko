@@ -209,8 +209,11 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 
 - 2026-10-15 G68 ✅ `78430a8` `7f65807` `ed8adb4`: chat solo lectura para órdenes completadas/canceladas; en disputa sigue abierto con aviso `pending` (decisión del usuario). Regla única en `chat/constants/chatOrderRules.ts`, aviso `ChatOrderNotice`; estado vía `useOrder` ya existente (sin request extra), refetch al volver a la pantalla. Rechazo de envío solo con 409 `ORDER_CLOSED` (`ed8adb4` corrige versión que tomaba 403/422). Badge en lista listo pero depende de `orderStatus` en payload (BR02). Checks: 19 suites / 306 tests, `tsc` 0.
 
+- 2026-10-15 G69/G86 ✅ `b4da6bd` `776a035` `7f9783f`: **Decisión del usuario: solo reportar** (bloquear postergado). `ReportSheet` en el DS + `src/features/reports/` (motivos con códigos, `ReportFlow`, `canReport`, mapeo de errores 404/405/501 → "todavía no están disponibles", 409 → "Ya reportaste esto."). Superficies: reels, reseñas (perfil público), chat ("Reportar usuario"), perfil de proveedor ("Reportar perfil"); nunca sobre contenido propio. `POST /users/:id/report` propuesto (BR03). Nuevos gaps G90 (reportar mensaje/comentario puntual), G91 (el que reporta no recibe resultado). Checks: 20 suites / 329 tests, `tsc` 0, `lint:ds` 37.
+- 2026-10-15 **Decisión del usuario G87**: reels se suben desde galería/cámara (no solo link HTTPS); límites 60 s y 100 MB; requiere endpoint de subida (BR04).
+
 ## Próximo paso
 
-0. Preguntas ❔ pendientes de `odd/ux-gaps.md` (siguiente: reportar/bloquear G69/G86).
+0. G87: subida de reels desde galería/cámara (60 s / 100 MB) + BR04. Luego siguientes ❔ de `odd/ux-gaps.md`.
 1. Responder las preguntas ❔ de `odd/ux-gaps.md` (de a una) e implementar las que queden definidas.
 2. T10: migrar `features/chat` + `features/reels` (ReelsScreen 67, ChatScreen 33, MyReels 10, ConversationsList 5) aplicando también el registro de faltantes UX. Antes: verificar en dispositivo (dark + light) T4–T9.
