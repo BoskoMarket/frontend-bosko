@@ -5,6 +5,7 @@ import { SPACING } from '../spacing';
 import { Button, ButtonVariant } from './Button';
 import { Card } from './Card';
 import { Text } from './Text';
+import { useThemeColors } from '@/stores/theme.store';
 
 export type DialogActionStyle = 'default' | 'cancel' | 'destructive';
 
@@ -55,6 +56,7 @@ export function ConfirmDialog({
   onDismiss,
   dismissable = true,
 }: ConfirmDialogProps) {
+  const tc = useThemeColors();
   const busy = actions.some((a) => a.loading);
   const dismiss = () => {
     if (dismissable && !busy) onDismiss();
@@ -80,7 +82,7 @@ export function ConfirmDialog({
           onPress={dismiss}
           accessibilityLabel="Cerrar"
         />
-        <Card padding="xl" radius="lg" elevated style={styles.card} contentStyle={styles.content}>
+        <Card padding="xl" radius="lg" elevated style={styles.card} contentStyle={{ ...styles.content, backgroundColor: tc.surface }}>
           <Text variant="subtitle" accessibilityRole="header">{title}</Text>
           {message ? <Text variant="bodySmall">{message}</Text> : null}
           <View style={row ? styles.actionsRow : styles.actionsStack}>

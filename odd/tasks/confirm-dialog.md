@@ -46,4 +46,4 @@ Replace the native `Alert.alert` dialogs with a design-system `ConfirmDialog` th
 ## Progress
 
 - 2026-10-15: document created, branch created. Next: T1.
-- 2026-10-15: T1 done (e570355). API: `dialog.alert/confirm/choose/fromAlert(title,message?,buttons?,{cancelable,onDismiss})` (fromAlert = drop-in for Alert.alert; async onPress keeps dialog open with spinner) + `ConfirmDialog`/`DialogRoot` in DS barrel, mounted in app/_layout.tsx. Checks: tsc clean, jest 25 suites/429 tests green, lint:ds 0.
+- 2026-10-15: T1 done (e570355). API: `dialog.alert/confirm/choose/fromAlert(title,message?,buttons?,{cancelable,onDismiss})` (fromAlert = drop-in for Alert.alert; async onPress keeps dialog open with spinner) + `ConfirmDialog`/`DialogRoot` in DS barrel, mounted in app/_layout.tsx. Checks: tsc clean, jest 25 suites/429 tests green, lint:ds 0. Review assess: medium, `slice_budget_reached` (528 lines) → status `stop: rdd_disabled` (RDD off; ordinary checks only). Next: user tests showcase on device, then T2.
