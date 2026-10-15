@@ -2,8 +2,9 @@
  * Rebrand "Señal Nocturna" — ProviderProfileScreen: misma lógica, estado y navegación que
  * el archivo original. Misma carga de perfil/servicios/reseñas y el modal de detalle — hero y CTA pasan al gradiente signal→bordo→profundo, badges de verificación a tintes translúcidos legibles en dark.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   Pressable,
   ScrollView,
@@ -23,8 +24,13 @@ import api from '@/core/api/axiosinstance';
 import { safeBack } from '@/core/navigation/safeBack';
 import { ServiceDetailModal } from '../components/ServiceDetailModal';
 import type { ServiceSummary } from '@/types/services';
-import { Button, GRADIENTS, TOKENS, useIsDark, useThemeColors, withAlpha } from '@/core/design-system';
+import { Button, GRADIENTS, TOKENS, useIsDark, useThemeColors, withAlpha, type ReportSheetSubmit } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { useProfile } from '@/hooks/queries/useProfileQuery';
+import { ReportFlow } from '@/features/reports/components/ReportFlow';
+import { canReport } from '@/features/reports/canReport';
+import { reportUser } from '@/features/reports/services/report.service';
+import { reportReview } from '@/features/reviews/services/review.service';
 
 interface ReviewItem {
   id: string;
@@ -32,7 +38,7 @@ interface ReviewItem {
   comment: string | null;
   reply: string | null;
   createdAt: string;
-  reviewer: { firstName: string; lastName: string; avatarUrl: string | null };
+  reviewer: { id: string | null; firstName: string; lastName: string; avatarUrl: string | null };
 }
 
 function useC() {
@@ -111,6 +117,26 @@ export default function ProviderProfileScreen() {
   const [loadKey, setLoadKey] = useState(0);
   const [selectedService, setSelectedService] = useState<ServiceSummary | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const { data: me } = useProfile();
+  const [reportTarget, setReportTarget] = useState<{ kind: 'profile' } | { kind: 'review'; id: string } | null>(null);
+  const closeReport = useCallback(() => setReportTarget(null), []);
+  const submitReport = useCallback(
+    async ({ reason, details }: ReportSheetSubmit) => {
+      if (!reportTarget) return;
+      if (reportTarget.kind === 'review') {
+        await reportReview(reportTarget.id, { reason, details });
+      } else if (id) {
+        await reportUser(id, { reason, details, context: { type: 'profile' } });
+      }
+    },
+    [reportTarget, id],
+  );
+  const canReportProfile = canReport(id, me?.id);
+  const openProfileMenu = () =>
+    Alert.alert('Opciones', undefined, [
+      { text: 'Reportar perfil', style: 'destructive', onPress: () => setReportTarget({ kind: 'profile' }) },
+      { text: 'Cancelar', style: 'cancel' },
+    ]);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -172,6 +198,7 @@ export default function ProviderProfileScreen() {
           reply: r.reply ?? null,
           createdAt: r.createdAt ?? '',
           reviewer: {
+            id: r.reviewer?.id ?? r.reviewerId ?? null,
             firstName: r.reviewer?.firstName ?? '',
             lastName: r.reviewer?.lastName ?? '',
             avatarUrl: r.reviewer?.avatarUrl ?? null,
@@ -245,6 +272,17 @@ export default function ProviderProfileScreen() {
       <Pressable onPress={goBack} style={[s.backBtn, s.backBtnFloat, { backgroundColor: c.card }]}>
         <Ionicons name="arrow-back" size={22} color={c.text} />
       </Pressable>
+
+      {canReportProfile && (
+        <Pressable
+          onPress={openProfileMenu}
+          style={[s.backBtn, s.moreBtnFloat, { backgroundColor: c.card }]}
+          accessibilityRole="button"
+          accessibilityLabel="Más opciones del perfil"
+        >
+          <Ionicons name="ellipsis-horizontal" size={20} color={c.text} />
+        </Pressable>
+      )}
 
       <Animated.ScrollView
         style={{ opacity: fadeAnim }}
@@ -397,6 +435,18 @@ export default function ProviderProfileScreen() {
                     </View>
                   </View>
                   {r.comment ? <Text style={[s.reviewComment, { color: c.sub }]}>{r.comment}</Text> : null}
+                  {canReport(r.reviewer.id, me?.id) ? (
+                    <Pressable
+                      onPress={() => setReportTarget({ kind: 'review', id: r.id })}
+                      hitSlop={8}
+                      style={s.reportReviewBtn}
+                      accessibilityRole="button"
+                      accessibilityLabel="Reportar reseña"
+                    >
+                      <Ionicons name="flag-outline" size={13} color={c.muted} />
+                      <Text style={[s.reportReviewText, { color: c.muted }]}>Reportar reseña</Text>
+                    </Pressable>
+                  ) : null}
                   {r.reply ? (
                     <View style={[s.replyBox, { backgroundColor: c.surface2, borderLeftColor: TOKENS.color.signal }]}>
                       <Text style={[s.replyLabel, { color: TOKENS.color.signal }]}>Respuesta del proveedor</Text>
@@ -427,6 +477,14 @@ export default function ProviderProfileScreen() {
         service={selectedService}
         onClose={() => setModalVisible(false)}
       />
+
+      <ReportFlow
+        visible={reportTarget !== null}
+        title={reportTarget?.kind === 'review' ? 'Reportar reseña' : 'Reportar perfil'}
+        message="Contanos por qué querés reportar esto."
+        onClose={closeReport}
+        submit={submitReport}
+      />
     </View>
   );
 }
@@ -444,6 +502,9 @@ const s = StyleSheet.create({
   },
   backBtnFloat: {
     position: 'absolute', top: 56, left: 16, zIndex: 10,
+  },
+  moreBtnFloat: {
+    position: 'absolute', top: 56, right: 16, zIndex: 10,
   },
 
   // Hero
@@ -540,6 +601,8 @@ const s = StyleSheet.create({
   starsRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 },
   reviewDate: { fontSize: 11, marginLeft: 4 },
   reviewComment: { fontSize: 13, lineHeight: 19 },
+  reportReviewBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
+  reportReviewText: { fontSize: 11 },
   replyBox: { marginTop: 6, padding: 10, borderRadius: 8, borderLeftWidth: 3 },
   replyLabel: { fontSize: 11, fontWeight: '700', marginBottom: 2 },
   replyText: { fontSize: 13, lineHeight: 18 },

@@ -75,7 +75,11 @@ import {
   useIsDark,
   useThemeColors,
   withAlpha,
+  type ReportSheetSubmit,
 } from '@/core/design-system';
+import { ReportFlow } from '@/features/reports/components/ReportFlow';
+import { canReport } from '@/features/reports/canReport';
+import { reportUser } from '@/features/reports/services/report.service';
 
 const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   pending: 'Pendiente',
@@ -400,6 +404,25 @@ export default function ChatScreen() {
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const { data: order, refetch: refetchOrder } = useOrder(conversation?.orderId);
+  // G69: report the other participant (report only; blocking is postponed).
+  const [reportOpen, setReportOpen] = useState(false);
+  const closeReport = useCallback(() => setReportOpen(false), []);
+  const reportTargetId = conversation?.otherParty?.id;
+  const reportOrderId = conversation?.orderId;
+  const canReportOther = canReport(reportTargetId, profile?.id) && !!reportOrderId;
+  const submitUserReport = useCallback(
+    async ({ reason, details }: ReportSheetSubmit) => {
+      if (!reportTargetId || !reportOrderId) return;
+      await reportUser(reportTargetId, { reason, details, context: { type: 'chat', orderId: reportOrderId } });
+    },
+    [reportTargetId, reportOrderId],
+  );
+  const openChatMenu = useCallback(() => {
+    Alert.alert('Opciones', undefined, [
+      { text: 'Reportar usuario', style: 'destructive', onPress: () => setReportOpen(true) },
+      { text: 'Cancelar', style: 'cancel' },
+    ]);
+  }, []);
   // G68: completed/cancelled => read-only. While the status is unknown the composer stays enabled.
   const readOnly = isChatReadOnly(order?.status);
   const refetchOrderRef = useRef(refetchOrder);
@@ -902,7 +925,26 @@ export default function ChatScreen() {
             <MaterialIcons name="description" size={19} color={TOKENS.color.signal} />
           </Pressable>
         )}
+        {canReportOther && (
+          <Pressable
+            onPress={openChatMenu}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Más opciones del chat"
+            style={[styles.headerOrderBtn, { backgroundColor: tc.surface }]}
+          >
+            <MaterialIcons name="more-vert" size={22} color={tc.text} />
+          </Pressable>
+        )}
       </BlurView>
+
+      <ReportFlow
+        visible={reportOpen}
+        title="Reportar usuario"
+        message="Contanos por qué querés reportar a esta persona. El equipo de Bosko lo va a revisar."
+        onClose={closeReport}
+        submit={submitUserReport}
+      />
 
       {/* Barra de contexto de la orden — el chat siempre pertenece a una orden */}
       {conversation?.orderId && order && (

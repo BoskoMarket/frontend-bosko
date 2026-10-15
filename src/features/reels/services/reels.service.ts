@@ -116,10 +116,16 @@ export async function deleteReelComment(
   await api.delete(`/reels/${reelId}/comments/${commentId}`);
 }
 
-/** POST /reels/:id/report */
+/**
+ * POST /reels/:id/report
+ * The backend only accepts `{ reason?: string }` (ReportReelDto), so the machine code goes in
+ * `reason` and the optional free text is appended as `code: details` (BR03 asks for a `details` field).
+ */
 export async function reportReel(
   reelId: string,
   reason?: string,
+  details?: string,
 ): Promise<void> {
-  await api.post(`/reels/${reelId}/report`, { reason });
+  const composed = reason && details ? `${reason}: ${details}` : reason;
+  await api.post(`/reels/${reelId}/report`, { reason: composed });
 }

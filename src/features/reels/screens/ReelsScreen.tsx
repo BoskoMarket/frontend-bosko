@@ -41,7 +41,8 @@ import {
   useReportReel,
 } from '@/hooks/queries/useReelsQuery';
 import { useFollowUser, useUnfollowUser } from '@/hooks/mutations/useFollowMutations';
-import { Avatar, Button, GRADIENTS, TOKENS, toast, useThemeColors } from '@/core/design-system';
+import { Avatar, Button, GRADIENTS, TOKENS, toast, useThemeColors, type ReportSheetSubmit } from '@/core/design-system';
+import { ReportFlow } from '@/features/reports/components/ReportFlow';
 
 const { width: W, height: H } = Dimensions.get('window');
 
@@ -336,7 +337,13 @@ const ReelItem = React.memo(function ReelItem({
 }) {
   const insets = useSafeAreaInsets();
   const { mutate: deleteReelMutate } = useDeleteReel();
-  const { mutate: reportReelMutate } = useReportReel();
+  const { mutateAsync: reportReelAsync } = useReportReel();
+  const [reportOpen, setReportOpen] = useState(false);
+  const closeReport = useCallback(() => setReportOpen(false), []);
+  const submitReelReport = useCallback(
+    ({ reason, details }: ReportSheetSubmit) => reportReelAsync({ reelId: reel.id, reason, details }),
+    [reel.id, reportReelAsync],
+  );
   const { mutate: followUserMutate } = useFollowUser();
   const { mutate: unfollowUserMutate } = useUnfollowUser();
 
@@ -485,21 +492,14 @@ const ReelItem = React.memo(function ReelItem({
     const isOwner = reel.user.id === currentUserId;
     const options: any[] = [
       { text: 'No me interesa', onPress: () => onNotInterested(reel.id) },
-      {
+    ];
+    if (!isOwner) {
+      options.push({
         text: 'Reportar contenido',
         style: 'destructive',
-        onPress: () =>
-          reportReelMutate(
-            { reelId: reel.id },
-            {
-              onSuccess: () =>
-                toast.success('Reporte enviado', 'Gracias por ayudarnos a mantener la comunidad.'),
-              onError: () =>
-                toast.error('No se pudo enviar el reporte', 'Intentá de nuevo en unos segundos.'),
-            },
-          ),
-      },
-    ];
+        onPress: () => setReportOpen(true),
+      });
+    }
     if (isOwner) {
       options.push({
         text: 'Eliminar reel',
@@ -517,7 +517,7 @@ const ReelItem = React.memo(function ReelItem({
     }
     options.push({ text: 'Cancelar', style: 'cancel' });
     Alert.alert('Opciones', undefined, options);
-  }, [reel.id, reel.user.id, currentUserId, reportReelMutate, deleteReelMutate, onNotInterested]);
+  }, [reel.id, reel.user.id, currentUserId, deleteReelMutate, onNotInterested]);
 
   const handleCommentPosted = useCallback(() => {
     setCommentCount(c => c + 1);
@@ -698,6 +698,14 @@ const ReelItem = React.memo(function ReelItem({
           onCommentPosted={handleCommentPosted}
         />
       )}
+
+      <ReportFlow
+        visible={reportOpen}
+        title="Reportar reel"
+        message="Contanos por qué querés reportar este contenido."
+        onClose={closeReport}
+        submit={submitReelReport}
+      />
     </View>
   );
 });
