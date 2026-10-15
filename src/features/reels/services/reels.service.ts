@@ -129,3 +129,61 @@ export async function reportReel(
   const composed = reason && details ? `${reason}: ${details}` : reason;
   await api.post(`/reels/${reelId}/report`, { reason: composed });
 }
+
+export interface ReelUploadResult {
+  videoUrl: string;
+  thumbnailUrl?: string;
+  /** Duration in seconds, measured by the server. */
+  duration: number;
+}
+
+export interface ReelUploadFile {
+  uri: string;
+  mimeType?: string | null;
+}
+
+/**
+ * POST /reels/upload — proposed, BR04 (`odd/backend-requests.md`).
+ * Multipart field `video` (mp4/mov, <= 100 MB, <= 60 s). Returns the stored URL, which is then
+ * sent to `createReel`. Supports progress (0..1) and cancellation through an AbortSignal.
+ */
+export async function uploadReelVideo(
+  file: ReelUploadFile,
+  opts: { onProgress?: (fraction: number) => void; signal?: AbortSignal } = {},
+): Promise<ReelUploadResult> {
+  const mimeType = file.mimeType && file.mimeType.startsWith('video/') ? file.mimeType : 'video/mp4';
+  const ext = mimeType === 'video/quicktime' ? 'mov' : 'mp4';
+  const formData = new FormData();
+  formData.append('video', { uri: file.uri, type: mimeType, name: `reel.${ext}` } as any);
+
+  const res = await api.post<ReelUploadResult>('/reels/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 5 * 60_000,
+    signal: opts.signal,
+    onUploadProgress: (event) => {
+      if (opts.onProgress && event.total) opts.onProgress(event.loaded / event.total);
+    },
+  });
+  return res.data;
+}
+
+export type ReelUploadErrorKind = 'cancelled' | 'unavailable' | 'tooLarge' | 'format' | 'network' | 'other';
+
+/** Classifies an upload failure so the screen can pick the right copy and offer retry. */
+export function classifyReelUploadError(error: unknown): ReelUploadErrorKind {
+  const e = error as { code?: string; response?: { status?: number }; message?: string; name?: string } | null;
+  if (e?.code === 'ERR_CANCELED' || e?.name === 'CanceledError' || e?.name === 'AbortError') return 'cancelled';
+  const status = e?.response?.status;
+  if (status === 404 || status === 405 || status === 501) return 'unavailable';
+  if (status === 413) return 'tooLarge';
+  if (status === 415 || status === 400) return 'format';
+  if (!status && (e?.code === 'ERR_NETWORK' || e?.code === 'ECONNABORTED' || /network|timeout/i.test(e?.message ?? ''))) return 'network';
+  return 'other';
+}
+
+export const REEL_UPLOAD_ERROR_MESSAGES: Record<Exclude<ReelUploadErrorKind, 'cancelled' | 'other'>, string> = {
+  unavailable: 'La subida de videos todavía no está disponible.',
+  tooLarge: 'El video es demasiado pesado. El máximo es de 100 MB.',
+  format: 'No pudimos procesar el video. Usá un archivo MP4 o MOV de hasta 60 segundos.',
+  network: 'Se cortó la conexión mientras subíamos el video. Revisá tu internet e intentá de nuevo.',
+};

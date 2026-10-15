@@ -8,6 +8,7 @@
  * Soporta texto, imágenes y mensajes de audio (estilo WhatsApp).
  */
 
+import { alertPermissionDenied } from '@/lib/permissionAlert';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
@@ -95,15 +96,6 @@ const QUICK_REPLIES = ['Hola, ¿estás disponible?', '¿Cuánto sale el trabajo?
 const POLL_INTERVAL = 10000;
 const TYPING_THROTTLE = 2000;
 const MAX_VIDEO_SECONDS = 60;
-
-/** Permission denied: explain why and offer a shortcut to the system settings. */
-function alertPermissionDenied(message: string) {
-  Alert.alert('Permiso requerido', message, [
-    { text: 'Ahora no', style: 'cancel' },
-    { text: 'Abrir ajustes', onPress: () => { Linking.openSettings().catch(() => {}); } },
-  ]);
-}
-
 
 function formatDuration(ms: number): string {
   const total = Math.floor(ms / 1000);
