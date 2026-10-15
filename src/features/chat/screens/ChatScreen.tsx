@@ -59,15 +59,21 @@ import {
 } from '../services/chat.service';
 import { socketService } from '../services/socket.service';
 import { useChatStore } from '@/stores/chat.store';
-import { useThemeColors, useIsDark } from '@/stores/theme.store';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { useOrder } from '@/hooks/queries/useOrdersQuery';
 import type { OrderStatus } from '@/features/orders/types/orders.types';
-import { TOKENS } from '@/core/design-system/tokens';
-import { GRADIENTS } from '@/core/design-system/gradients';
-import { FONT_FAMILY } from '@/core/design-system/typography';
-import { toast } from '@/core/components/Toast';
+import {
+  Avatar,
+  FONT_FAMILY,
+  GRADIENTS,
+  NoticeBanner,
+  TOKENS,
+  toast,
+  useIsDark,
+  useThemeColors,
+  withAlpha,
+} from '@/core/design-system';
 
 const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   pending: 'Pendiente',
@@ -82,6 +88,15 @@ const QUICK_REPLIES = ['Hola, ¿estás disponible?', '¿Cuánto sale el trabajo?
 
 const POLL_INTERVAL = 10000;
 const TYPING_THROTTLE = 2000;
+const MAX_VIDEO_SECONDS = 60;
+
+/** Permission denied: explain why and offer a shortcut to the system settings. */
+function alertPermissionDenied(message: string) {
+  Alert.alert('Permiso requerido', message, [
+    { text: 'Ahora no', style: 'cancel' },
+    { text: 'Abrir ajustes', onPress: () => { Linking.openSettings().catch(() => {}); } },
+  ]);
+}
 
 
 function formatDuration(ms: number): string {
@@ -114,12 +129,17 @@ function AudioBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
   const timeLabel = !status.isLoaded || durationMs === 0
     ? '--:--'
     : formatDuration(status.playing || positionMs > 0 ? positionMs : durationMs);
-  const accent = isMine ? '#fff' : TOKENS.color.signal;
-  const accentDim = isMine ? 'rgba(255,255,255,0.35)' : 'rgba(255,45,111,0.3)';
+  const accent = isMine ? TOKENS.color.onPrimary : TOKENS.color.signal;
+  const accentDim = isMine ? TOKENS.color.onPrimaryDim : withAlpha(TOKENS.color.signal, 0.3);
 
   return (
     <View style={[styles.audioBubble]}>
-      <Pressable onPress={togglePlay} style={[styles.audioPlayBtn, { borderColor: accentDim }]}>
+      <Pressable
+        onPress={togglePlay}
+        accessibilityRole="button"
+        accessibilityLabel={status.playing ? 'Pausar mensaje de voz' : 'Reproducir mensaje de voz'}
+        style={[styles.audioPlayBtn, { borderColor: accentDim }]}
+      >
         <MaterialIcons name={status.playing ? 'pause' : 'play-arrow'} size={22} color={accent} />
       </Pressable>
       <View style={styles.waveform}>
@@ -154,10 +174,12 @@ function VideoBubble({ uri }: { uri: string }) {
 // ── Burbuja de documento ─────────────────────────────────────────────────────
 function DocumentBubble({ msg, isMine }: { msg: Message; isMine: boolean }) {
   const filename = msg.mediaUrl?.split('/').pop()?.split('?')[0] ?? 'documento';
-  const accent = isMine ? 'rgba(255,255,255,0.9)' : TOKENS.color.signal;
+  const accent = isMine ? TOKENS.color.onPrimary : TOKENS.color.signal;
   return (
     <Pressable
       onPress={() => msg.mediaUrl && Linking.openURL(msg.mediaUrl)}
+      accessibilityRole="button"
+      accessibilityLabel={`Abrir documento ${decodeURIComponent(filename)}`}
       style={styles.docBubble}
     >
       <MaterialIcons name="insert-drive-file" size={28} color={accent} />
@@ -176,8 +198,14 @@ function MediaLightbox({ uri, isVideo, visible, onClose }: { uri: string; isVide
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <View style={styles.lightboxBackdrop}>
-        <TouchableOpacity style={styles.lightboxClose} onPress={onClose} activeOpacity={0.8}>
-          <MaterialIcons name="close" size={28} color="#fff" />
+        <TouchableOpacity
+          style={styles.lightboxClose}
+          onPress={onClose}
+          activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Cerrar"
+        >
+          <MaterialIcons name="close" size={28} color={TOKENS.onMedia.icon} />
         </TouchableOpacity>
         {isVideo ? (
           <VideoView player={player} style={styles.lightboxVideo} nativeControls contentFit="contain" />
@@ -197,7 +225,7 @@ const MessageBubble = React.memo(function MessageBubble({ msg, myUserId }: { msg
 
   if (msg.messageType === 'system_event') {
     return (
-      <View style={styles.systemMessage}>
+      <View style={[styles.systemMessage, { backgroundColor: tc.surface2 }]}>
         <Text style={[styles.systemText, { color: tc.textSub }]}>{msg.content}</Text>
       </View>
     );
@@ -218,20 +246,16 @@ const MessageBubble = React.memo(function MessageBubble({ msg, myUserId }: { msg
       : { borderRadius: 18, borderBottomLeftRadius: 4 };
     return (
       <View style={[styles.bubbleRow, isMine && styles.bubbleRowMine]}>
-        {!isMine && (
-          <View style={[styles.bubbleAvatar, { backgroundColor: tc.textSub }]}>
-            <Text style={styles.bubbleAvatarText}>
-              {(msg.sender?.firstName || '?').charAt(0).toUpperCase()}
-            </Text>
-          </View>
-        )}
+        {!isMine && <Avatar name={msg.sender?.firstName} size={28} />}
         <Pressable
           style={[
             styles.mediaThumbnail,
             mediaBorderStyle,
-            { borderColor: isMine ? 'rgba(255,255,255,0.25)' : tc.border },
+            { borderColor: isMine ? TOKENS.onMedia.border : tc.border },
           ]}
           onPress={() => setLightboxOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel={isVideo ? 'Ver video' : 'Ver imagen'}
         >
           {isVideo ? (
             <VideoBubble uri={msg.mediaUrl!} />
@@ -256,11 +280,11 @@ const MessageBubble = React.memo(function MessageBubble({ msg, myUserId }: { msg
       ) : msg.messageType === 'file' && msg.mediaUrl ? (
         <DocumentBubble msg={msg} isMine={isMine} />
       ) : (
-        <Text style={[styles.bubbleText, { color: isMine ? '#fff' : tc.text }, isMine && styles.bubbleTextMine]}>
+        <Text style={[styles.bubbleText, { color: isMine ? TOKENS.color.onPrimary : tc.text }]}>
           {msg.content}
         </Text>
       )}
-      <Text style={[styles.bubbleTime, { color: isMine ? 'rgba(255,255,255,0.7)' : tc.textSub }, isMine && styles.bubbleTimeMine]}>
+      <Text style={[styles.bubbleTime, { color: isMine ? TOKENS.color.onPrimarySub : tc.textSub }]}>
         {timestamp}
         {isMine && (
           <Text style={msg.isRead ? styles.statusRead : styles.statusSent}>
@@ -273,13 +297,7 @@ const MessageBubble = React.memo(function MessageBubble({ msg, myUserId }: { msg
 
   return (
     <View style={[styles.bubbleRow, isMine && styles.bubbleRowMine]}>
-      {!isMine && (
-        <View style={[styles.bubbleAvatar, { backgroundColor: tc.textSub }]}>
-          <Text style={styles.bubbleAvatarText}>
-            {(msg.sender?.firstName || '?').charAt(0).toUpperCase()}
-          </Text>
-        </View>
-      )}
+      {!isMine && <Avatar name={msg.sender?.firstName} size={28} />}
       {isMine ? (
         <LinearGradient colors={GRADIENTS.brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.bubble, styles.bubbleMine]}>
           {bubbleContent}
@@ -384,6 +402,8 @@ export default function ChatScreen() {
   const [input, setInput] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const [sending, setSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [socketReady, setSocketReady] = useState(socketService.isConnected);
@@ -424,10 +444,12 @@ export default function ChatScreen() {
       setConversation(conv);
       return conv.id;
     } catch {
+      setLoadFailed(true);
       return params.id;
     }
   }, [params.id]);
 
+  const busyRef = useRef(false);
   const pollBackoffRef = useRef(0);
 
   const loadMessages = useCallback(async (convId: string) => {
@@ -437,12 +459,14 @@ export default function ChatScreen() {
       hasMoreRef.current = hasMore;
       nextPageRef.current = 2;
       setMessages(latest);
+      setLoadFailed(false);
       await markAsRead(convId).catch(() => {});
     } catch (err: any) {
       if (err?.response?.status === 429) {
         pollBackoffRef.current = Date.now() + 60_000;
       }
       console.error('Error loading messages:', err);
+      setLoadFailed(true);
     }
   }, []);
 
@@ -511,6 +535,7 @@ export default function ChatScreen() {
     let active = true;
     const init = async () => {
       setLoading(true);
+      setLoadFailed(false);
       hasMoreRef.current = false;
       nextPageRef.current = 2;
       const id = await loadConversation();
@@ -523,7 +548,7 @@ export default function ChatScreen() {
     };
     init();
     return () => { active = false; };
-  }, [loadConversation, loadMessages]);
+  }, [loadConversation, loadMessages, reloadKey]);
 
   // Polling como fallback — solo activo cuando socket no está conectado
   useEffect(() => {
@@ -548,7 +573,7 @@ export default function ChatScreen() {
     try {
       const { granted } = await requestRecordingPermissionsAsync();
       if (!granted) {
-        Alert.alert('Permiso requerido', 'Necesitamos acceso al micrófono.');
+        alertPermissionDenied('Necesitamos acceso al micrófono para grabar mensajes de voz.');
         return;
       }
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
@@ -564,6 +589,7 @@ export default function ChatScreen() {
       }, 1000);
     } catch (err) {
       console.error('Error starting recording:', err);
+      toast.error('No se pudo iniciar la grabación', 'Intentá de nuevo');
     }
   }, [recorder]);
 
@@ -579,6 +605,10 @@ export default function ChatScreen() {
     try {
       await recorder.stop();
       await setAudioModeAsync({ allowsRecording: false });
+      if (duration < 1) {
+        toast.warning('Mensaje muy corto', 'Mantené presionado el micrófono para grabar');
+        return;
+      }
       const uri = recorder.uri;
       if (!uri) return;
       const convId = conversationRef.current?.id ?? convIdRef.current;
@@ -589,7 +619,7 @@ export default function ChatScreen() {
       updateLastMessage(convId, `🎤 Mensaje de voz (${formatDuration(duration * 1000)})`, profile?.id ?? '');
     } catch (err) {
       console.error('Error sending audio:', err);
-      Alert.alert('Error', 'No se pudo enviar el audio. Intentá de nuevo.');
+      toast.error('No se pudo enviar el audio', 'Intentá de nuevo');
     } finally {
       setSendingAudio(false);
       recordingDurationRef.current = 0;
@@ -623,21 +653,27 @@ export default function ChatScreen() {
   const handlePickMedia = useCallback(async () => {
     setShowAttachMenu(false);
     if (!conversation) return;
+    if (busyRef.current) return;
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería.');
+      alertPermissionDenied('Necesitamos acceso a tu galería para enviar fotos y videos.');
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images', 'videos'],
       quality: 0.4,
       allowsEditing: false,
-      videoMaxDuration: 60,
+      videoMaxDuration: MAX_VIDEO_SECONDS,
     });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
     const isVideo = asset.type === 'video';
+    if (isVideo && typeof asset.duration === 'number' && asset.duration > MAX_VIDEO_SECONDS * 1000) {
+      toast.warning('Video demasiado largo', `El máximo es de ${MAX_VIDEO_SECONDS} segundos.`);
+      return;
+    }
     const rawMime = isVideo ? 'video/mp4' : (asset.mimeType ?? 'image/jpeg');
+    busyRef.current = true;
     setSending(true);
     try {
       const { uri, mimeType } = await compressImage(asset.uri, rawMime);
@@ -646,8 +682,9 @@ export default function ChatScreen() {
       updateLastMessage(conversation.id, isVideo ? '🎥 Video' : '📷 Imagen', profile?.id ?? '');
     } catch (err) {
       console.error('Error sending media:', err);
-      Alert.alert('Error', 'No se pudo enviar el archivo.');
+      toast.error('No se pudo enviar el archivo', 'Revisá tu conexión e intentá de nuevo');
     } finally {
+      busyRef.current = false;
       setSending(false);
     }
   }, [conversation]);
@@ -656,19 +693,21 @@ export default function ChatScreen() {
   const launchCamera = useCallback(async (mediaTypes: ('images' | 'videos')[], isVideo: boolean) => {
     setShowAttachMenu(false);
     if (!conversation) return;
+    if (busyRef.current) return;
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu cámara.');
+      alertPermissionDenied('Necesitamos acceso a tu cámara para sacar fotos y grabar videos.');
       return;
     }
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes,
       quality: 0.4,
-      videoMaxDuration: 60,
+      videoMaxDuration: MAX_VIDEO_SECONDS,
     });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
     const rawMime = isVideo ? 'video/mp4' : (asset.mimeType ?? 'image/jpeg');
+    busyRef.current = true;
     setSending(true);
     try {
       const { uri, mimeType } = await compressImage(asset.uri, rawMime);
@@ -677,8 +716,9 @@ export default function ChatScreen() {
       updateLastMessage(conversation.id, isVideo ? '🎥 Video' : '📷 Foto', profile?.id ?? '');
     } catch (err) {
       console.error('Error sending camera media:', err);
-      Alert.alert('Error', 'No se pudo enviar el archivo.');
+      toast.error('No se pudo enviar el archivo', 'Revisá tu conexión e intentá de nuevo');
     } finally {
+      busyRef.current = false;
       setSending(false);
     }
   }, [conversation]);
@@ -689,7 +729,7 @@ export default function ChatScreen() {
   // ── Documento ────────────────────────────────────────────────────────────
   const handlePickDocument = useCallback(async () => {
     setShowAttachMenu(false);
-    if (!conversation) return;
+    if (!conversation || busyRef.current) return;
     const result = await DocumentPicker.getDocumentAsync({
       type: [
         'application/pdf',
@@ -702,6 +742,7 @@ export default function ChatScreen() {
     });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
+    busyRef.current = true;
     setSending(true);
     try {
       const newMsg = await sendMedia(conversation.id, asset.uri, asset.mimeType ?? 'application/pdf');
@@ -709,8 +750,9 @@ export default function ChatScreen() {
       updateLastMessage(conversation.id, '📎 Documento', profile?.id ?? '');
     } catch (err) {
       console.error('Error sending document:', err);
-      Alert.alert('Error', 'No se pudo enviar el documento.');
+      toast.error('No se pudo enviar el documento', 'Revisá tu conexión e intentá de nuevo');
     } finally {
+      busyRef.current = false;
       setSending(false);
     }
   }, [conversation]);
@@ -718,7 +760,12 @@ export default function ChatScreen() {
   // ── Texto ────────────────────────────────────────────────────────────────
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || !conversation) return;
+    if (!text || busyRef.current) return;
+    if (!conversation) {
+      toast.error('El chat todavía no está disponible', 'Esperá un momento o reintentá cargarlo');
+      return;
+    }
+    busyRef.current = true;
     setInput('');
     setSending(true);
     cancelTyping();
@@ -730,6 +777,7 @@ export default function ChatScreen() {
       setInput(text);
       toast.error('No se pudo enviar', 'Revisá tu conexión e intentá de nuevo');
     } finally {
+      busyRef.current = false;
       setSending(false);
     }
   };
@@ -804,28 +852,31 @@ export default function ChatScreen() {
     >
       <AnimatedBackground variant="minimal" />
       {/* Header */}
-      <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={[styles.header, { borderBottomColor: tc.divider }]}>
-        <Pressable onPress={() => safeBack(router, '/(tabs)/chat')} hitSlop={12} style={[styles.backButton, { backgroundColor: tc.surface }]}>
+      <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={[styles.header, { borderBottomColor: tc.divider, paddingTop: insets.top + 12 }]}>
+        <Pressable
+          onPress={() => safeBack(router, '/(tabs)/chat')}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Volver"
+          style={[styles.backButton, { backgroundColor: tc.surface }]}
+        >
           <MaterialIcons name="arrow-back" size={24} color={tc.text} />
         </Pressable>
         <View style={styles.headerInfo}>
-          {other?.avatarUrl ? (
-            <Image source={{ uri: other.avatarUrl }} style={styles.headerAvatar} />
-          ) : (
-            <LinearGradient colors={GRADIENTS.brand} style={styles.headerAvatarPlaceholder}>
-              <Text style={styles.headerAvatarText}>
-                {(other?.firstName || '?').charAt(0).toUpperCase()}
-              </Text>
-            </LinearGradient>
-          )}
+          <Avatar uri={other?.avatarUrl} name={otherName} size={40} />
           <View>
             <Text style={[styles.headerName, { color: tc.text }]} numberOfLines={1}>{otherName}</Text>
           </View>
         </View>
         {conversation?.orderId && (
-          <View style={[styles.headerOrderBtn, { backgroundColor: tc.accent }]}>
+          <Pressable
+            onPress={() => router.push({ pathname: '/orders/[id]', params: { id: conversation.orderId } })}
+            accessibilityRole="button"
+            accessibilityLabel="Ver la orden"
+            style={[styles.headerOrderBtn, { backgroundColor: tc.accent }]}
+          >
             <MaterialIcons name="description" size={19} color={TOKENS.color.signal} />
-          </View>
+          </Pressable>
         )}
       </BlurView>
 
@@ -834,6 +885,8 @@ export default function ChatScreen() {
         <Pressable
           style={[styles.orderBar, { backgroundColor: tc.accent, borderBottomColor: tc.border }]}
           onPress={() => router.push({ pathname: '/orders/[id]', params: { id: conversation.orderId } })}
+          accessibilityRole="button"
+          accessibilityLabel={`Ver la orden: ${order.service?.title ?? order.title}`}
         >
           <MaterialIcons name="work-outline" size={16} color={TOKENS.color.signal} />
           <View style={styles.orderBarText}>
@@ -846,6 +899,13 @@ export default function ChatScreen() {
           </View>
           <MaterialIcons name="chevron-right" size={18} color={TOKENS.color.signal} />
         </Pressable>
+      )}
+
+      {/* Sin conexión en tiempo real: los mensajes llegan por polling */}
+      {!socketReady && !!convId && (
+        <NoticeBanner variant="pending" icon="cloud-offline-outline" style={styles.offlineBanner}>
+          Sin conexión en tiempo real. Los mensajes nuevos pueden tardar en aparecer.
+        </NoticeBanner>
       )}
 
       {/* Mensajes */}
@@ -866,6 +926,23 @@ export default function ChatScreen() {
         onEndReachedThreshold={0.2}
         ListFooterComponent={loadingMore ? <ActivityIndicator color={TOKENS.color.signal} style={{ padding: 12 }} /> : null}
         ListEmptyComponent={
+          loadFailed ? (
+            <View style={[styles.emptyChat, { transform: [{ scaleY: -1 }] }]}>
+              <View style={[styles.emptyChatIconWrap, { backgroundColor: tc.accent }]}>
+                <MaterialIcons name="cloud-off" size={34} color={TOKENS.color.signal} />
+              </View>
+              <Text style={[styles.emptyChatText, { color: tc.text }]}>No pudimos cargar el chat</Text>
+              <Text style={[styles.emptyChatSubtext, { color: tc.textSub }]}>Revisá tu conexión e intentá de nuevo</Text>
+              <Pressable
+                onPress={() => setReloadKey(k => k + 1)}
+                accessibilityRole="button"
+                accessibilityLabel="Reintentar cargar el chat"
+                style={[styles.quickReplyChip, { backgroundColor: tc.surface2, borderColor: tc.border }]}
+              >
+                <Text style={[styles.quickReplyText, { color: tc.text }]}>Reintentar</Text>
+              </Pressable>
+            </View>
+          ) : (
           <View style={[styles.emptyChat, { transform: [{ scaleY: -1 }] }]}>
             <View style={[styles.emptyChatIconWrap, { backgroundColor: tc.accent }]}>
               <MaterialIcons name="forum" size={34} color={TOKENS.color.signal} />
@@ -878,12 +955,15 @@ export default function ChatScreen() {
                   key={reply}
                   style={[styles.quickReplyChip, { backgroundColor: tc.surface2, borderColor: tc.border }]}
                   onPress={() => setInput(reply)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Usar respuesta rápida: ${reply}`}
                 >
                   <Text style={[styles.quickReplyText, { color: tc.text }]}>{reply}</Text>
                 </Pressable>
               ))}
             </View>
           </View>
+          )
         }
         style={styles.messagesList}
       />
@@ -893,27 +973,27 @@ export default function ChatScreen() {
       {/* Menú de adjuntar */}
       {showAttachMenu && (
         <View style={[styles.attachMenu, { backgroundColor: tc.surface, borderTopColor: tc.divider }]}>
-          <Pressable onPress={handleCameraPhoto} style={styles.attachOption}>
+          <Pressable onPress={handleCameraPhoto} style={styles.attachOption} accessibilityRole="button" accessibilityLabel="Sacar una foto">
             <LinearGradient colors={GRADIENTS.brand} style={styles.attachIcon}>
-              <MaterialIcons name="camera-alt" size={20} color="#fff" />
+              <MaterialIcons name="camera-alt" size={20} color={TOKENS.color.onPrimary} />
             </LinearGradient>
             <Text style={[styles.attachOptionText, { color: tc.textSub }]}>Foto</Text>
           </Pressable>
-          <Pressable onPress={handleCameraVideo} style={styles.attachOption}>
+          <Pressable onPress={handleCameraVideo} style={styles.attachOption} accessibilityRole="button" accessibilityLabel="Grabar un video">
             <LinearGradient colors={GRADIENTS.brand} style={styles.attachIcon}>
-              <MaterialIcons name="videocam" size={20} color="#fff" />
+              <MaterialIcons name="videocam" size={20} color={TOKENS.color.onPrimary} />
             </LinearGradient>
             <Text style={[styles.attachOptionText, { color: tc.textSub }]}>Video</Text>
           </Pressable>
-          <Pressable onPress={handlePickMedia} style={styles.attachOption}>
+          <Pressable onPress={handlePickMedia} style={styles.attachOption} accessibilityRole="button" accessibilityLabel="Elegir de la galería">
             <LinearGradient colors={GRADIENTS.brand} style={styles.attachIcon}>
-              <MaterialIcons name="photo-library" size={20} color="#fff" />
+              <MaterialIcons name="photo-library" size={20} color={TOKENS.color.onPrimary} />
             </LinearGradient>
             <Text style={[styles.attachOptionText, { color: tc.textSub }]}>Galería</Text>
           </Pressable>
-          <Pressable onPress={handlePickDocument} style={styles.attachOption}>
+          <Pressable onPress={handlePickDocument} style={styles.attachOption} accessibilityRole="button" accessibilityLabel="Adjuntar un documento">
             <LinearGradient colors={GRADIENTS.brand} style={styles.attachIcon}>
-              <MaterialIcons name="insert-drive-file" size={20} color="#fff" />
+              <MaterialIcons name="insert-drive-file" size={20} color={TOKENS.color.onPrimary} />
             </LinearGradient>
             <Text style={[styles.attachOptionText, { color: tc.textSub }]}>Documento</Text>
           </Pressable>
@@ -928,13 +1008,15 @@ export default function ChatScreen() {
         ]}>
           {/* Botón izquierdo */}
           {isRecording || recordingLocked ? (
-            <Pressable onPress={cancelRecording} hitSlop={8} style={styles.leftBtn}>
-              <MaterialIcons name="delete" size={22} color="#dc2626" />
+            <Pressable onPress={cancelRecording} hitSlop={8} style={styles.leftBtn} accessibilityRole="button" accessibilityLabel="Descartar grabación">
+              <MaterialIcons name="delete" size={22} color={TOKENS.color.error} />
             </Pressable>
           ) : (
             <Pressable
               onPress={() => setShowAttachMenu(v => !v)}
               hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={showAttachMenu ? 'Cerrar adjuntos' : 'Adjuntar archivo'}
               style={({ pressed }) => [styles.leftBtn, pressed && { opacity: 0.6 }]}
             >
               <MaterialIcons name={showAttachMenu ? 'close' : 'attach-file'} size={22} color={tc.textSub} />
@@ -953,6 +1035,7 @@ export default function ChatScreen() {
               onChangeText={handleInputChange}
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
+              accessibilityLabel="Mensaje"
               placeholder="Escribí un mensaje..."
               placeholderTextColor={tc.textSub}
               multiline
@@ -964,25 +1047,31 @@ export default function ChatScreen() {
           {/* Botón derecho */}
           {recordingLocked ? (
             // Modo bloqueado: checkmark verde para enviar
-            <Pressable onPress={stopRecording} style={[styles.rightBtn, styles.rightBtnSend]}>
-              <MaterialIcons name="check" size={22} color="#fff" />
+            <Pressable onPress={stopRecording} style={[styles.rightBtn, styles.rightBtnSend]} accessibilityRole="button" accessibilityLabel="Enviar mensaje de voz">
+              <MaterialIcons name="check" size={22} color={TOKENS.color.onPrimary} />
             </Pressable>
           ) : !isRecording && !showMicButton ? (
             // Tiene texto: enviar
             <Pressable
               onPress={handleSend}
               disabled={!input.trim() || sending}
+              accessibilityRole="button"
+              accessibilityLabel="Enviar mensaje"
+              accessibilityState={{ disabled: !input.trim() || sending }}
               style={[styles.rightBtn, (!input.trim() || sending) && { backgroundColor: tc.surface2 }]}
             >
               {!!input.trim() && !sending && (
                 <LinearGradient colors={GRADIENTS.brand} style={styles.rightBtnGradient} />
               )}
-              {sending ? <ActivityIndicator color="#fff" size="small" /> : <MaterialIcons name="send" size={20} color="#fff" />}
+              {sending ? <ActivityIndicator color={TOKENS.color.onPrimary} size="small" /> : <MaterialIcons name="send" size={20} color={TOKENS.color.onPrimary} />}
             </Pressable>
           ) : (
             // Micrófono: View con responder para gesture de slide
             <View
               style={[styles.rightBtn, isRecording && styles.rightBtnRecording]}
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel="Mantené presionado para grabar un mensaje de voz"
               onStartShouldSetResponder={() => true}
               onMoveShouldSetResponder={() => true}
               onResponderGrant={(e) => {
@@ -1018,7 +1107,7 @@ export default function ChatScreen() {
               }}
             >
               {!isRecording && <LinearGradient colors={GRADIENTS.brand} style={styles.rightBtnGradient} />}
-              <MaterialIcons name="mic" size={20} color="#fff" />
+              <MaterialIcons name="mic" size={20} color={TOKENS.color.onPrimary} />
             </View>
           )}
         </View>
@@ -1033,7 +1122,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 60,
     paddingBottom: 12,
     paddingHorizontal: 16,
     gap: 12,
@@ -1042,12 +1130,6 @@ const styles = StyleSheet.create({
   },
   backButton: { padding: 6, borderRadius: 10 },
   headerInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  headerAvatar: { width: 40, height: 40, borderRadius: 20 },
-  headerAvatarPlaceholder: {
-    width: 40, height: 40, borderRadius: 20,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  headerAvatarText: { fontSize: 16, fontWeight: '700', fontFamily: FONT_FAMILY.display, color: '#fff' },
   headerName: { fontSize: 16, fontWeight: '700', fontFamily: FONT_FAMILY.heading },
   headerOrder: { fontSize: 12, marginTop: 1 },
   headerOrderBtn: {
@@ -1069,18 +1151,12 @@ const styles = StyleSheet.create({
   messagesContent: { paddingHorizontal: 16, paddingVertical: 16, gap: 8, flexGrow: 1 },
   systemMessage: {
     alignSelf: 'center',
-    backgroundColor: 'rgba(0,0,0,0.06)',
     paddingHorizontal: 12, paddingVertical: 6,
     borderRadius: 10, marginVertical: 4,
   },
   systemText: { fontSize: 12, textAlign: 'center' },
   bubbleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginBottom: 4 },
   bubbleRowMine: { flexDirection: 'row-reverse' },
-  bubbleAvatar: {
-    width: 28, height: 28, borderRadius: 14,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  bubbleAvatarText: { fontSize: 11, fontWeight: '700', color: '#fff' },
   bubble: { maxWidth: '75%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, gap: 4 },
   bubbleMine: {
     borderBottomRightRadius: 4,
@@ -1097,30 +1173,28 @@ const styles = StyleSheet.create({
   mediaThumbnail: {
     width: 220, height: 165,
     overflow: 'hidden',
-    backgroundColor: '#111',
+    backgroundColor: TOKENS.onMedia.canvas,
     borderWidth: 1,
   },
   mediaTimestampOverlay: {
     position: 'absolute', bottom: 6, right: 8,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: TOKENS.scrim.medium,
     paddingHorizontal: 5, paddingVertical: 2,
     borderRadius: 8,
   },
-  mediaTimestampText: { color: '#fff', fontSize: 10 },
+  mediaTimestampText: { color: TOKENS.onMedia.text, fontSize: 10 },
   bubbleImage: { width: 220, height: 165 },
-  bubbleVideo: { width: 220, height: 165, backgroundColor: '#000' },
+  bubbleVideo: { width: 220, height: 165, backgroundColor: TOKENS.onMedia.canvas },
   bubbleText: { fontSize: 15, lineHeight: 20 },
-  bubbleTextMine: { color: '#fff' },
   bubbleTime: { fontSize: 10, alignSelf: 'flex-end' },
-  bubbleTimeMine: { color: 'rgba(255,255,255,0.7)' },
   lightboxBackdrop: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.95)',
+    flex: 1, backgroundColor: TOKENS.scrim.heavy,
     alignItems: 'center', justifyContent: 'center',
   },
   lightboxClose: {
     position: 'absolute', top: 48, right: 20,
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: TOKENS.onMedia.fill,
     alignItems: 'center', justifyContent: 'center',
     zIndex: 10,
   },
@@ -1184,8 +1258,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   rightBtnGradient: { ...StyleSheet.absoluteFillObject },
-  rightBtnRecording: { backgroundColor: '#dc2626' },
-  rightBtnSend: { backgroundColor: '#22c55e' },
+  rightBtnRecording: { backgroundColor: TOKENS.color.error },
+  rightBtnSend: { backgroundColor: TOKENS.color.mint },
   rightBtnDisabled: {},
   rightBtnPressed: { opacity: 0.85, transform: [{ scale: 0.95 }] },
   // Recording
@@ -1221,7 +1295,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    shadowColor: '#000',
+    shadowColor: TOKENS.color.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -1232,6 +1306,7 @@ const styles = StyleSheet.create({
     height: 7,
     borderRadius: 4,
   },
-  statusSent: { color: 'rgba(255,255,255,0.7)' },
-  statusRead: { color: 'rgba(0,229,160,0.85)' },
+  statusSent: { color: TOKENS.color.onPrimarySub },
+  statusRead: { color: TOKENS.color.mint },
+  offlineBanner: { marginHorizontal: 12, marginTop: 8 },
 });
