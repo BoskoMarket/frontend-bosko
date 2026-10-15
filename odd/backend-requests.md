@@ -275,3 +275,42 @@ Un job elimina definitivamente las cuentas con `deletionScheduledAt` vencido. **
 - El `409 ACTIVE_ORDERS` vuelve a cargar las órdenes y muestra el bloqueo. Los usuarios con `authProvider: 'google'` ven "Confirmar con Google".
 - Archivos: `src/features/profile/screens/DeleteAccountScreen.tsx`, `src/features/profile/utils/deleteAccountRules.ts`, `src/features/profile/services/profile.ts`, `src/features/auth/state/AuthContext.tsx`, `__tests__/deleteAccount.test.tsx`.
 - **Al desplegar:** probar con una orden activa, sin órdenes, con una cuenta de Google, y volver a iniciar sesión dentro de los 30 días; luego pasar este pedido a ✅.
+
+---
+
+## BR06 — Configuración remota de la app (versión mínima, mantenimiento y tiendas)
+
+**Estado:** ⬜ pendiente de backend · **Origen:** G111 (`odd/ux-gaps.md`) · **Frontend:** implementado (falla en silencio si el endpoint no existe)
+
+### Contexto
+
+La app consulta `GET /app/config` al arrancar para bloquear versiones viejas o mostrar mantenimiento. El endpoint **no existe todavía**: ante cualquier error la app sigue normal (nunca se bloquea por falta del endpoint). Además, el botón "Actualizar ahora" en iOS abre una búsqueda en la App Store porque la app no conoce el enlace de su ficha.
+
+### 1. Leer la configuración
+
+- **Método y ruta:** `GET /app/config`
+- **Auth:** pública (se consulta antes de iniciar sesión).
+- **Respuesta `200`:**
+
+```json
+{
+  "minVersion": "1.2.0",
+  "maintenanceMode": false,
+  "maintenanceMessage": "Volvemos en unos minutos.",
+  "storeUrls": {
+    "ios": "https://apps.apple.com/app/id0000000000",
+    "android": "market://details?id=com.boskoapp.mobile"
+  }
+}
+```
+
+- `minVersion`: formato `x.y.z`; por debajo de esa versión la app muestra "Actualización requerida".
+- `maintenanceMode` + `maintenanceMessage`: bloquea la app con ese texto.
+- `storeUrls` (nuevo): enlaces de la ficha en cada tienda; si faltan, la app usa el enlace actual.
+- Todos los campos son opcionales; la respuesta debe poder cambiarse sin publicar una versión nueva.
+
+### Estado del frontend
+
+- Archivos: `src/features/appConfig/services/appConfig.service.ts`, `src/features/appConfig/hooks/useAppGate.ts`, `src/features/appConfig/screens/AppGateScreen.tsx`.
+- **Pendiente en frontend:** leer `storeUrls` y agregar "Reintentar" en mantenimiento; se hace cuando el endpoint exista.
+- **Al desplegar:** probar con `minVersion` mayor a la instalada, con `maintenanceMode: true` y sin el endpoint (404); luego pasar este pedido a ✅.
