@@ -15,6 +15,8 @@ Regla: lo que es claramente correcto y no inventa reglas de negocio se implement
 
 Commits de referencia (rama `feat/ds-t9-profile`): `79ad4e0` editor único · `8bbbb06` motivo de rechazo · `a5d10d7` DS (dangerOutline / pending) · `34e36a7` ScreenHeader · `3bc12a0` perfil · `6e6599f` usuarios · `4d4b69a` fixes.
 
+Commits de referencia T10 (rama `feat/ds-t10-chat-reels`): `55a83b4` tokens de DS · `a255c83` chat · `e0347d0` reels · `8ec52a1` tests.
+
 ## Perfil (`features/profile`)
 
 | ID | Flujo | Pantalla (archivo · símbolo) | Qué falta | Por qué importa | Propuesta de arreglo | Tipo | Estado | Origen |
@@ -92,6 +94,50 @@ Commits de referencia (rama `feat/ds-t9-profile`): `79ad4e0` editor único · `8
 | G51 | Antecedentes (admin) | `AdminBackgroundCheckScreen` | Aprobar/rechazar no da feedback de éxito (la tarjeta desaparece) y los errores son "No se pudo aprobar/rechazar". | No hay certeza de qué se resolvió ni por qué falló. | Toast de éxito y mensaje de error del backend. | feedback | ⬜ | T8 |
 | G52 | Rol proveedor | `ProfileScreen` · rol | Tras una aprobación, el rol parece actualizarse solo al refrescar o reabrir (no verificado en dispositivo). | El usuario aprobado sigue viendo "Estás camino a ser prestador". | Refrescar rol al enfocar la pantalla o por push. | estado-faltante | ⬜ | T9 |
 
+## Chat (hallazgos de T10: `features/chat`)
+
+| ID | Flujo | Pantalla | Qué falta | Por qué importa | Propuesta de arreglo | Tipo | Estado | Origen |
+|---|---|---|---|---|---|---|---|---|
+| G56 | Chat | `ChatScreen` · carga | Si fallaba cargar la conversación o los mensajes, se mostraba "Conversación iniciada" (como un chat nuevo) y no había forma de reintentar. | El usuario cree que perdió el historial o que el chat está vacío. | Estado de error con botón "Reintentar". | estado-faltante | ✅ `a255c83` | T10 |
+| G57 | Chat | `ChatScreen` · tiempo real | Sin indicador cuando el socket está caído (la app sigue con polling cada 10 s). | Los mensajes tardan en llegar y no se explica por qué. | Banner "Sin conexión en tiempo real…" mientras `socketReady` sea falso. | estado-faltante | ✅ `a255c83` | T10 |
+| G58 | Chat | `ChatScreen` · `handleSend` y adjuntos | Sin guarda de doble envío en texto ni en medios/documentos; si la conversación no estaba cargada, "Enviar" no hacía nada y no avisaba. | Mensajes duplicados con conexión lenta; toque sin respuesta. | Guarda con ref + aviso (toast) si el chat no está disponible. | validacion | ✅ `a255c83` | T10 |
+| G59 | Chat | `ChatScreen` · cámara, galería, micrófono | Con el permiso denegado solo salía "Necesitamos acceso…" sin salida. | El usuario no sabe cómo habilitarlo. | Diálogo con "Abrir ajustes" (`Linking.openSettings`). | feedback | ✅ `a255c83` | T10 |
+| G60 | Chat | `ChatScreen` · `handlePickMedia` | El límite de 60 s de video se pasa al selector, pero un video más largo de la galería no avisaba nada. | El usuario no entiende por qué no se envía. | Validar `asset.duration` y mostrar aviso. | feedback | ✅ `a255c83` | T10 |
+| G61 | Chat | `ChatScreen` · mensaje de voz | Un toque corto en el micrófono enviaba un audio vacío; si fallaba iniciar la grabación, el error se tragaba en silencio. | Mensajes vacíos al otro lado; el micrófono "no responde". | Descartar grabaciones de menos de 1 s con aviso; toast en error. | validacion | ✅ `a255c83` | T10 |
+| G62 | Chat | `ChatScreen` · fallos de envío | Los errores al enviar imagen, video, documento o audio usaban `Alert` bloqueante y genérico. | Interrumpe la conversación; sin pista sobre qué hacer. | Toast no bloqueante con "Revisá tu conexión e intentá de nuevo". | feedback | ✅ `a255c83` | T10 |
+| G63 | Chat | `ChatScreen` · burbuja | El mensaje no aparece hasta que el servidor responde: no hay estado "enviando" ni "no enviado — reintentar" por mensaje. En texto el contenido vuelve al input; en medios se pierde. | Con mala señal el usuario no sabe si salió el mensaje y puede perder el archivo. | Mensaje optimista con estados enviando / fallido + botón reintentar por burbuja. | estado-faltante | ⬜ | T10 |
+| G64 | Chat | `ChatScreen` · adjuntos | Sin progreso de subida ni forma de cancelar (solo un spinner en el botón de enviar). | Videos de hasta 60 s pueden tardar; no se puede abortar. | `onUploadProgress` en `sendMedia` + barra y cancelar. | estado-faltante | ⬜ | T10 |
+| G65 | Chat | `ChatScreen`, `ConversationsListScreen` | Botones solo-ícono sin `accessibilityLabel`: volver, adjuntar, enviar, micrófono, descartar, cerrar visor, play de audio, respuestas rápidas, filas de conversación. | Lector de pantalla anuncia "botón" sin nombre. | `accessibilityRole` + etiqueta (la fila incluye nombre y no leídos). | accesibilidad | ✅ `a255c83` | T10 |
+| G66 | Chat | `ChatScreen` · cabecera | El ícono de orden en la cabecera parecía un botón pero no hacía nada. | Toque sin respuesta. | Navegar a la orden (igual que la barra de contexto). | navegacion | ✅ `a255c83` | T10 |
+| G67 | Chat | `ChatScreen` · cabecera | El relleno superior estaba fijo en 60 px sin considerar el área segura. | Cabecera cortada o con exceso de espacio según el dispositivo. | `insets.top` del área segura. | estado-faltante | ✅ `a255c83` | T10 |
+| G68 | Chat | `ChatScreen` · orden vinculada | No se define qué pasa con el chat cuando la orden pasa a completada, cancelada o en disputa (hoy se puede seguir escribiendo). | Conversaciones abiertas indefinidamente o mensajes a una orden ya cerrada. | ¿Se bloquea el envío, se pasa a solo lectura o se archiva tras N días? Aviso en el chat según estado. | flujo-faltante | ❔ | T10 |
+| G69 | Chat | `ChatScreen` | No hay forma de reportar ni bloquear al otro usuario. | Sin recurso ante acoso o spam dentro de una orden. | ¿Se agrega "Reportar / Bloquear" en la cabecera? ¿Qué ve el usuario bloqueado y qué pasa con la orden activa? | seguridad | ❔ | T10 |
+| G70 | Chat | `ChatScreen` · adjuntos | No hay límite de tamaño ni de cantidad definido; los documentos se restringen a PDF y Office. | Subidas que fallan sin explicación o archivos pesados. | Confirmar tamaño máximo por tipo y mostrarlo antes de enviar. | validacion | ❔ | T10 |
+| G71 | Chat | `ChatScreen` | No hay moderación ni aviso sobre compartir teléfonos o enlaces para sacar la operación de la plataforma. | Riesgo para el pago protegido y la confianza. | ¿Se filtra o advierte? ¿Qué se registra para soporte? | seguridad | ❔ | T10 |
+| G72 | Chat | `NotificationsScreen` · deep link | La notificación push abre `/chat/{orderId}` (en `app/_layout.tsx`), pero la lista de notificaciones navega a `/chat/{conversationId}`; la ruta espera el id de la orden. No verificado en dispositivo. | Tocar una notificación de chat podría abrir un chat vacío o con error. | Unificar el id (orden) en ambos puntos de entrada. | navegacion | ⬜ | T10 |
+| G73 | Chat | `ConversationsListScreen` | Si el refresco falla teniendo conversaciones cargadas, no se avisaba (solo se veía el error con lista vacía). | La lista parece actualizada y no lo está. | Aviso sobre la lista indicando cómo reintentar. | estado-faltante | ✅ `a255c83` | T10 |
+
+## Reels (hallazgos de T10: `features/reels`)
+
+| ID | Flujo | Pantalla | Qué falta | Por qué importa | Propuesta de arreglo | Tipo | Estado | Origen |
+|---|---|---|---|---|---|---|---|---|
+| G74 | Reels | `ReelsScreen` · feed | Si el feed fallaba la pantalla quedaba en el estado vacío "Sin reels todavía"; tampoco había pull-to-refresh. | Parece que no hay contenido, no que hubo un error. | Error con "Reintentar" + `RefreshControl`. | estado-faltante | ✅ `e0347d0` | T10 |
+| G75 | Reels | `ReelsScreen` · doble toque | El doble toque marcaba "me gusta" solo en pantalla: nunca llamaba al servidor. | El like desaparece al volver a abrir el reel. | Persistir con `toggleLikeReel` y revertir si falla. | flujo-faltante | ✅ `e0347d0` | T10 |
+| G76 | Reels | `ReelsScreen` · video | Si un video no carga, queda el spinner o la pantalla negra sin explicación. | El usuario no puede recuperarlo sin salir del feed. | Estado "No se pudo cargar el video" con toque para reintentar. | estado-faltante | ✅ `e0347d0` | T10 |
+| G77 | Reels | `CommentsSheet` | Error al cargar comentarios sin reintento; error al comentar con `Alert` genérico. | Se muestra "Sé el primero en comentar" aunque haya comentarios. | Estado de error con "Reintentar" y toast con el motivo. | estado-faltante | ✅ `e0347d0` | T10 |
+| G78 | Reels | `ReelsScreen` · barra lateral | Me gusta, comentarios, compartir, cotizar, más opciones, silenciar y seguir sin `accessibilityLabel`. | El lector de pantalla no puede operar el feed. | Etiquetas por acción (el like indica el estado). | accesibilidad | ✅ `e0347d0` | T10 |
+| G79 | Reels | `ReelsScreen` · barra superior | La lupa no tenía acción. | Toque sin respuesta. | Navegar a `/search`. | navegacion | ✅ `e0347d0` | T10 |
+| G80 | Reels | `ReelsScreen` · "Reportar" | El reporte confirmaba con `Alert`; el éxito/error no usaba el toast común. | Inconsistente con el resto de la app. | Toast de éxito y de error. | feedback | ✅ `e0347d0` | T10 |
+| G81 | Reels | `MyReelsScreen` | Sin estado de error con reintento al cargar; lista vacía sin acción; eliminar y errores sin toast. | Callejón sin salida para el prestador. | Error con "Reintentar", CTA "Publicar un reel", toasts de éxito/error. | estado-faltante | ✅ `e0347d0` | T10 |
+| G82 | Reels | `ReelUploadScreen` | Publicar no daba feedback de éxito (solo volvía atrás). | No se sabe si el reel quedó publicado. | Toast "Reel publicado". | feedback | ✅ `e0347d0` | T10 |
+| G83 | Reels | `ReelsScreen` · pestañas | "Siguiendo" cambia el subrayado pero el feed no cambia. | La pestaña aparenta una función que no existe. | ¿Existe un feed de seguidos en el backend? Si no, ocultar la pestaña. | flujo-faltante | ❔ | T10 |
+| G84 | Reels | `ReelsScreen` · reproducción | Reproduce automáticamente (silenciado) sin importar la red. | Consumo de datos móviles no esperado. | ¿Se ofrece "Solo Wi-Fi" / ahorro de datos? ¿Se recuerda la preferencia de sonido? | flujo-faltante | ❔ | T10 |
+| G85 | Reels | `ReelsScreen` · "No me interesa" | La acción solo oculta el reel en memoria; al refrescar reaparece. | El usuario repite la acción y no mejora el feed. | ¿El backend registra la preferencia? | flujo-faltante | ❔ | T10 |
+| G86 | Reels | `ReelsScreen` · bloquear | Se puede reportar un reel pero no bloquear al prestador. | Sin recurso ante contenido molesto recurrente. | ¿Se agrega "Bloquear a este prestador"? | seguridad | ❔ | T10 |
+| G87 | Reels | `ReelUploadScreen` | Solo se puede publicar con un enlace HTTPS ya alojado; no hay carga desde la galería, ni progreso, ni límites de duración o tamaño. | Un prestador común no tiene dónde alojar un video. | ¿Existe un endpoint de subida? ¿Cuáles son la duración y el tamaño máximos? | flujo-faltante | ❔ | T10 |
+| G88 | Reels | Moderación | No se define si un reel se revisa antes de publicarse ni qué ve el prestador si se lo retira. | Contenido inapropiado visible o retirado sin explicación. | ¿Revisión previa o posterior? ¿Se notifica al prestador el motivo? | seguridad | ❔ | T10 |
+| G89 | Reels | `ReelsScreen` · compartir | Compartir envía el enlace al perfil del prestador, no al reel. | Quien recibe el enlace no ve el video compartido. | ¿Existe un enlace profundo por reel? | flujo-faltante | ❔ | T10 |
+
 ## Transversales
 
 | ID | Flujo | Pantalla | Qué falta | Por qué importa | Propuesta de arreglo | Tipo | Estado | Origen |
@@ -114,3 +160,9 @@ Commits de referencia (rama `feat/ds-t9-profile`): `79ad4e0` editor único · `8
 10. **Logout (G04):** ¿cerrar sesión desregistra las notificaciones push del dispositivo?
 11. **Re-autenticación (G55):** ¿qué cambios sensibles deben pedir contraseña o verificación reciente?
 12. **País (G26):** ¿la app opera solo en Argentina o necesita selector de país para teléfonos?
+13. **Chat y orden (G68):** cuando la orden se completa, cancela o entra en disputa, ¿el chat se bloquea, pasa a solo lectura o sigue abierto? ¿Por cuánto tiempo?
+14. **Reportar / bloquear (G69, G86):** ¿se necesita reportar y bloquear usuarios en chat y reels? ¿Qué pasa con una orden activa si se bloquea al otro usuario?
+15. **Subida de reels (G87):** hoy solo se publica con un enlace HTTPS. ¿Existe un endpoint de subida desde la galería y cuáles son los límites de duración y tamaño?
+16. **Pestaña "Siguiendo" (G83):** ¿el backend tiene un feed de seguidos? Si no, ¿se oculta la pestaña?
+17. **Datos móviles (G84):** ¿los reels se reproducen solos con datos móviles o se ofrece "Solo Wi-Fi"?
+18. **Archivos y moderación (G70, G71, G88):** ¿cuál es el tamaño máximo de adjuntos y se modera el contenido (teléfonos, enlaces, reels) antes o después de publicarse?
