@@ -20,8 +20,7 @@ import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from './state/ProfileContext';
 import { useProviderStatus } from '@/hooks/useProviderStatus';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
-import { getUserStats, UpdateProfilePayload, UserStats } from '@/features/profile/services/profile';
-import { EditProfileModal } from './components/EditProfileModal';
+import { getUserStats, UserStats } from '@/features/profile/services/profile';
 import {
   TOKENS,
   GRADIENTS,
@@ -34,7 +33,6 @@ import {
   ListRow,
   Skeleton,
   Text,
-  toast,
   useIsDark,
   useThemeColors,
   withAlpha,
@@ -203,13 +201,12 @@ export const ProfileScreen: React.FC = () => {
   const tc = useThemeColors();
   const isDark = useIsDark();
   const { logout } = useAuth();
-  const { profile, isLoading, error: profileError, refreshProfile, updateProfile } = useProfile();
+  const { profile, isLoading, error: profileError, refreshProfile } = useProfile();
   const { status: roleStatus, kycStatus, isLoading: roleLoading } = useProviderStatus();
   const { count: favCount } = useFavorites();
 
   const [stats, setStats]               = useState<UserStats | null>(null);
   const [statsFailed, setStatsFailed]   = useState(false);
-  const [editVisible, setEditVisible]   = useState(false);
   const [refreshing, setRefreshing]     = useState(false);
 
   // Entrance animations for 5 sections
@@ -251,15 +248,7 @@ export const ProfileScreen: React.FC = () => {
     setRefreshing(false);
   }, [refreshProfile, loadStats]);
 
-  const handleSave = async (data: UpdateProfilePayload) => {
-    try {
-      await updateProfile(data);
-      toast.success('Perfil actualizado');
-    } catch (err) {
-      toast.error('No se pudo guardar', 'Intenta de nuevo');
-      throw err;
-    }
-  };
+  const openEditProfile = useCallback(() => router.push('/(tabs)/profile/EditProfile'), []);
 
   const handleLogout = () => {
     Alert.alert('Cerrar sesión', '¿Querés cerrar sesión en este dispositivo?', [
@@ -356,7 +345,13 @@ export const ProfileScreen: React.FC = () => {
                 },
               ]}
             >
-              <Avatar uri={profile?.avatarUrl} name={profile?.firstName} size={AVATAR_SIZE} />
+              <Pressable
+                onPress={openEditProfile}
+                accessibilityRole="button"
+                accessibilityLabel="Cambiar foto de perfil"
+              >
+                <Avatar uri={profile?.avatarUrl} name={profile?.firstName} size={AVATAR_SIZE} />
+              </Pressable>
             </Animated.View>
           </View>
         </View>
@@ -410,7 +405,7 @@ export const ProfileScreen: React.FC = () => {
             size="sm"
             style={ss.editBtn}
             icon={<Ionicons name="pencil-outline" size={15} color={TOKENS.color.signal} />}
-            onPress={() => setEditVisible(true)}
+            onPress={openEditProfile}
           />
         </Animated.View>
 
@@ -580,7 +575,7 @@ export const ProfileScreen: React.FC = () => {
             <SettingsRow
               icon="person-outline"
               label="Editar Perfil"
-              onPress={() => setEditVisible(true)}
+              onPress={openEditProfile}
             />
             <Divider />
             {isPending && (
@@ -673,17 +668,6 @@ export const ProfileScreen: React.FC = () => {
 
       </ScrollView>
 
-      <EditProfileModal
-        visible={editVisible}
-        onClose={() => setEditVisible(false)}
-        onSave={handleSave}
-        initialData={{
-          firstName: profile?.firstName ?? '',
-          lastName:  profile?.lastName,
-          bio:       profile?.bio,
-          avatarUrl: profile?.avatarUrl,
-        }}
-      />
     </View>
   );
 };

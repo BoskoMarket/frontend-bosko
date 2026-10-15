@@ -181,6 +181,21 @@ describe.each(['dark', 'light'] as const)('profile screens (%s)', (mode) => {
   });
 });
 
+describe('profile editing is consolidated in EditProfileScreen', () => {
+  const repo = path.resolve(__dirname, '..');
+  const profileScreen = fs.readFileSync(path.join(repo, 'src/features/profile/ProfileScreen.tsx'), 'utf8');
+
+  it('removes the EditProfileModal', () => {
+    expect(fs.existsSync(path.join(repo, 'src/features/profile/components/EditProfileModal.tsx'))).toBe(false);
+    expect(profileScreen).not.toContain('EditProfileModal');
+  });
+
+  it('routes every ProfileScreen edit entry to the EditProfile route', () => {
+    expect(profileScreen).toContain("router.push('/(tabs)/profile/EditProfile')");
+    expect(fs.existsSync(path.join(repo, 'app/(tabs)/profile/EditProfile.tsx'))).toBe(true);
+  });
+});
+
 describe('profile and users have no hard-coded design literals', () => {
   const repo = path.resolve(__dirname, '..');
   const raw = /#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(|fontFamily\s*:\s*['"`]/;

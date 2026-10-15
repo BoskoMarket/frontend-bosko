@@ -1,5 +1,5 @@
 // Paleta "Premium" (dorado) — badges/CTAs/paneles de plan premium y proveedor
-// (PremiumButton, PremiumBanner, ProviderCTA, EditProfileModal, ServiceDetailModal…).
+// (PremiumButton, PremiumBanner, ProviderCTA, ServiceDetailModal…).
 // Sigue el tema como el resto de la UI: `PREMIUM_PALETTE.dark / .light`, consumida
 // con `usePremiumColors()` (mismo patrón que `useThemeColors()`).
 // - `gold`: dorado para texto/íconos, theme-aware (en light es un dorado oscuro con
