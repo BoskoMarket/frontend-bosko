@@ -207,8 +207,10 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 
 - 2026-10-15 seguimiento T10 ✅ `f0a9216` `560cfc6` `576217d`: **Portada** (G10, decisión del usuario: frontend contra endpoint propuesto): sección "Portada" en EditProfile (preview 3:1, cambiar/quitar con confirmación, 404/405/501 → "todavía no está disponible"); contrato BR01 en nuevo `odd/backend-requests.md`. **G72 confirmado y corregido**: lista de notificaciones abría `/chat/{conversationId}` (y antes la rama genérica `orderId` mandaba a `/orders/...`); ahora `getNotificationRoute` → `/chat/{data.orderId}`, sin `orderId` → `/(tabs)/chat`. ❔ backend debe confirmar que `new_message` trae `data.orderId`. **Decisión del usuario G68**: chat de orden completada/cancelada pasa a solo lectura con aviso "Orden finalizada" (opción B); disputa: pendiente de confirmar. Checks: 18 suites / 289 tests, `tsc` 0, `lint:ds` 37.
 
+- 2026-10-15 G68 ✅ `78430a8` `7f65807` `ed8adb4`: chat solo lectura para órdenes completadas/canceladas; en disputa sigue abierto con aviso `pending` (decisión del usuario). Regla única en `chat/constants/chatOrderRules.ts`, aviso `ChatOrderNotice`; estado vía `useOrder` ya existente (sin request extra), refetch al volver a la pantalla. Rechazo de envío solo con 409 `ORDER_CLOSED` (`ed8adb4` corrige versión que tomaba 403/422). Badge en lista listo pero depende de `orderStatus` en payload (BR02). Checks: 19 suites / 306 tests, `tsc` 0.
+
 ## Próximo paso
 
-0. G68: chat en solo lectura para órdenes finalizadas (+ BR02 backend: rechazar envío en órdenes finalizadas); confirmar comportamiento en disputa.
+0. Preguntas ❔ pendientes de `odd/ux-gaps.md` (siguiente: reportar/bloquear G69/G86).
 1. Responder las preguntas ❔ de `odd/ux-gaps.md` (de a una) e implementar las que queden definidas.
 2. T10: migrar `features/chat` + `features/reels` (ReelsScreen 67, ChatScreen 33, MyReels 10, ConversationsList 5) aplicando también el registro de faltantes UX. Antes: verificar en dispositivo (dark + light) T4–T9.
