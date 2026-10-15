@@ -176,3 +176,49 @@ Códigos estables, en inglés y en minúscula: `spam`, `inappropriate`, `harassm
 - Archivos: `src/core/design-system/components/ReportSheet.tsx`, `src/features/reports/` (motivos, servicio `reportUser`, `ReportFlow`, mapeo de errores, `canReport`), `reels.service.ts`, `review.service.ts`, `ChatScreen.tsx`, `ProviderProfileScreen.tsx`, `__tests__/reports.test.tsx`.
 - **Comportamiento hasta que se despliegue:** si `POST /users/:id/report` responde `404`, `405` o `501`, la app muestra "Los reportes todavía no están disponibles." y cierra la hoja. `409` muestra "Ya reportaste esto."; cualquier otro error, un aviso con posibilidad de reintentar. Nunca falla ni se cierra.
 - **Al desplegar:** verificar los cuatro puntos de entrada y pasar este pedido a ✅.
+
+---
+
+## BR04 — Subida de videos para reels
+
+**Estado:** ⬜ pendiente de backend · **Origen:** G87, G64 (`odd/ux-gaps.md`) · **Frontend:** implementado
+
+### Contexto
+
+Hoy un reel solo se puede publicar con un enlace HTTPS a un video ya alojado (`POST /reels` con `videoUrl`), algo que un prestador común no puede hacer. Decisión de producto: el prestador elige un video de su galería o lo graba con la cámara. Límites: **60 segundos** y **100 MB**.
+
+### 1. Subir el video (nuevo)
+
+`POST /reels/upload` — autenticado, rol prestador. `multipart/form-data`:
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| `video` | archivo | Obligatorio. `video/mp4` o `video/quicktime` (mov). Máx. 100 MB. |
+| `thumbnail` | archivo | Opcional. Imagen `jpeg`/`png`. |
+
+Respuesta `201`:
+
+```json
+{ "videoUrl": "https://cdn.…/reels/abc.mp4", "thumbnailUrl": "https://cdn.…/reels/abc.jpg", "duration": 42.5 }
+```
+
+- El servidor valida la **duración real** (≤ 60 s); el cliente solo la valida con lo que informa el selector.
+- Errores: `400` (archivo ausente, video corrupto o más largo de 60 s), `413` (más de 100 MB), `415` (formato no admitido).
+
+### 2. Crear el reel (existe)
+
+El cliente llama luego a `POST /reels` con `{ videoUrl, description, tags }`, sin cambios. Se eligió el flujo en dos pasos porque `createReel` ya recibe una URL y el enlace manual sigue funcionando.
+
+Alternativa válida: un único `POST /reels` multipart. Implicaría cambiar el contrato actual y dejar de aceptar `videoUrl`.
+
+### 3. Recomendación
+
+Para archivos de hasta 100 MB conviene una **URL prefirmada** (`POST /reels/upload-url` devuelve la URL de almacenamiento y el cliente sube directo): evita pasar el video por la API, admite reanudar y reduce timeouts. Si se adopta, el cliente solo cambia `uploadReelVideo`.
+
+### Estado del frontend
+
+- Implementado contra el contrato propuesto: elegir de la galería o grabar, vista previa, subida con porcentaje y cancelación, publicar bloqueado mientras sube, y el enlace HTTPS como opción avanzada.
+- Validación previa en el cliente: más de 60 s o más de 100 MB se rechaza con un aviso antes de subir. Si el tamaño no se conoce, lo resuelve el `413` del servidor.
+- **Comportamiento hasta que se despliegue:** `404`, `405` o `501` muestran "La subida de videos todavía no está disponible."; `413` indica el máximo de 100 MB; `400`/`415` piden un MP4 o MOV de hasta 60 s; un corte de red permite reintentar.
+- Archivos: `src/features/reels/services/reels.service.ts` (`uploadReelVideo`), `src/features/reels/constants/reelUploadRules.ts`, `src/features/reels/screens/ReelUploadScreen.tsx`, `__tests__/reelUpload.test.tsx`.
+- **Al desplegar:** probar desde la app con un video de 60 s, uno de 61 s y uno de más de 100 MB, y pasar este pedido a ✅.
