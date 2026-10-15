@@ -89,7 +89,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1.5,
     fontSize: 22,
-    fontWeight: '800',
-    fontFamily: FONT_FAMILY.heading,
+    fontFamily: FONT_FAMILY.display,
   },
 });
