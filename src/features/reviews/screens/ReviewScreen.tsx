@@ -3,18 +3,15 @@
  * POST /reviews con star rating + comentario.
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
-  Text,
-  TextInput,
   StyleSheet,
   ScrollView,
   Pressable,
   Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MotiView } from '@/core/components/MotiView';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,16 +19,28 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useCreateReview } from '@/hooks/mutations/useReviewMutations';
 import { extractApiError, getUserErrorMessage } from '@/lib/errors';
-import { TOKENS } from '@/core/design-system/tokens';
-import { Button } from '@/core/design-system';
-import { useThemeColors, useIsDark } from '@/stores/theme.store';
+import {
+  TOKENS,
+  GRADIENTS,
+  SPACING,
+  Badge,
+  Button,
+  Card,
+  Input,
+  ScreenHeader,
+  Text,
+  toast,
+  useThemeColors,
+  usePremiumColors,
+} from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const LABELS = ['Pésimo', 'Malo', 'Regular', 'Bueno', 'Excelente'];
+const MAX_COMMENT = 500;
 
 export default function ReviewScreen() {
   const tc = useThemeColors();
-  const isDark = useIsDark();
+  const pc = usePremiumColors();
   const insets = useSafeAreaInsets();
   const { orderId, providerName, serviceName } = useLocalSearchParams<{
     orderId: string;
@@ -40,6 +49,7 @@ export default function ReviewScreen() {
   }>();
 
   const { mutateAsync: createReview, isPending: submitting } = useCreateReview();
+  const inFlight = useRef(false);
 
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -48,16 +58,17 @@ export default function ReviewScreen() {
   const displayRating = hoverRating || rating;
 
   const handleSubmit = async () => {
+    if (inFlight.current) return;
     if (rating === 0) {
-      Alert.alert('Calificación requerida', 'Seleccioná una cantidad de estrellas.');
+      toast.warning('Calificación requerida', 'Seleccioná una cantidad de estrellas.');
       return;
     }
 
+    inFlight.current = true;
     try {
       await createReview({ orderId: orderId!, rating, comment: comment.trim() });
-      Alert.alert('¡Gracias!', 'Tu reseña ayuda a la comunidad.', [
-        { text: 'OK', onPress: () => safeBack(router, '/(tabs)/orders') },
-      ]);
+      toast.success('¡Gracias!', 'Tu reseña ayuda a la comunidad.');
+      safeBack(router, '/(tabs)/orders');
     } catch (err) {
       const { code } = extractApiError(err);
       if (code === 'ALREADY_REVIEWED') {
@@ -66,7 +77,9 @@ export default function ReviewScreen() {
         ]);
         return;
       }
-      Alert.alert('Error', getUserErrorMessage(err));
+      toast.error('No pudimos enviar tu reseña', getUserErrorMessage(err));
+    } finally {
+      inFlight.current = false;
     }
   };
 
@@ -86,9 +99,7 @@ export default function ReviewScreen() {
           transition={{ type: 'spring', damping: 16 }}
           style={styles.header}
         >
-          <Pressable onPress={() => safeBack(router, '/(tabs)/orders')} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
-            <MaterialIcons name="arrow-back" size={24} color={tc.text} />
-          </Pressable>
+          <ScreenHeader title="Calificar" onBack={() => safeBack(router, '/(tabs)/orders')} />
         </MotiView>
 
         {/* Icon */}
@@ -99,12 +110,12 @@ export default function ReviewScreen() {
           style={styles.iconWrap}
         >
           <LinearGradient
-            colors={[TOKENS.color.primary, TOKENS.color.primaryDark]}
+            colors={GRADIENTS.brandDeep}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.iconGrad}
           >
-            <MaterialIcons name="rate-review" size={40} color="#FFD700" />
+            <MaterialIcons name="rate-review" size={40} color={pc.goldFill} />
           </LinearGradient>
         </MotiView>
 
@@ -115,10 +126,10 @@ export default function ReviewScreen() {
           transition={{ type: 'timing', duration: 400, delay: 100 }}
           style={styles.titleSection}
         >
-          <Text style={[styles.title, { color: tc.text }]}>Calificá el servicio</Text>
-          {serviceName && <Text style={[styles.subtitle, { color: tc.textSub }]}>{serviceName}</Text>}
+          <Text variant="h3" color={tc.text}>Calificá el servicio</Text>
+          {serviceName && <Text variant="subtitle" color={tc.textSub}>{serviceName}</Text>}
           {providerName && (
-            <Text style={[styles.provider, { color: tc.textSub }]}>por {providerName}</Text>
+            <Text variant="body" color={tc.textSub}>por {providerName}</Text>
           )}
         </MotiView>
 
@@ -137,11 +148,14 @@ export default function ReviewScreen() {
                 onPressIn={() => setHoverRating(star)}
                 onPressOut={() => setHoverRating(0)}
                 hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel={`${star} ${star === 1 ? 'estrella' : 'estrellas'}: ${LABELS[star - 1]}`}
+                accessibilityState={{ selected: star === rating }}
               >
                 <MaterialIcons
                   name={star <= displayRating ? 'star' : 'star-outline'}
                   size={48}
-                  color={star <= displayRating ? '#FFD700' : tc.border}
+                  color={star <= displayRating ? TOKENS.color.rating : tc.border}
                   style={styles.star}
                 />
               </Pressable>
@@ -151,9 +165,8 @@ export default function ReviewScreen() {
             <MotiView
               from={{ opacity: 0, translateY: -8 }}
               animate={{ opacity: 1, translateY: 0 }}
-              style={styles.ratingLabel}
             >
-              <Text style={styles.ratingText}>{LABELS[displayRating - 1]}</Text>
+              <Badge label={LABELS[displayRating - 1]} tone="pending" />
             </MotiView>
           )}
         </MotiView>
@@ -165,20 +178,20 @@ export default function ReviewScreen() {
           transition={{ type: 'timing', duration: 400, delay: 300 }}
           style={styles.commentCard}
         >
-          <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={styles.commentBlur}>
-            <Text style={[styles.commentLabel, { color: tc.text }]}>Contanos tu experiencia</Text>
-            <TextInput
-              style={[styles.commentInput, { backgroundColor: tc.surface2, borderColor: tc.border, color: tc.text }]}
+          <Card radius="lg" padding="xl" contentStyle={styles.commentBody}>
+            <Input
+              label="Contanos tu experiencia"
               value={comment}
               onChangeText={setComment}
               placeholder="¿Qué te pareció el servicio? ¿Recomendarías al profesional?"
-              placeholderTextColor={tc.textMuted}
               multiline
-              maxLength={500}
+              maxLength={MAX_COMMENT}
               textAlignVertical="top"
             />
-            <Text style={styles.charCount}>{comment.length}/500</Text>
-          </BlurView>
+            <Text variant="caption" color={tc.textMuted} style={styles.charCount}>
+              {comment.length}/{MAX_COMMENT}
+            </Text>
+          </Card>
         </MotiView>
 
         {/* Submit */}
@@ -186,10 +199,11 @@ export default function ReviewScreen() {
           from={{ opacity: 0, translateY: 20 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ type: 'timing', duration: 400, delay: 400 }}
+          style={styles.submit}
         >
           <Button
             label="Enviar Reseña"
-            icon={<MaterialIcons name="send" size={18} color="#fff" />}
+            icon={<MaterialIcons name="send" size={18} color={TOKENS.color.onPrimary} />}
             onPress={handleSubmit}
             disabled={rating === 0}
             loading={submitting}
@@ -204,22 +218,16 @@ export default function ReviewScreen() {
 const styles = StyleSheet.create({
   bg: { flex: 1 },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 8,
+    paddingHorizontal: SPACING.xxl,
+    paddingTop: SPACING.sm,
     alignItems: 'center',
   },
   header: {
     width: '100%',
-    flexDirection: 'row',
-    marginBottom: 16,
-  },
-  backBtn: {
-    padding: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    marginBottom: SPACING.lg,
   },
   iconWrap: {
-    marginBottom: 20,
+    marginBottom: SPACING.xl,
   },
   iconGrad: {
     width: 80,
@@ -227,54 +235,18 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: TOKENS.color.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
+    ...TOKENS.shadow.button,
     elevation: 10,
   },
-  titleSection: { alignItems: 'center', marginBottom: 24, gap: 4 },
-  title: { fontSize: 24, fontWeight: '800', color: TOKENS.color.text },
-  subtitle: { fontSize: 16, color: TOKENS.color.sub, marginTop: 4 },
-  provider: { fontSize: 14, color: TOKENS.color.sub },
-  starsContainer: { alignItems: 'center', gap: 12, marginBottom: 28 },
-  starsRow: { flexDirection: 'row', gap: 4 },
+  titleSection: { alignItems: 'center', marginBottom: SPACING.xxl, gap: SPACING.xs },
+  starsContainer: { alignItems: 'center', gap: SPACING.md, marginBottom: 28 },
+  starsRow: { flexDirection: 'row', gap: SPACING.xs },
   star: { marginHorizontal: 2 },
-  ratingLabel: {
-    backgroundColor: 'rgba(255,215,0,0.15)',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  ratingText: { fontSize: 14, fontWeight: '700', color: '#92400e' },
   commentCard: {
     width: '100%',
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.85)',
-    marginBottom: 24,
+    marginBottom: SPACING.xxl,
   },
-  commentBlur: { padding: 20, gap: 10 },
-  commentLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: TOKENS.color.text,
-  },
-  commentInput: {
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 15,
-    color: TOKENS.color.text,
-    minHeight: 120,
-    borderWidth: 1.5,
-    borderColor: 'rgba(200,200,220,0.5)',
-  },
-  charCount: {
-    fontSize: 11,
-    color: 'rgba(107,107,107,0.5)',
-    alignSelf: 'flex-end',
-  },
+  commentBody: { gap: SPACING.sm },
+  charCount: { alignSelf: 'flex-end' },
+  submit: { width: '100%' },
 });
