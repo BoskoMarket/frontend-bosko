@@ -38,6 +38,7 @@ import {
   withAlpha,
 } from '@/core/design-system';
 import type { BadgeTone } from '@/core/design-system';
+import { ReelsAutoplayRow } from './components/ReelsAutoplayRow';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { openNotifications } from '@/stores/notificationsUI.store';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
@@ -645,6 +646,8 @@ export const ProfileScreen: React.FC = () => {
               label={isDark ? 'Modo Oscuro' : 'Modo Claro'}
               accessory={<ThemeToggle />}
             />
+            <Divider />
+            <ReelsAutoplayRow />
           </SettingsGroup>
 
           <View style={ss.dangerGroup}>

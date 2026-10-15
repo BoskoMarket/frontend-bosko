@@ -42,6 +42,9 @@ import {
 } from '@/hooks/queries/useReelsQuery';
 import { useFollowUser, useUnfollowUser } from '@/hooks/mutations/useFollowMutations';
 import { Avatar, Button, GRADIENTS, TOKENS, toast, useThemeColors, type ReportSheetSubmit } from '@/core/design-system';
+import { useReelsAutoplay } from '@/stores/preferences.store';
+import { useConnectionType } from '@/hooks/useConnectionType';
+import { shouldAutoplay } from '@/features/reels/utils/shouldAutoplay';
 import { ReportFlow } from '@/features/reports/components/ReportFlow';
 
 const { width: W, height: H } = Dimensions.get('window');
@@ -351,6 +354,12 @@ const ReelItem = React.memo(function ReelItem({
 
   const [isMuted,     setIsMuted]     = useState(true);
   const [isPaused,    setIsPaused]    = useState(false);
+  // Cellular + "Wi-Fi only" preference: wait for an explicit tap on this reel.
+  const autoplayPref   = useReelsAutoplay();
+  const connectionType = useConnectionType();
+  const autoplayAllowed = shouldAutoplay(autoplayPref, connectionType);
+  const [userStarted,  setUserStarted]  = useState(false);
+  const needsManualPlay = !isBeforeAfter && !autoplayAllowed && !userStarted;
   const [position,    setPosition]    = useState(0);
   const [duration,    setDuration]    = useState(0);
   const [isBuffering, setIsBuffering] = useState(!isBeforeAfter);
@@ -377,17 +386,18 @@ const ReelItem = React.memo(function ReelItem({
   // Play / pause según visibilidad (video only)
   useEffect(() => {
     if (isBeforeAfter) return;
-    if (isActive && !isPaused) {
+    if (isActive && !isPaused && !needsManualPlay) {
       player.play();
     } else {
       player.pause();
       if (!isActive) {
         player.currentTime = 0;
         setIsPaused(false);
+        setUserStarted(false);
         setPosition(0);
       }
     }
-  }, [isActive, isPaused, player, isBeforeAfter]);
+  }, [isActive, isPaused, needsManualPlay, player, isBeforeAfter]);
 
   // Sincronizar mute con el player (video only)
   useEffect(() => {
@@ -434,12 +444,15 @@ const ReelItem = React.memo(function ReelItem({
           setLikeCount(c => Math.max(0, c - 1));
         });
       }
+    } else if (needsManualPlay) {
+      // Autoplay blocked by the data preference → tap starts this reel
+      setUserStarted(true);
     } else {
       // Single tap → toggle pause
       setIsPaused(p => !p);
     }
     lastTap.current = now;
-  }, [liked, isBeforeAfter, reel.id]);
+  }, [liked, isBeforeAfter, needsManualPlay, reel.id]);
 
   const handleRetryVideo = useCallback(() => {
     setHasError(false);
@@ -577,7 +590,14 @@ const ReelItem = React.memo(function ReelItem({
           <ActivityIndicator size="large" color={TOKENS.onMedia.textSub} />
         </View>
       )}
-      {!isBeforeAfter && isPaused && !isBuffering && !hasError && (
+      {needsManualPlay && isActive && !hasError && (
+        <View style={s.pauseIcon} pointerEvents="none">
+          <View style={s.playButton}>
+            <Ionicons name="play" size={40} color={TOKENS.onMedia.icon} />
+          </View>
+        </View>
+      )}
+      {!isBeforeAfter && isPaused && !needsManualPlay && !isBuffering && !hasError && (
         <View style={s.pauseIcon} pointerEvents="none">
           <Ionicons name="pause" size={60} color={TOKENS.onMedia.textSub} />
         </View>
@@ -941,6 +961,16 @@ const s = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  playButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: 4,
+    backgroundColor: TOKENS.scrim.medium,
   },
 
   // Mute indicator
