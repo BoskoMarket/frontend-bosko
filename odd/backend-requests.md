@@ -110,3 +110,69 @@ El cliente trata `403`, `409` y `422` como "orden cerrada": muestra "No podés e
 - El badge de la lista está listo y se activa solo cuando el payload trae `orderStatus` (`Conversation.orderStatus`).
 - Archivos: `src/features/chat/constants/chatOrderRules.ts`, `src/features/chat/components/ChatOrderNotice.tsx`, `src/features/chat/screens/ChatScreen.tsx`, `src/features/chat/screens/ConversationsListScreen.tsx`, `__tests__/chatOrderStatus.test.tsx`.
 - **Al desplegar:** verificar el rechazo por REST y por socket, y pasar este pedido a ✅.
+
+---
+
+## BR03 — Reportes de usuarios y contenido
+
+**Estado:** ⬜ pendiente de backend · **Origen:** G69, G86 (`odd/ux-gaps.md`) · **Frontend:** implementado
+
+### Contexto
+
+Las tiendas de aplicaciones (Apple 1.2, política de contenido generado por usuarios de Google Play) exigen un mecanismo para reportar contenido y usuarios. Decisión de producto: por ahora **solo reportar** (el equipo de Bosko revisa); bloquear usuarios queda postergado. El frontend tiene un único flujo de reporte (hoja con motivo) usado en reels, reseñas, chat y perfil público.
+
+### 1. Reportar un usuario (nuevo)
+
+`POST /users/:id/report` — autenticado.
+
+```json
+{
+  "reason": "harassment",
+  "details": "Texto libre opcional (obligatorio si reason = other, máx. 500)",
+  "context": { "type": "chat", "orderId": "uuid" }
+}
+```
+
+- `context.type`: `chat` (requiere `orderId`; el reporte se hace desde el chat de esa orden) o `profile` (desde el perfil público).
+- Respuesta: `201` sin cuerpo relevante.
+
+### 2. Reportar un reel (existe)
+
+`POST /reels/:id/report` hoy acepta solo `{ reason?: string }` (`ReportReelDto`). Hasta que acepte `details`, el cliente envía el código en `reason` y, si hay texto libre, `"<code>: <texto>"` (ej. `other: me escribió por fuera de la app`). Pedido: aceptar `{ reason, details? }` como en el resto; el cliente pasará a enviarlos por separado.
+
+### 3. Reportar una reseña (existe)
+
+`POST /reviews/:id/report` hoy no recibe cuerpo. Pedido: aceptar `{ reason, details? }`. El cliente ya lo envía; confirmar que el validador no rechace campos extra mientras no se despliegue (si responde `400`, la app muestra el error genérico y permite reintentar).
+
+### 4. Motivos (`reason`)
+
+Códigos estables, en inglés y en minúscula: `spam`, `inappropriate`, `harassment`, `fraud`, `impersonation`, `other`.
+
+| Código | Texto en la app |
+|---|---|
+| `spam` | Spam o publicidad |
+| `inappropriate` | Contenido inapropiado |
+| `harassment` | Acoso o lenguaje ofensivo |
+| `fraud` | Fraude o estafa |
+| `impersonation` | Suplantación de identidad |
+| `other` | Otro (requiere `details`) |
+
+### 5. Validaciones
+
+- No se puede reportar a uno mismo ni el contenido propio (usuario, reel o reseña): `403`/`422` con código `CANNOT_REPORT_SELF` (la reseña ya tiene `CANNOT_REPORT_OWN_REVIEW`).
+- Límite: 1 reporte por destino y por usuario cada 24 h. Si se repite: `409` con código `ALREADY_REPORTED`; la app muestra "Ya reportaste esto."
+- `reason` obligatorio y dentro de la lista; `details` obligatorio si `reason = other`, máximo 500 caracteres.
+- Destino inexistente: `404` con su código habitual.
+
+### 6. Revisión y notificaciones
+
+- Hace falta una cola de revisión para el equipo (admin): destino, motivo, detalle, contexto (orden), reportante y fecha, con estado (pendiente / revisado / descartado).
+- **No se notifica nada al usuario reportado**, ni se revela quién reportó.
+
+### Estado del frontend
+
+- Implementado y testeado contra el contrato propuesto: hoja de reporte reutilizable (`ReportSheet` en el design system) y flujo común con toasts de éxito/error y protección de doble envío.
+- Puntos de entrada: reels (menú "Más opciones" → "Reportar contenido", oculto en reels propios), reseñas del perfil público ("Reportar reseña", oculto en reseñas propias), chat de la orden (menú → "Reportar usuario"), perfil público (menú → "Reportar perfil", oculto en el propio).
+- Archivos: `src/core/design-system/components/ReportSheet.tsx`, `src/features/reports/` (motivos, servicio `reportUser`, `ReportFlow`, mapeo de errores, `canReport`), `reels.service.ts`, `review.service.ts`, `ChatScreen.tsx`, `ProviderProfileScreen.tsx`, `__tests__/reports.test.tsx`.
+- **Comportamiento hasta que se despliegue:** si `POST /users/:id/report` responde `404`, `405` o `501`, la app muestra "Los reportes todavía no están disponibles." y cierra la hoja. `409` muestra "Ya reportaste esto."; cualquier otro error, un aviso con posibilidad de reintentar. Nunca falla ni se cierra.
+- **Al desplegar:** verificar los cuatro puntos de entrada y pasar este pedido a ✅.
