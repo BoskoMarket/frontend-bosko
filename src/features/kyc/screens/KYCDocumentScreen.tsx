@@ -1,23 +1,30 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Pressable,
   ScrollView,
   Image,
-  ActivityIndicator,
   Alert,
   Animated,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import * as ImagePicker from 'expo-image-picker';
 import { useKYC } from '../state/KYCContext';
 import { DocumentType } from '../types/kyc.types';
-import { TOKENS, GRADIENTS, useThemeColors } from '@/core/design-system';
+import {
+  TOKENS,
+  Button,
+  Card,
+  Chip,
+  NoticeBanner,
+  ScreenHeader,
+  Text,
+  useThemeColors,
+  withAlpha,
+} from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const DOCUMENT_TYPES: { value: DocumentType; label: string }[] = [
@@ -54,7 +61,7 @@ function PhotoSlot({
 }: {
   label: string;
   hint: string;
-  icon: any;
+  icon: React.ComponentProps<typeof MaterialIcons>['name'];
   photo: DocumentPhoto | null;
   onPress: () => void;
   tc: ReturnType<typeof useThemeColors>;
@@ -64,7 +71,7 @@ function PhotoSlot({
       style={({ pressed }) => [
         s.photoSlot,
         photo
-          ? { borderColor: 'rgba(0,229,160,0.4)', backgroundColor: 'rgba(0,229,160,0.05)' }
+          ? { borderColor: withAlpha(TOKENS.color.mint, 0.4), backgroundColor: withAlpha(TOKENS.color.mint, 0.05) }
           : { borderColor: tc.border, backgroundColor: tc.surface2 },
         pressed && s.photoSlotPressed,
       ]}
@@ -80,8 +87,8 @@ function PhotoSlot({
       ) : (
         <View style={s.photoEmpty}>
           <MaterialIcons name={icon} size={32} color={tc.textMuted} />
-          <Text style={[s.photoLabel, { color: tc.text }]}>{label}</Text>
-          <Text style={[s.photoHint, { color: tc.textSub }]}>{hint}</Text>
+          <Text variant="label" center>{label}</Text>
+          <Text variant="caption" color={tc.textSub} center>{hint}</Text>
         </View>
       )}
     </Pressable>
@@ -138,43 +145,29 @@ export default function KYCDocumentScreen() {
     <View style={[s.background, { backgroundColor: tc.bg }]}>
       <AnimatedBackground variant="minimal" />
       <ScrollView contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={s.header}>
-          <Pressable onPress={() => safeBack(router, '/(tabs)/profile/kyc')} hitSlop={12} style={[s.backButton, { backgroundColor: tc.surface }]}>
-            <MaterialIcons name="arrow-back" size={24} color={tc.text} />
-          </Pressable>
-          <Text style={[s.headerTitle, { color: tc.text }]}>Subir documentos</Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <ScreenHeader title="Subir documentos" onBack={() => safeBack(router, '/(tabs)/profile/kyc')} />
 
         {/* Document type */}
         <FadeSlide delay={0}>
-          <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
-            <Text style={[s.cardTitle, { color: tc.text }]}>Tipo de documento</Text>
+          <Card padding="xl" radius="lg" contentStyle={s.cardContent}>
+            <Text variant="subtitle">Tipo de documento</Text>
             <View style={s.docTypeGrid}>
               {DOCUMENT_TYPES.map(dt => (
-                <Pressable
+                <Chip
                   key={dt.value}
-                  style={[
-                    s.docTypeButton,
-                    { borderColor: tc.border, backgroundColor: tc.surface2 },
-                    docType === dt.value && [s.docTypeButtonActive, { backgroundColor: tc.accent }],
-                  ]}
+                  label={dt.label}
+                  selected={docType === dt.value}
                   onPress={() => setDocType(dt.value)}
-                >
-                  <Text style={[s.docTypeText, { color: tc.textSub }, docType === dt.value && s.docTypeTextActive]}>
-                    {dt.label}
-                  </Text>
-                </Pressable>
+                />
               ))}
             </View>
-          </View>
+          </Card>
         </FadeSlide>
 
         {/* Document photos */}
         <FadeSlide delay={100}>
-          <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
-            <Text style={[s.cardTitle, { color: tc.text }]}>Fotos del documento</Text>
+          <Card padding="xl" radius="lg" contentStyle={s.cardContent}>
+            <Text variant="subtitle">Fotos del documento</Text>
             <View style={s.photosRow}>
               <PhotoSlot
                 label="Frente"
@@ -193,14 +186,14 @@ export default function KYCDocumentScreen() {
                 tc={tc}
               />
             </View>
-          </View>
+          </Card>
         </FadeSlide>
 
         {/* Selfie */}
         <FadeSlide delay={200}>
-          <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
-            <Text style={[s.cardTitle, { color: tc.text }]}>Selfie de verificación</Text>
-            <Text style={[s.cardSubtitle, { color: tc.textSub }]}>
+          <Card padding="xl" radius="lg" contentStyle={s.cardContent}>
+            <Text variant="subtitle">Selfie de verificación</Text>
+            <Text variant="bodySmall" color={tc.textSub} style={s.cardSubtitle}>
               Sacate una foto sosteniendo el documento junto a tu rostro.
             </Text>
             <PhotoSlot
@@ -211,53 +204,26 @@ export default function KYCDocumentScreen() {
               onPress={() => pickImage('selfie')}
               tc={tc}
             />
-          </View>
+          </Card>
         </FadeSlide>
 
-        {!!error && (
-          <View style={[s.errorBanner, { backgroundColor: TOKENS.status.cancelled.bg }]}>
-            <MaterialIcons name="error-outline" size={16} color={TOKENS.status.cancelled.fg} />
-            <Text style={[s.errorText, { color: TOKENS.status.cancelled.fg }]}>{error}</Text>
-          </View>
-        )}
+        {!!error && <NoticeBanner variant="error">{error}</NoticeBanner>}
 
         {/* Submit button */}
         <FadeSlide delay={300}>
-          <View style={[s.submitButtonShadow, !canSubmit && s.submitButtonShadowDisabled]}>
-            <Pressable
-              onPress={handleSubmit}
-              disabled={!canSubmit || loading}
-              style={({ pressed }) => [
-                s.submitButton,
-                pressed && canSubmit && s.buttonPressed,
-              ]}
-            >
-            <LinearGradient
-              colors={canSubmit
-                ? GRADIENTS.brand
-                : [tc.surface2, tc.border] as const
-              }
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={s.buttonGradient}
-            >
-              {loading
-                ? <ActivityIndicator color="#fff" size="small" />
-                : (
-                  <>
-                    <Text style={s.submitButtonText}>
-                      {canSubmit
-                        ? 'Enviar documentos'
-                        : `Faltan ${[!front, !back, !selfie].filter(Boolean).length} foto(s)`
-                      }
-                    </Text>
-                    {canSubmit && <MaterialIcons name="upload" size={18} color="#fff" />}
-                  </>
-                )
-              }
-            </LinearGradient>
-          </Pressable>
-          </View>
+          <Button
+            label={canSubmit
+              ? 'Enviar documentos'
+              : `Faltan ${[!front, !back, !selfie].filter(Boolean).length} foto(s)`
+            }
+            size="lg"
+            fullWidth
+            iconPosition="right"
+            icon={canSubmit ? <MaterialIcons name="upload" size={18} color={TOKENS.color.onPrimary} /> : undefined}
+            loading={loading}
+            disabled={!canSubmit}
+            onPress={handleSubmit}
+          />
         </FadeSlide>
       </ScrollView>
     </View>
@@ -267,47 +233,9 @@ export default function KYCDocumentScreen() {
 const s = StyleSheet.create({
   background: { flex: 1 },
   container: { paddingTop: 60, paddingBottom: 40, paddingHorizontal: 24, gap: 16 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  backButton: {
-    padding: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-  },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: TOKENS.color.text },
-  card: {
-    borderRadius: 20,
-    padding: 20,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.9)',
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: TOKENS.color.text },
-  cardSubtitle: { fontSize: 13, color: TOKENS.color.sub, marginTop: -8 },
+  cardContent: { gap: 12 },
+  cardSubtitle: { marginTop: -8 },
   docTypeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  docTypeButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: 'rgba(200,200,220,0.5)',
-    backgroundColor: 'rgba(255,255,255,0.6)',
-  },
-  docTypeButtonActive: {
-    borderColor: TOKENS.color.signal,
-  },
-  docTypeText: { fontSize: 13, fontWeight: '500', color: TOKENS.color.sub },
-  docTypeTextActive: { color: TOKENS.color.signal, fontWeight: '700' },
   photosRow: { flexDirection: 'row', gap: 12 },
   photoSlot: {
     flex: 1,
@@ -315,9 +243,7 @@ const s = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderColor: 'rgba(133,0,33,0.25)',
     overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.6)',
   },
   photoSlotPressed: { opacity: 0.8 },
   photoPreview: { width: '100%', height: '100%', resizeMode: 'cover' },
@@ -325,38 +251,7 @@ const s = StyleSheet.create({
     position: 'absolute',
     bottom: 6,
     right: 6,
-    backgroundColor: '#fff',
     borderRadius: 14,
   },
   photoEmpty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4, padding: 8 },
-  photoLabel: { fontSize: 13, fontWeight: '700', color: TOKENS.color.text, textAlign: 'center' },
-  photoHint: { fontSize: 11, color: TOKENS.color.sub, textAlign: 'center' },
-  errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#fee2e2',
-    borderRadius: 12,
-    padding: 12,
-  },
-  errorText: { flex: 1, fontSize: 13, color: '#dc2626' },
-  submitButton: {
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  submitButtonShadow: {
-    borderRadius: 14,
-    ...TOKENS.shadow.glow,
-  },
-  submitButtonShadowDisabled: { shadowOpacity: 0, elevation: 0 },
-  buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  buttonGradient: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  submitButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

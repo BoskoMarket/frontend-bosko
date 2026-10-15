@@ -1,11 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  Pressable,
   ScrollView,
-  ActivityIndicator,
   Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,7 +10,18 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useKYC } from '../state/KYCContext';
-import { TOKENS, wash, useThemeColors } from '@/core/design-system';
+import {
+  TOKENS,
+  Button,
+  Card,
+  IconCircle,
+  NoticeBanner,
+  ScreenHeader,
+  Text,
+  wash,
+  withAlpha,
+  useThemeColors,
+} from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const MAX_ATTEMPTS = 3;
@@ -70,22 +78,13 @@ export default function KYCRejectedScreen() {
     >
       <AnimatedBackground variant="minimal" />
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={s.header}>
-          <Pressable onPress={() => safeBack(router, '/(tabs)/profile/kyc')} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.surface }]}>
-            <MaterialIcons name="arrow-back" size={24} color={tc.text} />
-          </Pressable>
-          <Text style={[s.headerTitle, { color: tc.text }]}>Verificación rechazada</Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <ScreenHeader title="Verificación rechazada" onBack={() => safeBack(router, '/(tabs)/profile/kyc')} />
 
         {/* Icon */}
         <Animated.View style={[s.iconWrap, { opacity: 1 }]}>
-          <View style={s.iconCircle}>
-            <MaterialIcons name="cancel" size={52} color="#dc2626" />
-          </View>
-          <Text style={s.title}>Verificación rechazada</Text>
-          <Text style={[s.subtitle, { color: tc.textSub }]}>
+          <IconCircle name="close-circle" variant="danger" size={84} iconSize={52} />
+          <Text variant="h3" color={TOKENS.color.error} center>Verificación rechazada</Text>
+          <Text variant="body" color={tc.textSub} center>
             Tu verificación de identidad no fue aprobada. Revisá el motivo y volvé a intentarlo.
           </Text>
         </Animated.View>
@@ -93,29 +92,37 @@ export default function KYCRejectedScreen() {
         {/* Rejection reason */}
         {!!rejectionReason && (
           <FadeSlide delay={100}>
-            <View style={[s.card, s.reasonCard]}>
+            <Card
+              padding="xl"
+              radius="lg"
+              contentStyle={{
+                gap: 12,
+                backgroundColor: TOKENS.status.cancelled.bg,
+                borderColor: withAlpha(TOKENS.color.error, 0.35),
+              }}
+            >
               <View style={s.reasonHeader}>
-                <MaterialIcons name="info" size={18} color="#dc2626" />
-                <Text style={s.reasonTitle}>Motivo del rechazo</Text>
+                <MaterialIcons name="info" size={18} color={TOKENS.color.error} />
+                <Text variant="label" color={TOKENS.color.error}>Motivo del rechazo</Text>
               </View>
-              <Text style={s.reasonText}>{rejectionReason}</Text>
-            </View>
+              <Text variant="body">{rejectionReason}</Text>
+            </Card>
           </FadeSlide>
         )}
 
         {/* Tips */}
         <FadeSlide delay={150}>
-          <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
-            <Text style={[s.cardTitle, { color: tc.text }]}>Consejos para el reintento</Text>
+          <Card padding="xl" radius="lg" contentStyle={s.cardContent}>
+            <Text variant="subtitle">Consejos para el reintento</Text>
             {REJECTION_TIPS.map((tip, i) => (
               <View key={i} style={s.tipRow}>
-                <View style={s.tipBullet}>
-                  <Text style={s.tipNumber}>{i + 1}</Text>
+                <View style={[s.tipBullet, { backgroundColor: tc.accent }]}>
+                  <Text variant="caption" weight="700" color={TOKENS.color.signal}>{i + 1}</Text>
                 </View>
-                <Text style={[s.tipText, { color: tc.textSub }]}>{tip}</Text>
+                <Text variant="bodySmall" color={tc.textSub} style={s.tipText}>{tip}</Text>
               </View>
             ))}
-          </View>
+          </Card>
         </FadeSlide>
 
         {/* Attempts counter */}
@@ -124,9 +131,9 @@ export default function KYCRejectedScreen() {
             <MaterialIcons
               name="refresh"
               size={18}
-              color={canRetry ? TOKENS.color.primary : '#dc2626'}
+              color={canRetry ? TOKENS.color.signal : TOKENS.color.error}
             />
-            <Text style={[s.attemptsText, !canRetry && s.attemptsExhausted]}>
+            <Text variant="label" color={canRetry ? TOKENS.color.signal : TOKENS.color.error}>
               {canRetry
                 ? `Intentos disponibles: ${MAX_ATTEMPTS - attemptCount} de ${MAX_ATTEMPTS}`
                 : 'Agotaste los 3 intentos. Contactá a soporte.'
@@ -135,55 +142,36 @@ export default function KYCRejectedScreen() {
           </View>
         </FadeSlide>
 
-        {!!error && (
-          <View style={s.errorBanner}>
-            <MaterialIcons name="error-outline" size={16} color="#dc2626" />
-            <Text style={s.errorText}>{error}</Text>
-          </View>
-        )}
+        {!!error && <NoticeBanner variant="error">{error}</NoticeBanner>}
 
         {canRetry ? (
           <FadeSlide delay={250}>
-            <View style={s.primaryBtnShadow}>
-              <Pressable
-                onPress={handleRetry}
-                disabled={loading}
-                style={({ pressed }) => [s.primaryBtn, pressed && s.btnPressed]}
-              >
-              <LinearGradient
-                colors={[TOKENS.color.primary, '#a0032a', TOKENS.color.primaryDark ?? '#3D000F']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={s.btnGradient}
-              >
-                {loading
-                  ? <ActivityIndicator color="#fff" size="small" />
-                  : (
-                    <>
-                      <MaterialIcons name="refresh" size={20} color="#fff" />
-                      <Text style={s.btnText}>Reintentar verificación</Text>
-                    </>
-                  )
-                }
-              </LinearGradient>
-            </Pressable>
-            </View>
+            <Button
+              label="Reintentar verificación"
+              size="lg"
+              fullWidth
+              loading={loading}
+              icon={<MaterialIcons name="refresh" size={20} color={TOKENS.color.onPrimary} />}
+              onPress={handleRetry}
+            />
           </FadeSlide>
         ) : (
-          <View style={[s.supportCard, { backgroundColor: tc.surface, borderColor: tc.border }]}>
-            <MaterialIcons name="support-agent" size={24} color={TOKENS.color.primary} />
-            <View style={{ flex: 1 }}>
-              <Text style={[s.supportTitle, { color: tc.text }]}>¿Necesitás ayuda?</Text>
-              <Text style={[s.supportText, { color: tc.textSub }]}>
+          <Card padding="lg" radius="md" contentStyle={s.supportContent}>
+            <MaterialIcons name="support-agent" size={24} color={TOKENS.color.signal} />
+            <View style={s.supportText}>
+              <Text variant="label">¿Necesitás ayuda?</Text>
+              <Text variant="bodySmall" color={tc.textSub}>
                 Contactá a nuestro equipo de soporte con tu problema de verificación.
               </Text>
             </View>
-          </View>
+          </Card>
         )}
 
-        <Pressable onPress={() => router.replace('/(tabs)/profile/kyc')} style={s.secondaryRow}>
-          <Text style={s.secondaryText}>Ver estado de verificación</Text>
-        </Pressable>
+        <Button
+          label="Ver estado de verificación"
+          variant="ghost"
+          onPress={() => router.replace('/(tabs)/profile/kyc')}
+        />
       </ScrollView>
     </LinearGradient>
   );
@@ -192,118 +180,27 @@ export default function KYCRejectedScreen() {
 const s = StyleSheet.create({
   bg: { flex: 1 },
   scroll: { paddingTop: 60, paddingBottom: 40, paddingHorizontal: 24, gap: 16 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  backBtn: {
-    padding: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-  },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: TOKENS.color.text },
   iconWrap: { alignItems: 'center', gap: 10, paddingVertical: 8 },
-  iconCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: '#fef2f2',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#fecaca',
-  },
-  title: { fontSize: 22, fontWeight: '800', color: '#dc2626', textAlign: 'center' },
-  subtitle: { fontSize: 14, color: TOKENS.color.sub, textAlign: 'center', lineHeight: 20 },
-  card: {
-    borderRadius: 20,
-    padding: 20,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.9)',
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  reasonCard: {
-    borderColor: '#fecaca',
-    backgroundColor: 'rgba(254,226,226,0.5)',
-  },
+  cardContent: { gap: 12 },
   reasonHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  reasonTitle: { fontSize: 14, fontWeight: '700', color: '#dc2626' },
-  reasonText: { fontSize: 14, color: '#7f1d1d', lineHeight: 20 },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: TOKENS.color.text },
   tipRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   tipBullet: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'rgba(133,0,33,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 1,
   },
-  tipNumber: { fontSize: 12, fontWeight: '700', color: TOKENS.color.primary },
-  tipText: { flex: 1, fontSize: 13, color: TOKENS.color.sub, lineHeight: 18 },
+  tipText: { flex: 1 },
   attemptsCard: {
     borderRadius: 14,
     padding: 14,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.9)',
-    backgroundColor: 'rgba(255,255,255,0.85)',
+    borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  attemptsText: { fontSize: 13, fontWeight: '600', color: TOKENS.color.primary },
-  attemptsExhausted: { color: '#dc2626' },
-  errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#fee2e2',
-    borderRadius: 12,
-    padding: 12,
-  },
-  errorText: { flex: 1, fontSize: 13, color: '#dc2626' },
-  primaryBtn: {
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  primaryBtnShadow: {
-    borderRadius: 14,
-    shadowColor: TOKENS.color.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  btnPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  btnGradient: {
-    paddingVertical: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  supportCard: {
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.9)',
-    backgroundColor: 'rgba(255,255,255,0.85)',
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  supportTitle: { fontSize: 14, fontWeight: '700', color: TOKENS.color.text },
-  supportText: { fontSize: 13, color: TOKENS.color.sub, lineHeight: 18, marginTop: 2 },
-  secondaryRow: { alignItems: 'center', paddingVertical: 8 },
-  secondaryText: { fontSize: 14, color: TOKENS.color.primary, fontWeight: '600' },
+  supportContent: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  supportText: { flex: 1, gap: 2 },
 });
