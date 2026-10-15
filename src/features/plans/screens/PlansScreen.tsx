@@ -25,7 +25,7 @@ import {
 import { TOKENS } from '@/core/design-system/tokens';
 import { GRADIENTS } from '@/core/design-system/gradients';
 import { getUserErrorMessage } from '@/lib/errors';
-import { useThemeColors, wash } from '@/core/design-system';
+import { useThemeColors, usePremiumColors, wash, withAlpha } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -58,6 +58,7 @@ function AnimatedCard({ index, children }: { index: number; children: React.Reac
 export default function PlansScreen() {
   useRequireProviderStatus('provider');
   const tc = useThemeColors();
+  const pc = usePremiumColors();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [myPlan, setMyPlan] = useState<MyPlan | null | undefined>(undefined);
   const [loading, setLoading] = useState(true);
@@ -175,9 +176,9 @@ export default function PlansScreen() {
                 end={{ x: 1, y: 1 }}
                 style={s.currentPlanGrad}
               >
-                <MaterialIcons name="workspace-premium" size={28} color="#FFD700" />
+                <MaterialIcons name="workspace-premium" size={28} color={pc.goldFill} />
                 <View style={s.currentPlanInfo}>
-                  <Text style={s.currentPlanLabel}>Plan actual</Text>
+                  <Text style={[s.currentPlanLabel, { color: pc.goldFill }]}>Plan actual</Text>
                   <Text style={s.currentPlanName}>{myPlan.plan.name}</Text>
                   <Text style={s.currentPlanPeriod}>
                     Vigente hasta {new Date(myPlan.currentPeriodEnd).toLocaleDateString('es-AR')}
@@ -213,17 +214,17 @@ export default function PlansScreen() {
                   onPress={() => { if (!isCurrent && !subscribing) handleSubscribe(plan.id); }}
                   disabled={isCurrent || !!subscribing}
                 >
-                  <View style={[s.planInner, { backgroundColor: tc.card, borderColor: tc.cardBorder }, isPopular && s.planInnerPopular]}>
+                  <View style={[s.planInner, { backgroundColor: tc.card, borderColor: tc.cardBorder }, isPopular && { borderColor: withAlpha(TOKENS.color.signal, 0.35), borderWidth: 1.5 }]}>
                     {isPopular && (
-                      <View style={s.popularBadge}>
-                        <Text style={s.popularText}>Más popular</Text>
+                      <View style={[s.popularBadge, { backgroundColor: pc.goldFill }]}>
+                        <Text style={[s.popularText, { color: pc.onGold }]}>Más popular</Text>
                       </View>
                     )}
 
                     <View style={s.planHeader}>
-                      <Text style={[s.planName, { color: tc.text }, isPopular && s.planNamePopular]}>{plan.name}</Text>
+                      <Text style={[s.planName, { color: tc.text }, isPopular && { color: TOKENS.color.signal }]}>{plan.name}</Text>
                       <View style={s.planPrice}>
-                        <Text style={[s.planPriceAmount, { color: tc.text }, isPopular && s.planPricePopular]}>
+                        <Text style={[s.planPriceAmount, { color: tc.text }, isPopular && { color: TOKENS.color.signal }]}>
                           {formatPrice(plan.price, plan.currency)}
                         </Text>
                         <Text style={[s.planPriceInterval, { color: tc.textSub }]}>
@@ -240,7 +241,7 @@ export default function PlansScreen() {
                           <MaterialIcons
                             name="check-circle"
                             size={18}
-                            color={isPopular ? '#FFD700' : TOKENS.color.mint}
+                            color={isPopular ? pc.gold : TOKENS.color.mint}
                           />
                           <Text style={[s.featureText, { color: tc.text }]}>{feature}</Text>
                         </View>
@@ -254,15 +255,15 @@ export default function PlansScreen() {
                       </View>
                     ) : (
                       <LinearGradient
-                        colors={isPopular ? ['#FFD700', '#FFA500'] : GRADIENTS.brand}
+                        colors={isPopular ? [pc.goldFill, pc.goldFillEnd] : GRADIENTS.brand}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={s.subscribeBtn}
                       >
                         {subscribing === plan.id ? (
-                          <ActivityIndicator color="#fff" size="small" />
+                          <ActivityIndicator color={TOKENS.color.onPrimary} size="small" />
                         ) : (
-                          <Text style={[s.subscribeBtnText, isPopular && { color: TOKENS.color.primaryDark }]}>
+                          <Text style={[s.subscribeBtnText, isPopular && { color: pc.onGold }]}>
                             {plan.price === 0 ? 'Gratuito' : 'Suscribirse'}
                           </Text>
                         )}
@@ -290,15 +291,12 @@ const s = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.6)',
-    backgroundColor: 'rgba(255,255,255,0.4)',
   },
   backBtn: {
     padding: 8,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.8)',
   },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: TOKENS.color.text },
+  headerTitle: { fontSize: 20, fontWeight: '800' },
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scrollContent: { padding: 24, paddingBottom: 40, gap: 20 },
   currentPlanBanner: { borderRadius: 20, overflow: 'hidden' },
@@ -312,33 +310,31 @@ const s = StyleSheet.create({
   currentPlanLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: 'rgba(255,215,0,0.7)',
+    opacity: 0.7,
     textTransform: 'uppercase',
   },
-  currentPlanName: { fontSize: 18, fontWeight: '800', color: '#fff' },
-  currentPlanPeriod: { fontSize: 12, color: 'rgba(255,255,255,0.6)' },
+  currentPlanName: { fontSize: 18, fontWeight: '800', color: TOKENS.onMedia.text },
+  currentPlanPeriod: { fontSize: 12, color: TOKENS.onMedia.textMuted },
   cancelBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: TOKENS.onMedia.border,
   },
-  cancelBtnText: { fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.8)' },
+  cancelBtnText: { fontSize: 12, fontWeight: '600', color: TOKENS.onMedia.textSub },
   freeNote: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     padding: 14,
     borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.85)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.9)',
   },
-  freeNoteText: { flex: 1, fontSize: 13, color: TOKENS.color.text, lineHeight: 18 },
+  freeNoteText: { flex: 1, fontSize: 13, lineHeight: 18 },
   planCardShadow: {
     borderRadius: 24,
-    shadowColor: '#000',
+    shadowColor: TOKENS.color.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
@@ -353,43 +349,33 @@ const s = StyleSheet.create({
     padding: 20,
     gap: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.9)',
-    backgroundColor: '#FFFFFF',
     borderRadius: 24,
-  },
-  planInnerPopular: {
-    borderColor: 'rgba(255,45,111,0.35)',
-    borderWidth: 1.5,
   },
   popularBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#FFD700',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 20,
   },
-  popularText: { fontSize: 12, fontWeight: '800', color: TOKENS.color.primaryDark },
+  popularText: { fontSize: 12, fontWeight: '800' },
   planHeader: { gap: 8 },
-  planName: { fontSize: 20, fontWeight: '800', color: TOKENS.color.text },
-  planNamePopular: { color: TOKENS.color.signal },
-  planPrice: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
-  planPriceAmount: { fontSize: 32, fontWeight: '800', color: TOKENS.color.text },
-  planPricePopular: { color: TOKENS.color.signal },
-  planPriceInterval: { fontSize: 14, color: TOKENS.color.sub },
-  planDescription: { fontSize: 14, color: TOKENS.color.sub, lineHeight: 20 },
+  planName: { fontSize: 20, fontWeight: '800' },
+    planPrice: { flexDirection: 'row', alignItems: 'baseline', gap: 4 },
+  planPriceAmount: { fontSize: 32, fontWeight: '800' },
+    planPriceInterval: { fontSize: 14 },
+  planDescription: { fontSize: 14, lineHeight: 20 },
   featuresList: { gap: 10 },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  featureText: { fontSize: 14, color: TOKENS.color.text, flex: 1 },
+  featureText: { fontSize: 14, flex: 1 },
   currentBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: 'rgba(22,163,74,0.15)',
     paddingVertical: 12,
     borderRadius: 14,
   },
-  currentBadgeText: { fontSize: 14, fontWeight: '700', color: '#16a34a' },
+  currentBadgeText: { fontSize: 14, fontWeight: '700' },
   subscribeBtn: { paddingVertical: 14, borderRadius: 14, alignItems: 'center' },
-  subscribeBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  subscribeBtnText: { fontSize: 16, fontWeight: '700', color: TOKENS.color.onPrimary },
 });
