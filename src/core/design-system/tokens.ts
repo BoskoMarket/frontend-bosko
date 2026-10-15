@@ -28,6 +28,9 @@ export const TOKENS = {
     success: C.mint,
     /** Text/icon color on top of the brand gradient (theme-independent). */
     onPrimary: C.white,
+    /** Secondary text/icons on the brand gradient (timestamps, delivery ticks) and its hairline/outline. */
+    onPrimarySub: withAlpha(C.white, 0.7),
+    onPrimaryDim: withAlpha(C.white, 0.35),
     /** Base color of drop shadows (theme-independent). */
     shadow: C.black,
   },
@@ -38,6 +41,8 @@ export const TOKENS = {
     text: C.white,
     textSub: withAlpha(C.white, 0.75),
     textMuted: withAlpha(C.white, 0.65),
+    /** Base canvas behind video/images (reels feed, media thumbnails, lightbox). */
+    canvas: C.black,
     icon: C.white,
     /** Solid light fill (pills / bubbles over media). */
     solid: C.white,
@@ -52,6 +57,8 @@ export const TOKENS = {
     light: withAlpha(C.black, 0.35),
     medium: withAlpha(C.black, 0.55),
     strong: withAlpha(C.black, 0.75),
+    /** Near-opaque backdrop for full-screen media viewers. */
+    heavy: withAlpha(C.black, 0.95),
   },
   // Colores semánticos de ciclo de vida (órdenes, KYC) — fg + bg translúcido a juego.
   status: {
