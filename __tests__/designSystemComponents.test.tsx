@@ -14,6 +14,8 @@ import {
   EmptyState,
   Input,
   ListRow,
+  NoticeBanner,
+  TOKENS,
   OtpInput,
   SectionHeader,
   ToastRoot,
@@ -22,6 +24,7 @@ import {
 import { Input as LegacyInput } from '@/core/components/Input';
 import { EmptyState as LegacyEmptyState } from '@/core/components/EmptyState';
 import { ToastRoot as LegacyToastRoot, toast as legacyToast } from '@/core/components/Toast';
+import { useThemeStore } from '@/stores/theme.store';
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
@@ -70,6 +73,16 @@ describe('design system components', () => {
     fireEvent.press(getByText('Más tarde'));
     expect(onCta).toHaveBeenCalledTimes(1);
     expect(onSecondary).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['dark', 'light'] as const)('NoticeBanner error variant uses the error colors (%s)', (mode) => {
+    act(() => { useThemeStore.getState().setMode(mode); });
+    const { getByText, toJSON } = render(<NoticeBanner variant="error">Algo salió mal</NoticeBanner>);
+    expect(getByText('Algo salió mal')).toBeTruthy();
+    const tree = JSON.stringify(toJSON());
+    expect(tree).toContain(TOKENS.color.error);
+    expect(tree).toContain(TOKENS.status.cancelled.bg);
+    act(() => { useThemeStore.getState().setMode('dark'); });
   });
 
   it('Toast shows an alert enqueued via toast.success', () => {
