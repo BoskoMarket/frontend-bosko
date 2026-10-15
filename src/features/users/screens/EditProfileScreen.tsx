@@ -3,21 +3,17 @@
  * PATCH /users/me + POST /users/me/avatar
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
-  Text,
-  TextInput,
   StyleSheet,
   ScrollView,
   Pressable,
   ActivityIndicator,
   Alert,
-  Image,
+  KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from '@/core/components/BlurView';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MotiView } from '@/core/components/MotiView';
 import { router } from 'expo-router';
@@ -26,20 +22,31 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useUploadAvatar } from '@/hooks/queries/useProfileQuery';
 import { useProfile } from '@/features/profile/state/ProfileContext';
-
-import { TOKENS } from '@/core/design-system/tokens';
-import { Button, useThemeColors, useIsDark, wash } from '@/core/design-system';
+import {
+  TOKENS,
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Input,
+  ScreenHeader,
+  Text,
+  toast,
+  useThemeColors,
+} from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
+const AVATAR_SIZE = 104;
+const BIO_MAX = 500;
+
 export default function EditProfileScreen() {
   const tc = useThemeColors();
-  const isDark = useIsDark();
-  const { profile, updateProfile, isLoading } = useProfile();
+  const { profile, updateProfile, refreshProfile, isLoading, error: profileError } = useProfile();
 
   const [firstName, setFirstName] = useState(profile?.firstName || '');
   const [lastName, setLastName] = useState(profile?.lastName || '');
-  const [username] = useState('');
   const [phone, setPhone] = useState(profile?.phone || '');
   const [bio, setBio] = useState(profile?.bio || '');
   const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
@@ -48,6 +55,18 @@ export default function EditProfileScreen() {
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [saving, setSaving] = useState(false);
+  const seeded = useRef(!!profile);
+
+  // The profile can arrive after the screen mounts (cold start / refetch): seed the form once.
+  useEffect(() => {
+    if (profile && !seeded.current) {
+      seeded.current = true;
+      setFirstName(profile.firstName || '');
+      setLastName(profile.lastName || '');
+      setPhone(profile.phone || '');
+      setBio(profile.bio || '');
+    }
+  }, [profile]);
 
   const pickImage = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -70,54 +89,103 @@ export default function EditProfileScreen() {
       setUploadingAvatar(true);
       try {
         await uploadAvatar(uri);
+        toast.success('Foto actualizada');
       } catch (err: any) {
-        Alert.alert('Error', getUserErrorMessage(err));
+        toast.error('No se pudo subir la foto', getUserErrorMessage(err));
         setAvatarUri(null);
       } finally {
         setUploadingAvatar(false);
       }
     }
-  }, []);
+  }, [uploadAvatar]);
+
+  const trimmedFirstName = firstName.trim();
+  const firstNameError = firstName.length > 0 && !trimmedFirstName ? 'El nombre es obligatorio' : undefined;
+
+  const hasChanges =
+    firstName !== (profile?.firstName ?? '') ||
+    lastName !== (profile?.lastName ?? '') ||
+    bio !== (profile?.bio ?? '') ||
+    phone !== (profile?.phone ?? '') ||
+    coordinates !== null;
+
+  const canSave = hasChanges && !!trimmedFirstName && !saving && !uploadingAvatar;
 
   const handleSave = useCallback(async () => {
+    if (!canSave) return;
     setSaving(true);
     try {
-      await updateProfile({ firstName, lastName, bio, phone, ...(coordinates ?? {}) });
-      Alert.alert('Perfil actualizado', 'Tus datos se guardaron correctamente.', [
-        { text: 'OK', onPress: () => safeBack(router, '/(tabs)/profile') },
-      ]);
+      await updateProfile({ firstName: trimmedFirstName, lastName, bio, phone, ...(coordinates ?? {}) });
+      toast.success('Perfil actualizado', 'Tus datos se guardaron correctamente.');
+      safeBack(router, '/(tabs)/profile');
     } catch (err: any) {
-      Alert.alert('Error', getUserErrorMessage(err));
+      toast.error('No se pudo guardar', getUserErrorMessage(err));
     } finally {
       setSaving(false);
     }
-  }, [firstName, lastName, bio, phone, coordinates, updateProfile]);
+  }, [canSave, trimmedFirstName, lastName, bio, phone, coordinates, updateProfile]);
 
-  const hasChanges =
-    firstName !== profile?.firstName ||
-    lastName !== profile?.lastName ||
-    bio !== profile?.bio ||
-    phone !== (profile?.phone ?? '') || coordinates !== null;
+  const handleBack = useCallback(() => {
+    if (!hasChanges || saving) {
+      safeBack(router, '/(tabs)/profile');
+      return;
+    }
+    Alert.alert('Descartar cambios', 'Tenés cambios sin guardar. ¿Querés salir igual?', [
+      { text: 'Seguir editando', style: 'cancel' },
+      { text: 'Descartar', style: 'destructive', onPress: () => safeBack(router, '/(tabs)/profile') },
+    ]);
+  }, [hasChanges, saving]);
+
+  const handleLocate = useCallback(async () => {
+    setLocating(true);
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (permission.status !== 'granted') throw new Error('Permití el acceso a tu ubicación en los ajustes del dispositivo.');
+      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setCoordinates({ lat: position.coords.latitude, lng: position.coords.longitude });
+    } catch (err) {
+      Alert.alert('Ubicación', getUserErrorMessage(err));
+    } finally {
+      setLocating(false);
+    }
+  }, []);
 
   const displayUri = avatarUri || profile?.avatarUrl;
 
+  // First load in flight with no cached profile / load failed: nothing to edit yet.
+  if (!profile) {
+    return (
+      <View style={[styles.bg, { backgroundColor: tc.bg }]}>
+        <AnimatedBackground variant="minimal" />
+        <View style={styles.header}>
+          <ScreenHeader title="Editar Perfil" onBack={() => safeBack(router, '/(tabs)/profile')} />
+        </View>
+        <View style={styles.centered}>
+          {isLoading ? (
+            <ActivityIndicator color={TOKENS.color.signal} />
+          ) : (
+            <EmptyState
+              icon="cloud-offline-outline"
+              title="No pudimos cargar tu perfil"
+              subtitle={profileError ?? 'Revisá tu conexión e intentá de nuevo.'}
+              cta={{ label: 'Reintentar', onPress: () => { refreshProfile(); } }}
+            />
+          )}
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <LinearGradient
-      colors={wash(tc)}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.bg}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={[styles.bg, { backgroundColor: tc.bg }]}
     >
       <AnimatedBackground variant="minimal" />
 
-      {/* Header */}
-      <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={[styles.header, { borderBottomColor: tc.border }]}>
-        <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={12} style={[styles.backBtn, { backgroundColor: tc.surface }]}>
-          <MaterialIcons name="arrow-back" size={24} color={tc.text} />
-        </Pressable>
-        <Text style={[styles.headerTitle, { color: tc.text }]}>Editar Perfil</Text>
-        <View style={{ width: 40 }} />
-      </BlurView>
+      <View style={styles.header}>
+        <ScreenHeader title="Editar Perfil" onBack={handleBack} />
+      </View>
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -131,32 +199,23 @@ export default function EditProfileScreen() {
           transition={{ type: 'spring', damping: 14 }}
           style={styles.avatarSection}
         >
-          <Pressable onPress={pickImage} disabled={uploadingAvatar}>
-            <LinearGradient
-              colors={[TOKENS.color.primary, TOKENS.color.primaryDark]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.avatarBorder}
-            >
-              <View style={[styles.avatarContainer, { backgroundColor: tc.surface2 }]}>
-                {uploadingAvatar ? (
-                  <ActivityIndicator color={TOKENS.color.primary} size="large" />
-                ) : displayUri ? (
-                  <Image source={{ uri: displayUri }} style={styles.avatarImage} />
-                ) : (
-                  <View style={[styles.avatarPlaceholder, { backgroundColor: tc.surface2 }]}>
-                    <Text style={styles.avatarInitial}>
-                      {(profile?.firstName || 'U').charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
-                )}
-                <View style={[styles.cameraBadge, { borderColor: tc.bg }]}>
-                  <MaterialIcons name="camera-alt" size={16} color="#fff" />
-                </View>
+          <Pressable
+            onPress={pickImage}
+            disabled={uploadingAvatar}
+            accessibilityRole="button"
+            accessibilityLabel="Cambiar foto de perfil"
+          >
+            <Avatar uri={displayUri} name={profile?.firstName} size={AVATAR_SIZE} />
+            {uploadingAvatar ? (
+              <View style={[styles.avatarOverlay, { backgroundColor: TOKENS.scrim.medium }]}>
+                <ActivityIndicator color={TOKENS.onMedia.icon} />
               </View>
-            </LinearGradient>
+            ) : null}
+            <View style={[styles.cameraBadge, { borderColor: tc.bg }]}>
+              <MaterialIcons name="camera-alt" size={16} color={TOKENS.color.onPrimary} />
+            </View>
           </Pressable>
-          <Text style={[styles.avatarHint, { color: tc.textSub }]}>Tocá para cambiar foto</Text>
+          <Text variant="caption" color={tc.textSub}>Tocá para cambiar foto</Text>
         </MotiView>
 
         {/* Form */}
@@ -164,103 +223,79 @@ export default function EditProfileScreen() {
           from={{ opacity: 0, translateY: 20 }}
           animate={{ opacity: 1, translateY: 0 }}
           transition={{ type: 'timing', duration: 350, delay: 100 }}
-          style={[styles.formCard, { borderColor: tc.cardBorder }]}
         >
-          <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={styles.formBlur}>
-            {/* Nombre */}
-            <View style={styles.fieldGroup}>
-              <Text style={[styles.label, { color: tc.text }]}>Nombre</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: tc.surface, borderColor: tc.border, color: tc.text }]}
-                value={firstName}
-                onChangeText={setFirstName}
-                placeholder="Tu nombre"
-                placeholderTextColor={tc.textMuted}
-              />
-            </View>
+          <Card padding="xl" radius="lg" contentStyle={styles.formContent}>
+            <Input
+              label="Nombre"
+              value={firstName}
+              onChangeText={setFirstName}
+              placeholder="Tu nombre"
+              error={firstNameError}
+              autoCapitalize="words"
+            />
 
-            {/* Apellido */}
-            <View style={styles.fieldGroup}>
-              <Text style={[styles.label, { color: tc.text }]}>Apellido</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: tc.surface, borderColor: tc.border, color: tc.text }]}
-                value={lastName}
-                onChangeText={setLastName}
-                placeholder="Tu apellido"
-                placeholderTextColor={tc.textMuted}
-              />
-            </View>
-
-            {/* Username (solo lectura, se muestra) */}
-            {username ? (
-              <View style={styles.fieldGroup}>
-                <Text style={[styles.label, { color: tc.text }]}>Usuario</Text>
-                <View style={[styles.readonlyField, { backgroundColor: tc.surface2, borderColor: tc.border }]}>
-                  <Text style={[styles.readonlyText, { color: tc.textSub }]}>@{username}</Text>
-                  <MaterialIcons name="lock" size={14} color={tc.textMuted} />
-                </View>
-              </View>
-            ) : null}
+            <Input
+              label="Apellido"
+              value={lastName}
+              onChangeText={setLastName}
+              placeholder="Tu apellido"
+              autoCapitalize="words"
+            />
 
             {/* Teléfono */}
             <View style={styles.fieldGroup}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Text style={[styles.label, { color: tc.text }]}>Teléfono</Text>
+              <View style={styles.phoneHeader}>
+                <Text variant="label">Teléfono</Text>
                 {profile?.isPhoneVerified ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <MaterialIcons name="verified" size={14} color="#16a34a" />
-                    <Text style={{ fontSize: 12, color: '#16a34a', fontWeight: '600' }}>Verificado</Text>
-                  </View>
+                  <Badge label="Verificado" tone="done" icon="checkmark-circle" size="sm" />
                 ) : (
-                  <Pressable onPress={() => router.push('/(tabs)/profile/verify-phone')}>
-                    <Text style={{ fontSize: 12, color: TOKENS.color.primary, fontWeight: '600' }}>Verificar →</Text>
-                  </Pressable>
+                  <Button
+                    label="Verificar"
+                    variant="ghost"
+                    size="sm"
+                    iconPosition="right"
+                    icon={<MaterialIcons name="arrow-forward" size={14} color={TOKENS.color.signal} />}
+                    onPress={() => router.push('/(tabs)/profile/verify-phone')}
+                  />
                 )}
               </View>
-              <TextInput
-                style={[styles.input, { backgroundColor: tc.surface, borderColor: tc.border, color: tc.text }]}
+              <Input
                 value={phone}
                 onChangeText={setPhone}
                 placeholder="+54 11 1234 5678"
-                placeholderTextColor={tc.textMuted}
                 keyboardType="phone-pad"
+                accessibilityLabel="Teléfono"
               />
             </View>
 
             {/* Ubicación */}
             <View style={styles.fieldGroup}>
-              <Text style={[styles.label, { color: tc.text }]}>Ubicación</Text>
-              <Text style={{ color: tc.textSub, marginBottom: 8 }}>
+              <Text variant="label">Ubicación</Text>
+              <Text variant="bodySmall" color={tc.textSub}>
                 {coordinates ? 'Ubicación seleccionada. Guardá el perfil para confirmarla.' : profile?.location || 'Usá tu ubicación actual para ubicar tu perfil.'}
               </Text>
-              <Button label={locating ? 'Buscando ubicación…' : 'Usar mi ubicación actual'} disabled={locating} onPress={async () => {
-                setLocating(true);
-                try {
-                  const permission = await Location.requestForegroundPermissionsAsync();
-                  if (permission.status !== 'granted') throw new Error('Permití el acceso a tu ubicación en los ajustes del dispositivo.');
-                  const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-                  setCoordinates({ lat: position.coords.latitude, lng: position.coords.longitude });
-                } catch (err) { Alert.alert('Ubicación', getUserErrorMessage(err)); }
-                finally { setLocating(false); }
-              }} />
+              <Button
+                label={locating ? 'Buscando ubicación…' : 'Usar mi ubicación actual'}
+                variant="secondary"
+                loading={locating}
+                onPress={handleLocate}
+              />
             </View>
 
             {/* Bio */}
             <View style={styles.fieldGroup}>
-              <Text style={[styles.label, { color: tc.text }]}>Bio</Text>
-              <TextInput
-                style={[styles.input, styles.textArea, { backgroundColor: tc.surface, borderColor: tc.border, color: tc.text }]}
+              <Input
+                label="Bio"
                 value={bio}
                 onChangeText={setBio}
                 placeholder="Contanos sobre vos..."
-                placeholderTextColor={tc.textMuted}
                 multiline
-                maxLength={500}
+                maxLength={BIO_MAX}
                 textAlignVertical="top"
               />
-              <Text style={[styles.charCount, { color: tc.textMuted }]}>{bio.length}/500</Text>
+              <Text variant="caption" color={tc.textMuted} style={styles.charCount}>{bio.length}/{BIO_MAX}</Text>
             </View>
-          </BlurView>
+          </Card>
         </MotiView>
 
         {/* Save */}
@@ -271,84 +306,39 @@ export default function EditProfileScreen() {
         >
           <Button
             label="Guardar Cambios"
-            icon={<MaterialIcons name="check" size={20} color="#fff" />}
+            icon={<MaterialIcons name="check" size={20} color={TOKENS.color.onPrimary} />}
             onPress={handleSave}
-            disabled={!hasChanges}
-            loading={saving || isLoading}
+            disabled={!canSave}
+            loading={saving}
             fullWidth
           />
         </MotiView>
       </ScrollView>
-    </LinearGradient>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   bg: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 60,
-    paddingHorizontal: 24,
-    paddingBottom: 16,
-    overflow: 'hidden',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.6)',
-  },
-  backBtn: {
-    padding: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.6)',
-  },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: TOKENS.color.text },
+  header: { paddingTop: 60, paddingHorizontal: 24, paddingBottom: 16 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: 24,
+    paddingTop: 8,
     paddingBottom: 40,
     gap: 24,
   },
-  // Avatar
   avatarSection: { alignItems: 'center', gap: 8 },
-  avatarBorder: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    padding: 3,
+  avatarOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: AVATAR_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  avatarContainer: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-    backgroundColor: '#f0f0f0',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'visible',
-  },
-  avatarImage: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-  },
-  avatarPlaceholder: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
-    backgroundColor: '#e5e7eb',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarInitial: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: TOKENS.color.primary,
   },
   cameraBadge: {
     position: 'absolute',
-    bottom: 2,
-    right: 2,
+    bottom: 0,
+    right: 0,
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -356,64 +346,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: '#fff',
   },
-  avatarHint: {
-    fontSize: 12,
-    color: 'rgba(107,107,107,0.6)',
-    fontWeight: '500',
-  },
-  // Form
-  formCard: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.85)',
-  },
-  formBlur: {
-    padding: 20,
-    gap: 18,
-  },
+  formContent: { gap: 18 },
   fieldGroup: { gap: 6 },
-  label: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: TOKENS.color.text,
-    letterSpacing: 0.3,
-  },
-  input: {
-    backgroundColor: 'rgba(255,255,255,0.7)',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 15,
-    color: TOKENS.color.text,
-    borderWidth: 1.5,
-    borderColor: 'rgba(200,200,220,0.5)',
-  },
-  textArea: {
-    minHeight: 100,
-    paddingTop: 14,
-  },
-  charCount: {
-    fontSize: 11,
-    color: 'rgba(107,107,107,0.5)',
-    alignSelf: 'flex-end',
-  },
-  readonlyField: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(200,200,220,0.2)',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1.5,
-    borderColor: 'rgba(200,200,220,0.3)',
-  },
-  readonlyText: {
-    fontSize: 15,
-    color: 'rgba(107,107,107,0.6)',
-  },
-  // Save
+  phoneHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  charCount: { alignSelf: 'flex-end' },
 });
