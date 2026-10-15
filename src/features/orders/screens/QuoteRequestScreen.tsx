@@ -12,7 +12,6 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MotiView } from '@/core/components/MotiView';
@@ -28,6 +27,7 @@ import {
   SPACING,
   TOKENS,
   useThemeColors,
+  dialog,
 } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
@@ -44,12 +44,12 @@ export default function QuoteRequestScreen() {
 
   const handleSubmit = async () => {
     if (!message.trim()) {
-      Alert.alert('Campo requerido', 'Describí qué necesitás para que el proveedor pueda cotizar.');
+      dialog.fromAlert('Campo requerido', 'Describí qué necesitás para que el proveedor pueda cotizar.');
       return;
     }
 
     if (!params.serviceId) {
-      Alert.alert('Error', 'No se encontró el servicio. Volvé e intentá nuevamente.');
+      dialog.fromAlert('Error', 'No se encontró el servicio. Volvé e intentá nuevamente.');
       return;
     }
 
@@ -62,13 +62,13 @@ export default function QuoteRequestScreen() {
         scheduledDate: scheduledDate.trim() || undefined,
       });
 
-      Alert.alert(
+      dialog.fromAlert(
         '¡Solicitud enviada!',
         'El proveedor recibirá tu solicitud y te responderá pronto.',
         [{ text: 'Ver mis órdenes', onPress: () => router.replace('/(tabs)/orders') }],
       );
     } catch (err: any) {
-      Alert.alert('Error', getUserErrorMessage(err));
+      dialog.fromAlert('Error', getUserErrorMessage(err));
     } finally {
       setIsLoading(false);
     }

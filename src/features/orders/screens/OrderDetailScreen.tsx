@@ -39,6 +39,7 @@ import {
   SPACING,
   useThemeColors,
   usePremiumColors,
+  dialog,
 } from '@/core/design-system';
 import type { TimelineStep } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
@@ -135,7 +136,7 @@ export default function OrderDetailScreen() {
       await action();
       await refetchOrder(); // Refresca los datos
     } catch (err) {
-      Alert.alert(`Error al ${label.toLowerCase()}`, getUserErrorMessage(err));
+      dialog.fromAlert(`Error al ${label.toLowerCase()}`, getUserErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
