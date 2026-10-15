@@ -68,3 +68,45 @@ Relacionado: `odd/ux-gaps.md` (huecos de UX que originan estos pedidos).
   - `__tests__/profileBanner.test.ts`, `__tests__/profile.test.tsx`
 - **Comportamiento hasta que se despliegue:** si el servidor responde `404`, `405` o `501`, la app muestra "La portada todavía no está disponible." y no cambia nada. `413` muestra un mensaje de tamaño (máx. 5 MB); `400`/`415`, un mensaje de formato; cualquier otro error, el mensaje genérico. Nunca falla ni se cierra.
 - **Al desplegar:** no hace falta tocar el frontend. Verificar subida, reemplazo y quitado desde la app y pasar este pedido a ✅.
+
+---
+
+## BR02 — Rechazar mensajes en órdenes finalizadas
+
+### Contexto
+
+Decisión de producto (G68): cuando una orden pasa a `completed` o `cancelled`, el chat queda en solo lectura. Con la orden en `disputed` el chat sigue abierto. El cliente oculta el campo de escritura según el estado de la orden, pero una regla solo en el frontend se puede saltear (versiones viejas de la app, llamadas directas a la API, socket). El servidor debe ser quien la haga cumplir.
+
+### 1. Rechazar envíos en órdenes cerradas
+
+Aplicar a todos los puntos de envío, con la misma regla:
+
+- `POST /conversations/{conversationId}/messages` (texto)
+- `POST /conversations/{conversationId}/media` (imagen, video, documento y audio)
+- Envío de mensajes por socket (evento de envío de mensaje del gateway de chat)
+
+Reglas:
+
+- Si la orden vinculada está en `completed` o `cancelled`: rechazar y no persistir ni emitir el mensaje.
+- Si está en `disputed`, `pending`, `accepted` o `in_progress`: permitir como hoy.
+- Respuesta propuesta: `409 Conflict` con cuerpo `{ "code": "ORDER_CLOSED", "message": "La orden está cerrada y el chat es de solo lectura." }`. Por socket, un evento de error equivalente con el mismo `code`.
+- Lectura (`GET` de conversaciones y mensajes, `PATCH .../read`) sigue permitida en órdenes cerradas.
+
+El cliente trata `403`, `409` y `422` como "orden cerrada": muestra "No podés enviar mensajes en una orden finalizada." y vuelve a consultar la orden.
+
+### 2. Estado de la orden en la lista de conversaciones
+
+- `GET /conversations` y `GET /conversations/{orderId}` deberían incluir `orderStatus` (`pending | accepted | in_progress | completed | cancelled | disputed`).
+- Hoy el cliente obtiene el estado con `GET /orders/{id}` al abrir el chat. En la lista no hay estado, así que no se muestra el badge "Finalizada" / "Cancelada" / "En disputa" (evitamos consultar una orden por fila).
+
+### 3. Notificación `new_message`
+
+- El payload `data` de la notificación `new_message` debe incluir `orderId` (hoy solo se observó `conversationId`). El cliente abre `/chat/{orderId}` (G72); sin `orderId` solo puede llevar a la lista de chats.
+
+### Estado del frontend
+
+- Implementado: oculta el campo de escritura (texto, adjuntos, micrófono) y muestra el aviso en órdenes `completed`/`cancelled`; aviso informativo en `disputed`. Estado desde `useOrder` (sin request extra), refrescado al volver el foco.
+- Ya maneja el rechazo `403`/`409`/`422` del servidor en texto, multimedia y audio.
+- El badge de la lista está listo y se activa solo cuando el payload trae `orderStatus` (`Conversation.orderStatus`).
+- Archivos: `src/features/chat/constants/chatOrderRules.ts`, `src/features/chat/components/ChatOrderNotice.tsx`, `src/features/chat/screens/ChatScreen.tsx`, `src/features/chat/screens/ConversationsListScreen.tsx`, `__tests__/chatOrderStatus.test.tsx`.
+- **Al desplegar:** verificar el rechazo por REST y por socket, y pasar este pedido a ✅.
