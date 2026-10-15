@@ -1,23 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  Pressable,
-  ActivityIndicator,
-  ScrollView,
-  Alert,
-  Animated,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, StyleSheet, ScrollView, Alert, Animated } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { deleteAccountService } from '@/features/profile/services/profile';
-import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors, wash } from '@/core/design-system';
+import {
+  TOKENS,
+  Button,
+  Card,
+  IconCircle,
+  Input,
+  NoticeBanner,
+  ScreenHeader,
+  Text,
+  useThemeColors,
+} from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const CONFIRM_WORD = 'ELIMINAR';
@@ -53,7 +51,6 @@ export default function DeleteAccountScreen() {
   const [step, setStep] = useState<1 | 2>(1);
   const [confirmText, setConfirmText] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -81,8 +78,19 @@ export default function DeleteAccountScreen() {
     ]).start();
   };
 
-  const handleDelete = async () => {
-    if (!canDelete) return;
+  const handleBack = () => {
+    if (loading) return;
+    if (step === 2) {
+      setStep(1);
+      setPassword('');
+      setError('');
+    } else {
+      safeBack(router, '/(tabs)/profile');
+    }
+  };
+
+  const handleDelete = () => {
+    if (!canDelete || loading) return;
     Alert.alert(
       'Última confirmación',
       '¿Estás absolutamente seguro? Esta acción eliminará tu cuenta para siempre.',
@@ -100,7 +108,8 @@ export default function DeleteAccountScreen() {
               router.replace('/login');
             } catch (err: any) {
               const code = err?.response?.data?.code;
-              if (code === 'NOT_FOUND') setError('Usuario no encontrado.');
+              if (!err?.response) setError('Sin conexión. Revisá tu internet e intentá de nuevo.');
+              else if (code === 'NOT_FOUND') setError('Usuario no encontrado.');
               else if (code === 'INVALID_PASSWORD' || err?.response?.status === 401)
                 setError('Contraseña incorrecta. Verificá e intentá de nuevo.');
               else setError('Error al eliminar la cuenta. Intentá más tarde.');
@@ -114,44 +123,26 @@ export default function DeleteAccountScreen() {
   };
 
   return (
-    <LinearGradient
-      colors={wash(tc)}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={s.bg}
-    >
+    <View style={[s.bg, { backgroundColor: tc.bg }]}>
       <AnimatedBackground variant="minimal" />
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        {/* Header */}
-        <View style={s.header}>
-          <Pressable
-            onPress={() => step === 2 ? (setStep(1), setPassword(''), setError('')) : safeBack(router, '/(tabs)/profile')}
-            hitSlop={12}
-            style={[s.backBtn, { backgroundColor: tc.surface }]}
-          >
-            <MaterialIcons name="arrow-back" size={24} color={tc.text} />
-          </Pressable>
-          <Text style={[s.headerTitle, { color: tc.text }]}>
-            {step === 1 ? 'Eliminar cuenta' : 'Confirmar identidad'}
-          </Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <ScreenHeader title={step === 1 ? 'Eliminar cuenta' : 'Confirmar identidad'} onBack={handleBack} />
 
         {/* Step indicator */}
         <View style={s.stepRow}>
-          <View style={[s.stepDot, { backgroundColor: tc.border }, s.stepDotActive]} />
+          <View style={[s.stepDot, { backgroundColor: TOKENS.color.error }]} />
           <View style={[s.stepLine, { backgroundColor: tc.divider }]} />
-          <View style={[s.stepDot, { backgroundColor: tc.border }, step === 2 && s.stepDotActive]} />
+          <View style={[s.stepDot, { backgroundColor: step === 2 ? TOKENS.color.error : tc.border }]} />
         </View>
 
         {/* Warning icon */}
         <Animated.View style={[s.warningIconWrap, { opacity: iconOpacity, transform: [{ scale: iconScale }] }]}>
-          <View style={[s.warningCircle, { backgroundColor: TOKENS.status.cancelled.bg, borderColor: 'rgba(255,77,77,0.35)' }]}>
-            <MaterialIcons name={step === 1 ? 'warning' : 'lock'} size={48} color={TOKENS.color.error} />
-          </View>
-          <Text style={s.warningTitle}>{step === 1 ? 'Zona de peligro' : 'Verificá tu identidad'}</Text>
-          <Text style={[s.warningSubtitle, { color: tc.textSub }]}>
+          <IconCircle name={step === 1 ? 'warning' : 'lock-closed'} variant="danger" size={84} />
+          <Text variant="h3" color={TOKENS.color.error} center>
+            {step === 1 ? 'Zona de peligro' : 'Verificá tu identidad'}
+          </Text>
+          <Text variant="bodySmall" color={tc.textSub} center>
             {step === 1
               ? 'Esta acción es permanente e irreversible.'
               : 'Ingresá tu contraseña para confirmar la eliminación.'}
@@ -162,280 +153,107 @@ export default function DeleteAccountScreen() {
           <>
             {/* Consequences */}
             <FadeSlide delay={100}>
-              <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
-                <Text style={[s.cardTitle, { color: tc.text }]}>Si eliminás tu cuenta:</Text>
+              <Card padding="xl" radius="lg" contentStyle={s.cardContent}>
+                <Text variant="subtitle">Si eliminás tu cuenta:</Text>
                 {WARNINGS.map((w, i) => (
                   <View key={i} style={s.warningItem}>
-                    <MaterialIcons name="close" size={16} color="#dc2626" style={{ marginTop: 2 }} />
-                    <Text style={[s.warningText, { color: tc.textSub }]}>{w}</Text>
+                    <MaterialIcons name="close" size={16} color={TOKENS.color.error} style={s.warningIcon} />
+                    <Text variant="bodySmall" color={tc.textSub} style={s.warningText}>{w}</Text>
                   </View>
                 ))}
-              </View>
+              </Card>
             </FadeSlide>
 
             {/* Confirm word input */}
             <FadeSlide delay={200}>
-              <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
-                <Text style={[s.confirmLabel, { color: tc.textSub }]}>
+              <Card padding="xl" radius="lg" contentStyle={s.cardContent}>
+                <Text variant="body" color={tc.textSub}>
                   Escribí{' '}
-                  <Text style={s.confirmWord}>{CONFIRM_WORD}</Text>
+                  <Text variant="body" weight="800" color={TOKENS.color.error}>{CONFIRM_WORD}</Text>
                   {' '}para continuar:
                 </Text>
-                <TextInput
-                  style={[s.confirmInput, { borderColor: tc.border, color: tc.text, backgroundColor: tc.surface }, canProceed && { borderColor: TOKENS.color.error, backgroundColor: TOKENS.status.cancelled.bg }]}
+                <Input
                   value={confirmText}
                   onChangeText={setConfirmText}
                   placeholder={CONFIRM_WORD}
-                  placeholderTextColor={tc.textMuted}
                   autoCapitalize="characters"
                   autoCorrect={false}
+                  accessibilityLabel={`Escribí ${CONFIRM_WORD} para continuar`}
                 />
-              </View>
+              </Card>
             </FadeSlide>
 
             <FadeSlide delay={300}>
-              <View style={[s.deleteBtnShadow, !canProceed && s.deleteBtnShadowDisabled]}>
-                <Pressable
-                  onPress={goToStep2}
-                  disabled={!canProceed}
-                  style={({ pressed }) => [
-                    s.deleteBtn,
-                    pressed && canProceed && s.btnPressed,
-                  ]}
-                >
-                  <LinearGradient
-                    colors={canProceed ? ['#dc2626', '#b91c1c', '#991b1b'] : ['#ccc', '#bbb']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={s.btnGradient}
-                  >
-                    <Text style={s.btnText}>Continuar</Text>
-                    <MaterialIcons name="arrow-forward" size={20} color="#fff" />
-                  </LinearGradient>
-                </Pressable>
-              </View>
+              <Button
+                label="Continuar"
+                variant="danger"
+                size="lg"
+                fullWidth
+                disabled={!canProceed}
+                iconPosition="right"
+                icon={<MaterialIcons name="arrow-forward" size={20} color={TOKENS.color.onPrimary} />}
+                onPress={goToStep2}
+              />
             </FadeSlide>
           </>
         )}
 
         {step === 2 && (
-          <Animated.View style={{ opacity: step2Opacity, transform: [{ translateY: step2Ty }], gap: 16 }}>
-            {/* Password input */}
-            <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
-              <Text style={[s.confirmLabel, { color: tc.textSub }]}>Ingresá tu contraseña actual:</Text>
-              <View style={s.passwordRow}>
-                <TextInput
-                  style={[s.confirmInput, { borderColor: tc.border, color: tc.text, backgroundColor: tc.surface }, s.passwordInput, password.length >= 6 && { borderColor: TOKENS.color.error, backgroundColor: TOKENS.status.cancelled.bg }]}
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="••••••••"
-                  placeholderTextColor={tc.textMuted}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoFocus
-                />
-                <Pressable onPress={() => setShowPassword(v => !v)} style={[s.eyeBtn, { borderColor: tc.border, backgroundColor: tc.surface2 }]} hitSlop={8}>
-                  <MaterialIcons
-                    name={showPassword ? 'visibility-off' : 'visibility'}
-                    size={20}
-                    color={tc.textSub}
-                  />
-                </Pressable>
-              </View>
-            </View>
+          <Animated.View style={[s.step2, { opacity: step2Opacity, transform: [{ translateY: step2Ty }] }]}>
+            <Card padding="xl" radius="lg" contentStyle={s.cardContent}>
+              <Input
+                label="Ingresá tu contraseña actual"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="••••••••"
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoFocus
+                editable={!loading}
+                returnKeyType="done"
+                onSubmitEditing={handleDelete}
+              />
+            </Card>
 
-            {!!error && (
-              <View style={s.errorBanner}>
-                <MaterialIcons name="error-outline" size={16} color="#dc2626" />
-                <Text style={s.errorText}>{error}</Text>
-              </View>
-            )}
+            {!!error && <NoticeBanner variant="error">{error}</NoticeBanner>}
 
-            {/* Delete button */}
-            <View style={[s.deleteBtnShadow, (!canDelete || loading) && s.deleteBtnShadowDisabled]}>
-              <Pressable
-                onPress={handleDelete}
-                disabled={!canDelete || loading}
-                style={({ pressed }) => [
-                  s.deleteBtn,
-                  pressed && canDelete && s.btnPressed,
-                ]}
-              >
-                <LinearGradient
-                  colors={canDelete ? ['#dc2626', '#b91c1c', '#991b1b'] : ['#ccc', '#bbb']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={s.btnGradient}
-                >
-                  {loading
-                    ? <ActivityIndicator color="#fff" size="small" />
-                    : (
-                      <>
-                        <MaterialIcons name="delete-forever" size={20} color="#fff" />
-                        <Text style={s.btnText}>Eliminar mi cuenta</Text>
-                      </>
-                    )
-                  }
-                </LinearGradient>
-              </Pressable>
-            </View>
+            <Button
+              label="Eliminar mi cuenta"
+              variant="danger"
+              size="lg"
+              fullWidth
+              loading={loading}
+              disabled={!canDelete}
+              icon={<MaterialIcons name="delete-forever" size={20} color={TOKENS.color.onPrimary} />}
+              onPress={handleDelete}
+            />
           </Animated.View>
         )}
 
-        {!!error && step === 1 && (
-          <View style={s.errorBanner}>
-            <MaterialIcons name="error-outline" size={16} color="#dc2626" />
-            <Text style={s.errorText}>{error}</Text>
-          </View>
-        )}
+        {!!error && step === 1 && <NoticeBanner variant="error">{error}</NoticeBanner>}
 
-        <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} style={s.cancelRow}>
-          <Text style={[s.cancelText, { color: tc.textSub }]}>Cancelar, mantener mi cuenta</Text>
-        </Pressable>
+        <Button
+          label="Cancelar, mantener mi cuenta"
+          variant="ghost"
+          disabled={loading}
+          onPress={() => safeBack(router, '/(tabs)/profile')}
+        />
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
   bg: { flex: 1 },
   scroll: { paddingTop: 60, paddingBottom: 40, paddingHorizontal: 24, gap: 16 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  stepRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 0,
-    marginBottom: 4,
-  },
-  stepDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'rgba(200,200,220,0.6)',
-  },
-  stepDotActive: { backgroundColor: '#dc2626' },
-  stepLine: {
-    width: 40,
-    height: 2,
-    backgroundColor: 'rgba(200,200,220,0.4)',
-    marginHorizontal: 6,
-  },
-  passwordRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 0,
-  },
-  passwordInput: {
-    flex: 1,
-    borderTopRightRadius: 0,
-    borderBottomRightRadius: 0,
-    borderRightWidth: 0,
-  },
-  eyeBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderWidth: 2,
-    borderColor: 'rgba(200,200,220,0.5)',
-    borderLeftWidth: 0,
-    borderTopRightRadius: 12,
-    borderBottomRightRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backBtn: {
-    padding: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-  },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: TOKENS.color.text },
+  stepRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  stepDot: { width: 10, height: 10, borderRadius: 5 },
+  stepLine: { width: 40, height: 2, marginHorizontal: 6 },
   warningIconWrap: { alignItems: 'center', gap: 10, paddingVertical: 8 },
-  warningCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: '#fef2f2',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#fecaca',
-  },
-  warningTitle: { fontSize: 22, fontWeight: '800', color: '#dc2626', textAlign: 'center' },
-  warningSubtitle: { fontSize: 14, color: TOKENS.color.sub, textAlign: 'center' },
-  card: {
-    borderRadius: 20,
-    padding: 20,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.9)',
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: TOKENS.color.text },
+  cardContent: { gap: 12 },
   warningItem: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
-  warningText: { flex: 1, fontSize: 13, color: TOKENS.color.sub, lineHeight: 18 },
-  confirmLabel: { fontSize: 14, color: TOKENS.color.sub, lineHeight: 20 },
-  confirmWord: { fontWeight: '800', color: '#dc2626', letterSpacing: 1 },
-  confirmInput: {
-    borderWidth: 2,
-    borderColor: 'rgba(200,200,220,0.5)',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    fontWeight: '700',
-    color: TOKENS.color.text,
-    letterSpacing: 2,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-  },
-  confirmInputValid: { borderColor: '#dc2626', backgroundColor: '#fff5f5' },
-  errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: TOKENS.status.cancelled.bg,
-    borderRadius: 12,
-    padding: 12,
-  },
-  errorText: { flex: 1, fontSize: 13, color: '#dc2626' },
-  deleteBtnShadow: {
-    borderRadius: 14,
-    shadowColor: '#dc2626',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  deleteBtnShadowDisabled: { shadowOpacity: 0, elevation: 0 },
-  deleteBtn: {
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  btnPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  btnGradient: {
-    paddingVertical: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  cancelRow: { alignItems: 'center', paddingVertical: 12 },
-  cancelText: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-    fontWeight: '600',
-    textDecorationLine: 'underline',
-  },
+  warningIcon: { marginTop: 2 },
+  warningText: { flex: 1, lineHeight: 18 },
+  step2: { gap: 16 },
 });
