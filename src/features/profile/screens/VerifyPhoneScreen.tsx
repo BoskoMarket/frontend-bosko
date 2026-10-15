@@ -8,7 +8,6 @@ import React, { useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
@@ -29,6 +28,7 @@ import {
   ScreenHeader,
   Text,
   useThemeColors,
+  dialog,
 } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -99,7 +99,7 @@ export default function VerifyPhoneScreen() {
       const idToken = await userCredential.user.getIdToken();
       await verifyPhoneWithFirebase(idToken);
       await refreshProfile();
-      Alert.alert('¡Listo!', 'Tu teléfono fue verificado correctamente.', [
+      dialog.fromAlert('¡Listo!', 'Tu teléfono fue verificado correctamente.', [
         { text: 'OK', onPress: () => safeBack(router, '/(tabs)/profile') },
       ]);
     } catch (err: any) {

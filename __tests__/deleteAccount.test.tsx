@@ -1,8 +1,7 @@
 import React from 'react';
-import { Alert } from 'react-native';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { useThemeStore } from '@/stores/theme.store';
-import { toast } from '@/core/design-system';
+import { dialog, toast } from '@/core/design-system';
 import type { Order } from '@/features/orders/types/orders.types';
 import {
   BLOCKING_ORDER_STATUSES,
@@ -78,7 +77,7 @@ describe('deleteAccountRules', () => {
 const setMode = (mode: 'dark' | 'light') => act(() => { useThemeStore.getState().setMode(mode); });
 
 const autoConfirm = () =>
-  jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
+  jest.spyOn(dialog, 'fromAlert').mockImplementation((_t, _m, buttons) => {
     buttons?.find((b) => b.style === 'destructive')?.onPress?.();
   });
 

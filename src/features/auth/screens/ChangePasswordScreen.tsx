@@ -7,7 +7,6 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  Alert,
   ScrollView,
   Animated,
 } from 'react-native';
@@ -24,6 +23,7 @@ import {
   Text,
   TOKENS,
   useThemeColors,
+  dialog,
 } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { getUserErrorMessage } from '@/lib/errors';
@@ -101,7 +101,7 @@ export default function ChangePasswordScreen() {
     setIsLoading(true);
     try {
       await changePasswordService(currentPassword, newPassword);
-      Alert.alert('¡Listo!', 'Tu contraseña fue actualizada exitosamente.', [
+      dialog.fromAlert('¡Listo!', 'Tu contraseña fue actualizada exitosamente.', [
         { text: 'OK', onPress: () => safeBack(router, '/(tabs)/profile') },
       ]);
     } catch (err) {
