@@ -11,6 +11,8 @@ export interface CardProps extends ViewProps {
   bordered?: boolean;
   elevated?: boolean;
   onPress?: () => void;
+  /** Layout styles for the inner surface (gap, flexDirection, alignItems…). `style` targets the outer wrapper. */
+  contentStyle?: ViewStyle;
 }
 
 /**
@@ -27,6 +29,7 @@ export function Card({
   elevated = false,
   onPress,
   style,
+  contentStyle,
   children,
   ...rest
 }: CardProps) {
@@ -45,6 +48,7 @@ export function Card({
     overflow: 'hidden',
     backgroundColor: tc.card,
     ...(bordered ? { borderWidth: 1, borderColor: tc.cardBorder } : null),
+    ...contentStyle,
   };
 
   const surface = (
