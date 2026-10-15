@@ -221,9 +221,13 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 
 - 2026-10-15 T11 ✅ `d9f2b37` `27baaec` `6521802` `2e43e10` (rama `feat/ds-t11-rest`, apilada sobre T10): notifications, reviews, search, favorites y appConfig migrados; `serviceCategories.ts` borrado (100% código comentado, sin importadores). **`lint:ds` = 0 en todo el repo.** Sin agregados al DS. UX gaps G92–G112: 12 implementados (error+retry, banner de permiso de notificaciones denegado, toasts y anti doble envío en reseñas, Enter ejecuta búsqueda, "Deshacer" 5 s al quitar favorito, a11y labels); ⬜ G96 paginación de notificaciones, G111 link a tienda/mantenimiento (BR06 `GET /app/config`). ❔ reseñas (comentario obligatorio, editar/borrar/responder, calificación al cliente, plazo, reportar reseña abusiva), búsquedas recientes, favoritos sincronizados, swipe/archivar notificaciones. Checks: 24 suites / 419 tests, `tsc` 0, eslint 0 errores. **Verificar en dispositivo**: headers de notificaciones/reseñas, `Badge` de rating, `EmptyState` animado, barra "Deshacer" de favoritos.
 
+- 2026-10-15 **Decisiones del usuario (T11)**: reseña con comentario obligatorio y editable (G101); el prestador califica al cliente (G102; plazo abierto); guardar búsquedas recientes (G107); sincronizar favoritos postergado (G109); deslizar para borrar notificaciones (G97). Pendiente de implementar. El usuario frena acá para probar en dispositivo.
+
 ## Próximo paso
 
-0. G37 (cambio de teléfono verificado) pendiente de respuesta; siguientes ❔ de `odd/ux-gaps.md`.
+0. **Usuario probando en dispositivo (dark + light) T4–T11.** Con su feedback: corregir lo que aparezca y armar PRs encadenados de las ramas apiladas (`feat/ds-t3-components` … `feat/ds-t11-rest`).
+1. Implementar decisiones T11 (G101, G102, G107, G97) + BR que hagan falta (editar reseña, reseña del prestador al cliente).
+2. G37 (cambio de teléfono verificado) pendiente de respuesta; ❔ restantes de `odd/ux-gaps.md`.
 1. T12: nombre de marca (`BRAND.name` en copy, `STORAGE_PREFIX` estable, `app.json` → `app.config.ts` desde brand).
 2. Antes de T13: verificar en dispositivo (dark + light) T4–T11 y armar PRs encadenados de las ramas apiladas.
 1. Responder las preguntas ❔ de `odd/ux-gaps.md` (de a una) e implementar las que queden definidas.
