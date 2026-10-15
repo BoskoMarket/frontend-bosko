@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Animated,
   Pressable,
@@ -12,24 +12,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors } from '@/stores/theme.store';
+import {
+  Button,
+  Card,
+  Divider,
+  GRADIENTS,
+  SPACING,
+  TOKENS,
+  useIsDark,
+  useThemeColors,
+} from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useOrderPayment } from '@/hooks/queries/usePaymentsQuery';
-
-function useC() {
-  const tc = useThemeColors();
-  return {
-    primary: TOKENS.color.primary,
-    dark:    TOKENS.color.primaryDark,
-    bg:      tc.bg,
-    card:    tc.card,
-    text:    tc.text,
-    sub:     tc.textSub,
-    green:   '#16A34A',
-    greenBg: '#F0FFF4',
-  };
-}
 
 function formatCurrency(amount: string | undefined) {
   const n = parseFloat(amount ?? '0');
@@ -43,7 +37,8 @@ export function PaymentSuccessScreen() {
     amount:      string;
     serviceName: string;
   }>();
-  const C = useC();
+  const tc = useThemeColors();
+  const isDark = useIsDark();
   const paymentQuery = useOrderPayment(params.orderId);
   const payment = paymentQuery.data;
 
@@ -89,23 +84,28 @@ export function PaymentSuccessScreen() {
 
   const goHome = () => router.replace('/(tabs)');
 
-  if (paymentQuery.isLoading) return <View style={[s.root, { backgroundColor: C.bg, justifyContent: 'center' }]}><ActivityIndicator /></View>;
+  if (paymentQuery.isLoading) return <View style={[s.root, { backgroundColor: tc.bg, justifyContent: 'center' }]}><ActivityIndicator color={TOKENS.color.signal} /></View>;
   if (!payment?.simulated || payment.status !== 'paid') return (
-    <View style={[s.root, { backgroundColor: C.bg, justifyContent: 'center', padding: 24 }]}>
-      <Text style={{ color: C.text }}>No encontramos una simulación confirmada para esta orden.</Text>
-      <Pressable onPress={goHome}><Text style={{ color: C.primary, marginTop: 24 }}>Volver al inicio</Text></Pressable>
+    <View style={[s.root, { backgroundColor: tc.bg, justifyContent: 'center', padding: SPACING.xxl }]}>
+      <Text style={{ color: tc.text }}>No encontramos una simulación confirmada para esta orden.</Text>
+      <Pressable onPress={goHome}><Text style={{ color: TOKENS.color.signal, marginTop: SPACING.xxl }}>Volver al inicio</Text></Pressable>
     </View>
   );
 
   return (
-    <View style={[s.root, { backgroundColor: C.bg, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+    <View style={[s.root, { backgroundColor: tc.bg, paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <AnimatedBackground variant="minimal" />
-      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={tc.bg} />
 
       {/* ── Success icon ────────────────────────────────────────────────── */}
       <View style={s.iconSection}>
         {/* Outer ring */}
-        <Animated.View style={[s.outerRing, { transform: [{ scale: bgScale }] }]} />
+        <Animated.View
+          style={[
+            s.outerRing,
+            { backgroundColor: TOKENS.status.done.bg, borderColor: TOKENS.status.done.fg, transform: [{ scale: bgScale }] },
+          ]}
+        />
 
         {/* Inner circle */}
         <View style={s.innerCircleShadow}>
@@ -116,10 +116,10 @@ export function PaymentSuccessScreen() {
             ]}
           >
             <LinearGradient
-              colors={[C.green, '#15803d']}
+              colors={GRADIENTS.success}
               style={s.checkGradient}
             >
-              <Ionicons name="checkmark" size={48} color="#fff" />
+              <Ionicons name="checkmark" size={48} color={TOKENS.color.onPrimary} />
             </LinearGradient>
           </Animated.View>
         </View>
@@ -132,41 +132,41 @@ export function PaymentSuccessScreen() {
           { opacity: contentFade, transform: [{ translateY: contentY }] },
         ]}
       >
-        <Text style={[s.title, { color: C.text }]}>Simulación completada</Text>
-        <Text style={[s.subtitle, { color: C.sub }]}>No se cobró dinero ni se notificó un pago al proveedor.</Text>
+        <Text style={[s.title, { color: tc.text }]}>Simulación completada</Text>
+        <Text style={[s.subtitle, { color: tc.textSub }]}>No se cobró dinero ni se notificó un pago al proveedor.</Text>
 
         {/* Amount pill */}
-        <View style={[s.amountPill, { backgroundColor: C.card }]}>
-          <Text style={[s.amountLabel, { color: C.sub }]}>Monto simulado</Text>
-          <Text style={s.amountValue}>{formatCurrency(String(payment.amount))}</Text>
-        </View>
+        <Card padding="lg" radius="md" contentStyle={s.amountPill}>
+          <Text style={[s.amountLabel, { color: tc.textSub }]}>Monto simulado</Text>
+          <Text style={[s.amountValue, { color: TOKENS.color.signal }]}>{formatCurrency(String(payment.amount))}</Text>
+        </Card>
 
         {/* Service card */}
-        <View style={[s.detailCard, { backgroundColor: C.card }]}>
+        <Card padding="lg" radius="md" style={s.detailWrap} contentStyle={s.detailCard}>
           <View style={s.detailRow}>
-            <View style={s.detailIcon}>
-              <Ionicons name="construct-outline" size={16} color={C.primary} />
+            <View style={[s.detailIcon, { backgroundColor: tc.accent }]}>
+              <Ionicons name="construct-outline" size={16} color={TOKENS.color.signal} />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[s.detailLabel, { color: C.sub }]}>Servicio</Text>
-              <Text style={[s.detailValue, { color: C.text }]}>{payment.order?.title ?? 'Servicio'}</Text>
+            <View style={s.flex}>
+              <Text style={[s.detailLabel, { color: tc.textSub }]}>Servicio</Text>
+              <Text style={[s.detailValue, { color: tc.text }]}>{payment.order?.title ?? 'Servicio'}</Text>
             </View>
           </View>
 
-          <View style={s.detailDivider} />
+          <Divider />
 
           <View style={s.detailRow}>
-            <View style={[s.detailIcon, { backgroundColor: '#F0FFF4' }]}>
-              <Ionicons name="shield-checkmark-outline" size={16} color={C.green} />
+            <View style={[s.detailIcon, { backgroundColor: TOKENS.status.done.bg }]}>
+              <Ionicons name="shield-checkmark-outline" size={16} color={TOKENS.status.done.fg} />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[s.detailLabel, { color: C.sub }]}>Estado del pago</Text>
-              <Text style={[s.detailValue, { color: C.green }]}>Simulado · sin movimiento de dinero</Text>
+            <View style={s.flex}>
+              <Text style={[s.detailLabel, { color: tc.textSub }]}>Estado del pago</Text>
+              <Text style={[s.detailValue, { color: TOKENS.status.done.fg }]}>Simulado · sin movimiento de dinero</Text>
             </View>
           </View>
-        </View>
+        </Card>
 
-        <Text style={[s.escrowNote, { color: C.sub }]}>
+        <Text style={[s.escrowNote, { color: tc.textSub }]}>
           La orden conserva su estado real. Este comprobante corresponde únicamente a una prueba en este dispositivo.
         </Text>
       </Animated.View>
@@ -178,21 +178,14 @@ export function PaymentSuccessScreen() {
           { opacity: contentFade, transform: [{ translateY: contentY }] },
         ]}
       >
-        <Pressable onPress={goToOrder} style={s.primaryBtn}>
-          <LinearGradient
-            colors={[C.dark, C.primary, '#c0002f']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={s.primaryBtnGrad}
-          >
-            <Ionicons name="receipt-outline" size={18} color="#fff" />
-            <Text style={s.primaryBtnText}>Ver estado de la orden</Text>
-          </LinearGradient>
-        </Pressable>
+        <Button
+          label="Ver estado de la orden"
+          icon={<Ionicons name="receipt-outline" size={18} color={TOKENS.color.onPrimary} />}
+          fullWidth
+          onPress={goToOrder}
+        />
 
-        <Pressable onPress={goHome} style={s.secondaryBtn}>
-          <Text style={[s.secondaryBtnText, { color: C.sub }]}>Ir al inicio</Text>
-        </Pressable>
+        <Button label="Ir al inicio" variant="ghost" fullWidth onPress={goHome} />
       </Animated.View>
     </View>
   );
@@ -206,9 +199,10 @@ const s = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 32,
+    paddingHorizontal: SPACING.xxl,
+    paddingVertical: SPACING.xxxl,
   },
+  flex: { flex: 1 },
 
   iconSection: {
     flex: 1,
@@ -220,9 +214,7 @@ const s = StyleSheet.create({
     width: RING_SIZE,
     height: RING_SIZE,
     borderRadius: RING_SIZE / 2,
-    backgroundColor: '#F0FFF4',
     borderWidth: 2,
-    borderColor: '#BBF7D0',
   },
   innerCircle: {
     width: CIRCLE_SIZE,
@@ -234,7 +226,7 @@ const s = StyleSheet.create({
     width: CIRCLE_SIZE,
     height: CIRCLE_SIZE,
     borderRadius: CIRCLE_SIZE / 2,
-    shadowColor: '#16A34A',
+    shadowColor: TOKENS.color.mint,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
     shadowRadius: 16,
@@ -250,7 +242,7 @@ const s = StyleSheet.create({
     flex: 2,
     width: '100%',
     alignItems: 'center',
-    gap: 16,
+    gap: SPACING.lg,
   },
   title: {
     fontSize: 28,
@@ -265,36 +257,19 @@ const s = StyleSheet.create({
   },
 
   amountPill: {
-    borderRadius: 16,
-    paddingHorizontal: 28,
-    paddingVertical: 14,
     alignItems: 'center',
-    gap: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 8,
-    elevation: 3,
+    gap: SPACING.xs,
+    paddingHorizontal: 28,
   },
   amountLabel: { fontSize: 12, fontWeight: '500' },
-  amountValue: { fontSize: 26, fontWeight: '800', color: TOKENS.color.primary, letterSpacing: -0.5 },
+  amountValue: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
 
-  detailCard: {
-    width: '100%',
-    borderRadius: 16,
-    padding: 16,
-    gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  detailRow:     { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  detailIcon:    { width: 36, height: 36, borderRadius: 10, backgroundColor: '#FFF0F3', alignItems: 'center', justifyContent: 'center' },
+  detailWrap: { width: '100%' },
+  detailCard: { gap: 10 },
+  detailRow:     { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  detailIcon:    { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   detailLabel:   { fontSize: 11, marginBottom: 1 },
   detailValue:   { fontSize: 14, fontWeight: '600' },
-  detailDivider: { height: 1, backgroundColor: '#EDEDF0' },
 
   escrowNote: {
     fontSize: 12,
@@ -307,15 +282,4 @@ const s = StyleSheet.create({
     width: '100%',
     gap: 10,
   },
-  primaryBtn:     { borderRadius: 15, overflow: 'hidden' },
-  primaryBtnGrad: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-  },
-  primaryBtnText:   { fontSize: 16, fontWeight: '700', color: '#fff' },
-  secondaryBtn:     { alignItems: 'center', paddingVertical: 14 },
-  secondaryBtnText: { fontSize: 15, fontWeight: '600' },
 });

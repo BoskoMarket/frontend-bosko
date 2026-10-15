@@ -1,8 +1,4 @@
 /**
- * Rebrand "Señal Nocturna" — OrderDetailScreen: misma lógica, estado y navegación que
- * el archivo original. Mismo timeline, acciones (aceptar/rechazar/iniciar/completar/cancelar/disputar) — íconos de timeline pendiente pasan de tinte bordo apagado a signal.
- */
-/**
  * OrderDetailScreen — Detalle completo de una orden.
  * Muestra el estado, timeline, y acciones disponibles según rol y estado.
  * Acciones: aceptar, rechazar, iniciar, completar, cancelar, disputar.
@@ -12,7 +8,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   View,
-  Text,
   StyleSheet,
   ScrollView,
   Pressable,
@@ -20,7 +15,6 @@ import {
   Alert,
   RefreshControl,
   Modal,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -32,17 +26,29 @@ import { useOrders } from '../state/OrdersContext';
 import { useOrder } from '@/hooks/queries/useOrdersQuery';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { OrderStatus } from '../types/orders.types';
+import { ORDER_STATUS } from '../constants/orderStatus';
 import { getUserErrorMessage } from '@/lib/errors';
-import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors } from '@/stores/theme.store';
+import {
+  Button,
+  Card,
+  Input,
+  ScreenHeader,
+  StepTimeline,
+  Text,
+  TOKENS,
+  SPACING,
+  useThemeColors,
+  usePremiumColors,
+} from '@/core/design-system';
+import type { TimelineStep } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 // Pasos del timeline en orden
-const TIMELINE_STEPS: { status: OrderStatus; label: string; icon: string }[] = [
+const TIMELINE_STEPS: { status: OrderStatus; label: string; icon: TimelineStep['icon'] }[] = [
   { status: 'pending',     label: 'Solicitud enviada', icon: 'send' },
-  { status: 'accepted',    label: 'Aceptada',          icon: 'check-circle' },
-  { status: 'in_progress', label: 'En progreso',       icon: 'build' },
-  { status: 'completed',   label: 'Completada',        icon: 'verified' },
+  { status: 'accepted',    label: 'Aceptada',          icon: 'checkmark-circle' },
+  { status: 'in_progress', label: 'En progreso',       icon: 'construct' },
+  { status: 'completed',   label: 'Completada',        icon: 'shield-checkmark' },
 ];
 
 const STATUS_ORDER: OrderStatus[] = ['pending', 'accepted', 'in_progress', 'completed'];
@@ -52,20 +58,14 @@ function formatCurrency(amount: number) {
 }
 
 function Timeline({ currentStatus }: { currentStatus: OrderStatus }) {
-  const tc = useThemeColors();
   // Si está cancelada o en disputa, no mostramos el timeline normal
   if (currentStatus === 'cancelled' || currentStatus === 'disputed') {
+    const info = ORDER_STATUS[currentStatus];
+    const palette = TOKENS.status[info.tone];
     return (
-      <View style={styles.cancelledBanner}>
-        <MaterialIcons
-          name={currentStatus === 'cancelled' ? 'cancel' : 'gavel'}
-          size={20}
-          color={currentStatus === 'cancelled' ? '#dc2626' : '#f59e0b'}
-        />
-        <Text style={[
-          styles.cancelledText,
-          { color: currentStatus === 'cancelled' ? '#dc2626' : '#f59e0b' }
-        ]}>
+      <View style={[styles.cancelledBanner, { backgroundColor: palette.bg }]}>
+        <MaterialIcons name={info.icon} size={20} color={palette.fg} />
+        <Text variant="label" color={palette.fg}>
           {currentStatus === 'cancelled' ? 'Orden cancelada' : 'En disputa — equipo revisando'}
         </Text>
       </View>
@@ -73,43 +73,20 @@ function Timeline({ currentStatus }: { currentStatus: OrderStatus }) {
   }
 
   const currentIdx = STATUS_ORDER.indexOf(currentStatus);
+  const allDone = currentStatus === 'completed';
 
-  return (
-    <View style={styles.timeline}>
-      {TIMELINE_STEPS.map((step, idx) => {
-        const done = idx <= currentIdx;
-        const active = idx === currentIdx;
+  const steps: TimelineStep[] = TIMELINE_STEPS.map((step, idx) => ({
+    label: step.label,
+    icon: step.icon,
+    status: idx < currentIdx || allDone ? 'done' : idx === currentIdx ? 'active' : 'pending',
+  }));
 
-        return (
-          <View key={step.status} style={styles.timelineStep}>
-            <View style={styles.timelineLeft}>
-              <View style={[
-                styles.timelineDot,
-                done && styles.timelineDotDone,
-                active && styles.timelineDotActive,
-              ]}>
-                <MaterialIcons
-                  name={step.icon as any}
-                  size={14}
-                  color={done ? '#fff' : 'rgba(255,45,111,0.35)'}
-                />
-              </View>
-              {idx < TIMELINE_STEPS.length - 1 && (
-                <View style={[styles.timelineLine, done && idx < currentIdx && styles.timelineLineDone]} />
-              )}
-            </View>
-            <Text style={[styles.timelineLabel, done && styles.timelineLabelDone, { color: done ? tc.text : tc.textSub }]}>
-              {step.label}
-            </Text>
-          </View>
-        );
-      })}
-    </View>
-  );
+  return <StepTimeline steps={steps} />;
 }
 
 export default function OrderDetailScreen() {
   const tc = useThemeColors();
+  const pc = usePremiumColors();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id: string }>();
   const { acceptOrder, rejectOrder, startOrder, completeOrder, cancelOrder, disputeOrder } = useOrders();
@@ -176,6 +153,11 @@ export default function OrderDetailScreen() {
     });
   };
 
+  const enter = (i: number) => ({
+    opacity: anims[i],
+    transform: [{ translateY: anims[i].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }],
+  });
+
   if (loading) {
     return (
       <View style={[styles.background, styles.centered, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
@@ -189,9 +171,9 @@ export default function OrderDetailScreen() {
     return (
       <View style={[styles.background, styles.centered, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
         <AnimatedBackground variant="minimal" />
-        <Text style={[styles.notFoundText, { color: tc.textSub }]}>No se encontró la orden</Text>
+        <Text variant="subtitle" color={tc.textSub} style={styles.notFoundText}>No se encontró la orden</Text>
         <Pressable onPress={() => safeBack(router, '/(tabs)/orders')} style={styles.backLink}>
-          <Text style={styles.backLinkText}>← Volver</Text>
+          <Text variant="body" color={TOKENS.color.signal} weight="600">← Volver</Text>
         </Pressable>
       </View>
     );
@@ -200,6 +182,8 @@ export default function OrderDetailScreen() {
   const date = new Date(order.createdAt).toLocaleDateString('es-AR', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
+
+  const confirmDisabled = !reasonText.trim();
 
   return (
     <View style={[styles.background, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
@@ -215,71 +199,60 @@ export default function OrderDetailScreen() {
           />
         }
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Pressable
-            onPress={() => safeBack(router, '/(tabs)/orders')}
-            hitSlop={12}
-            style={[styles.backButton, { backgroundColor: tc.card, borderWidth: 1, borderColor: tc.cardBorder }]}
-          >
-            <MaterialIcons name="arrow-back" size={24} color={tc.text} />
-          </Pressable>
-          <Text style={[styles.headerTitle, { color: tc.text }]}>Detalle de orden</Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <ScreenHeader title="Detalle de orden" onBack={() => safeBack(router, '/(tabs)/orders')} />
 
         {/* Nombre del servicio + fecha */}
-        <Animated.View style={{ opacity: anims[0], transform: [{ translateY: anims[0].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }}>
-          <View style={[styles.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
-            <Text style={[styles.serviceName, { color: tc.text }]}>{order.service?.title || 'Servicio'}</Text>
+        <Animated.View style={enter(0)}>
+          <Card padding="lg" radius="lg" contentStyle={styles.card}>
+            <Text variant="title" color={tc.text}>{order.service?.title || 'Servicio'}</Text>
             <View style={styles.metaRow}>
               <MaterialIcons name="schedule" size={14} color={tc.textSub} />
-              <Text style={[styles.metaText, { color: tc.textSub }]}>{date}</Text>
+              <Text variant="bodySmall" color={tc.textSub}>{date}</Text>
             </View>
             {order.address && (
               <View style={styles.metaRow}>
                 <MaterialIcons name="location-on" size={14} color={tc.textSub} />
-                <Text style={[styles.metaText, { color: tc.textSub }]}>{order.address}</Text>
+                <Text variant="bodySmall" color={tc.textSub}>{order.address}</Text>
               </View>
             )}
-          </View>
+          </Card>
         </Animated.View>
 
         {/* Timeline */}
-        <Animated.View style={{ opacity: anims[1], transform: [{ translateY: anims[1].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }}>
-          <View style={[styles.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
-            <Text style={[styles.sectionTitle, { color: tc.text }]}>Estado de la orden</Text>
+        <Animated.View style={enter(1)}>
+          <Card padding="lg" radius="lg" contentStyle={styles.card}>
+            <Text variant="label" color={tc.text}>Estado de la orden</Text>
             <Timeline currentStatus={order.status} />
-          </View>
+          </Card>
         </Animated.View>
 
         {/* Mensaje del cliente */}
-        <Animated.View style={{ opacity: anims[2], transform: [{ translateY: anims[2].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }}>
-          <View style={[styles.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
-            <Text style={[styles.sectionTitle, { color: tc.text }]}>Mensaje</Text>
-            <Text style={[styles.messageText, { color: tc.textSub }]}>{order.clientMessage}</Text>
-          </View>
+        <Animated.View style={enter(2)}>
+          <Card padding="lg" radius="lg" contentStyle={styles.card}>
+            <Text variant="label" color={tc.text}>Mensaje</Text>
+            <Text variant="body" color={tc.textSub}>{order.clientMessage}</Text>
+          </Card>
         </Animated.View>
 
         {/* Botón ir al chat */}
         <Pressable
-          style={({ pressed }) => [styles.chatButton, pressed && styles.buttonPressed]}
+          style={({ pressed }) => [styles.chatButton, { backgroundColor: tc.accent, borderColor: tc.border }, pressed && styles.buttonPressed]}
           onPress={() => router.push({ pathname: '/chat/[id]', params: { id: order.id } })}
         >
           <MaterialIcons name="chat" size={18} color={TOKENS.color.signal} />
-          <Text style={styles.chatButtonText}>Abrir chat de esta orden</Text>
+          <Text variant="label" color={TOKENS.color.signal} style={styles.chatButtonText}>Abrir chat de esta orden</Text>
           <MaterialIcons name="chevron-right" size={18} color={TOKENS.color.signal} />
         </Pressable>
 
         {/* Banner de reembolso */}
         {order.paymentStatus === 'refunded' && (
-          <View style={styles.refundBanner}>
-            <MaterialIcons name="assignment-return" size={22} color="#6b21a8" />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.refundTitle}>
+          <View style={[styles.banner, { backgroundColor: TOKENS.status.progress.bg }]}>
+            <MaterialIcons name="assignment-return" size={22} color={TOKENS.status.progress.fg} />
+            <View style={styles.flex}>
+              <Text variant="label" color={TOKENS.status.progress.fg}>
                 Reembolsado{order.agreedPrice ? ` — ${formatCurrency(order.agreedPrice)}` : ''}
               </Text>
-              <Text style={styles.refundSub}>
+              <Text variant="bodySmall" color={tc.textSub}>
                 {order.disputeReason || order.cancellationReason || 'El monto fue devuelto a tu método de pago original.'}
               </Text>
             </View>
@@ -288,11 +261,11 @@ export default function OrderDetailScreen() {
 
         {/* Banner de orden completada */}
         {order.status === 'completed' && (
-          <View style={styles.completedBanner}>
-            <MaterialIcons name="check-circle" size={22} color="#16a34a" />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.completedTitle}>Orden completada</Text>
-              <Text style={styles.completedSub}>
+          <View style={[styles.banner, { backgroundColor: TOKENS.status.done.bg }]}>
+            <MaterialIcons name="check-circle" size={22} color={TOKENS.status.done.fg} />
+            <View style={styles.flex}>
+              <Text variant="label" color={TOKENS.status.done.fg}>Orden completada</Text>
+              <Text variant="bodySmall" color={tc.textSub}>
                 {isProvider
                   ? 'El trabajo fue marcado como finalizado.'
                   : 'El servicio fue completado. Podés calificarlo.'}
@@ -302,21 +275,21 @@ export default function OrderDetailScreen() {
         )}
 
         {/* Acciones según rol y estado */}
-        <Animated.View style={[styles.actionsContainer, { opacity: anims[3], transform: [{ translateY: anims[3].interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) }] }]}>
+        <Animated.View style={[styles.actionsContainer, enter(3)]}>
           {/* PROVEEDOR: puede aceptar o rechazar si pending */}
           {isProvider && order.status === 'pending' && (
             <>
               <ActionButton
                 label="Aceptar"
                 icon="check"
-                color="#16a34a"
+                color={TOKENS.status.done.fg}
                 loading={actionLoading === 'Aceptar'}
                 onPress={() => runAction('Aceptar', () => acceptOrder(order.id))}
               />
               <ActionButton
                 label="Rechazar"
                 icon="close"
-                color="#dc2626"
+                color={TOKENS.status.cancelled.fg}
                 secondary
                 loading={actionLoading === 'Rechazar'}
                 onPress={() => promptAndRun(
@@ -344,7 +317,7 @@ export default function OrderDetailScreen() {
             <ActionButton
               label="Marcar como completado"
               icon="check-circle"
-              color="#16a34a"
+              color={TOKENS.status.done.fg}
               loading={actionLoading === 'Marcar como completado'}
               onPress={() => runAction('Marcar como completado', () => completeOrder(order.id))}
             />
@@ -355,7 +328,7 @@ export default function OrderDetailScreen() {
             <ActionButton
               label="Cancelar orden"
               icon="cancel"
-              color="#dc2626"
+              color={TOKENS.status.cancelled.fg}
               secondary
               loading={actionLoading === 'Cancelar orden'}
               onPress={() => promptAndRun(
@@ -371,7 +344,7 @@ export default function OrderDetailScreen() {
             <ActionButton
               label="Pagar orden"
               icon="payment"
-              color="#16a34a"
+              color={TOKENS.status.done.fg}
               loading={actionLoading === 'Pagar'}
               onPress={handlePay}
             />
@@ -382,7 +355,8 @@ export default function OrderDetailScreen() {
             <ActionButton
               label="Calificar servicio"
               icon="star"
-              color="#FFD700"
+              color={pc.goldFill}
+              textColor={pc.onGold}
               loading={false}
               onPress={() => router.push({
                 pathname: '/orders/review',
@@ -398,8 +372,8 @@ export default function OrderDetailScreen() {
           {/* CLIENTE: ya calificó esta orden */}
           {isClient && order.status === 'completed' && order.review && (
             <View style={[styles.reviewedBanner, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
-              <MaterialIcons name="star" size={18} color="#FFD700" />
-              <Text style={[styles.reviewedBannerText, { color: tc.textSub }]}>
+              <MaterialIcons name="star" size={18} color={TOKENS.color.rating} />
+              <Text variant="label" color={tc.textSub}>
                 Ya calificaste este servicio ({order.review.rating}/5)
               </Text>
             </View>
@@ -410,7 +384,7 @@ export default function OrderDetailScreen() {
             <ActionButton
               label="Abrir disputa"
               icon="gavel"
-              color="#f59e0b"
+              color={TOKENS.color.warning}
               secondary
               loading={actionLoading === 'Abrir disputa'}
               onPress={() => promptAndRun(
@@ -432,36 +406,32 @@ export default function OrderDetailScreen() {
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
+          style={[styles.modalOverlay, { backgroundColor: TOKENS.scrim.medium }]}
         >
-          <View style={[styles.modalBox, { backgroundColor: tc.card }]}>
-            <Text style={[styles.modalTitle, { color: tc.text }]}>{reasonModal?.title}</Text>
-            <TextInput
-              style={[styles.modalInput, { borderColor: tc.border, backgroundColor: tc.surface2, color: tc.text }]}
+          <View style={[styles.modalBox, { backgroundColor: tc.surface }]}>
+            <Text variant="subtitle" color={tc.text}>{reasonModal?.title}</Text>
+            <Input
               placeholder={reasonModal?.placeholder}
-              placeholderTextColor={tc.textSub}
               value={reasonText}
               onChangeText={setReasonText}
               multiline
               autoFocus
             />
             <View style={styles.modalActions}>
-              <Pressable
-                style={[styles.modalCancel, { borderColor: tc.border }]}
-                onPress={() => setReasonModal(null)}
-              >
-                <Text style={[styles.modalCancelText, { color: tc.textSub }]}>Cancelar</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.modalConfirm, !reasonText.trim() && { opacity: 0.4 }]}
-                onPress={() => {
-                  if (!reasonText.trim()) return;
-                  reasonModal?.onConfirm(reasonText.trim());
-                }}
-                disabled={!reasonText.trim()}
-              >
-                <Text style={styles.modalConfirmText}>Confirmar</Text>
-              </Pressable>
+              <View style={styles.flex}>
+                <Button label="Cancelar" variant="secondary" fullWidth onPress={() => setReasonModal(null)} />
+              </View>
+              <View style={styles.flex}>
+                <Button
+                  label="Confirmar"
+                  fullWidth
+                  disabled={confirmDisabled}
+                  onPress={() => {
+                    if (confirmDisabled) return;
+                    reasonModal?.onConfirm(reasonText.trim());
+                  }}
+                />
+              </View>
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -471,15 +441,18 @@ export default function OrderDetailScreen() {
 }
 
 function ActionButton({
-  label, icon, color, secondary, loading, onPress
+  label, icon, color, textColor = TOKENS.color.onPrimary, secondary, loading, onPress,
 }: {
   label: string;
-  icon: any;
+  icon: React.ComponentProps<typeof MaterialIcons>['name'];
   color: string;
+  /** Label/icon color on a filled button (default: on-primary). */
+  textColor?: string;
   secondary?: boolean;
   loading?: boolean;
   onPress: () => void;
 }) {
+  const fg = secondary ? color : textColor;
   return (
     <Pressable
       style={({ pressed }) => [
@@ -491,11 +464,11 @@ function ActionButton({
       disabled={loading}
     >
       {loading
-        ? <ActivityIndicator color={secondary ? color : '#fff'} size="small" />
+        ? <ActivityIndicator color={fg} size="small" />
         : (
           <>
-            <MaterialIcons name={icon} size={18} color={secondary ? color : '#fff'} />
-            <Text style={[styles.actionButtonText, secondary && { color }]}>{label}</Text>
+            <MaterialIcons name={icon} size={18} color={fg} />
+            <Text variant="button" color={fg}>{label}</Text>
           </>
         )
       }
@@ -505,278 +478,77 @@ function ActionButton({
 
 const styles = StyleSheet.create({
   background: { flex: 1 },
+  flex: { flex: 1 },
   centered: { alignItems: 'center', justifyContent: 'center' },
   container: {
-    paddingTop: 8,
-    paddingHorizontal: 20,
+    paddingTop: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
     gap: 14,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  backButton: {
-    padding: 8,
-    borderRadius: 12,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: TOKENS.color.text,
-  },
-  card: {
-    borderRadius: 20,
-    overflow: 'hidden',
-    padding: 18,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.85)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 4,
-    gap: 8,
-  },
-  serviceName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: TOKENS.color.text,
-  },
+  card: { gap: SPACING.sm },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  metaText: {
-    fontSize: 13,
-    color: TOKENS.color.sub,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: TOKENS.color.text,
-    marginBottom: 4,
-  },
-  messageText: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-    lineHeight: 20,
-  },
-  // Timeline
-  timeline: { gap: 0 },
-  timelineStep: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 12,
-    paddingVertical: 4,
-  },
-  timelineLeft: {
-    alignItems: 'center',
-    width: 28,
-  },
-  timelineDot: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(133,0,33,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  timelineDotDone: {
-    backgroundColor: TOKENS.color.signal,
-  },
-  timelineDotActive: {
-    backgroundColor: TOKENS.color.signal,
-    shadowColor: TOKENS.color.signal,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  timelineLine: {
-    width: 2,
-    height: 24,
-    backgroundColor: 'rgba(133,0,33,0.1)',
-    marginTop: 2,
-  },
-  timelineLineDone: {
-    backgroundColor: TOKENS.color.signal,
-  },
-  timelineLabel: {
-    fontSize: 14,
-    color: TOKENS.color.sub,
-    paddingTop: 6,
-  },
-  timelineLabelDone: {
-    color: TOKENS.color.text,
-    fontWeight: '600',
-  },
-  completedBanner: {
+  banner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#f0fdf4',
-    borderRadius: 14,
+    gap: SPACING.md,
+    borderRadius: TOKENS.radius.sm,
     padding: 14,
-    borderWidth: 1,
-    borderColor: '#bbf7d0',
-  },
-  completedTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#16a34a',
-  },
-  completedSub: {
-    fontSize: 13,
-    color: '#15803d',
-    marginTop: 2,
-  },
-  refundBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#f3e8ff',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#e9d5ff',
-  },
-  refundTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#6b21a8',
-  },
-  refundSub: {
-    fontSize: 13,
-    color: '#7e22ce',
-    marginTop: 2,
   },
   cancelledBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#fee2e2',
-    borderRadius: 12,
-    padding: 12,
-  },
-  cancelledText: {
-    fontSize: 14,
-    fontWeight: '600',
+    gap: SPACING.sm,
+    borderRadius: TOKENS.radius.sm,
+    padding: SPACING.md,
   },
   reviewedBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    borderRadius: 12,
+    gap: SPACING.sm,
+    borderRadius: TOKENS.radius.sm,
     borderWidth: 1,
-    padding: 12,
-  },
-  reviewedBannerText: {
-    fontSize: 14,
-    fontWeight: '600',
+    padding: SPACING.md,
   },
   chatButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     padding: 14,
-    borderRadius: 16,
-    backgroundColor: 'rgba(133,0,33,0.06)',
+    borderRadius: TOKENS.radius.md,
     borderWidth: 1,
-    borderColor: 'rgba(133,0,33,0.15)',
   },
-  chatButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: TOKENS.color.signal,
-    flex: 1,
-  },
+  chatButtonText: { flex: 1 },
   actionsContainer: { gap: 10 },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: SPACING.sm,
     paddingVertical: 14,
-    paddingHorizontal: 20,
+    paddingHorizontal: SPACING.xl,
     borderRadius: 14,
     minHeight: 52,
   },
-  actionButtonText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#fff',
-  },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  notFoundText: {
-    fontSize: 17,
-    color: TOKENS.color.sub,
-    marginBottom: 16,
-  },
-  backLink: { padding: 8 },
-  backLinkText: {
-    fontSize: 15,
-    color: TOKENS.color.signal,
-    fontWeight: '600',
-  },
+  notFoundText: { marginBottom: SPACING.lg },
+  backLink: { padding: SPACING.sm },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: SPACING.xxl,
   },
   modalBox: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: TOKENS.radius.lg,
+    padding: SPACING.xl,
     gap: 14,
-  },
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: TOKENS.color.text,
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 14,
-    color: TOKENS.color.text,
-    minHeight: 80,
-    textAlignVertical: 'top',
-    backgroundColor: '#FAFAFA',
   },
   modalActions: {
     flexDirection: 'row',
     gap: 10,
-  },
-  modalCancel: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    alignItems: 'center',
-  },
-  modalCancelText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: TOKENS.color.sub,
-  },
-  modalConfirm: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
-    backgroundColor: TOKENS.color.signal,
-    alignItems: 'center',
-  },
-  modalConfirmText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#fff',
   },
 });
