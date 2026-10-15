@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { PREMIUM_SHADOWS, TOKENS, useThemeColors } from "@/core/design-system";
 import type { ThemeColors } from "@/core/design-system";
+import { FONT_FAMILY } from '@/core/design-system';
 
 export function ProfessionalCard({
   item,
@@ -42,7 +43,7 @@ const createStyles = (tc: ThemeColors) => StyleSheet.create({
     ...PREMIUM_SHADOWS.global,
   },
   avatar: { width: 56, height: 56, borderRadius: 12 },
-  name: { fontWeight: "800", color: tc.text },
+  name: { fontFamily: FONT_FAMILY.display, color: tc.text },
   role: { color: tc.textSub, marginVertical: 4 },
   cta: {
     alignSelf: "flex-start",
@@ -51,5 +52,5 @@ const createStyles = (tc: ThemeColors) => StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 12,
   },
-  ctaText: { color: TOKENS.color.onPrimary, fontWeight: "700" },
+  ctaText: { color: TOKENS.color.onPrimary, fontFamily: FONT_FAMILY.heading },
 });

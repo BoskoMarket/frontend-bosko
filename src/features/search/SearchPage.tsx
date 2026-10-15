@@ -35,6 +35,7 @@ import {
 import type { Category } from "@/interfaces/category";
 import type { Provider } from "@/interfaces/provider";
 import type { Service } from "@/interfaces/service";
+import { FONT_FAMILY } from '@/core/design-system';
 
 type ResultItem =
   | { key: string; type: "category"; data: Category }
@@ -315,6 +316,7 @@ const s = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 15,
+    fontFamily: FONT_FAMILY.body,
     padding: 0,
   },
   loaderWrap: {

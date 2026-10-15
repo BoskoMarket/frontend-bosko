@@ -3,6 +3,7 @@ import { FlatList, View, StyleSheet, Dimensions } from "react-native";
 import { SPACING, Text, TOKENS, useThemeColors } from "@/core/design-system";
 import { PremiumButton } from "@/components/PremiumButton";
 import { router } from "expo-router";
+import { FONT_FAMILY } from '@/core/design-system';
 
 const { width } = Dimensions.get("window");
 
@@ -50,6 +51,6 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     backgroundColor: "transparent",
   },
-  title: { fontSize: 22, fontWeight: "800" },
+  title: { fontSize: 22, fontFamily: FONT_FAMILY.display },
   sub: { marginTop: SPACING.xs + 2 },
 });

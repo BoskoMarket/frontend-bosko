@@ -1,6 +1,7 @@
 import React, { useCallback } from "react";
 import { AccessibilityActionEvent, Pressable, StyleSheet, Text, View } from "react-native";
 import { SPACING, TOKENS, useThemeColors } from "@/core/design-system";
+import { FONT_FAMILY } from '@/core/design-system';
 
 type StarRatingProps = {
   value: number;
@@ -69,7 +70,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
           <Text
             style={[
               styles.star,
-              { fontSize: size },
+              { fontSize: size, fontFamily: FONT_FAMILY.body },
               { color: filled ? TOKENS.color.rating : tc.textMuted },
             ]}
           >

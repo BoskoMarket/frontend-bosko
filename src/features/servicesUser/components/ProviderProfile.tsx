@@ -14,6 +14,7 @@ import type { Rate } from "@/types/services";
 import { TOKENS, useThemeColors } from "@/core/design-system";
 import type { ThemeColors } from "@/core/design-system";
 import { PremiumButton } from "@/components/PremiumButton";
+import { FONT_FAMILY } from '@/core/design-system';
 
 const formatRate = (rate: Rate) => {
   const symbol = rate.currency === "ARS" ? "$" : rate.currency === "USD" ? "US$" : `${rate.currency} `;
@@ -175,12 +176,13 @@ const createStyles = (tc: ThemeColors) => StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontFamily: FONT_FAMILY.headingMedium,
     color: tc.text,
     textAlign: "center",
   },
   emptySubtitle: {
     fontSize: 14,
+    fontFamily: FONT_FAMILY.body,
     color: tc.textSub,
     textAlign: "center",
   },
@@ -200,6 +202,7 @@ const createStyles = (tc: ThemeColors) => StyleSheet.create({
   },
   backIcon: {
     fontSize: 20,
+    fontFamily: FONT_FAMILY.body,
     color: tc.text,
   },
   heroCard: {
@@ -231,15 +234,17 @@ const createStyles = (tc: ThemeColors) => StyleSheet.create({
   },
   heroName: {
     fontSize: 22,
-    fontWeight: "700",
+    fontFamily: FONT_FAMILY.heading,
     color: TOKENS.onMedia.text,
   },
   heroTitle: {
     fontSize: 16,
+    fontFamily: FONT_FAMILY.body,
     color: TOKENS.onMedia.text,
   },
   heroSummary: {
     fontSize: 14,
+    fontFamily: FONT_FAMILY.body,
     color: TOKENS.onMedia.textSub,
     textAlign: "center",
   },
@@ -250,15 +255,17 @@ const createStyles = (tc: ThemeColors) => StyleSheet.create({
   },
   heroRating: {
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: FONT_FAMILY.headingMedium,
     color: TOKENS.color.rating,
   },
   heroReviews: {
     fontSize: 14,
+    fontFamily: FONT_FAMILY.body,
     color: TOKENS.onMedia.text,
   },
   heroLocation: {
     fontSize: 14,
+    fontFamily: FONT_FAMILY.body,
     color: TOKENS.onMedia.textSub,
   },
   heroActions: {
@@ -268,7 +275,7 @@ const createStyles = (tc: ThemeColors) => StyleSheet.create({
   },
   heroRate: {
     fontSize: 15,
-    fontWeight: "600",
+    fontFamily: FONT_FAMILY.headingMedium,
     color: TOKENS.onMedia.text,
   },
 
@@ -281,11 +288,12 @@ const createStyles = (tc: ThemeColors) => StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontFamily: FONT_FAMILY.heading,
     color: tc.text,
   },
   sectionBody: {
     fontSize: 14,
+    fontFamily: FONT_FAMILY.body,
     color: tc.textSub,
     lineHeight: 20,
   },
@@ -301,6 +309,7 @@ const createStyles = (tc: ThemeColors) => StyleSheet.create({
   },
   tagText: {
     fontSize: 12,
+    fontFamily: FONT_FAMILY.body,
     color: tc.text,
   },
   worksList: {
@@ -322,11 +331,12 @@ const createStyles = (tc: ThemeColors) => StyleSheet.create({
   },
   workTitle: {
     fontSize: 14,
-    fontWeight: "600",
+    fontFamily: FONT_FAMILY.headingMedium,
     color: tc.text,
   },
   workTime: {
     fontSize: 12,
+    fontFamily: FONT_FAMILY.body,
     color: tc.textSub,
   },
   dot: {

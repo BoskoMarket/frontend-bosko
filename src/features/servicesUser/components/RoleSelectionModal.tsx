@@ -9,7 +9,7 @@ import React, { useRef, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { FullScreenModal, BRAND_RADIAL_FILL, TOKENS, useThemeColors } from '@/core/design-system';
+import { FullScreenModal, BRAND_RADIAL_FILL, TOKENS, useThemeColors, FONT_FAMILY } from '@/core/design-system';
 
 export const ROLE_MODAL_SEEN_KEY = 'BOSKO_ROLE_MODAL_SEEN';
 
@@ -127,8 +127,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 4,
   },
-  title: { fontSize: 20, fontWeight: '800', textAlign: 'center' },
-  subtitle: { fontSize: 14, textAlign: 'center', lineHeight: 20, marginBottom: 8 },
+  title: { fontSize: 20, fontFamily: FONT_FAMILY.display, textAlign: 'center' },
+  subtitle: { fontSize: 14, fontFamily: FONT_FAMILY.body, textAlign: 'center', lineHeight: 20, marginBottom: 8 },
   optionShadow: {
     width: '100%',
     borderRadius: 18,
@@ -159,6 +159,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   optionText: { flex: 1, gap: 2 },
-  optionTitle: { fontSize: 15, fontWeight: '700', color: TOKENS.color.onPrimary },
-  optionSub: { fontSize: 12, color: TOKENS.onMedia.textSub },
+  optionTitle: { fontSize: 15, fontFamily: FONT_FAMILY.heading, color: TOKENS.color.onPrimary },
+  optionSub: { fontSize: 12, fontFamily: FONT_FAMILY.body, color: TOKENS.onMedia.textSub },
 });

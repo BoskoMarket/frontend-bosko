@@ -17,7 +17,7 @@ import { useMyServices, useDeleteService } from "@/hooks/queries/useMarketplaceQ
 import type { Service } from "@/features/servicesUser/services/service";
 import { EmptyState } from '@/core/components/EmptyState';
 import { getUserErrorMessage } from '@/lib/errors';
-import { BRAND_RADIAL_FILL, TOKENS, useThemeColors, dialog } from '@/core/design-system';
+import { BRAND_RADIAL_FILL, TOKENS, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -212,13 +212,14 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 28,
+    fontFamily: FONT_FAMILY.body,
     lineHeight: 32,
     marginTop: -2,
   },
   header: {
     flex: 1,
     fontSize: 22,
-    fontWeight: "700",
+    fontFamily: FONT_FAMILY.heading,
   },
   addBtn: {
     flexDirection: 'row',
@@ -231,11 +232,12 @@ const styles = StyleSheet.create({
   },
   addBtnText: {
     color: TOKENS.color.onPrimary,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
     fontSize: 13,
   },
   planMessage: {
     fontSize: 14,
+    fontFamily: FONT_FAMILY.body,
     marginBottom: 16,
   },
   loader: {
@@ -268,10 +270,11 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontFamily: FONT_FAMILY.headingMedium,
   },
   cardDescription: {
     fontSize: 14,
+    fontFamily: FONT_FAMILY.body,
   },
   cardMeta: {
     flexDirection: "row",
@@ -281,12 +284,12 @@ const styles = StyleSheet.create({
   cardCategory: {
     fontSize: 13,
     color: SIGNAL,
-    fontWeight: "600",
+    fontFamily: FONT_FAMILY.headingMedium,
     textTransform: "uppercase",
   },
   cardPrice: {
     fontSize: 16,
-    fontWeight: "700",
+    fontFamily: FONT_FAMILY.heading,
   },
   cardActions: {
     flexDirection: "row",
@@ -303,7 +306,7 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     color: SIGNAL,
-    fontWeight: "600",
+    fontFamily: FONT_FAMILY.headingMedium,
   },
   deleteButton: {
     paddingHorizontal: 16,
@@ -314,6 +317,6 @@ const styles = StyleSheet.create({
   },
   deleteButtonText: {
     color: TOKENS.status.cancelled.fg,
-    fontWeight: "600",
+    fontFamily: FONT_FAMILY.headingMedium,
   },
 });

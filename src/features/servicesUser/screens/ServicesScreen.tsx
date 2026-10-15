@@ -20,7 +20,7 @@ import { router } from 'expo-router';
 import { useCategories } from '@/hooks/queries/useMarketplaceQuery';
 import type { Category } from '@/types/services';
 import { EmptyState } from '@/core/components/EmptyState';
-import { Skeleton, TOKENS, useIsDark, useThemeColors } from '@/core/design-system';
+import { Skeleton, TOKENS, useIsDark, useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { FeaturedCard } from '../components/FeaturedCard';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -220,11 +220,12 @@ const s = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: '800',
+    fontFamily: FONT_FAMILY.display,
     letterSpacing: -0.5,
   },
   headerSub: {
     fontSize: 13,
+    fontFamily: FONT_FAMILY.body,
     marginTop: 2,
   },
   searchIcon: {
@@ -262,6 +263,7 @@ const s = StyleSheet.create({
   searchPlaceholder: {
     flex: 1,
     fontSize: 14,
+    fontFamily: FONT_FAMILY.body,
   },
   searchFilter: {
     width: 28,

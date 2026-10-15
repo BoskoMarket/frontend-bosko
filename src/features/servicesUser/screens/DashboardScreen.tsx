@@ -472,7 +472,7 @@ function ErrorBanner({ message, onRetry, C }: { message: string; onRetry: () => 
   return (
     <View style={{ alignItems: 'center', paddingVertical: 24, gap: 10 }}>
       <Ionicons name="cloud-offline-outline" size={32} color={C.sub} />
-      <Text style={{ color: C.sub, fontSize: 13 }}>{message}</Text>
+      <Text style={{ color: C.sub, fontSize: 13, fontFamily: FONT_FAMILY.body }}>{message}</Text>
       <Button label="Reintentar" size="sm" onPress={onRetry} />
     </View>
   );
@@ -563,11 +563,11 @@ const ds = StyleSheet.create({
   categoryTile: { flex: 1, borderRadius: 18, borderWidth: 1.5, padding: 13, paddingHorizontal: 10, gap: 9 },
   categoryIconWrap: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   categoryIconGlow: { shadowColor: TOKENS.color.signal, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.35, shadowRadius: 14, elevation: 4 },
-  categoryTileName: { fontSize: 12, fontWeight: '700', fontFamily: FONT_FAMILY.heading, lineHeight: 15 },
-  categoryTileCount: { fontSize: 11, fontFamily: FONT_FAMILY.mono, fontWeight: '700' },
+  categoryTileName: { fontSize: 12, fontFamily: FONT_FAMILY.heading, lineHeight: 15 },
+  categoryTileCount: { fontSize: 11, fontFamily: FONT_FAMILY.mono },
   qaBtn: { alignItems: 'center', gap: 7 },
   qaIcon: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-  qaLabel: { fontSize: 11.5, fontWeight: '500' },
+  qaLabel: { fontSize: 11.5, fontFamily: FONT_FAMILY.bodyMedium },
 });
 
 function makeStyles(C: CPalette) { return StyleSheet.create({
@@ -577,9 +577,9 @@ function makeStyles(C: CPalette) { return StyleSheet.create({
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { width: 42, height: 42, borderRadius: 14, borderWidth: 2, borderColor: withAlpha(C.signal, 0.19) },
   avatarGrad: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  avatarInitial: { color: TOKENS.color.onPrimary, fontSize: 17, fontWeight: '700', fontFamily: FONT_FAMILY.heading },
+  avatarInitial: { color: TOKENS.color.onPrimary, fontSize: 17, fontFamily: FONT_FAMILY.heading },
   greeting: { fontSize: 11, fontFamily: FONT_FAMILY.mono, letterSpacing: 1, textTransform: 'uppercase', color: C.sub, marginBottom: 3 },
-  userName: { fontSize: 16, fontWeight: '700', fontFamily: FONT_FAMILY.heading, color: C.text },
+  userName: { fontSize: 16, fontFamily: FONT_FAMILY.heading, color: C.text },
   notifBtn: {
     width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
     backgroundColor: C.surface2, borderWidth: 1, borderColor: C.border,
@@ -591,7 +591,7 @@ function makeStyles(C: CPalette) { return StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14, gap: 10,
     backgroundColor: C.card, borderWidth: 1, borderColor: C.border,
   },
-  searchPlaceholder: { flex: 1, fontSize: 14, color: C.sub },
+  searchPlaceholder: { flex: 1, fontSize: 14, fontFamily: FONT_FAMILY.body, color: C.sub },
   searchFilter: { width: 28, height: 28, borderRadius: 9, backgroundColor: C.signal, alignItems: 'center', justifyContent: 'center' },
 
   scroll: { paddingTop: 4 },
@@ -601,10 +601,10 @@ function makeStyles(C: CPalette) { return StyleSheet.create({
   heroBubble: { position: 'absolute', borderRadius: 999, backgroundColor: TOKENS.onMedia.solid },
   heroContent: { gap: 6 },
   heroIconWrap: { width: 38, height: 38, borderRadius: 13, backgroundColor: TOKENS.onMedia.fill, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-  heroTitle: { fontSize: 22, fontWeight: '800', fontFamily: FONT_FAMILY.display, color: TOKENS.onMedia.text, lineHeight: 28, letterSpacing: -0.4 },
-  heroSubtitle: { fontSize: 13, color: TOKENS.onMedia.textSub, marginBottom: 4 },
+  heroTitle: { fontSize: 22, fontFamily: FONT_FAMILY.display, color: TOKENS.onMedia.text, lineHeight: 28, letterSpacing: -0.4 },
+  heroSubtitle: { fontSize: 13, fontFamily: FONT_FAMILY.body, color: TOKENS.onMedia.textSub, marginBottom: 4 },
   heroCta: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: TOKENS.onMedia.solid, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7, alignSelf: 'flex-start' },
-  heroCtaText: { fontSize: 13, fontWeight: '700', color: C.primary },
+  heroCtaText: { fontSize: 13, fontFamily: FONT_FAMILY.heading, color: C.primary },
 
   dotsRow: { flexDirection: 'row', justifyContent: 'center', gap: 6, paddingTop: 12, paddingBottom: 2 },
   dot: { height: 5, borderRadius: 2.5 },
@@ -626,10 +626,10 @@ function makeStyles(C: CPalette) { return StyleSheet.create({
 
   ctaBanner: { borderRadius: 26, padding: 22, overflow: 'hidden', minHeight: 120 },
   ctaLeft: { flex: 1, gap: 4, zIndex: 1 },
-  ctaTitle: { fontSize: 18, fontWeight: '800', fontFamily: FONT_FAMILY.display, color: TOKENS.onMedia.text, letterSpacing: -0.3 },
-  ctaSub: { fontSize: 13, color: TOKENS.onMedia.textSub, lineHeight: 19, marginBottom: 10 },
+  ctaTitle: { fontSize: 18, fontFamily: FONT_FAMILY.display, color: TOKENS.onMedia.text, letterSpacing: -0.3 },
+  ctaSub: { fontSize: 13, fontFamily: FONT_FAMILY.body, color: TOKENS.onMedia.textSub, lineHeight: 19, marginBottom: 10 },
   ctaBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: TOKENS.onMedia.solid, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7, alignSelf: 'flex-start' },
-  ctaBtnText: { fontSize: 13, fontWeight: '700', color: C.primary },
+  ctaBtnText: { fontSize: 13, fontFamily: FONT_FAMILY.heading, color: C.primary },
   ctaBubble1: { position: 'absolute', width: 120, height: 120, borderRadius: 60, backgroundColor: TOKENS.onMedia.fillFaint, right: -20, top: -20 },
   ctaBubble2: { position: 'absolute', width: 80, height: 80, borderRadius: 40, backgroundColor: TOKENS.onMedia.fillFaint, right: 50, bottom: -20 },
 }); }

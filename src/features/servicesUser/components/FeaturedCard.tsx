@@ -157,15 +157,14 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   body: { padding: 13, gap: 6 },
-  title: { fontSize: 13, fontWeight: '600', lineHeight: 17 },
+  title: { fontSize: 13, fontFamily: FONT_FAMILY.headingMedium, lineHeight: 17 },
   meta: {
     fontSize: 11,
-    fontWeight: '700',
     letterSpacing: 0.5,
     color: TOKENS.color.mint,
     fontFamily: FONT_FAMILY.mono,
   },
   divider: { height: 1 },
   ctaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
-  ctaLabel: { flex: 1, fontSize: 12, fontWeight: '600', color: TOKENS.color.signal },
+  ctaLabel: { flex: 1, fontSize: 12, fontFamily: FONT_FAMILY.headingMedium, color: TOKENS.color.signal },
 });

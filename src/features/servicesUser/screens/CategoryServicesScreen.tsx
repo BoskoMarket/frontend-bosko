@@ -24,7 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCategories, useServicesByCategory } from '@/hooks/queries/useMarketplaceQuery';
 import type { ServiceSummary } from '@/types/services';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
-import { GRADIENTS, Skeleton, TOKENS, useIsDark, useThemeColors } from '@/core/design-system';
+import { GRADIENTS, Skeleton, TOKENS, useIsDark, useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { RadialBlob } from '@/core/components/RadialBlob';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -379,15 +379,17 @@ const s = StyleSheet.create({
   },
   heroIcon: {
     fontSize: 28,
+    fontFamily: FONT_FAMILY.body,
   },
   heroTitle: {
     fontSize: 26,
-    fontWeight: '800',
+    fontFamily: FONT_FAMILY.display,
     color: TOKENS.onMedia.text,
     letterSpacing: -0.4,
   },
   heroDesc: {
     fontSize: 13,
+    fontFamily: FONT_FAMILY.body,
     color: TOKENS.onMedia.textMuted,
     lineHeight: 19,
   },
@@ -401,11 +403,12 @@ const s = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
     letterSpacing: -0.2,
   },
   sectionSub: {
     fontSize: 13,
+    fontFamily: FONT_FAMILY.body,
   },
 
   // List item wrapper
@@ -417,6 +420,7 @@ const s = StyleSheet.create({
   endLabel: {
     textAlign: 'center',
     fontSize: 13,
+    fontFamily: FONT_FAMILY.body,
     paddingVertical: 20,
   },
 
@@ -472,10 +476,11 @@ const s = StyleSheet.create({
   },
   name: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
   },
   headline: {
     fontSize: 13,
+    fontFamily: FONT_FAMILY.body,
   },
   metaRow: {
     flexDirection: 'row',
@@ -489,10 +494,11 @@ const s = StyleSheet.create({
   },
   ratingText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
   },
   reviewCount: {
     fontSize: 11,
+    fontFamily: FONT_FAMILY.body,
   },
   dot: {
     width: 3,
@@ -501,11 +507,12 @@ const s = StyleSheet.create({
   },
   location: {
     fontSize: 12,
+    fontFamily: FONT_FAMILY.body,
     flex: 1,
   },
   price: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
     color: TOKENS.color.signal,
   },
 
@@ -516,7 +523,7 @@ const s = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 40,
   },
-  emptyIcon: { fontSize: 48 },
-  emptyTitle: { fontSize: 18, fontWeight: '700' },
-  emptySub: { fontSize: 14, textAlign: 'center', lineHeight: 20 },
+  emptyIcon: { fontSize: 48, fontFamily: FONT_FAMILY.body },
+  emptyTitle: { fontSize: 18, fontFamily: FONT_FAMILY.heading },
+  emptySub: { fontSize: 14, fontFamily: FONT_FAMILY.body, textAlign: 'center', lineHeight: 20 },
 });
