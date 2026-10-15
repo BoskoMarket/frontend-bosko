@@ -40,8 +40,10 @@ describe('chat order rules (G68)', () => {
 
   it('detects closed-order rejections', () => {
     expect(isOrderClosedError({ response: { status: 409 } })).toBe(true);
-    expect(isOrderClosedError({ response: { status: 403 } })).toBe(true);
-    expect(isOrderClosedError({ response: { status: 422 } })).toBe(true);
+    expect(isOrderClosedError({ response: { status: 409, data: { code: 'ORDER_CLOSED' } } })).toBe(true);
+    expect(isOrderClosedError({ response: { status: 409, data: { code: 'DUPLICATE' } } })).toBe(false);
+    expect(isOrderClosedError({ response: { status: 403 } })).toBe(false);
+    expect(isOrderClosedError({ response: { status: 422 } })).toBe(false);
     expect(isOrderClosedError({ response: { status: 500 } })).toBe(false);
     expect(isOrderClosedError(new Error('network'))).toBe(false);
   });

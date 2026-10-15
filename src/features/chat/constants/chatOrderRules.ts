@@ -35,10 +35,15 @@ export function chatNoticeFor(status: OrderStatus | undefined | null): ChatOrder
 
 export const CHAT_ORDER_CLOSED_TOAST = 'No podés enviar mensajes en una orden finalizada.';
 
-/** HTTP statuses the backend may use to reject a send because the order is closed. */
+/**
+ * True when the backend rejected a send because the order is closed (BR02: 409 `ORDER_CLOSED`).
+ * 403/422 are excluded on purpose: they also mean "not a participant" or validation errors.
+ */
 export function isOrderClosedError(err: unknown): boolean {
-  const status = (err as { response?: { status?: number } } | null)?.response?.status;
-  return status === 403 || status === 409 || status === 422;
+  const response = (err as { response?: { status?: number; data?: { code?: string } } } | null)?.response;
+  if (response?.status !== 409) return false;
+  const code = response.data?.code;
+  return code === undefined || code === 'ORDER_CLOSED';
 }
 
 /** Small badge for the conversations list; null when the status needs no marker. */
