@@ -85,6 +85,29 @@ describe('design system components', () => {
     act(() => { useThemeStore.getState().setMode('dark'); });
   });
 
+  it.each(['dark', 'light'] as const)('NoticeBanner pending variant uses the pending status colors (%s)', (mode) => {
+    act(() => { useThemeStore.getState().setMode(mode); });
+    const { getByText, toJSON } = render(<NoticeBanner variant="pending">En revisión</NoticeBanner>);
+    expect(getByText('En revisión')).toBeTruthy();
+    const tree = JSON.stringify(toJSON());
+    expect(tree).toContain(TOKENS.status.pending.fg);
+    expect(tree).toContain(TOKENS.status.pending.bg);
+    act(() => { useThemeStore.getState().setMode('dark'); });
+  });
+
+  it.each(['dark', 'light'] as const)('Button dangerOutline is transparent with error border and label (%s)', (mode) => {
+    act(() => { useThemeStore.getState().setMode(mode); });
+    const onPress = jest.fn();
+    const { getByText, toJSON } = render(<Button label="Rechazar" variant="dangerOutline" onPress={onPress} />);
+    fireEvent.press(getByText('Rechazar'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+    const tree = JSON.stringify(toJSON());
+    expect(tree).toContain('"backgroundColor":"transparent"');
+    expect(tree).toContain('"borderColor":"' + TOKENS.color.error + '"');
+    expect(tree).toContain('"color":"' + TOKENS.color.error + '"');
+    act(() => { useThemeStore.getState().setMode('dark'); });
+  });
+
   it('Toast shows an alert enqueued via toast.success', () => {
     jest.useFakeTimers();
     const { queryByText, getByText } = render(<ToastRoot />);

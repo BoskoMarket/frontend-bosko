@@ -69,8 +69,12 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
 
       {/* Acciones */}
       <View style={s.actionsRow}>
-        <Pressable
+        <Button
+          label="Rechazar"
+          variant="dangerOutline"
+          size="sm"
           style={s.rejectBtn}
+          icon={<Ionicons name="close-circle-outline" size={16} color={TOKENS.color.error} />}
           onPress={() => {
             Alert.prompt(
               'Rechazar',
@@ -93,10 +97,7 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
               'plain-text',
             );
           }}
-        >
-          <Ionicons name="close-circle-outline" size={16} color={TOKENS.color.error} />
-          <Text variant="button" color={TOKENS.color.error}>Rechazar</Text>
-        </Pressable>
+        />
 
         <View style={s.approveWrap}>
           <Button
@@ -209,6 +210,6 @@ const s = StyleSheet.create({
   docText:     { flex: 1 },
 
   actionsRow:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  rejectBtn:   { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, borderWidth: 1.5, borderColor: TOKENS.color.error, height: 38 },
+  rejectBtn:   { flex: 1 },
   approveWrap: { flex: 2 },
 });
