@@ -40,6 +40,7 @@ jest.mock('expo-image-picker', () => ({}));
 jest.mock('expo-location', () => ({}));
 
 import DeleteAccountScreen from '@/features/profile/screens/DeleteAccountScreen';
+import VerifyPhoneScreen from '@/features/profile/screens/VerifyPhoneScreen';
 import EditPayments from '@/features/users/components/edit/EditPayments';
 import EditProfileScreen from '@/features/users/screens/EditProfileScreen';
 
@@ -120,6 +121,21 @@ describe.each(['dark', 'light'] as const)('profile screens (%s)', (mode) => {
       await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'));
       expect(mockLogout).toHaveBeenCalledTimes(1);
       alertSpy.mockRestore();
+    });
+  });
+
+  describe('VerifyPhoneScreen', () => {
+    it('rejects a malformed number inline before calling the SMS provider', () => {
+      const { getByPlaceholderText, getByText } = render(<VerifyPhoneScreen />);
+      fireEvent.changeText(getByPlaceholderText('+54 9 11 1234-5678'), '12ab');
+      fireEvent.press(getByText('Enviar código'));
+      expect(getByText(/Ingresá el número con código de país/)).toBeTruthy();
+    });
+
+    it('asks for a number when the field is empty', () => {
+      const { getByText } = render(<VerifyPhoneScreen />);
+      fireEvent.press(getByText('Enviar código'));
+      expect(getByText('Ingresá un número de teléfono')).toBeTruthy();
     });
   });
 

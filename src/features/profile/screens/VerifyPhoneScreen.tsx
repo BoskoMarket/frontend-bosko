@@ -34,6 +34,9 @@ import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 type Step = 'phone' | 'code';
 
+// E.164: "+" followed by 8 to 15 digits.
+const E164 = /^\+\d{8,15}$/;
+
 export default function VerifyPhoneScreen() {
   const tc = useThemeColors();
   const { refreshProfile } = useProfile();
@@ -53,8 +56,13 @@ export default function VerifyPhoneScreen() {
       return;
     }
 
-    // Normalizar formato internacional
-    const normalized = trimmed.startsWith('+') ? trimmed : `+${trimmed}`;
+    // Normalizar formato internacional (sin espacios, guiones ni paréntesis)
+    const compact = trimmed.replace(/[\s\-().]/g, '');
+    const normalized = compact.startsWith('+') ? compact : `+${compact}`;
+    if (!E164.test(normalized)) {
+      setError('Ingresá el número con código de país, por ejemplo +54 9 11 1234-5678');
+      return;
+    }
 
     setError('');
     setLoading(true);
@@ -65,7 +73,12 @@ export default function VerifyPhoneScreen() {
       confirmationRef.current = confirmation;
       setStep('code');
     } catch (err: any) {
-      setError(err?.message || 'No se pudo enviar el SMS. Verificá el número.');
+      const missingNative = /Cannot find module|native module/i.test(String(err?.message));
+      setError(
+        missingNative
+          ? 'La verificación por SMS no está disponible en esta versión de la app.'
+          : err?.message || 'No se pudo enviar el SMS. Verificá el número.',
+      );
     } finally {
       setLoading(false);
     }
@@ -115,7 +128,7 @@ export default function VerifyPhoneScreen() {
         <AnimatedBackground variant="minimal" />
 
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior="padding"
           style={styles.flex}
         >
           <View style={styles.header}>

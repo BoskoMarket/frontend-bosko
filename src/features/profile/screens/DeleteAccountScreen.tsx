@@ -14,6 +14,7 @@ import {
   NoticeBanner,
   ScreenHeader,
   Text,
+  toast,
   useThemeColors,
 } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
@@ -106,6 +107,7 @@ export default function DeleteAccountScreen() {
               await deleteAccountService(password);
               await logout();
               router.replace('/login');
+              toast.success('Cuenta eliminada', 'Tu cuenta y tus datos fueron eliminados.');
             } catch (err: any) {
               const code = err?.response?.data?.code;
               if (!err?.response) setError('Sin conexión. Revisá tu internet e intentá de nuevo.');

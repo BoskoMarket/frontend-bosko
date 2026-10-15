@@ -56,7 +56,8 @@ export default function KYCRejectedScreen() {
   const { verification, retry, loading, error, clearError } = useKYC();
 
   const attemptCount = verification?.attemptCount ?? 0;
-  const canRetry = attemptCount < MAX_ATTEMPTS;
+  const maxAttempts = verification?.maxAttempts ?? MAX_ATTEMPTS;
+  const canRetry = attemptCount < maxAttempts;
   const rejectionReason = verification?.rejectionReason;
 
   const handleRetry = async () => {
@@ -135,8 +136,8 @@ export default function KYCRejectedScreen() {
             />
             <Text variant="label" color={canRetry ? TOKENS.color.signal : TOKENS.color.error}>
               {canRetry
-                ? `Intentos disponibles: ${MAX_ATTEMPTS - attemptCount} de ${MAX_ATTEMPTS}`
-                : 'Agotaste los 3 intentos. Contactá a soporte.'
+                ? `Intentos disponibles: ${maxAttempts - attemptCount} de ${maxAttempts}`
+                : `Agotaste los ${maxAttempts} intentos. Contactá a soporte.`
               }
             </Text>
           </View>

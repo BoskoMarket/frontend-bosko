@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
-  Platform,
+  Linking,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { MotiView } from '@/core/components/MotiView';
@@ -71,7 +71,10 @@ export default function EditProfileScreen() {
   const pickImage = useCallback(async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería para cambiar el avatar.');
+      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería para cambiar el avatar.', [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Abrir ajustes', onPress: () => { Linking.openSettings(); } },
+      ]);
       return;
     }
 
@@ -178,7 +181,7 @@ export default function EditProfileScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior="padding"
       style={[styles.bg, { backgroundColor: tc.bg }]}
     >
       <AnimatedBackground variant="minimal" />
