@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Dimensions, Animated } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { PREMIUM_SHADOWS, usePremiumColors } from '@/core/design-system';
+import { PREMIUM_SHADOWS, usePremiumColors, FONT_FAMILY } from '@/core/design-system';
 import type { PremiumColors } from '@/core/design-system';
 
 
@@ -77,7 +77,7 @@ const createStyles = (pc: PremiumColors) => StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 22,
-        fontWeight: 'bold',
+        fontFamily: FONT_FAMILY.heading,
         color: pc.textPrimary,
         marginBottom: 20,
         marginLeft: 4,
@@ -110,13 +110,14 @@ const createStyles = (pc: PremiumColors) => StyleSheet.create({
     },
     title: {
         fontSize: 18,
-        fontWeight: 'bold',
+        fontFamily: FONT_FAMILY.heading,
         color: pc.textPrimary,
         marginBottom: 4,
         flex: 1,
     },
     description: {
         fontSize: 14,
+        fontFamily: FONT_FAMILY.body,
         color: pc.textSecondary,
         flex: 1,
         lineHeight: 20,

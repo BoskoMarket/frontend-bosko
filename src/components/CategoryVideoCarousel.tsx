@@ -15,6 +15,7 @@ import { useCategories } from "@/hooks/queries/useMarketplaceQuery";
 import { Category } from "@/interfaces/category";
 import { GRADIENTS, PREMIUM_SHADOWS, TOKENS, usePremiumColors } from "@/core/design-system";
 import type { PremiumColors } from "@/core/design-system";
+import { FONT_FAMILY } from '@/core/design-system';
 
 const CARD_WIDTH = 160;
 const CARD_HEIGHT = 300;
@@ -136,11 +137,12 @@ const createStyles = (pc: PremiumColors) => StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: "bold",
+    fontFamily: FONT_FAMILY.heading,
     color: pc.primary,
   },
   subtitle: {
     fontSize: 12,
+    fontFamily: FONT_FAMILY.body,
     color: pc.textPrimary,
   },
   scrollContent: {
@@ -181,7 +183,7 @@ const createStyles = (pc: PremiumColors) => StyleSheet.create({
   categoryName: {
     color: TOKENS.onMedia.text,
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: FONT_FAMILY.heading,
     marginBottom: 4,
     textShadowColor: TOKENS.scrim.medium,
     textShadowOffset: { width: 0, height: 1 },
@@ -190,6 +192,6 @@ const createStyles = (pc: PremiumColors) => StyleSheet.create({
   serviceCount: {
     color: pc.goldFill,
     fontSize: 12,
-    fontWeight: "600",
+    fontFamily: FONT_FAMILY.headingMedium,
   },
 });

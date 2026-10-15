@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, Dimensions, Animated } from 'react-n
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
-import { PREMIUM_SHADOWS, TOKENS, usePremiumColors } from '@/core/design-system';
+import { PREMIUM_SHADOWS, TOKENS, usePremiumColors, FONT_FAMILY } from '@/core/design-system';
 import type { PremiumColors } from '@/core/design-system';
 import { PremiumButton } from '@/components/PremiumButton';
 
@@ -77,7 +77,7 @@ export const ProviderCTA = () => {
                         variant="primary"
                         onPress={() => { }}
                         gradientColors={[pc.goldFill, pc.goldFillEnd]}
-                        textStyle={{ color: pc.onGold, fontSize: 16, fontWeight: 'bold' }}
+                        textStyle={{ color: pc.onGold, fontSize: 16, fontFamily: FONT_FAMILY.heading }}
                         style={styles.ctaButton}
                     />
                 </LinearGradient>
@@ -133,12 +133,13 @@ const createStyles = (pc: PremiumColors) => StyleSheet.create({
     },
     mainText: {
         fontSize: 24,
-        fontWeight: 'bold',
+        fontFamily: FONT_FAMILY.heading,
         color: pc.textPrimary,
         marginBottom: 4,
     },
     subText: {
         fontSize: 14,
+        fontFamily: FONT_FAMILY.body,
         color: pc.textSecondary,
     },
     featuresRow: {
@@ -160,7 +161,7 @@ const createStyles = (pc: PremiumColors) => StyleSheet.create({
     featureText: {
         fontSize: 12,
         color: pc.textPrimary,
-        fontWeight: '600',
+        fontFamily: FONT_FAMILY.headingMedium,
     },
     divider: {
         width: 1,

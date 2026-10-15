@@ -6,7 +6,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { StackActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUnreadTotal } from '@/stores/chat.store';
-import { TOKENS, useThemeColors, withAlpha } from '@/core/design-system';
+import { TOKENS, useThemeColors, withAlpha, FONT_FAMILY } from '@/core/design-system';
 import type { ThemeColors } from '@/core/design-system';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -298,7 +298,7 @@ const createStyles = (tc: ThemeColors) => StyleSheet.create({
   },
   badgeText: {
     fontSize: 9,
-    fontWeight: '800',
+    fontFamily: FONT_FAMILY.display,
     color: TOKENS.color.onPrimary,
   },
 });

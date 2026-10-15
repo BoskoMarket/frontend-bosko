@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { PREMIUM_SHADOWS, TOKENS, usePremiumColors, withAlpha } from "@/core/design-system";
 import type { PremiumColors } from "@/core/design-system";
 import { useProfile } from "@/features/profile/state/ProfileContext";
+import { FONT_FAMILY } from '@/core/design-system';
 
 export const PremiumBanner = () => {
   const insets = useSafeAreaInsets();
@@ -83,12 +84,13 @@ const createStyles = (pc: PremiumColors) => StyleSheet.create({
   },
   greeting: {
     fontSize: 28,
-    fontWeight: "bold",
+    fontFamily: FONT_FAMILY.heading,
     color: TOKENS.color.onPrimary,
     letterSpacing: -0.5,
   },
   subGreeting: {
     fontSize: 16,
+    fontFamily: FONT_FAMILY.body,
     color: TOKENS.onMedia.textSub,
     marginTop: 4,
   },
