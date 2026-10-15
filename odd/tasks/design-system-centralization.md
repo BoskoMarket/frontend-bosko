@@ -212,8 +212,11 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 - 2026-10-15 G69/G86 ✅ `b4da6bd` `776a035` `7f9783f`: **Decisión del usuario: solo reportar** (bloquear postergado). `ReportSheet` en el DS + `src/features/reports/` (motivos con códigos, `ReportFlow`, `canReport`, mapeo de errores 404/405/501 → "todavía no están disponibles", 409 → "Ya reportaste esto."). Superficies: reels, reseñas (perfil público), chat ("Reportar usuario"), perfil de proveedor ("Reportar perfil"); nunca sobre contenido propio. `POST /users/:id/report` propuesto (BR03). Nuevos gaps G90 (reportar mensaje/comentario puntual), G91 (el que reporta no recibe resultado). Checks: 20 suites / 329 tests, `tsc` 0, `lint:ds` 37.
 - 2026-10-15 **Decisión del usuario G87**: reels se suben desde galería/cámara (no solo link HTTPS); límites 60 s y 100 MB; requiere endpoint de subida (BR04).
 
+- 2026-10-15 G87 frontend ✅ `60ec559` `3cc07af`: ReelUpload con "Elegir de la galería" / "Grabar video", validación 60 s / 100 MB, preview, progreso + cancelar (`ProgressBar` nuevo en el DS; G64 ✅ para reels, chat pendiente), errores mapeados; link HTTPS conservado como opción secundaria. Endpoint `POST /reels/upload` propuesto (BR04). Alerta de permisos compartida en `src/lib/permissionAlert.ts`. Checks: 21 suites / 343 tests, `tsc` 0, `lint:ds` 37.
+- 2026-10-15 **Decisión del usuario G84**: reels con autoplay siempre por defecto + ajuste en perfil "solo con Wi-Fi" (opción C). Pendiente: confirmar store de preferencias (regla 6 de `CLAUDE.md`).
+
 ## Próximo paso
 
-0. G87: subida de reels desde galería/cámara (60 s / 100 MB) + BR04. Luego siguientes ❔ de `odd/ux-gaps.md`.
+0. G84: ajuste de autoplay (store de preferencias a confirmar con el usuario) usando `@react-native-community/netinfo`. Luego siguientes ❔ de `odd/ux-gaps.md`.
 1. Responder las preguntas ❔ de `odd/ux-gaps.md` (de a una) e implementar las que queden definidas.
 2. T10: migrar `features/chat` + `features/reels` (ReelsScreen 67, ChatScreen 33, MyReels 10, ConversationsList 5) aplicando también el registro de faltantes UX. Antes: verificar en dispositivo (dark + light) T4–T9.
