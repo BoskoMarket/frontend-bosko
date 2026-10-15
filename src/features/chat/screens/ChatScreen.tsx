@@ -45,7 +45,7 @@ import { BlurView } from '@/core/components/BlurView';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import {
   fetchConversationByOrder,
@@ -63,6 +63,8 @@ import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { useOrder } from '@/hooks/queries/useOrdersQuery';
 import type { OrderStatus } from '@/features/orders/types/orders.types';
+import { ChatOrderNotice } from '../components/ChatOrderNotice';
+import { CHAT_ORDER_CLOSED_TOAST, isChatReadOnly, isOrderClosedError } from '../constants/chatOrderRules';
 import {
   Avatar,
   FONT_FAMILY,
@@ -397,7 +399,24 @@ export default function ChatScreen() {
   const insets = useSafeAreaInsets();
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
-  const { data: order } = useOrder(conversation?.orderId);
+  const { data: order, refetch: refetchOrder } = useOrder(conversation?.orderId);
+  // G68: completed/cancelled => read-only. While the status is unknown the composer stays enabled.
+  const readOnly = isChatReadOnly(order?.status);
+  const refetchOrderRef = useRef(refetchOrder);
+  refetchOrderRef.current = refetchOrder;
+  const orderLoadedRef = useRef(false);
+  orderLoadedRef.current = !!order;
+  // Refresh the order status when the screen regains focus (only once it was already loaded once).
+  useFocusEffect(useCallback(() => {
+    if (orderLoadedRef.current) void refetchOrderRef.current();
+  }, []));
+  // If the backend rejects a send because the order is closed, tell the user and resync the status.
+  const handleClosedOrderError = useCallback((err: unknown): boolean => {
+    if (!isOrderClosedError(err)) return false;
+    toast.error(CHAT_ORDER_CLOSED_TOAST);
+    void refetchOrderRef.current();
+    return true;
+  }, []);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
@@ -619,6 +638,7 @@ export default function ChatScreen() {
       updateLastMessage(convId, `🎤 Mensaje de voz (${formatDuration(duration * 1000)})`, profile?.id ?? '');
     } catch (err) {
       console.error('Error sending audio:', err);
+      if (handleClosedOrderError(err)) return;
       toast.error('No se pudo enviar el audio', 'Intentá de nuevo');
     } finally {
       setSendingAudio(false);
@@ -682,6 +702,7 @@ export default function ChatScreen() {
       updateLastMessage(conversation.id, isVideo ? '🎥 Video' : '📷 Imagen', profile?.id ?? '');
     } catch (err) {
       console.error('Error sending media:', err);
+      if (handleClosedOrderError(err)) return;
       toast.error('No se pudo enviar el archivo', 'Revisá tu conexión e intentá de nuevo');
     } finally {
       busyRef.current = false;
@@ -716,6 +737,7 @@ export default function ChatScreen() {
       updateLastMessage(conversation.id, isVideo ? '🎥 Video' : '📷 Foto', profile?.id ?? '');
     } catch (err) {
       console.error('Error sending camera media:', err);
+      if (handleClosedOrderError(err)) return;
       toast.error('No se pudo enviar el archivo', 'Revisá tu conexión e intentá de nuevo');
     } finally {
       busyRef.current = false;
@@ -750,6 +772,7 @@ export default function ChatScreen() {
       updateLastMessage(conversation.id, '📎 Documento', profile?.id ?? '');
     } catch (err) {
       console.error('Error sending document:', err);
+      if (handleClosedOrderError(err)) return;
       toast.error('No se pudo enviar el documento', 'Revisá tu conexión e intentá de nuevo');
     } finally {
       busyRef.current = false;
@@ -775,6 +798,7 @@ export default function ChatScreen() {
       updateLastMessage(conversation.id, text, profile?.id ?? '');
     } catch (err) {
       setInput(text);
+      if (handleClosedOrderError(err)) return;
       toast.error('No se pudo enviar', 'Revisá tu conexión e intentá de nuevo');
     } finally {
       busyRef.current = false;
@@ -971,7 +995,7 @@ export default function ChatScreen() {
       {isTyping && <View style={{ transform: [{ scaleY: -1 }] }}><TypingBubble /></View>}
 
       {/* Menú de adjuntar */}
-      {showAttachMenu && (
+      {showAttachMenu && !readOnly && (
         <View style={[styles.attachMenu, { backgroundColor: tc.surface, borderTopColor: tc.divider }]}>
           <Pressable onPress={handleCameraPhoto} style={styles.attachOption} accessibilityRole="button" accessibilityLabel="Sacar una foto">
             <LinearGradient colors={GRADIENTS.brand} style={styles.attachIcon}>
@@ -1001,6 +1025,10 @@ export default function ChatScreen() {
       )}
 
       {/* Input bar */}
+      {order?.status === 'disputed' && <ChatOrderNotice status={order.status} style={styles.orderNotice} />}
+      {readOnly ? (
+        <ChatOrderNotice status={order?.status} style={{ ...styles.orderNotice, marginBottom: Math.max(insets.bottom, 12) }} />
+      ) : (
       <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12), borderTopColor: tc.divider }]}>
         <View style={[
           styles.inputWrapper,
@@ -1112,6 +1140,7 @@ export default function ChatScreen() {
           )}
         </View>
       </BlurView>
+      )}
     </KeyboardAvoidingView>
   );
 }
@@ -1309,4 +1338,5 @@ const styles = StyleSheet.create({
   statusSent: { color: TOKENS.color.onPrimarySub },
   statusRead: { color: TOKENS.color.mint },
   offlineBanner: { marginHorizontal: 12, marginTop: 8 },
+  orderNotice: { marginHorizontal: 12, marginTop: 8 },
 });

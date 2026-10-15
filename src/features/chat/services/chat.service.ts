@@ -6,6 +6,7 @@
  */
 
 import api from '@/core/api/axiosinstance';
+import type { OrderStatus } from '@/features/orders/types/orders.types';
 
 export interface ChatParticipant {
   id: string;
@@ -45,6 +46,8 @@ export interface Conversation {
   otherParty: OtherParty;
   lastMessage?: { content: string; senderId: string; createdAt: string | Date } | null;
   unreadCount: number;
+  /** Order status. Not returned by the backend yet (BR02); the list badge renders only when present. */
+  orderStatus?: OrderStatus;
   createdAt: string | Date;
 }
 

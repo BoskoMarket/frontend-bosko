@@ -25,9 +25,10 @@ import { Animated } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchConversations, Conversation } from '../services/chat.service';
+import { chatStatusBadge } from '../constants/chatOrderRules';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { useChatStore, useConversationsList } from '@/stores/chat.store';
-import { Avatar, EmptyState, FONT_FAMILY, NoticeBanner, TOKENS, useThemeColors, withAlpha } from '@/core/design-system';
+import { Avatar, Badge, EmptyState, FONT_FAMILY, NoticeBanner, TOKENS, useThemeColors, withAlpha } from '@/core/design-system';
 
 type MessagePreview = { icon?: React.ComponentProps<typeof Ionicons>['name']; label: string };
 
@@ -87,6 +88,7 @@ function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
   }, [hasUnread]);
 
   const preview = getMessagePreview(item.lastMessage?.content);
+  const statusBadge = chatStatusBadge(item.orderStatus);
 
   return (
     <Animated.View style={{ opacity: fadeAnim }}>
@@ -131,6 +133,7 @@ function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
                 {preview.label}
               </Text>
             </View>
+            {statusBadge && <Badge label={statusBadge.label} tone={statusBadge.tone} size="sm" />}
             {hasUnread && (
               <View style={styles.unreadBadge}>
                 <Text style={styles.unreadCount}>
