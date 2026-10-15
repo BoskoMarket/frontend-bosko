@@ -10,6 +10,9 @@ import {
   Button,
   Badge,
   Chip,
+  ConfirmDialog,
+  DialogRoot,
+  dialog,
   Divider,
   EmptyState,
   Input,
@@ -273,6 +276,127 @@ describe.each(['dark', 'light'] as const)('ReasonDialog (%s)', (mode) => {
     expect(onCancel).not.toHaveBeenCalled();
     expect(getByPlaceholderText('Motivo...').props.editable).toBe(false);
     expect(onConfirm).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConfirmDialog', () => {
+  it('renders copy and fires action callbacks', () => {
+    const onOk = jest.fn();
+    const onCancel = jest.fn();
+    const onDismiss = jest.fn();
+    const { getByText, getByLabelText } = render(
+      <ConfirmDialog
+        visible
+        title="Eliminar"
+        message="Seguro?"
+        onDismiss={onDismiss}
+        actions={[
+          { label: 'Borrar', style: 'destructive', onPress: onOk },
+          { label: 'Cancelar', style: 'cancel', onPress: onCancel },
+        ]}
+      />,
+    );
+    expect(getByText('Eliminar')).toBeTruthy();
+    expect(getByText('Seguro?')).toBeTruthy();
+    fireEvent.press(getByText('Borrar'));
+    fireEvent.press(getByText('Cancelar'));
+    expect(onOk).toHaveBeenCalledTimes(1);
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    fireEvent.press(getByLabelText('Cerrar'));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not dismiss when dismissable is false', () => {
+    const onDismiss = jest.fn();
+    const { getByLabelText } = render(
+      <ConfirmDialog visible title="t" dismissable={false} onDismiss={onDismiss} actions={[{ label: 'OK', onPress: jest.fn() }]} />,
+    );
+    fireEvent.press(getByLabelText('Cerrar'));
+    expect(onDismiss).not.toHaveBeenCalled();
+  });
+});
+
+describe('dialog imperative API', () => {
+  it('confirm resolves true on confirm and false on cancel / dismiss', async () => {
+    const { getByText, getByLabelText } = render(<DialogRoot />);
+    let p!: Promise<boolean>;
+    act(() => { p = dialog.confirm({ title: 'Seguro', confirmLabel: 'Si' }); });
+    fireEvent.press(getByText('Si'));
+    await expect(p).resolves.toBe(true);
+
+    act(() => { p = dialog.confirm({ title: 'Seguro' }); });
+    fireEvent.press(getByText('Cancelar'));
+    await expect(p).resolves.toBe(false);
+
+    act(() => { p = dialog.confirm({ title: 'Seguro' }); });
+    fireEvent.press(getByLabelText('Cerrar'));
+    await expect(p).resolves.toBe(false);
+  });
+
+  it('alert resolves after OK and queues a second dialog', async () => {
+    const { getByText, queryByText } = render(<DialogRoot />);
+    let a!: Promise<void>;
+    let b!: Promise<void>;
+    act(() => {
+      a = dialog.alert({ title: 'Uno' });
+      b = dialog.alert({ title: 'Dos', okLabel: 'Entendido' });
+    });
+    expect(getByText('Uno')).toBeTruthy();
+    expect(queryByText('Dos')).toBeNull();
+    fireEvent.press(getByText('Aceptar'));
+    await a;
+    expect(getByText('Dos')).toBeTruthy();
+    fireEvent.press(getByText('Entendido'));
+    await b;
+  });
+
+  it('choose resolves the pressed key, or null when dismissed', async () => {
+    const { getByText, getByLabelText } = render(<DialogRoot />);
+    const actions = [
+      { key: 'a' as const, label: 'Opcion A' },
+      { key: 'b' as const, label: 'Opcion B' },
+      { key: 'c' as const, label: 'Cancelar', style: 'cancel' as const },
+    ];
+    let p!: Promise<'a' | 'b' | 'c' | null>;
+    act(() => { p = dialog.choose({ title: 'Elegi', actions }); });
+    fireEvent.press(getByText('Opcion B'));
+    await expect(p).resolves.toBe('b');
+
+    act(() => { p = dialog.choose({ title: 'Elegi', actions }); });
+    fireEvent.press(getByLabelText('Cerrar'));
+    await expect(p).resolves.toBeNull();
+  });
+
+  it('fromAlert calls the pressed button onPress and the cancel onPress on dismiss', () => {
+    const onYes = jest.fn();
+    const onNo = jest.fn();
+    const { getByText, getByLabelText } = render(<DialogRoot />);
+    act(() => {
+      dialog.fromAlert('Salir', 'Seguro?', [
+        { text: 'No', style: 'cancel', onPress: onNo },
+        { text: 'Si', style: 'destructive', onPress: onYes },
+      ]);
+    });
+    fireEvent.press(getByText('Si'));
+    expect(onYes).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      dialog.fromAlert('Salir', undefined, [
+        { text: 'No', style: 'cancel', onPress: onNo },
+        { text: 'Si', onPress: onYes },
+      ]);
+    });
+    fireEvent.press(getByLabelText('Cerrar'));
+    expect(onNo).toHaveBeenCalledTimes(1);
+  });
+
+  it('fromAlert honours cancelable:false and defaults to a single OK button', () => {
+    const { getByText, getByLabelText, queryByText } = render(<DialogRoot />);
+    act(() => { dialog.fromAlert('Aviso', 'Solo OK', undefined, { cancelable: false }); });
+    fireEvent.press(getByLabelText('Cerrar'));
+    expect(getByText('Aviso')).toBeTruthy();
+    fireEvent.press(getByText('OK'));
+    expect(queryByText('Aviso')).toBeNull();
   });
 });
 

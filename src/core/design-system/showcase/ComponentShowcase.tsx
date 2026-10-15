@@ -18,6 +18,7 @@ import {
   Card,
   Chip,
   Divider,
+  dialog,
   EmptyState,
   FONT_FAMILY,
   FullScreenModal,
@@ -359,6 +360,31 @@ function ModalSection() {
             <Button label="Cerrar" onPress={() => setFull(false)} />
           </View>
         </FullScreenModal>
+      </Section>
+      <Section name="ConfirmDialog / dialog">
+        <Row>
+          <Button label="alert" size="sm" variant="secondary" onPress={() => dialog.alert({ title: 'Listo', message: 'Se guardo correctamente' }).then(() => toast.success('alert cerrado'))} />
+          <Button label="confirm" size="sm" onPress={() => dialog.confirm({ title: 'Publicar servicio', message: 'Quedara visible para todos.' }).then((ok) => toast.success(`confirm: ${ok}`))} />
+          <Button label="destructive" size="sm" variant="danger" onPress={() => dialog.confirm({ title: 'Eliminar', message: 'Esta accion no se puede deshacer.', confirmLabel: 'Eliminar', destructive: true }).then((ok) => toast.success(`destructive: ${ok}`))} />
+          <Button
+            label="choose (3)"
+            size="sm"
+            variant="outline"
+            onPress={() =>
+              dialog
+                .choose({
+                  title: 'Subir documento',
+                  message: 'Elegi como adjuntarlo',
+                  actions: [
+                    { key: 'file', label: 'Desde archivos' },
+                    { key: 'camera', label: 'Tomar foto' },
+                    { key: 'cancel', label: 'Cancelar', style: 'cancel' },
+                  ],
+                })
+                .then((key) => toast.success(`choose: ${key ?? 'null'}`))
+            }
+          />
+        </Row>
       </Section>
       <Section name="ReasonDialog">
         <Button label="Abrir" variant="secondary" onPress={() => setReason(true)} />

@@ -47,3 +47,12 @@ export { ReportSheet } from './ReportSheet';
 export type { ReportSheetProps, ReportSheetReason, ReportSheetSubmit } from './ReportSheet';
 export { ProgressBar } from './ProgressBar';
 export type { ProgressBarProps } from './ProgressBar';
+export { ConfirmDialog, DialogRoot, dialog } from './ConfirmDialog';
+export type {
+  ConfirmDialogProps,
+  ConfirmDialogAction,
+  DialogAction,
+  DialogActionStyle,
+  AlertButton,
+  AlertOptions,
+} from './ConfirmDialog';
