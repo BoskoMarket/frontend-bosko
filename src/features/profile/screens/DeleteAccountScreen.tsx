@@ -4,13 +4,26 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useAuth } from '@/features/auth/state/AuthContext';
-import { deleteAccountService } from '@/features/profile/services/profile';
+import { useGoogleReauth } from '@/features/auth/hooks/useGoogleSignIn';
+import { useProfile } from '@/features/profile/state/ProfileContext';
+import { deleteAccountService, type DeleteAccountCredentials } from '@/features/profile/services/profile';
+import { useClientOrders, useProviderOrders } from '@/hooks/queries/useOrdersQuery';
+import { useMyPlan } from '@/hooks/queries/usePlansQuery';
+import { ORDER_STATUS } from '@/features/orders/constants/orderStatus';
+import {
+  DELETION_GRACE_DAYS,
+  blockingOrders,
+  deactivationMessage,
+  mergeOrders,
+} from '@/features/profile/utils/deleteAccountRules';
 import {
   TOKENS,
+  Badge,
   Button,
   Card,
   IconCircle,
   Input,
+  ListRow,
   NoticeBanner,
   ScreenHeader,
   Text,
@@ -22,11 +35,12 @@ import { AnimatedBackground } from '@/components/AnimatedBackground';
 const CONFIRM_WORD = 'ELIMINAR';
 
 const WARNINGS = [
-  'Tu perfil y datos personales serán eliminados permanentemente.',
-  'Tus servicios publicados serán dados de baja.',
-  'No podrás recuperar tu historial de órdenes ni conversaciones.',
-  'Esta acción no tiene vuelta atrás.',
+  'Tu cuenta se desactiva y tu perfil, servicios y reels dejan de verse.',
+  `Tenés ${DELETION_GRACE_DAYS} días para cambiar de idea: si volvés a iniciar sesión en ese plazo, tu cuenta se reactiva.`,
+  `Pasados los ${DELETION_GRACE_DAYS} días, tu cuenta y tus datos se eliminan definitivamente.`,
 ];
+const PREMIUM_WARNING = 'Vas a perder tu plan Premium sin reembolso del período restante.';
+const BLOCKED_MESSAGE = 'No podés eliminar tu cuenta mientras tengas órdenes activas.';
 
 function FadeSlide({ delay, children }: { delay: number; children: React.ReactNode }) {
   const opacity = useRef(new Animated.Value(0)).current;
@@ -49,6 +63,17 @@ function FadeSlide({ delay, children }: { delay: number; children: React.ReactNo
 export default function DeleteAccountScreen() {
   const tc = useThemeColors();
   const { logout } = useAuth();
+  const { profile } = useProfile();
+  const isGoogle = profile?.authProvider === 'google';
+  const { loading: googleLoading, getGoogleIdToken } = useGoogleReauth();
+  const clientOrders = useClientOrders();
+  const providerOrders = useProviderOrders();
+  const myPlan = useMyPlan();
+  const blocking = blockingOrders(mergeOrders(clientOrders.data, providerOrders.data));
+  const providerIds = new Set((providerOrders.data ?? []).map((o) => o.id));
+  const [serverBlocked, setServerBlocked] = useState(false);
+  const isBlocked = blocking.length > 0 || serverBlocked;
+  const isPremium = myPlan.data?.status === 'active';
   const [step, setStep] = useState<1 | 2>(1);
   const [confirmText, setConfirmText] = useState('');
   const [password, setPassword] = useState('');
@@ -68,7 +93,7 @@ export default function DeleteAccountScreen() {
   }, []);
 
   const canProceed = confirmText === CONFIRM_WORD;
-  const canDelete = canProceed && password.length >= 6;
+  const canDelete = canProceed && (isGoogle || password.length >= 6);
 
   const goToStep2 = () => {
     setError('');
@@ -91,29 +116,50 @@ export default function DeleteAccountScreen() {
   };
 
   const handleDelete = () => {
-    if (!canDelete || loading) return;
+    if (!canDelete || loading || googleLoading) return;
     Alert.alert(
       'Última confirmación',
-      '¿Estás absolutamente seguro? Esta acción eliminará tu cuenta para siempre.',
+      `Tu cuenta se desactivará y se eliminará definitivamente en ${DELETION_GRACE_DAYS} días. Si volvés a iniciar sesión antes, se reactiva.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
-          text: 'Sí, eliminar',
+          text: 'Sí, desactivar',
           style: 'destructive',
           onPress: async () => {
             setError('');
             setLoading(true);
             try {
-              await deleteAccountService(password);
+              let credentials: DeleteAccountCredentials;
+              if (isGoogle) {
+                let googleIdToken: string | null;
+                try {
+                  googleIdToken = await getGoogleIdToken();
+                } catch {
+                  toast.error('No pudimos confirmar con Google', 'Intentá de nuevo.');
+                  return;
+                }
+                if (!googleIdToken) return; // user cancelled the Google prompt
+                credentials = { googleIdToken };
+              } else {
+                credentials = { password };
+              }
+              const result = await deleteAccountService(credentials);
               await logout();
               router.replace('/login');
-              toast.success('Cuenta eliminada', 'Tu cuenta y tus datos fueron eliminados.');
+              toast.success('Cuenta desactivada', deactivationMessage(result?.deletionScheduledAt));
             } catch (err: any) {
               const code = err?.response?.data?.code;
-              if (!err?.response) setError('Sin conexión. Revisá tu internet e intentá de nuevo.');
+              if (code === 'ACTIVE_ORDERS' || err?.response?.status === 409) {
+                setServerBlocked(true);
+                setStep(1);
+                void clientOrders.refetch();
+                void providerOrders.refetch();
+              } else if (!err?.response) setError('Sin conexión. Revisá tu internet e intentá de nuevo.');
               else if (code === 'NOT_FOUND') setError('Usuario no encontrado.');
+              else if (code === 'REAUTH_FAILED')
+                setError('No pudimos verificar tu cuenta de Google. Intentá de nuevo.');
               else if (code === 'INVALID_PASSWORD' || err?.response?.status === 401)
-                setError('Contraseña incorrecta. Verificá e intentá de nuevo.');
+                setError(isGoogle ? 'No pudimos verificar tu cuenta de Google. Intentá de nuevo.' : 'Contraseña incorrecta. Verificá e intentá de nuevo.');
               else setError('Error al eliminar la cuenta. Intentá más tarde.');
             } finally {
               setLoading(false);
@@ -142,16 +188,37 @@ export default function DeleteAccountScreen() {
         <Animated.View style={[s.warningIconWrap, { opacity: iconOpacity, transform: [{ scale: iconScale }] }]}>
           <IconCircle name={step === 1 ? 'warning' : 'lock-closed'} variant="danger" size={84} />
           <Text variant="h3" color={TOKENS.color.error} center>
-            {step === 1 ? 'Zona de peligro' : 'Verificá tu identidad'}
+            {isBlocked ? 'No se puede eliminar todavía' : step === 1 ? 'Zona de peligro' : 'Verificá tu identidad'}
           </Text>
           <Text variant="bodySmall" color={tc.textSub} center>
             {step === 1
-              ? 'Esta acción es permanente e irreversible.'
-              : 'Ingresá tu contraseña para confirmar la eliminación.'}
+              ? `Tu cuenta se desactiva y se elimina definitivamente en ${DELETION_GRACE_DAYS} días.`
+              : isGoogle
+                ? 'Confirmá con tu cuenta de Google para continuar.'
+                : 'Ingresá tu contraseña para confirmar la eliminación.'}
           </Text>
         </Animated.View>
 
-        {step === 1 && (
+        {isBlocked && (
+          <FadeSlide delay={100}>
+            <NoticeBanner variant="error">{BLOCKED_MESSAGE}</NoticeBanner>
+            {blocking.length > 0 && (
+              <Card padding="md" radius="lg" contentStyle={s.blockList}>
+                {blocking.map((o) => (
+                  <ListRow
+                    key={o.id}
+                    label={o.title}
+                    subtitle={providerIds.has(o.id) ? 'Como proveedor' : 'Como cliente'}
+                    right={<Badge label={ORDER_STATUS[o.status].label} tone={ORDER_STATUS[o.status].tone} />}
+                    onPress={() => router.push({ pathname: '/orders/[id]', params: { id: o.id } })}
+                  />
+                ))}
+              </Card>
+            )}
+          </FadeSlide>
+        )}
+
+        {step === 1 && !isBlocked && (
           <>
             {/* Consequences */}
             <FadeSlide delay={100}>
@@ -163,6 +230,12 @@ export default function DeleteAccountScreen() {
                     <Text variant="bodySmall" color={tc.textSub} style={s.warningText}>{w}</Text>
                   </View>
                 ))}
+                {isPremium && (
+                  <View style={s.warningItem}>
+                    <MaterialIcons name="close" size={16} color={TOKENS.color.error} style={s.warningIcon} />
+                    <Text variant="bodySmall" color={tc.textSub} style={s.warningText}>{PREMIUM_WARNING}</Text>
+                  </View>
+                )}
               </Card>
             </FadeSlide>
 
@@ -200,8 +273,15 @@ export default function DeleteAccountScreen() {
           </>
         )}
 
-        {step === 2 && (
+        {step === 2 && !isBlocked && (
           <Animated.View style={[s.step2, { opacity: step2Opacity, transform: [{ translateY: step2Ty }] }]}>
+            {isGoogle ? (
+              <Card padding="xl" radius="lg" contentStyle={s.cardContent}>
+                <Text variant="bodySmall" color={tc.textSub}>
+                  Tu cuenta usa Google para iniciar sesión. Vas a elegir tu cuenta de Google para confirmar.
+                </Text>
+              </Card>
+            ) : (
             <Card padding="xl" radius="lg" contentStyle={s.cardContent}>
               <Input
                 label="Ingresá tu contraseña actual"
@@ -217,15 +297,16 @@ export default function DeleteAccountScreen() {
                 onSubmitEditing={handleDelete}
               />
             </Card>
+            )}
 
             {!!error && <NoticeBanner variant="error">{error}</NoticeBanner>}
 
             <Button
-              label="Eliminar mi cuenta"
+              label={isGoogle ? 'Confirmar con Google' : 'Eliminar mi cuenta'}
               variant="danger"
               size="lg"
               fullWidth
-              loading={loading}
+              loading={loading || googleLoading}
               disabled={!canDelete}
               icon={<MaterialIcons name="delete-forever" size={20} color={TOKENS.color.onPrimary} />}
               onPress={handleDelete}
@@ -258,4 +339,5 @@ const s = StyleSheet.create({
   warningIcon: { marginTop: 2 },
   warningText: { flex: 1, lineHeight: 18 },
   step2: { gap: 16 },
+  blockList: { gap: 4 },
 });

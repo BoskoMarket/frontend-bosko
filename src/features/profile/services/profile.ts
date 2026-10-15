@@ -8,6 +8,8 @@ export interface UserProfile {
     lastName?: string;
     phone?: string;
     isPhoneVerified?: boolean;
+    /** Proposed (BR05): how the account signs in. Absent => treated as 'password'. */
+    authProvider?: 'password' | 'google';
     bio?: string;
     avatarUrl?: string;
     bannerUrl?: string;
@@ -98,7 +100,15 @@ export async function verifyPhoneWithFirebase(firebaseIdToken: string): Promise<
     await api.post('/users/me/verify-phone', { firebaseIdToken });
 }
 
-/** Eliminar cuenta — DELETE /users/me */
-export async function deleteAccountService(password: string): Promise<void> {
-    await api.delete('/users/me', { data: { password } });
+export interface DeleteAccountResult {
+    /** ISO date when the deactivated account is purged. Absent on older backends. */
+    deletionScheduledAt?: string;
+}
+
+/** Desactiva la cuenta con 30 días de gracia — DELETE /users/me (409 ACTIVE_ORDERS si hay órdenes activas) */
+export type DeleteAccountCredentials = { password: string } | { googleIdToken: string };
+
+export async function deleteAccountService(credentials: DeleteAccountCredentials): Promise<DeleteAccountResult> {
+    const { data } = await api.delete<DeleteAccountResult | undefined>('/users/me', { data: credentials });
+    return data ?? {};
 }
