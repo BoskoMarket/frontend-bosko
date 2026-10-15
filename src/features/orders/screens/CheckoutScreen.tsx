@@ -11,7 +11,6 @@ import {
   Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -24,7 +23,7 @@ import {
   Button,
   Card,
   Divider,
-  GRADIENTS,
+  BRAND_RADIAL_FILL,
   ScreenHeader,
   SPACING,
   TOKENS,
@@ -156,9 +155,9 @@ export function CheckoutScreen() {
               {order.service?.thumbnail ? (
                 <Image source={{ uri: order.service.thumbnail }} style={s.thumb} contentFit="cover" />
               ) : (
-                <LinearGradient colors={GRADIENTS.brand} style={s.thumbFallback}>
+                <View style={[s.thumbFallback, BRAND_RADIAL_FILL]}>
                   <Ionicons name="construct" size={20} color={TOKENS.color.onPrimary} />
-                </LinearGradient>
+                </View>
               )}
               <View style={s.serviceInfo}>
                 <Text style={[s.serviceName, { color: tc.text }]}>{order.service?.title ?? 'Servicio'}</Text>

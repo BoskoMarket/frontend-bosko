@@ -8,6 +8,11 @@ export const GRADIENTS = {
   // 2-stop — botones, chips activos, burbuja de tab
   brand: [TOKENS.color.signal, TOKENS.color.primary] as const,
 
+  // Radial — primary CTA fill: signal glow from the top-right corner fading
+  // into wine, then deep wine. CSS string for `experimental_backgroundImage`
+  // (RN >= 0.79 native gradients; expo-linear-gradient has no radial).
+  brandRadial: `radial-gradient(120% 120% at 100% 0%, ${TOKENS.color.signal} 0%, ${TOKENS.color.primary} 45%, ${TOKENS.color.primaryDark} 100%)`,
+
   // Éxito — verificado / pago OK
   success: [TOKENS.color.mint, TOKENS.color.mintDeep] as const,
 
@@ -29,6 +34,9 @@ export const GRADIENTS = {
   // Fondo de auth/onboarding: bg → tinte vino → bg. Theme-aware (pasar `tc` o `PALETTE.dark`).
   backdrop: (tc: { bg: string; bgWine: string }) => [tc.bg, tc.bgWine, tc.bg] as const,
 } as const;
+
+// Radial brand fill for a sized View (radial replacement for the linear brand gradient).
+export const BRAND_RADIAL_FILL = { experimental_backgroundImage: GRADIENTS.brandRadial } as const;
 
 export function wash(tc: { bg: string; surface2: string }): readonly [string, string, string] {
   return [tc.bg, tc.surface2, tc.bg] as const;

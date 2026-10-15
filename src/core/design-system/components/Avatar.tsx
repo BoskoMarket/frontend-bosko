@@ -1,9 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { TOKENS } from '../tokens';
-import { GRADIENTS } from '../gradients';
+import { BRAND_RADIAL_FILL } from '../gradients';
 import { FONT_FAMILY } from '../typography';
 import { Text } from './Text';
 import { useThemeColors } from '@/stores/theme.store';
@@ -30,7 +29,7 @@ export function Avatar({ uri, name, size = 52, online = false, style }: AvatarPr
       {uri ? (
         <Image source={{ uri }} style={[circle, { backgroundColor: tc.surface2 }]} contentFit="cover" />
       ) : (
-        <LinearGradient colors={GRADIENTS.brand} style={[circle, styles.center]}>
+        <View style={[circle, styles.center, BRAND_RADIAL_FILL]}>
           <Text
             variant="title"
             color={TOKENS.color.onPrimary}
@@ -38,7 +37,7 @@ export function Avatar({ uri, name, size = 52, online = false, style }: AvatarPr
           >
             {initial}
           </Text>
-        </LinearGradient>
+        </View>
       )}
       {online ? (
         <View

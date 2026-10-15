@@ -42,6 +42,7 @@ import {
   Button,
   FONT_FAMILY,
   GRADIENTS,
+  BRAND_RADIAL_FILL,
   SectionHeader,
   TOKENS,
   useIsDark,
@@ -165,9 +166,9 @@ function CategoryTile({
         ]}
       >
         {featured ? (
-          <LinearGradient colors={GRADIENTS.brand} style={[ds.categoryIconWrap, ds.categoryIconGlow]}>
+          <View style={[ds.categoryIconWrap, ds.categoryIconGlow, BRAND_RADIAL_FILL]}>
             <Ionicons name={iconName} size={18} color={TOKENS.color.onPrimary} />
-          </LinearGradient>
+          </View>
         ) : (
           <View style={[ds.categoryIconWrap, { backgroundColor: tc.accent }]}>
             <Ionicons name={iconName} size={18} color={TOKENS.color.signal} />
@@ -344,9 +345,9 @@ export default function DashboardScreen() {
           {profile?.avatarUrl ? (
             <Image source={{ uri: profile.avatarUrl }} style={s.avatar} contentFit="cover" />
           ) : (
-            <LinearGradient colors={GRADIENTS.brand} style={s.avatarGrad}>
+            <View style={[s.avatarGrad, BRAND_RADIAL_FILL]}>
               <Text style={s.avatarInitial}>{(profile?.firstName?.[0] ?? 'U').toUpperCase()}</Text>
-            </LinearGradient>
+            </View>
           )}
           <View>
             <Text style={s.greeting}>{greeting} 👋</Text>

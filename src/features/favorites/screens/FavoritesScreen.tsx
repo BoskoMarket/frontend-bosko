@@ -8,7 +8,6 @@ import {
   View,
 } from 'react-native';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -18,7 +17,7 @@ import { AnimatedBackground } from '@/components/AnimatedBackground';
 import type { ServiceSummary } from '@/types/services';
 import {
   TOKENS,
-  GRADIENTS,
+  BRAND_RADIAL_FILL,
   SPACING,
   Badge,
   EmptyState,
@@ -77,9 +76,9 @@ function FavoriteCard({ item, onRemove }: { item: ServiceSummary; onRemove: () =
         {item.thumbnail ? (
           <Image source={{ uri: item.thumbnail }} style={s.thumb} contentFit="cover" />
         ) : (
-          <LinearGradient colors={GRADIENTS.brand} style={s.thumbFallback}>
+          <View style={[s.thumbFallback, BRAND_RADIAL_FILL]}>
             <Ionicons name="construct" size={22} color={TOKENS.color.onPrimary} />
-          </LinearGradient>
+          </View>
         )}
 
         {/* Info */}

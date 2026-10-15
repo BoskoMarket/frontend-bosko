@@ -19,7 +19,6 @@ import {
   Alert,
   ScrollView,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
@@ -27,7 +26,7 @@ import {
   AuthCard,
   Button,
   Divider,
-  GRADIENTS,
+  BRAND_RADIAL_FILL,
   Input,
   SPACING,
   Text,
@@ -194,7 +193,7 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
 
                   <View style={[styles.progressTrack, { backgroundColor: tc.border }]}>
                     <Animated.View style={[styles.progressFill, progressStyle]}>
-                      <LinearGradient colors={GRADIENTS.brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+                      <View style={[StyleSheet.absoluteFill, BRAND_RADIAL_FILL]} />
                     </Animated.View>
                   </View>
 

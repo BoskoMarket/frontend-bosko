@@ -10,7 +10,7 @@ export type { PaletteColors } from './palette';
 export { SPACING } from './spacing';
 export type { SpacingKey } from './spacing';
 export { TYPE_SCALE, FONT_FAMILY } from './typography';
-export { GRADIENTS, wash } from './gradients';
+export { GRADIENTS, BRAND_RADIAL_FILL, wash } from './gradients';
 export { MOTION } from './motion';
 
 export { useThemeColors, useIsDark, useToggleTheme, useThemeMode, usePremiumColors, THEME_COLORS } from '@/stores/theme.store';

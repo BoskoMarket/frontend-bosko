@@ -23,7 +23,7 @@ import {
   MyPlan,
 } from '@/features/plans/services/plan.service';
 import { TOKENS } from '@/core/design-system/tokens';
-import { GRADIENTS } from '@/core/design-system/gradients';
+import { GRADIENTS, BRAND_RADIAL_FILL } from '@/core/design-system/gradients';
 import { getUserErrorMessage } from '@/lib/errors';
 import { useThemeColors, usePremiumColors, wash, withAlpha } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
@@ -254,12 +254,8 @@ export default function PlansScreen() {
                         <Text style={[s.currentBadgeText, { color: TOKENS.status.done.fg }]}>Plan actual</Text>
                       </View>
                     ) : (
-                      <LinearGradient
-                        colors={isPopular ? [pc.goldFill, pc.goldFillEnd] : GRADIENTS.brand}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={s.subscribeBtn}
-                      >
+                      <View style={[s.subscribeBtn, isPopular ? { overflow: 'hidden' } : BRAND_RADIAL_FILL]}>
+                        {isPopular && (<LinearGradient colors={[pc.goldFill, pc.goldFillEnd]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />)}
                         {subscribing === plan.id ? (
                           <ActivityIndicator color={TOKENS.color.onPrimary} size="small" />
                         ) : (
@@ -267,7 +263,7 @@ export default function PlansScreen() {
                             {plan.price === 0 ? 'Gratuito' : 'Suscribirse'}
                           </Text>
                         )}
-                      </LinearGradient>
+                      </View>
                     )}
                   </View>
                 </Pressable>

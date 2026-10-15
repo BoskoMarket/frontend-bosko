@@ -24,7 +24,7 @@ import api from '@/core/api/axiosinstance';
 import { safeBack } from '@/core/navigation/safeBack';
 import { ServiceDetailModal } from '../components/ServiceDetailModal';
 import type { ServiceSummary } from '@/types/services';
-import { Button, GRADIENTS, TOKENS, useIsDark, useThemeColors, withAlpha, type ReportSheetSubmit } from '@/core/design-system';
+import { Button, GRADIENTS, BRAND_RADIAL_FILL, TOKENS, useIsDark, useThemeColors, withAlpha, type ReportSheetSubmit } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { ReportFlow } from '@/features/reports/components/ReportFlow';
@@ -464,10 +464,10 @@ export default function ProviderProfileScreen() {
       {services.length > 0 && (
         <View style={[s.footer, { backgroundColor: c.card, borderTopColor: c.border, paddingBottom: insets.bottom + 12 }]}>
           <Pressable onPress={handleRequest}>
-            <LinearGradient colors={GRADIENTS.brand} style={s.ctaBtn}>
+            <View style={[s.ctaBtn, BRAND_RADIAL_FILL]}>
               <Ionicons name="chatbubble-ellipses-outline" size={18} color={TOKENS.color.onPrimary} />
               <Text style={s.ctaBtnText}>Solicitar servicio</Text>
-            </LinearGradient>
+            </View>
           </Pressable>
         </View>
       )}

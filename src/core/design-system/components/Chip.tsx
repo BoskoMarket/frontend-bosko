@@ -1,10 +1,9 @@
 import React from 'react';
 import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { TOKENS } from '../tokens';
 import { SPACING } from '../spacing';
-import { GRADIENTS } from '../gradients';
+import { BRAND_RADIAL_FILL } from '../gradients';
 import { Text } from './Text';
 import { useThemeColors } from '@/stores/theme.store';
 
@@ -39,9 +38,9 @@ export function Chip({ label, selected = false, icon, onPress, disabled, style }
       style={[styles.base, !selected && { backgroundColor: tc.surface2, borderColor: tc.border }, disabled && styles.disabled, style]}
     >
       {selected ? (
-        <LinearGradient colors={GRADIENTS.brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.inner}>
+        <View style={[styles.inner, BRAND_RADIAL_FILL]}>
           {content}
-        </LinearGradient>
+        </View>
       ) : (
         <View style={styles.inner}>{content}</View>
       )}
