@@ -17,6 +17,7 @@ import {
   NoticeBanner,
   TOKENS,
   OtpInput,
+  ReasonDialog,
   SectionHeader,
   ToastRoot,
   toast,
@@ -232,6 +233,46 @@ describe('design system components', () => {
     fireEvent.press(getByLabelText('Editar perfil. Nombre y foto'));
     fireEvent.press(getByText('Eliminar cuenta'));
     expect(onPress).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe.each(['dark', 'light'] as const)('ReasonDialog (%s)', (mode) => {
+  beforeEach(() => { act(() => { useThemeStore.getState().setMode(mode); }); });
+  afterAll(() => { act(() => { useThemeStore.getState().setMode('dark'); }); });
+
+  const setup = (extra: Partial<React.ComponentProps<typeof ReasonDialog>> = {}) => {
+    const onConfirm = jest.fn();
+    const onCancel = jest.fn();
+    const utils = render(
+      <ReasonDialog visible title="Rechazar" placeholder="Motivo..." confirmLabel="Confirmar" onConfirm={onConfirm} onCancel={onCancel} {...extra} />,
+    );
+    return { ...utils, onConfirm, onCancel };
+  };
+
+  it('requires a non-empty reason before confirming', () => {
+    const { getByText, getByPlaceholderText, onConfirm } = setup();
+    fireEvent.press(getByText('Confirmar'));
+    expect(onConfirm).not.toHaveBeenCalled();
+    fireEvent.changeText(getByPlaceholderText('Motivo...'), '   ');
+    fireEvent.press(getByText('Confirmar'));
+    expect(onConfirm).not.toHaveBeenCalled();
+    fireEvent.changeText(getByPlaceholderText('Motivo...'), '  vencido ');
+    fireEvent.press(getByText('Confirmar'));
+    expect(onConfirm).toHaveBeenCalledWith('vencido');
+  });
+
+  it('cancels', () => {
+    const { getByText, onCancel } = setup();
+    fireEvent.press(getByText('Cancelar'));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('is locked while submitting', () => {
+    const { getByText, getByPlaceholderText, onConfirm, onCancel } = setup({ submitting: true });
+    fireEvent.press(getByText('Cancelar'));
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(getByPlaceholderText('Motivo...').props.editable).toBe(false);
+    expect(onConfirm).not.toHaveBeenCalled();
   });
 });
 
