@@ -41,7 +41,6 @@ import {
   Text,
   TOKENS,
   TYPE_SCALE,
-  ToastRoot,
   toast,
   usePremiumColors,
   useThemeColors,
@@ -409,7 +408,6 @@ export function ComponentShowcase() {
         <AuthSection />
         <ModalSection />
       </ScrollView>
-      <ToastRoot />
     </View>
   );
 }
