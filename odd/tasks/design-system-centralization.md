@@ -215,8 +215,11 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 - 2026-10-15 G87 frontend ✅ `60ec559` `3cc07af`: ReelUpload con "Elegir de la galería" / "Grabar video", validación 60 s / 100 MB, preview, progreso + cancelar (`ProgressBar` nuevo en el DS; G64 ✅ para reels, chat pendiente), errores mapeados; link HTTPS conservado como opción secundaria. Endpoint `POST /reels/upload` propuesto (BR04). Alerta de permisos compartida en `src/lib/permissionAlert.ts`. Checks: 21 suites / 343 tests, `tsc` 0, `lint:ds` 37.
 - 2026-10-15 **Decisión del usuario G84**: reels con autoplay siempre por defecto + ajuste en perfil "solo con Wi-Fi" (opción C). Pendiente: confirmar store de preferencias (regla 6 de `CLAUDE.md`).
 
+- 2026-10-15 G84 ✅ `a628c19` `2037907`: **Decisión del usuario**: store nuevo `src/stores/preferences.store.ts` (`reelsAutoplay: 'always' | 'wifi'`, persist `BOSKO_PREFERENCES_v1`); fila "Reproducción automática de reels" en Perfil > Preferencias; con "solo Wi-Fi" + datos el reel queda en pausa con botón play (`useConnectionType` vía netinfo; desconocido = Wi-Fi). Detalle menor: doble tap en reel bloqueado también lo reproduce.
+- 2026-10-15 Borrar cuenta ✅ `89fe269` `ff7ca12`: **Decisiones del usuario**: (1) órdenes activas (pending/accepted/in_progress + disputed) bloquean el borrado con lista y links; Premium solo avisa; (2) período de gracia de 30 días (desactiva, reactivación al volver a iniciar sesión, toast "Reactivamos tu cuenta" si login trae `reactivated`); (3) usuarios de Google confirman con re-login de Google (`useGoogleReauth`, `authProvider` en perfil). Contrato BR05. Pendiente: anonimizar vs borrar reseñas/mensajes en la purga (backend/producto), exportación de datos, rate limit de intentos de contraseña (G20). Checks: 23 suites / 383 tests, `tsc` 0, `lint:ds` 37.
+
 ## Próximo paso
 
-0. G84: ajuste de autoplay (store de preferencias a confirmar con el usuario) usando `@react-native-community/netinfo`. Luego siguientes ❔ de `odd/ux-gaps.md`.
+0. Siguientes ❔ de `odd/ux-gaps.md` (en curso: G37 cambio de teléfono verificado). Luego T11 (notifications, reviews, search, favorites: 37 violaciones restantes).
 1. Responder las preguntas ❔ de `odd/ux-gaps.md` (de a una) e implementar las que queden definidas.
 2. T10: migrar `features/chat` + `features/reels` (ReelsScreen 67, ChatScreen 33, MyReels 10, ConversationsList 5) aplicando también el registro de faltantes UX. Antes: verificar en dispositivo (dark + light) T4–T9.
