@@ -3,7 +3,7 @@ import { View, Text, TextInput, StyleSheet, ScrollView, KeyboardAvoidingView, Pl
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { Button, useThemeColors, ScreenHeader } from '@/core/design-system';
+import { Button, toast, useThemeColors } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { createReel } from '../services/reels.service';
 import { getUserErrorMessage } from '@/lib/errors';
@@ -27,6 +27,7 @@ export default function ReelUploadScreen() {
     try {
       await createReel({ videoUrl: url, description: description.trim(), tags });
       await qc.invalidateQueries({ queryKey: ['reels'] });
+      toast.success('Reel publicado');
       safeBack(router, '/(tabs)/reels');
     } catch (error) { Alert.alert('No se pudo publicar', getUserErrorMessage(error)); }
     finally { setSaving(false); }
