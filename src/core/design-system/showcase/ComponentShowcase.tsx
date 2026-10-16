@@ -31,22 +31,28 @@ import {
   NoticeBanner,
   NoticeBannerVariant,
   OtpInput,
+  PathCard,
   ProgressBar,
   ReasonDialog,
   ReportSheet,
   ScreenHeader,
   SectionHeader,
   ScreenLoader,
+  ServiceCard,
   Skeleton,
   SkeletonList,
   SkeletonRow,
   SPACING,
+  StatTile,
+  StepCard,
   StepTimeline,
   Text,
   TOKENS,
+  TrustRow,
   TYPE_SCALE,
   toast,
   usePremiumColors,
+  ValueHero,
   useThemeColors,
 } from '@/core/design-system';
 
@@ -459,6 +465,72 @@ function ModalSection() {
   );
 }
 
+function HomeSection() {
+  const [fav, setFav] = useState(false);
+  return (
+    <>
+      <Section name="ServiceCard">
+        <Row style={styles.cardRow}>
+          <ServiceCard
+            style={styles.half}
+            title="Instalación de tomas y tableros"
+            category="Electricidad"
+            location="Palermo"
+            rating={4.8}
+            reviewsCount={32}
+            price="$18.500"
+            isAvailable
+            isFavorite={fav}
+            onToggleFavorite={() => setFav((v) => !v)}
+            onPress={() => {}}
+          />
+          <ServiceCard
+            style={styles.half}
+            title="Pintura de interiores"
+            fallbackIcon="brush-outline"
+            category="Pintura"
+            location="Caballito"
+            price="Consultar"
+            onPress={() => {}}
+          />
+        </Row>
+      </Section>
+      <Section name="ValueHero">
+        <ValueHero
+          eyebrow="Servicios en red · ARG"
+          title="Encontrá quien lo haga. O hacelo vos."
+          body="Bosko conecta a quienes necesitan un trabajo con quienes saben hacerlo, cerca tuyo."
+          searchPlaceholder="¿Qué necesitás? Electricista, pintor…"
+          onSearchPress={() => {}}
+        />
+      </Section>
+      <Section name="PathCard">
+        <Row style={styles.cardRow}>
+          <PathCard icon="search-outline" title="Contratar" description="Profesionales verificados con reseñas reales." linkLabel="Buscar servicios →" onPress={() => {}} />
+          <PathCard icon="construct-outline" title="Ofrecer" description="Publicá tus servicios y conseguí clientes." linkLabel="Empezar a ofrecer →" onPress={() => {}} />
+        </Row>
+      </Section>
+      <Section name="StepCard">
+        <Row style={styles.cardRow}>
+          <StepCard number="01" title="Buscá" caption="Por rubro o zona" />
+          <StepCard number="02" title="Pedí presupuesto" caption="Por chat, sin cargo" />
+          <StepCard number="03" title="Coordiná y calificá" caption="Todo en la orden" />
+        </Row>
+      </Section>
+      <Section name="TrustRow">
+        <TrustRow icon="shield-checkmark-outline" title="Identidad verificada" caption="Los profesionales validan su identidad y antecedentes" />
+        <TrustRow icon="star-outline" title="Reseñas reales" caption="Solo califica quien contrató el servicio" />
+      </Section>
+      <Section name="StatTile">
+        <Row style={styles.cardRow}>
+          <StatTile value="4.8" label="Rating" />
+          <StatTile value="128" label="Trabajos" />
+        </Row>
+      </Section>
+    </>
+  );
+}
+
 export function ComponentShowcase() {
   const tc = useThemeColors();
   const insets = useSafeAreaInsets();
@@ -476,6 +548,7 @@ export function ComponentShowcase() {
         <InputSection />
         <FeedbackSection />
         <LayoutSection />
+        <HomeSection />
         <AuthSection />
         <ModalSection />
       </ScrollView>
@@ -491,6 +564,8 @@ const styles = StyleSheet.create({
   section: { gap: SPACING.sm },
   sectionBody: { gap: SPACING.md },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, alignItems: 'center' },
+  cardRow: { flexWrap: 'nowrap', alignItems: 'stretch' },
+  half: { flex: 1 },
   gap: { gap: SPACING.xs },
   swatch: { width: 72, gap: SPACING.xs },
   swatchBox: { height: 40, borderRadius: TOKENS.radius.sm, borderWidth: 1 },
