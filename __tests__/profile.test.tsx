@@ -1,9 +1,9 @@
 import React from 'react';
 import * as fs from 'fs';
 import * as path from 'path';
-import { Alert } from 'react-native';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { useThemeStore } from '@/stores/theme.store';
+import { dialog } from '@/core/design-system';
 
 const mockBack = jest.fn();
 const mockReplace = jest.fn();
@@ -108,7 +108,7 @@ describe.each(['dark', 'light'] as const)('profile screens (%s)', (mode) => {
 
     it('leaves without prompting when nothing changed', () => {
       mockProfileState = { profile, isLoading: false, error: null };
-      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+      const alertSpy = jest.spyOn(dialog, 'fromAlert').mockImplementation(() => {});
       const { getByLabelText } = render(<EditProfileScreen />);
       fireEvent.press(getByLabelText('Volver'));
       expect(alertSpy).not.toHaveBeenCalled();
@@ -118,7 +118,7 @@ describe.each(['dark', 'light'] as const)('profile screens (%s)', (mode) => {
 
     it('asks before discarding unsaved changes', () => {
       mockProfileState = { profile, isLoading: false, error: null };
-      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+      const alertSpy = jest.spyOn(dialog, 'fromAlert').mockImplementation(() => {});
       const { getByLabelText, getByPlaceholderText } = render(<EditProfileScreen />);
       fireEvent.changeText(getByPlaceholderText('Tu nombre'), 'Ana María');
       fireEvent.press(getByLabelText('Volver'));
@@ -142,7 +142,7 @@ describe.each(['dark', 'light'] as const)('profile screens (%s)', (mode) => {
 
     it('asks for confirmation before removing the banner', () => {
       mockProfileState = { profile: { ...profile, bannerUrl: 'https://cdn.test/b.jpg' }, isLoading: false, error: null };
-      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+      const alertSpy = jest.spyOn(dialog, 'fromAlert').mockImplementation(() => {});
       const { getByLabelText } = render(<EditProfileScreen />);
       fireEvent.press(getByLabelText('Quitar portada'));
       expect(alertSpy).toHaveBeenCalledWith('Quitar portada', expect.any(String), expect.any(Array));

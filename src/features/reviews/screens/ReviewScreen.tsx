@@ -9,7 +9,6 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
-  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -32,6 +31,7 @@ import {
   toast,
   useThemeColors,
   usePremiumColors,
+  dialog,
 } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -72,7 +72,7 @@ export default function ReviewScreen() {
     } catch (err) {
       const { code } = extractApiError(err);
       if (code === 'ALREADY_REVIEWED') {
-        Alert.alert('Ya calificaste esta orden', getUserErrorMessage(err), [
+        dialog.fromAlert('Ya calificaste esta orden', getUserErrorMessage(err), [
           { text: 'OK', onPress: () => safeBack(router, '/(tabs)/orders') },
         ]);
         return;

@@ -21,7 +21,6 @@ import {
   Platform,
   ActivityIndicator,
   Image,
-  Alert,
   Animated,
   Keyboard,
   Linking,
@@ -76,6 +75,7 @@ import {
   useThemeColors,
   withAlpha,
   type ReportSheetSubmit,
+  dialog,
 } from '@/core/design-system';
 import { ReportFlow } from '@/features/reports/components/ReportFlow';
 import { canReport } from '@/features/reports/canReport';
@@ -409,7 +409,7 @@ export default function ChatScreen() {
     [reportTargetId, reportOrderId],
   );
   const openChatMenu = useCallback(() => {
-    Alert.alert('Opciones', undefined, [
+    dialog.fromAlert('Opciones', undefined, [
       { text: 'Reportar usuario', style: 'destructive', onPress: () => setReportOpen(true) },
       { text: 'Cancelar', style: 'cancel' },
     ]);

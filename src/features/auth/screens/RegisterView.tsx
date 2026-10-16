@@ -16,7 +16,6 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   Animated,
-  Alert,
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,6 +32,7 @@ import {
   TOKENS,
   FONT_FAMILY,
   useThemeColors,
+  dialog,
 } from '@/core/design-system';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useGoogleSignIn } from '@/features/auth/hooks/useGoogleSignIn';
@@ -146,7 +146,7 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
         setFieldError(fields[STEPS[firstInvalid].field]!);
         Animated.timing(progress, { toValue: (firstInvalid + 1) / STEPS.length, duration: 300, useNativeDriver: false }).start();
       }
-      if (general) Alert.alert('Error', general);
+      if (general) dialog.fromAlert('Error', general);
     }
   };
 

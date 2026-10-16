@@ -5,7 +5,6 @@ import {
   Pressable,
   ScrollView,
   Image,
-  Alert,
   Animated,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -24,6 +23,7 @@ import {
   Text,
   useThemeColors,
   withAlpha,
+  dialog,
 } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -106,7 +106,7 @@ export default function KYCDocumentScreen() {
   const pickImage = async (type: 'front' | 'back' | 'selfie') => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería para continuar.');
+      dialog.fromAlert('Permiso requerido', 'Necesitamos acceso a tu galería para continuar.');
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({

@@ -5,7 +5,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -22,7 +21,7 @@ import { uploadServiceImages } from "@/features/servicesUser/services/service";
 import { useCategories, useMyServices, useUpdateService } from "@/hooks/queries/useMarketplaceQuery";
 import { useAddServiceWithPlanLimit } from "@/features/servicesUser/hooks/useAddServiceWithPlanLimit";
 import { fetchServiceById } from "../services/services";
-import { Button, Card, Chip, GRADIENTS, Input, SPACING, Text, TOKENS, useThemeColors } from '@/core/design-system';
+import { Button, Card, Chip, GRADIENTS, Input, SPACING, Text, TOKENS, useThemeColors, dialog } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
 import { toast } from '@/core/components/Toast';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
@@ -134,7 +133,7 @@ export default function ServiceFormScreen() {
   const handlePickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Permiso requerido", "Necesitamos acceso a tus fotos.");
+      dialog.fromAlert("Permiso requerido", "Necesitamos acceso a tus fotos.");
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -373,10 +372,10 @@ export default function ServiceFormScreen() {
                 setUploadingImages(true);
                 try {
                   await uploadServiceImages(selectedService.id, galleryImages);
-                  Alert.alert("Imágenes subidas", "Las fotos se agregaron al servicio.");
+                  dialog.fromAlert("Imágenes subidas", "Las fotos se agregaron al servicio.");
                   setGalleryImages([]);
                 } catch (err: any) {
-                  Alert.alert("Error", getUserErrorMessage(err));
+                  dialog.fromAlert("Error", getUserErrorMessage(err));
                 } finally {
                   setUploadingImages(false);
                 }

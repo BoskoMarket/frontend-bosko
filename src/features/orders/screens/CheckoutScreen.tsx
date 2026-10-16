@@ -8,7 +8,6 @@ import {
   Text,
   View,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
@@ -29,6 +28,7 @@ import {
   TOKENS,
   useIsDark,
   useThemeColors,
+  dialog,
 } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { paymentBreakdown } from '@/features/payments/services/mockPayments';
@@ -99,7 +99,7 @@ export function CheckoutScreen() {
         },
       });
     } catch (err) {
-      Alert.alert('Error', getUserErrorMessage(err));
+      dialog.fromAlert('Error', getUserErrorMessage(err));
     } finally {
       setPaying(false);
     }

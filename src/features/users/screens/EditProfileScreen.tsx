@@ -10,7 +10,6 @@ import {
   ScrollView,
   Pressable,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Linking,
 } from 'react-native';
@@ -38,6 +37,7 @@ import {
   Text,
   toast,
   useThemeColors,
+  dialog,
 } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
@@ -79,7 +79,7 @@ export default function EditProfileScreen() {
   const ensureGalleryPermission = useCallback(async (purpose: string) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status === 'granted') return true;
-    Alert.alert('Permiso requerido', `Necesitamos acceso a tu galería para cambiar ${purpose}.`, [
+    dialog.fromAlert('Permiso requerido', `Necesitamos acceso a tu galería para cambiar ${purpose}.`, [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Abrir ajustes', onPress: () => { Linking.openSettings(); } },
     ]);
@@ -119,7 +119,7 @@ export default function EditProfileScreen() {
 
   const confirmRemoveBanner = useCallback(() => {
     if (bannerBusy.current) return;
-    Alert.alert('Quitar portada', '¿Querés quitar tu portada? Se va a mostrar la imagen por defecto.', [
+    dialog.fromAlert('Quitar portada', '¿Querés quitar tu portada? Se va a mostrar la imagen por defecto.', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Quitar',
@@ -200,7 +200,7 @@ export default function EditProfileScreen() {
       safeBack(router, '/(tabs)/profile');
       return;
     }
-    Alert.alert('Descartar cambios', 'Tenés cambios sin guardar. ¿Querés salir igual?', [
+    dialog.fromAlert('Descartar cambios', 'Tenés cambios sin guardar. ¿Querés salir igual?', [
       { text: 'Seguir editando', style: 'cancel' },
       { text: 'Descartar', style: 'destructive', onPress: () => safeBack(router, '/(tabs)/profile') },
     ]);
@@ -214,7 +214,7 @@ export default function EditProfileScreen() {
       const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       setCoordinates({ lat: position.coords.latitude, lng: position.coords.longitude });
     } catch (err) {
-      Alert.alert('Ubicación', getUserErrorMessage(err));
+      dialog.fromAlert('Ubicación', getUserErrorMessage(err));
     } finally {
       setLocating(false);
     }

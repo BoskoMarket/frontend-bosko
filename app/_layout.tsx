@@ -13,6 +13,7 @@ import { queryClient } from "@/core/query/queryClient";
 import { setupQueryNetworkFocus } from "@/core/query/networkFocus";
 import { AuthProvider, useAuth } from "@/features/auth/state/AuthContext";
 import { ToastRoot } from "@/core/components/Toast";
+import { DialogRoot } from "@/core/design-system";
 import { AppBackground } from "@/core/components/AppBackground";
 import { usePushNotificationSetup } from "@/hooks/usePushNotificationSetup";
 import { NotificationsModalRoot } from "@/features/notifications/screens/NotificationsScreen";
@@ -106,6 +107,7 @@ function ThemedRoot() {
       </BiometricLockGate>
       <UpdateBanner />
       <ToastRoot />
+      <DialogRoot />
       <NotificationsModalRoot />
     </AppBackground>
   );

@@ -1,7 +1,6 @@
 ﻿import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   ScrollView,
   StatusBar,
@@ -27,6 +26,7 @@ import {
   Text,
   useThemeColors,
   useIsDark,
+  dialog,
 } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
 import {
@@ -90,7 +90,7 @@ export default function BackgroundCheckScreen() {
       } else if (source === 'camera') {
         const perm = await ImagePicker.requestCameraPermissionsAsync();
         if (perm.status !== 'granted') {
-          Alert.alert('Permiso requerido', 'Necesitamos acceso a la cámara.');
+          dialog.fromAlert('Permiso requerido', 'Necesitamos acceso a la cámara.');
           return;
         }
         const result = await ImagePicker.launchCameraAsync({ quality: 0.9 });
@@ -101,7 +101,7 @@ export default function BackgroundCheckScreen() {
       } else {
         const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (perm.status !== 'granted') {
-          Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería.');
+          dialog.fromAlert('Permiso requerido', 'Necesitamos acceso a tu galería.');
           return;
         }
         const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.9 });
@@ -111,7 +111,7 @@ export default function BackgroundCheckScreen() {
         fileName = 'antecedentes.jpg';
       }
     } catch {
-      Alert.alert('Error', 'No se pudo seleccionar el archivo.');
+      dialog.fromAlert('Error', 'No se pudo seleccionar el archivo.');
       return;
     }
 
@@ -119,16 +119,16 @@ export default function BackgroundCheckScreen() {
     try {
       await uploadBackgroundCheck(uri, mimeType, fileName);
       await load();
-      Alert.alert('¡Enviado!', 'Tu documento fue enviado y está bajo revisión del equipo de Bosko.');
+      dialog.fromAlert('¡Enviado!', 'Tu documento fue enviado y está bajo revisión del equipo de Bosko.');
     } catch (e: any) {
-      Alert.alert('Error', getUserErrorMessage(e));
+      dialog.fromAlert('Error', getUserErrorMessage(e));
     } finally {
       setUploading(false);
     }
   };
 
   const showPickerOptions = () => {
-    Alert.alert('Subir documento', 'Elegí cómo querés adjuntar tu certificado', [
+    dialog.fromAlert('Subir documento', 'Elegí cómo querés adjuntar tu certificado', [
       { text: 'PDF o imagen desde archivos', onPress: () => handlePickAndUpload('document') },
       { text: 'Tomar foto', onPress: () => handlePickAndUpload('camera') },
       { text: 'Elegir de galería', onPress: () => handlePickAndUpload('gallery') },

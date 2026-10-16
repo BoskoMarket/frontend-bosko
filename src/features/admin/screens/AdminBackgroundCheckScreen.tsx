@@ -1,7 +1,6 @@
 ﻿import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -26,6 +25,7 @@ import {
   Text,
   useThemeColors,
   useIsDark,
+  dialog,
 } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -53,7 +53,7 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
       setRejectOpen(false);
       onReview(item.id);
     } catch {
-      Alert.alert('Error', 'No se pudo rechazar.');
+      dialog.fromAlert('Error', 'No se pudo rechazar.');
     } finally {
       setRejecting(false);
     }
@@ -75,7 +75,7 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
       <Pressable
         style={[s.docRow, { backgroundColor: tc.accent }]}
         onPress={() => {
-          Alert.alert('Documento', `URL del certificado:\n${item.backgroundCheckUrl}`, [{ text: 'OK' }]);
+          dialog.fromAlert('Documento', `URL del certificado:\n${item.backgroundCheckUrl}`, [{ text: 'OK' }]);
         }}
       >
         <Ionicons name="document-text-outline" size={18} color={TOKENS.color.signal} />
@@ -101,7 +101,7 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
             fullWidth
             icon={<Ionicons name="checkmark-circle-outline" size={16} color={TOKENS.color.onPrimary} />}
             onPress={() => {
-              Alert.alert('Aprobar antecedentes', `¿Aprobar el certificado de ${item.firstName}?`, [
+              dialog.fromAlert('Aprobar antecedentes', `¿Aprobar el certificado de ${item.firstName}?`, [
                 { text: 'Cancelar', style: 'cancel' },
                 {
                   text: 'Aprobar',
@@ -110,7 +110,7 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
                       await adminReview(item.id, true);
                       onReview(item.id);
                     } catch {
-                      Alert.alert('Error', 'No se pudo aprobar.');
+                      dialog.fromAlert('Error', 'No se pudo aprobar.');
                     }
                   },
                 },

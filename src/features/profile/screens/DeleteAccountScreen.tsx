@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert, Animated } from 'react-native';
+import { View, StyleSheet, ScrollView, Animated } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
@@ -29,6 +29,7 @@ import {
   Text,
   toast,
   useThemeColors,
+  dialog,
 } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -117,7 +118,7 @@ export default function DeleteAccountScreen() {
 
   const handleDelete = () => {
     if (!canDelete || loading || googleLoading) return;
-    Alert.alert(
+    dialog.fromAlert(
       'Última confirmación',
       `Tu cuenta se desactivará y se eliminará definitivamente en ${DELETION_GRACE_DAYS} días. Si volvés a iniciar sesión antes, se reactiva.`,
       [

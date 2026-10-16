@@ -1,7 +1,6 @@
 ﻿import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   Pressable,
   RefreshControl,
@@ -37,6 +36,7 @@ import {
   useIsDark,
   useThemeColors,
   withAlpha,
+  dialog,
 } from '@/core/design-system';
 import type { BadgeTone } from '@/core/design-system';
 import { ReelsAutoplayRow } from './components/ReelsAutoplayRow';
@@ -253,7 +253,7 @@ export const ProfileScreen: React.FC = () => {
   const openEditProfile = useCallback(() => router.push('/(tabs)/profile/EditProfile'), []);
 
   const handleLogout = () => {
-    Alert.alert('Cerrar sesión', '¿Querés cerrar sesión en este dispositivo?', [
+    dialog.fromAlert('Cerrar sesión', '¿Querés cerrar sesión en este dispositivo?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Cerrar sesión',

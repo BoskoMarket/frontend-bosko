@@ -12,7 +12,6 @@ import {
   ActivityIndicator,
   RefreshControl,
   Animated,
-  Alert,
   Linking,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -33,6 +32,7 @@ import {
   FullScreenModal,
   useThemeColors,
   withAlpha,
+  dialog,
 } from '@/core/design-system';
 import { useNotificationsOpen, closeNotifications } from '@/stores/notificationsUI.store';
 
@@ -86,7 +86,7 @@ function NotificationItem({ item, onPress, onDelete }: { item: Notification; onP
   const cfg = TYPE_ICON[item.type.toLowerCase()] ?? TYPE_ICON.default;
 
   const onLongPress = () => {
-    Alert.alert('Eliminar', '¿Eliminás esta notificación?', [
+    dialog.fromAlert('Eliminar', '¿Eliminás esta notificación?', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Eliminar', style: 'destructive', onPress: onDelete },
     ]);
@@ -159,7 +159,7 @@ export default function NotificationsScreen() {
   };
 
   const handleClearAll = () => {
-    Alert.alert('Limpiar notificaciones', '¿Eliminás todas las notificaciones?', [
+    dialog.fromAlert('Limpiar notificaciones', '¿Eliminás todas las notificaciones?', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Limpiar todo', style: 'destructive', onPress: clearAll },
     ]);

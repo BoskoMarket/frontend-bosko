@@ -6,7 +6,6 @@ import {
   ScrollView,
   Pressable,
   ActivityIndicator,
-  Alert,
   RefreshControl,
   Animated,
 } from 'react-native';
@@ -25,7 +24,7 @@ import {
 import { TOKENS } from '@/core/design-system/tokens';
 import { GRADIENTS, BRAND_RADIAL_FILL } from '@/core/design-system/gradients';
 import { getUserErrorMessage } from '@/lib/errors';
-import { useThemeColors, usePremiumColors, wash, withAlpha } from '@/core/design-system';
+import { useThemeColors, usePremiumColors, wash, withAlpha, dialog } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -99,17 +98,17 @@ export default function PlansScreen() {
     setSubscribing(planId);
     try {
       await subscribe(planId);
-      Alert.alert('Simulación completada', 'No se cobró dinero ni se activaron beneficios reales.');
+      dialog.fromAlert('Simulación completada', 'No se cobró dinero ni se activaron beneficios reales.');
       load();
     } catch (err: any) {
-      Alert.alert('Error', getUserErrorMessage(err));
+      dialog.fromAlert('Error', getUserErrorMessage(err));
     } finally {
       setSubscribing(null);
     }
   };
 
   const handleCancel = () => {
-    Alert.alert(
+    dialog.fromAlert(
       'Cancelar suscripción',
       '¿Estás seguro? Esta acción cancela la simulación en este dispositivo.',
       [
@@ -119,10 +118,10 @@ export default function PlansScreen() {
           onPress: async () => {
             try {
               await cancelSubscription();
-              Alert.alert('Suscripción cancelada', 'Se canceló la simulación. No hubo movimientos de dinero.');
+              dialog.fromAlert('Suscripción cancelada', 'Se canceló la simulación. No hubo movimientos de dinero.');
               load();
             } catch (err: any) {
-              Alert.alert('Error', getUserErrorMessage(err));
+              dialog.fromAlert('Error', getUserErrorMessage(err));
             }
           },
         },
