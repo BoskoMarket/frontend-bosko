@@ -19,7 +19,7 @@ import React, {
   useState,
 } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { Button, SPACING, Text } from '@/core/design-system';
+import { Button, SPACING, Text, toast } from '@/core/design-system';
 import axios from 'axios';
 import { API_URL } from '@/core/config/env';
 import { socketService } from '@/features/chat/services/socket.service';
@@ -155,6 +155,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         userEmail: credentials.email,
         user: response.user ?? null,
       });
+
+      if (response.reactivated === true) {
+        toast.success('Reactivamos tu cuenta', 'Cancelamos la eliminación programada.');
+      }
 
       return response;
     } catch (err: any) {

@@ -20,14 +20,11 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
-import { EmptyState } from '@/core/components/EmptyState';
-import { GRADIENTS } from '@/core/design-system/gradients';
-import { useThemeColors } from '@/stores/theme.store';
+import { Button, EmptyState, GRADIENTS, TOKENS, toast, useThemeColors } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useMyReels, useUpdateReel, useDeleteReel } from '@/hooks/queries/useReelsQuery';
 import { getUserErrorMessage } from '@/lib/errors';
-import { toast } from '@/core/components/Toast';
 import type { Reel } from '@/features/reels/services/reels.service';
 
 const { width: W } = Dimensions.get('window');
@@ -47,7 +44,12 @@ function ReelTile({ reel, onPress }: { reel: Reel; onPress: () => void }) {
   const thumb = reel.type === 'before_after' ? reel.afterImageUrl : null;
 
   return (
-    <Pressable onPress={onPress} style={[styles.tile, { backgroundColor: tc.surface, borderColor: tc.cardBorder }]}>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Editar reel, ${reel.likes ?? 0} me gusta, ${reel.comments ?? 0} comentarios`}
+      style={[styles.tile, { backgroundColor: tc.surface, borderColor: tc.cardBorder }]}
+    >
       {thumb ? (
         <Image source={{ uri: thumb }} style={StyleSheet.absoluteFill} contentFit="cover" />
       ) : (
@@ -56,17 +58,17 @@ function ReelTile({ reel, onPress }: { reel: Reel; onPress: () => void }) {
         </View>
       )}
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.75)']}
+        colors={GRADIENTS.overlayFadeDown}
         style={styles.tileGrad}
         pointerEvents="none"
       />
       <View style={styles.tileStats} pointerEvents="none">
         <View style={styles.tileStat}>
-          <Ionicons name="heart" size={13} color="#fff" />
+          <Ionicons name="heart" size={13} color={TOKENS.onMedia.icon} />
           <Text style={styles.tileStatText}>{fmtNum(reel.likes ?? 0)}</Text>
         </View>
         <View style={styles.tileStat}>
-          <Ionicons name="chatbubble" size={12} color="#fff" />
+          <Ionicons name="chatbubble" size={12} color={TOKENS.onMedia.icon} />
           <Text style={styles.tileStatText}>{fmtNum(reel.comments ?? 0)}</Text>
         </View>
       </View>
@@ -108,7 +110,7 @@ function EditReelSheet({
       toast.success('Reel actualizado');
       onClose();
     } catch (err) {
-      Alert.alert('Error', getUserErrorMessage(err));
+      toast.error('No se pudo guardar', getUserErrorMessage(err));
     }
   };
 
@@ -121,9 +123,10 @@ function EditReelSheet({
         onPress: async () => {
           try {
             await deleteReel(reel.id);
+            toast.success('Reel eliminado');
             onClose();
           } catch (err) {
-            Alert.alert('Error', getUserErrorMessage(err));
+            toast.error('No se pudo eliminar', getUserErrorMessage(err));
           }
         },
       },
@@ -157,7 +160,13 @@ function EditReelSheet({
           {tags.length > 0 && (
             <View style={styles.tagsRow}>
               {tags.map((tag) => (
-                <Pressable key={tag} style={[styles.tagChip, { backgroundColor: tc.accent }]} onPress={() => removeTag(tag)}>
+                <Pressable
+                  key={tag}
+                  style={[styles.tagChip, { backgroundColor: tc.accent }]}
+                  onPress={() => removeTag(tag)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Quitar tag ${tag}`}
+                >
                   <Text style={[styles.tagChipText, { color: tc.text }]}>#{tag}</Text>
                   <MaterialIcons name="close" size={13} color={tc.textSub} />
                 </Pressable>
@@ -179,25 +188,21 @@ function EditReelSheet({
           )}
 
           <View style={styles.sheetActions}>
-            <Pressable
-              style={[styles.deleteBtn, { borderColor: tc.border }]}
-              onPress={handleDelete}
+            <Button
+              variant="dangerOutline"
+              label="Eliminar"
+              icon={<Ionicons name="trash-outline" size={16} color={TOKENS.color.error} />}
+              loading={deleting}
               disabled={busy}
-            >
-              {deleting ? <ActivityIndicator color="#EF4444" size="small" /> : (
-                <>
-                  <Ionicons name="trash-outline" size={16} color="#EF4444" />
-                  <Text style={styles.deleteBtnText}>Eliminar</Text>
-                </>
-              )}
-            </Pressable>
-            <Pressable style={styles.saveBtnShadow} onPress={handleSave} disabled={busy}>
-              <LinearGradient colors={GRADIENTS.brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.saveBtn}>
-                {saving
-                  ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text style={styles.saveBtnText}>Guardar cambios</Text>}
-              </LinearGradient>
-            </Pressable>
+              onPress={handleDelete}
+            />
+            <Button
+              label="Guardar cambios"
+              loading={saving}
+              disabled={busy}
+              onPress={handleSave}
+              style={styles.saveBtn}
+            />
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -210,7 +215,7 @@ export default function MyReelsScreen() {
   useRequireProviderStatus('provider');
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();
-  const { data: reels = [], isLoading, isFetching, refetch } = useMyReels();
+  const { data: reels = [], isLoading, isError, isFetching, refetch } = useMyReels();
   const [editingReel, setEditingReel] = useState<Reel | null>(null);
 
   const totalLikes = reels.reduce((acc, r) => acc + (r.likes ?? 0), 0);
@@ -224,11 +229,13 @@ export default function MyReelsScreen() {
           style={[styles.backBtn, { backgroundColor: tc.surface }]}
           onPress={() => safeBack(router, '/(tabs)/profile')}
           hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel="Volver"
         >
           <Ionicons name="chevron-back" size={22} color={tc.text} />
         </Pressable>
         <Text style={[styles.header, { color: tc.text }]}>Mis reels</Text>
-        <Pressable accessibilityLabel="Publicar reel" onPress={() => router.push('/(tabs)/profile/upload-reel')} hitSlop={12}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Publicar reel" onPress={() => router.push('/(tabs)/profile/upload-reel')} hitSlop={12}>
           <Ionicons name="add" size={26} color={tc.text} />
         </Pressable>
       </View>
@@ -245,11 +252,19 @@ export default function MyReelsScreen() {
         <View style={styles.loader}>
           <ActivityIndicator color={tc.textSub} />
         </View>
+      ) : isError && reels.length === 0 ? (
+        <EmptyState
+          icon="cloud-offline-outline"
+          title="No pudimos cargar tus reels"
+          subtitle="Hubo un problema de conexión. Probá de nuevo en unos segundos."
+          cta={{ label: 'Reintentar', onPress: () => { refetch(); } }}
+        />
       ) : reels.length === 0 ? (
         <EmptyState
           icon="film-outline"
           title="Todavía no subiste reels"
           subtitle="Mostrá tu trabajo en video y llegá a más clientes."
+          cta={{ label: 'Publicar un reel', onPress: () => router.push('/(tabs)/profile/upload-reel') }}
         />
       ) : (
         <FlatList
@@ -312,10 +327,10 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   tileStat: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  tileStatText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  tileStatText: { color: TOKENS.onMedia.text, fontSize: 12, fontWeight: '700' },
 
   // ── Edit sheet ────────────────────────────────────────────────────────────
-  backdrop: { backgroundColor: 'rgba(0,0,0,0.5)' },
+  backdrop: { backgroundColor: TOKENS.scrim.medium },
   sheet: {
     position: 'absolute',
     bottom: 0,
@@ -357,23 +372,5 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   sheetActions: { flexDirection: 'row', gap: 10, marginTop: 20 },
-  deleteBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-  },
-  deleteBtnText: { color: '#EF4444', fontSize: 14, fontWeight: '700' },
-  saveBtnShadow: { flex: 1, borderRadius: 14 },
-  saveBtn: {
-    flex: 1,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-  },
-  saveBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  saveBtn: { flex: 1 },
 });

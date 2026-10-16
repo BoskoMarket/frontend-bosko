@@ -50,3 +50,34 @@ export function useGoogleSignIn() {
 
   return { loading, signInWithGoogle };
 }
+
+/**
+ * useGoogleReauth — pide un idToken de Google FRESCO sin iniciar sesión de nuevo.
+ * Se usa para confirmar acciones sensibles (ej: eliminar cuenta) de usuarios
+ * que no tienen contraseña. Devuelve null si el usuario canceló el selector.
+ */
+export function useGoogleReauth() {
+  const [loading, setLoading] = useState(false);
+
+  const getGoogleIdToken = useCallback(async (): Promise<string | null> => {
+    if (!GOOGLE_WEB_CLIENT_ID) {
+      throw new Error('Login con Google todavía no está configurado.');
+    }
+    setLoading(true);
+    try {
+      const { GoogleSignin, isSuccessResponse, isCancelledResponse } = require('@react-native-google-signin/google-signin');
+      GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      if (isCancelledResponse(response)) return null;
+      if (!isSuccessResponse(response) || !response.data.idToken) {
+        throw new Error('Google no devolvió un idToken válido.');
+      }
+      return response.data.idToken as string;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return { loading, getGoogleIdToken };
+}

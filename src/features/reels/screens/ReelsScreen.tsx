@@ -15,6 +15,7 @@ import {
   PanResponder,
   Platform,
   Pressable,
+  RefreshControl,
   Share,
   StatusBar,
   StyleSheet,
@@ -40,7 +41,11 @@ import {
   useReportReel,
 } from '@/hooks/queries/useReelsQuery';
 import { useFollowUser, useUnfollowUser } from '@/hooks/mutations/useFollowMutations';
-import { useThemeColors } from '@/stores/theme.store';
+import { Avatar, Button, GRADIENTS, TOKENS, toast, useThemeColors, type ReportSheetSubmit } from '@/core/design-system';
+import { useReelsAutoplay } from '@/stores/preferences.store';
+import { useConnectionType } from '@/hooks/useConnectionType';
+import { shouldAutoplay } from '@/features/reels/utils/shouldAutoplay';
+import { ReportFlow } from '@/features/reports/components/ReportFlow';
 
 const { width: W, height: H } = Dimensions.get('window');
 
@@ -52,12 +57,13 @@ function fmtNum(n: number): string {
 
 // ── Action button (right sidebar) ────────────────────────────────────────────
 function ActionBtn({
-  icon, label, color, onPress,
+  icon, label, color, onPress, accessibilityLabel,
 }: {
   icon: React.ComponentProps<typeof Ionicons>['name'];
   label?: string;
   color?: string;
   onPress?: () => void;
+  accessibilityLabel: string;
 }) {
   const scale = useRef(new Animated.Value(1)).current;
 
@@ -70,9 +76,9 @@ function ActionBtn({
   };
 
   return (
-    <Pressable onPress={press} style={s.actionBtn}>
+    <Pressable onPress={press} style={s.actionBtn} accessibilityRole="button" accessibilityLabel={accessibilityLabel}>
       <Animated.View style={{ transform: [{ scale }] }}>
-        <Ionicons name={icon} size={28} color={color ?? '#FFFFFF'} />
+        <Ionicons name={icon} size={28} color={color ?? TOKENS.onMedia.icon} />
       </Animated.View>
       {label !== undefined && <Text style={s.actionLabel}>{label}</Text>}
     </Pressable>
@@ -142,7 +148,7 @@ function FloatingHeart({ visible, x, y }: { visible: boolean; x: number; y: numb
         },
       ]}
     >
-      <Ionicons name="heart" size={80} color="#FF2D55" />
+      <Ionicons name="heart" size={80} color={TOKENS.color.signal} />
     </Animated.View>
   );
 }
@@ -164,7 +170,7 @@ function CommentsSheet({
   const [text,    setText]    = useState('');
   const [sending, setSending] = useState(false);
 
-  const { data: comments = [], isLoading, refetch } = useReelComments(reelId);
+  const { data: comments = [], isLoading, isError, refetch } = useReelComments(reelId);
   const { mutate: deleteComment } = useDeleteReelComment(reelId);
 
   const handleSend = async () => {
@@ -176,7 +182,7 @@ function CommentsSheet({
       onCommentPosted();
       refetch();
     } catch (err) {
-      Alert.alert('Error', getUserErrorMessage(err));
+      toast.error('No se pudo comentar', getUserErrorMessage(err));
     } finally {
       setSending(false);
     }
@@ -206,7 +212,7 @@ function CommentsSheet({
         style={{ flex: 1 }}
       >
         {/* Backdrop */}
-        <Pressable style={[StyleSheet.absoluteFill, s.commentsBackdrop]} onPress={onClose} />
+        <Pressable style={[StyleSheet.absoluteFill, s.commentsBackdrop]} onPress={onClose} accessibilityLabel="Cerrar comentarios" />
 
         <View style={[s.commentsSheet, { paddingBottom: insets.bottom + 44, backgroundColor: tc.surface }]}>
           {/* Handle */}
@@ -216,6 +222,14 @@ function CommentsSheet({
           {isLoading ? (
             <View style={s.commentsEmpty}>
               <ActivityIndicator color={tc.textSub} />
+            </View>
+          ) : isError ? (
+            <View style={s.commentsEmpty}>
+              <Ionicons name="cloud-offline-outline" size={44} color={tc.textMuted} />
+              <Text style={[s.commentsEmptyText, { color: tc.textSub }]}>No pudimos cargar los comentarios</Text>
+              <Pressable onPress={() => refetch()} accessibilityRole="button" accessibilityLabel="Reintentar cargar comentarios" hitSlop={8}>
+                <Text style={[s.commentsRetry, { color: tc.signal }]}>Reintentar</Text>
+              </Pressable>
             </View>
           ) : comments.length === 0 ? (
             <View style={s.commentsEmpty}>
@@ -237,7 +251,7 @@ function CommentsSheet({
                     <Text style={[s.commentText, { color: tc.textSub }]}>{item.comment}</Text>
                   </View>
                   {item.userId === currentUserId && (
-                    <Pressable onPress={() => handleDeleteComment(item.id)} style={s.commentDelete}>
+                    <Pressable onPress={() => handleDeleteComment(item.id)} style={s.commentDelete} accessibilityRole="button" accessibilityLabel="Eliminar comentario">
                       <Ionicons name="trash-outline" size={16} color={tc.textMuted} />
                     </Pressable>
                   )}
@@ -250,6 +264,7 @@ function CommentsSheet({
           <View style={[s.commentsInputRow, { borderTopColor: tc.divider }]}>
             <TextInput
               style={[s.commentsInput, { backgroundColor: tc.surface2, color: tc.text }]}
+              accessibilityLabel="Escribí un comentario"
               placeholder="Escribí un comentario..."
               placeholderTextColor={tc.textMuted}
               value={text}
@@ -257,7 +272,7 @@ function CommentsSheet({
               multiline
               maxLength={500}
             />
-            <Pressable onPress={handleSend} disabled={!text.trim() || sending} style={[s.commentsSendBtn, { backgroundColor: tc.surface2 }]}>
+            <Pressable onPress={handleSend} disabled={!text.trim() || sending} accessibilityRole="button" accessibilityLabel="Enviar comentario" style={[s.commentsSendBtn, { backgroundColor: tc.surface2 }]}>
               {sending
                 ? <ActivityIndicator size="small" color={tc.text} />
                 : <Ionicons name="send" size={20} color={text.trim() ? tc.text : tc.textMuted} />
@@ -303,8 +318,8 @@ function BeforeAfterSlider({ before, after }: { before: string; after: string })
       {/* Divider — línea vertical + handle */}
       <Animated.View style={[s.baDividerLine, { left: dividerX }]} pointerEvents="none">
         <View style={s.baDividerHandle}>
-          <Ionicons name="chevron-back"    size={11} color="#fff" />
-          <Ionicons name="chevron-forward" size={11} color="#fff" />
+          <Ionicons name="chevron-back"    size={11} color={TOKENS.onMedia.canvas} />
+          <Ionicons name="chevron-forward" size={11} color={TOKENS.onMedia.canvas} />
         </View>
       </Animated.View>
     </View>
@@ -325,7 +340,13 @@ const ReelItem = React.memo(function ReelItem({
 }) {
   const insets = useSafeAreaInsets();
   const { mutate: deleteReelMutate } = useDeleteReel();
-  const { mutate: reportReelMutate } = useReportReel();
+  const { mutateAsync: reportReelAsync } = useReportReel();
+  const [reportOpen, setReportOpen] = useState(false);
+  const closeReport = useCallback(() => setReportOpen(false), []);
+  const submitReelReport = useCallback(
+    ({ reason, details }: ReportSheetSubmit) => reportReelAsync({ reelId: reel.id, reason, details }),
+    [reel.id, reportReelAsync],
+  );
   const { mutate: followUserMutate } = useFollowUser();
   const { mutate: unfollowUserMutate } = useUnfollowUser();
 
@@ -333,9 +354,16 @@ const ReelItem = React.memo(function ReelItem({
 
   const [isMuted,     setIsMuted]     = useState(true);
   const [isPaused,    setIsPaused]    = useState(false);
+  // Cellular + "Wi-Fi only" preference: wait for an explicit tap on this reel.
+  const autoplayPref   = useReelsAutoplay();
+  const connectionType = useConnectionType();
+  const autoplayAllowed = shouldAutoplay(autoplayPref, connectionType);
+  const [userStarted,  setUserStarted]  = useState(false);
+  const needsManualPlay = !isBeforeAfter && !autoplayAllowed && !userStarted;
   const [position,    setPosition]    = useState(0);
   const [duration,    setDuration]    = useState(0);
   const [isBuffering, setIsBuffering] = useState(!isBeforeAfter);
+  const [hasError,    setHasError]    = useState(false);
   const [liked,         setLiked]         = useState(reel.isLiked ?? false);
   const [likeCount,     setLikeCount]     = useState(reel.likes ?? 0);
   const [commentCount,  setCommentCount]  = useState(reel.comments ?? 0);
@@ -358,17 +386,18 @@ const ReelItem = React.memo(function ReelItem({
   // Play / pause según visibilidad (video only)
   useEffect(() => {
     if (isBeforeAfter) return;
-    if (isActive && !isPaused) {
+    if (isActive && !isPaused && !needsManualPlay) {
       player.play();
     } else {
       player.pause();
       if (!isActive) {
         player.currentTime = 0;
         setIsPaused(false);
+        setUserStarted(false);
         setPosition(0);
       }
     }
-  }, [isActive, isPaused, player, isBeforeAfter]);
+  }, [isActive, isPaused, needsManualPlay, player, isBeforeAfter]);
 
   // Sincronizar mute con el player (video only)
   useEffect(() => {
@@ -391,6 +420,7 @@ const ReelItem = React.memo(function ReelItem({
     if (isBeforeAfter) return;
     const sub = player.addListener('statusChange', ({ status }) => {
       setIsBuffering(status === 'loading');
+      setHasError(status === 'error');
     });
     return () => sub.remove();
   }, [player, isBeforeAfter]);
@@ -408,13 +438,27 @@ const ReelItem = React.memo(function ReelItem({
       if (!liked) {
         setLiked(true);
         setLikeCount(c => c + 1);
+        // Persist the like (it used to be local-only); roll back if the request fails.
+        toggleLikeReel(reel.id).catch(() => {
+          setLiked(false);
+          setLikeCount(c => Math.max(0, c - 1));
+        });
       }
+    } else if (needsManualPlay) {
+      // Autoplay blocked by the data preference → tap starts this reel
+      setUserStarted(true);
     } else {
       // Single tap → toggle pause
       setIsPaused(p => !p);
     }
     lastTap.current = now;
-  }, [liked, isBeforeAfter]);
+  }, [liked, isBeforeAfter, needsManualPlay, reel.id]);
+
+  const handleRetryVideo = useCallback(() => {
+    setHasError(false);
+    setIsBuffering(true);
+    player.replace({ uri: reel.videoUrl ?? '' });
+  }, [player, reel.videoUrl]);
 
   const handleLikePress = useCallback(() => {
     setLiked(l => {
@@ -461,21 +505,14 @@ const ReelItem = React.memo(function ReelItem({
     const isOwner = reel.user.id === currentUserId;
     const options: any[] = [
       { text: 'No me interesa', onPress: () => onNotInterested(reel.id) },
-      {
+    ];
+    if (!isOwner) {
+      options.push({
         text: 'Reportar contenido',
         style: 'destructive',
-        onPress: () =>
-          reportReelMutate(
-            { reelId: reel.id },
-            {
-              onSuccess: () =>
-                Alert.alert('Reporte enviado', 'Gracias por ayudarnos a mantener la comunidad.'),
-              onError: () =>
-                Alert.alert('Error', 'No se pudo enviar el reporte.'),
-            },
-          ),
-      },
-    ];
+        onPress: () => setReportOpen(true),
+      });
+    }
     if (isOwner) {
       options.push({
         text: 'Eliminar reel',
@@ -493,7 +530,7 @@ const ReelItem = React.memo(function ReelItem({
     }
     options.push({ text: 'Cancelar', style: 'cancel' });
     Alert.alert('Opciones', undefined, options);
-  }, [reel.id, reel.user.id, currentUserId, reportReelMutate, deleteReelMutate, onNotInterested]);
+  }, [reel.id, reel.user.id, currentUserId, deleteReelMutate, onNotInterested]);
 
   const handleCommentPosted = useCallback(() => {
     setCommentCount(c => c + 1);
@@ -537,12 +574,12 @@ const ReelItem = React.memo(function ReelItem({
 
       {/* ── Dark gradient overlays ──────────────────────────────────────── */}
       <LinearGradient
-        colors={['rgba(0,0,0,0.35)', 'transparent']}
+        colors={GRADIENTS.overlayFadeUp}
         style={s.gradTop}
         pointerEvents="none"
       />
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.75)']}
+        colors={GRADIENTS.overlayFadeDown}
         style={s.gradBottom}
         pointerEvents="none"
       />
@@ -550,20 +587,39 @@ const ReelItem = React.memo(function ReelItem({
       {/* ── Video-only overlays ─────────────────────────────────────────── */}
       {!isBeforeAfter && isBuffering && isActive && (
         <View style={s.pauseIcon} pointerEvents="none">
-          <ActivityIndicator size="large" color="rgba(255,255,255,0.8)" />
+          <ActivityIndicator size="large" color={TOKENS.onMedia.textSub} />
         </View>
       )}
-      {!isBeforeAfter && isPaused && !isBuffering && (
+      {needsManualPlay && isActive && !hasError && (
         <View style={s.pauseIcon} pointerEvents="none">
-          <Ionicons name="pause" size={60} color="rgba(255,255,255,0.75)" />
+          <View style={s.playButton}>
+            <Ionicons name="play" size={40} color={TOKENS.onMedia.icon} />
+          </View>
         </View>
+      )}
+      {!isBeforeAfter && isPaused && !needsManualPlay && !isBuffering && !hasError && (
+        <View style={s.pauseIcon} pointerEvents="none">
+          <Ionicons name="pause" size={60} color={TOKENS.onMedia.textSub} />
+        </View>
+      )}
+      {!isBeforeAfter && hasError && isActive && (
+        <Pressable
+          style={s.pauseIcon}
+          onPress={handleRetryVideo}
+          accessibilityRole="button"
+          accessibilityLabel="No se pudo cargar el video. Tocá para reintentar"
+        >
+          <Ionicons name="refresh" size={44} color={TOKENS.onMedia.textSub} />
+          <Text style={s.errorTitle}>No se pudo cargar el video</Text>
+          <Text style={s.errorSub}>Tocá para reintentar</Text>
+        </Pressable>
       )}
       {!isBeforeAfter && (
         <Animated.View
           style={[s.muteIndicator, { opacity: muteOpacity, transform: [{ scale: muteScale }] }]}
           pointerEvents="none"
         >
-          <Ionicons name={isMuted ? 'volume-mute' : 'volume-high'} size={32} color="#fff" />
+          <Ionicons name={isMuted ? 'volume-mute' : 'volume-high'} size={32} color={TOKENS.onMedia.icon} />
         </Animated.View>
       )}
       {!isBeforeAfter && (
@@ -573,17 +629,20 @@ const ReelItem = React.memo(function ReelItem({
       {/* ── Right sidebar ───────────────────────────────────────────────── */}
       <View style={[s.sidebar, { paddingBottom: insets.bottom + 80 }]}>
         {/* Avatar + follow button */}
-        <Pressable onPress={handleFollow} style={s.avatarWrap}>
-          <Image
-            source={reel.user.avatar ? { uri: reel.user.avatar } : undefined}
-            style={s.avatar}
-            contentFit="cover"
-          />
+        <Pressable
+          onPress={handleFollow}
+          style={s.avatarWrap}
+          accessibilityRole="button"
+          accessibilityLabel={isFollowing ? `Dejar de seguir a ${reel.user.username}` : `Seguir a ${reel.user.username}`}
+        >
+          <View style={s.avatar}>
+            <Avatar uri={reel.user.avatar} name={reel.user.name || reel.user.username} size={42} />
+          </View>
           <View style={[s.followDot, isFollowing && s.followDotActive]}>
             <Ionicons
               name={isFollowing ? 'checkmark' : 'add'}
               size={12}
-              color="#fff"
+              color={TOKENS.color.onPrimary}
             />
           </View>
         </Pressable>
@@ -591,24 +650,32 @@ const ReelItem = React.memo(function ReelItem({
         <ActionBtn
           icon={liked ? 'heart' : 'heart-outline'}
           label={fmtNum(likeCount)}
-          color={liked ? '#FF2D55' : '#FFFFFF'}
+          color={liked ? TOKENS.color.signal : TOKENS.onMedia.icon}
           onPress={handleLikePress}
+          accessibilityLabel={liked ? 'Quitar me gusta' : 'Me gusta'}
         />
         <ActionBtn
           icon="chatbubble-ellipses"
           label={fmtNum(commentCount)}
           onPress={() => setShowComments(true)}
+          accessibilityLabel="Ver comentarios"
         />
-        <ActionBtn icon="arrow-redo" label="Compartir" onPress={handleShare} />
+        <ActionBtn icon="arrow-redo" label="Compartir" onPress={handleShare} accessibilityLabel="Compartir reel" />
         <ActionBtn
           icon="pricetag-outline"
           label="Cotizar"
           onPress={handleQuote}
+          accessibilityLabel="Cotizar con este prestador"
         />
-        <ActionBtn icon="ellipsis-horizontal" onPress={handleMore} />
+        <ActionBtn icon="ellipsis-horizontal" onPress={handleMore} accessibilityLabel="Más opciones" />
         {!isBeforeAfter && (
-          <Pressable onPress={handleMuteToggle} style={s.actionBtn}>
-            <Ionicons name={isMuted ? 'volume-mute' : 'volume-high'} size={24} color="#fff" />
+          <Pressable
+            onPress={handleMuteToggle}
+            style={s.actionBtn}
+            accessibilityRole="button"
+            accessibilityLabel={isMuted ? 'Activar sonido' : 'Silenciar'}
+          >
+            <Ionicons name={isMuted ? 'volume-mute' : 'volume-high'} size={24} color={TOKENS.onMedia.icon} />
           </Pressable>
         )}
       </View>
@@ -626,14 +693,14 @@ const ReelItem = React.memo(function ReelItem({
         <Text style={s.tags}>{(reel.tags ?? []).join(' ')}</Text>
         {!isBeforeAfter && reel.music && (
           <View style={s.musicRow}>
-            <Ionicons name="musical-notes" size={13} color="rgba(255,255,255,0.8)" />
+            <Ionicons name="musical-notes" size={13} color={TOKENS.onMedia.textSub} />
             <Text style={s.musicText} numberOfLines={1}>{reel.music}</Text>
           </View>
         )}
 
         {isBeforeAfter && (
           <View style={s.beforeAfterBadge}>
-            <Ionicons name="swap-horizontal" size={12} color="#fff" />
+            <Ionicons name="swap-horizontal" size={12} color={TOKENS.onMedia.icon} />
             <Text style={s.beforeAfterBadgeText}>Arrastrá para comparar</Text>
           </View>
         )}
@@ -651,6 +718,14 @@ const ReelItem = React.memo(function ReelItem({
           onCommentPosted={handleCommentPosted}
         />
       )}
+
+      <ReportFlow
+        visible={reportOpen}
+        title="Reportar reel"
+        message="Contanos por qué querés reportar este contenido."
+        onClose={closeReport}
+        submit={submitReelReport}
+      />
     </View>
   );
 });
@@ -662,16 +737,23 @@ function TopBar({ insetTop }: { insetTop: number }) {
   return (
     <View style={[s.topBar, { paddingTop: insetTop + 8 }]} pointerEvents="box-none">
       <View style={s.topTabs} pointerEvents="auto">
-        <Pressable onPress={() => setTab('siguiendo')}>
+        <Pressable onPress={() => setTab('siguiendo')} accessibilityRole="tab" accessibilityState={{ selected: tab === 'siguiendo' }}>
           <Text style={[s.topTab, tab === 'siguiendo' && s.topTabActive]}>Siguiendo</Text>
         </Pressable>
         <View style={s.topDivider} />
-        <Pressable onPress={() => setTab('parati')}>
+        <Pressable onPress={() => setTab('parati')} accessibilityRole="tab" accessibilityState={{ selected: tab === 'parati' }}>
           <Text style={[s.topTab, tab === 'parati' && s.topTabActive]}>Para ti</Text>
         </Pressable>
       </View>
-      <Pressable style={s.topSearch} pointerEvents="auto">
-        <Ionicons name="search" size={22} color="#fff" />
+      <Pressable
+        style={s.topSearch}
+        pointerEvents="auto"
+        onPress={() => router.push('/search')}
+        accessibilityRole="button"
+        accessibilityLabel="Buscar"
+        hitSlop={8}
+      >
+        <Ionicons name="search" size={22} color={TOKENS.onMedia.icon} />
       </Pressable>
     </View>
   );
@@ -682,7 +764,7 @@ export default function ReelsScreen() {
   const insets = useSafeAreaInsets();
   const { authState } = useAuth();
   const currentUserId = authState.user?.id;
-  const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } = useReelsFeed();
+  const { data, isLoading, isError, isRefetching, refetch, isFetchingNextPage, fetchNextPage, hasNextPage } = useReelsFeed();
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
   const reels = (data?.pages.flat() ?? []).filter(r => !ignoredIds.has(r.id));
   const [activeIndex, setActiveIndex] = useState(0);
@@ -734,7 +816,20 @@ export default function ReelsScreen() {
   if (isLoading) {
     return (
       <View style={[s.root, s.center]}>
-        <ActivityIndicator size="large" color="#fff" />
+        <ActivityIndicator size="large" color={TOKENS.onMedia.icon} />
+      </View>
+    );
+  }
+
+  if (isError && reels.length === 0) {
+    return (
+      <View style={[s.root, s.center]}>
+        <StatusBar hidden />
+        <Ionicons name="cloud-offline-outline" size={56} color={TOKENS.onMedia.textMuted} />
+        <Text style={s.emptyTitle}>No pudimos cargar los reels</Text>
+        <Text style={s.emptySubtitle}>Revisá tu conexión e intentá de nuevo.</Text>
+        <Button label="Reintentar" onPress={() => refetch()} style={s.retryBtn} />
+        <TopBar insetTop={insets.top} />
       </View>
     );
   }
@@ -759,16 +854,25 @@ export default function ReelsScreen() {
         initialNumToRender={1}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching && !isFetchingNextPage}
+            onRefresh={() => refetch()}
+            tintColor={TOKENS.onMedia.icon}
+            colors={[TOKENS.color.signal]}
+            progressViewOffset={insets.top + 48}
+          />
+        }
         ListFooterComponent={
           isFetchingNextPage ? (
             <View style={s.footerLoader}>
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={TOKENS.onMedia.icon} />
             </View>
           ) : null
         }
         ListEmptyComponent={
           <View style={s.emptyContainer}>
-            <Ionicons name="videocam-off-outline" size={56} color="rgba(255,255,255,0.25)" />
+            <Ionicons name="videocam-off-outline" size={56} color={TOKENS.onMedia.textMuted} />
             <Text style={s.emptyTitle}>Sin reels todavía</Text>
             <Text style={s.emptySubtitle}>Los proveedores aún no han publicado videos. Volvé pronto.</Text>
           </View>
@@ -785,13 +889,13 @@ export default function ReelsScreen() {
 const s = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: TOKENS.onMedia.canvas,
   },
   center: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#000',
+    backgroundColor: TOKENS.onMedia.canvas,
   },
   emptyContainer: {
     height: H,
@@ -799,19 +903,33 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
     paddingHorizontal: 40,
-    backgroundColor: '#000',
+    backgroundColor: TOKENS.onMedia.canvas,
   },
   emptyTitle: {
-    color: 'rgba(255,255,255,0.85)',
+    color: TOKENS.onMedia.text,
     fontSize: 18,
     fontWeight: '700',
     textAlign: 'center',
   },
   emptySubtitle: {
-    color: 'rgba(255,255,255,0.4)',
+    color: TOKENS.onMedia.textMuted,
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  retryBtn: {
+    marginTop: 8,
+    paddingHorizontal: 28,
+  },
+  errorTitle: {
+    marginTop: 8,
+    fontSize: 15,
+    fontWeight: '700',
+    color: TOKENS.onMedia.text,
+  },
+  errorSub: {
+    fontSize: 13,
+    color: TOKENS.onMedia.textSub,
   },
   footerLoader: {
     height: H,
@@ -823,7 +941,7 @@ const s = StyleSheet.create({
   reel: {
     width: W,
     height: H,
-    backgroundColor: '#000',
+    backgroundColor: TOKENS.onMedia.canvas,
   },
 
   // Gradient overlays
@@ -845,6 +963,16 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
 
+  playButton: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: 4,
+    backgroundColor: TOKENS.scrim.medium,
+  },
+
   // Mute indicator
   muteIndicator: {
     position: 'absolute',
@@ -853,7 +981,7 @@ const s = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: TOKENS.scrim.medium,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -881,7 +1009,9 @@ const s = StyleSheet.create({
     height: 46,
     borderRadius: 23,
     borderWidth: 2,
-    borderColor: '#fff',
+    borderColor: TOKENS.onMedia.solid,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   followDot: {
     position: 'absolute',
@@ -890,26 +1020,25 @@ const s = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#FF2D55',
+    backgroundColor: TOKENS.color.signal,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#000',
+    borderColor: TOKENS.onMedia.canvas,
   },
   followDotActive: {
-    backgroundColor: '#22c55e',
+    backgroundColor: TOKENS.color.mint,
   },
 
   // Comments sheet
   commentsBackdrop: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: TOKENS.scrim.medium,
   },
   commentsSheet: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#1a1a2e',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 16,
@@ -919,7 +1048,6 @@ const s = StyleSheet.create({
   commentsHandle: {
     width: 36,
     height: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 14,
@@ -927,7 +1055,6 @@ const s = StyleSheet.create({
   commentsTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#fff',
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -938,7 +1065,10 @@ const s = StyleSheet.create({
   },
   commentsEmptyText: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.4)',
+  },
+  commentsRetry: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   commentItem: {
     flexDirection: 'row',
@@ -946,7 +1076,6 @@ const s = StyleSheet.create({
     gap: 10,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
   },
   commentAvatar: {
     width: 32,
@@ -961,11 +1090,9 @@ const s = StyleSheet.create({
   commentUser: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#fff',
   },
   commentText: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.8)',
     lineHeight: 18,
   },
   commentDelete: {
@@ -977,16 +1104,13 @@ const s = StyleSheet.create({
     alignItems: 'flex-end',
     gap: 10,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
     paddingTop: 12,
   },
   commentsInput: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    color: '#fff',
     fontSize: 14,
     maxHeight: 100,
   },
@@ -994,7 +1118,6 @@ const s = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1005,8 +1128,8 @@ const s = StyleSheet.create({
   actionLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.6)',
+    color: TOKENS.onMedia.text,
+    textShadowColor: TOKENS.scrim.medium,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
@@ -1022,22 +1145,22 @@ const s = StyleSheet.create({
   username: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0,0,0,0.7)',
+    color: TOKENS.onMedia.text,
+    textShadowColor: TOKENS.scrim.medium,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
   description: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.90)',
+    color: TOKENS.onMedia.text,
     lineHeight: 19,
-    textShadowColor: 'rgba(0,0,0,0.6)',
+    textShadowColor: TOKENS.scrim.medium,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
   },
   tags: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.75)',
+    color: TOKENS.onMedia.textSub,
     fontWeight: '600',
   },
   musicRow: {
@@ -1047,7 +1170,7 @@ const s = StyleSheet.create({
   },
   musicText: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
+    color: TOKENS.onMedia.textSub,
     flex: 1,
   },
 
@@ -1057,7 +1180,7 @@ const s = StyleSheet.create({
     top: 90,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: TOKENS.scrim.medium,
     borderRadius: 6,
   },
   baLabelLeft:  { left: 12 },
@@ -1065,7 +1188,7 @@ const s = StyleSheet.create({
   baLabelText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#fff',
+    color: TOKENS.onMedia.text,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
@@ -1074,7 +1197,7 @@ const s = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 2,
-    backgroundColor: '#fff',
+    backgroundColor: TOKENS.onMedia.solid,
     marginLeft: -1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1083,11 +1206,11 @@ const s = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#fff',
+    backgroundColor: TOKENS.onMedia.solid,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: TOKENS.color.shadow,
     shadowOpacity: 0.3,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
@@ -1097,7 +1220,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: TOKENS.onMedia.fill,
     borderRadius: 99,
     paddingHorizontal: 9,
     paddingVertical: 4,
@@ -1106,7 +1229,7 @@ const s = StyleSheet.create({
   beforeAfterBadgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.9)',
+    color: TOKENS.onMedia.text,
   },
 
   // Available badge
@@ -1114,9 +1237,9 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(34,197,94,0.18)',
+    backgroundColor: TOKENS.status.done.bg,
     borderWidth: 1,
-    borderColor: 'rgba(34,197,94,0.4)',
+    borderColor: TOKENS.status.done.fg,
     borderRadius: 99,
     paddingHorizontal: 9,
     paddingVertical: 4,
@@ -1126,26 +1249,26 @@ const s = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#22c55e',
+    backgroundColor: TOKENS.color.mint,
   },
   availableText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#22c55e',
+    color: TOKENS.color.mint,
     letterSpacing: 0.2,
   },
 
   // Progress bar
   progressTrack: {
     height: 2,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: TOKENS.onMedia.fillStrong,
     borderRadius: 1,
     marginTop: 6,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: TOKENS.onMedia.solid,
     borderRadius: 1,
   },
 
@@ -1167,17 +1290,17 @@ const s = StyleSheet.create({
   topDivider: {
     width: 1,
     height: 16,
-    backgroundColor: 'rgba(255,255,255,0.4)',
+    backgroundColor: TOKENS.onMedia.border,
   },
   topTab: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.55)',
+    color: TOKENS.onMedia.textMuted,
   },
   topTabActive: {
-    color: '#FFFFFF',
+    color: TOKENS.onMedia.text,
     textDecorationLine: 'underline',
-    textDecorationColor: '#FFFFFF',
+    textDecorationColor: TOKENS.onMedia.text,
   },
   topSearch: {
     position: 'absolute',

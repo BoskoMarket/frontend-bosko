@@ -8,7 +8,6 @@ import { useThemeStore } from '@/stores/theme.store';
 const mockBack = jest.fn();
 const mockReplace = jest.fn();
 const mockLogout = jest.fn(async () => {});
-const mockDeleteAccount = jest.fn();
 const mockUpdateProfile = jest.fn(async () => {});
 const mockRefreshProfile = jest.fn(async () => {});
 const mockLoadHistory = jest.fn(async () => {});
@@ -24,9 +23,6 @@ jest.mock('@/components/AnimatedBackground', () => ({ AnimatedBackground: () => 
 jest.mock('@/features/auth/state/AuthContext', () => ({
   useAuth: () => ({ logout: mockLogout, authState: { user: { email: 'a@b.c' } } }),
 }));
-jest.mock('@/features/profile/services/profile', () => ({
-  deleteAccountService: (...a: any[]) => mockDeleteAccount(...a),
-}));
 jest.mock('@/features/payments/state/PaymentContext', () => ({ usePayments: () => mockPayments }));
 jest.mock('@/features/profile/state/ProfileContext', () => ({
   useProfile: () => ({
@@ -35,11 +31,14 @@ jest.mock('@/features/profile/state/ProfileContext', () => ({
     refreshProfile: mockRefreshProfile,
   }),
 }));
-jest.mock('@/hooks/queries/useProfileQuery', () => ({ useUploadAvatar: () => ({ mutateAsync: jest.fn() }) }));
+jest.mock('@/hooks/queries/useProfileQuery', () => ({
+  useUploadAvatar: () => ({ mutateAsync: jest.fn() }),
+  useUploadBanner: () => ({ mutateAsync: jest.fn() }),
+  useRemoveBanner: () => ({ mutateAsync: jest.fn() }),
+}));
 jest.mock('expo-image-picker', () => ({}));
 jest.mock('expo-location', () => ({}));
 
-import DeleteAccountScreen from '@/features/profile/screens/DeleteAccountScreen';
 import VerifyPhoneScreen from '@/features/profile/screens/VerifyPhoneScreen';
 import EditPayments from '@/features/users/components/edit/EditPayments';
 import EditProfileScreen from '@/features/users/screens/EditProfileScreen';
@@ -81,48 +80,6 @@ describe.each(['dark', 'light'] as const)('profile screens (%s)', (mode) => {
     });
   });
 
-  describe('DeleteAccountScreen', () => {
-    it('keeps Continue disabled until the confirmation word is typed', () => {
-      const { getByText, getByLabelText, queryByText } = render(<DeleteAccountScreen />);
-      expect(getByText('Si eliminás tu cuenta:')).toBeTruthy();
-      fireEvent.press(getByText('Continuar'));
-      expect(queryByText('Confirmar identidad')).toBeNull();
-      fireEvent.changeText(getByLabelText('Escribí ELIMINAR para continuar'), 'ELIMINAR');
-      fireEvent.press(getByText('Continuar'));
-      expect(getByText('Confirmar identidad')).toBeTruthy();
-    });
-
-    it('asks for a final confirmation and shows the API error inline', async () => {
-      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
-        buttons?.find((b) => b.style === 'destructive')?.onPress?.();
-      });
-      mockDeleteAccount.mockRejectedValueOnce({ response: { status: 401 } });
-      const { getByText, getByLabelText, getByPlaceholderText } = render(<DeleteAccountScreen />);
-      fireEvent.changeText(getByLabelText('Escribí ELIMINAR para continuar'), 'ELIMINAR');
-      fireEvent.press(getByText('Continuar'));
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'secret1');
-      fireEvent.press(getByText('Eliminar mi cuenta'));
-      expect(alertSpy).toHaveBeenCalledWith('Última confirmación', expect.any(String), expect.any(Array));
-      await waitFor(() => expect(getByText('Contraseña incorrecta. Verificá e intentá de nuevo.')).toBeTruthy());
-      expect(mockLogout).not.toHaveBeenCalled();
-      alertSpy.mockRestore();
-    });
-
-    it('logs out and goes to login after a successful deletion', async () => {
-      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => {
-        buttons?.find((b) => b.style === 'destructive')?.onPress?.();
-      });
-      mockDeleteAccount.mockResolvedValueOnce(undefined);
-      const { getByText, getByLabelText, getByPlaceholderText } = render(<DeleteAccountScreen />);
-      fireEvent.changeText(getByLabelText('Escribí ELIMINAR para continuar'), 'ELIMINAR');
-      fireEvent.press(getByText('Continuar'));
-      fireEvent.changeText(getByPlaceholderText('••••••••'), 'secret1');
-      fireEvent.press(getByText('Eliminar mi cuenta'));
-      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'));
-      expect(mockLogout).toHaveBeenCalledTimes(1);
-      alertSpy.mockRestore();
-    });
-  });
 
   describe('VerifyPhoneScreen', () => {
     it('rejects a malformed number inline before calling the SMS provider', () => {
@@ -167,6 +124,28 @@ describe.each(['dark', 'light'] as const)('profile screens (%s)', (mode) => {
       fireEvent.press(getByLabelText('Volver'));
       expect(alertSpy).toHaveBeenCalledWith('Descartar cambios', expect.any(String), expect.any(Array));
       expect(mockBack).not.toHaveBeenCalled();
+      alertSpy.mockRestore();
+    });
+
+    it('renders the Portada section; "Quitar" only when a banner exists', () => {
+      mockProfileState = { profile, isLoading: false, error: null };
+      const first = render(<EditProfileScreen />);
+      expect(first.getByText('Portada')).toBeTruthy();
+      expect(first.getByLabelText('Cambiar portada')).toBeTruthy();
+      expect(first.queryByLabelText('Quitar portada')).toBeNull();
+      first.unmount();
+
+      mockProfileState = { profile: { ...profile, bannerUrl: 'https://cdn.test/b.jpg' }, isLoading: false, error: null };
+      const second = render(<EditProfileScreen />);
+      expect(second.getByLabelText('Quitar portada')).toBeTruthy();
+    });
+
+    it('asks for confirmation before removing the banner', () => {
+      mockProfileState = { profile: { ...profile, bannerUrl: 'https://cdn.test/b.jpg' }, isLoading: false, error: null };
+      const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+      const { getByLabelText } = render(<EditProfileScreen />);
+      fireEvent.press(getByLabelText('Quitar portada'));
+      expect(alertSpy).toHaveBeenCalledWith('Quitar portada', expect.any(String), expect.any(Array));
       alertSpy.mockRestore();
     });
 

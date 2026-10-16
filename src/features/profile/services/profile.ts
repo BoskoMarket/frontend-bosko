@@ -8,6 +8,8 @@ export interface UserProfile {
     lastName?: string;
     phone?: string;
     isPhoneVerified?: boolean;
+    /** Proposed (BR05): how the account signs in. Absent => treated as 'password'. */
+    authProvider?: 'password' | 'google';
     bio?: string;
     avatarUrl?: string;
     bannerUrl?: string;
@@ -55,6 +57,32 @@ export async function uploadAvatar(fileUri: string): Promise<{ avatarUrl: string
     return data;
 }
 
+/**
+ * Subir portada — POST /users/me/banner (multipart, campo `banner`).
+ *
+ * ENDPOINT PROPUESTO, pendiente de backend (ver `odd/backend-requests.md`, BR01).
+ * Hasta que se despliegue responde 404/405/501 y la UI lo trata como "no disponible".
+ */
+export async function uploadBanner(fileUri: string): Promise<{ bannerUrl: string }> {
+    const formData = new FormData();
+    formData.append('banner', { uri: fileUri, type: 'image/jpeg', name: 'banner.jpg' } as any);
+
+    const { data } = await api.post<{ bannerUrl: string }>("/users/me/banner", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data;
+}
+
+/**
+ * Quitar portada — DELETE /users/me/banner (deja `bannerUrl = null`).
+ *
+ * ENDPOINT PROPUESTO, pendiente de backend (BR01). Acepta `{ bannerUrl: null }` o 204.
+ */
+export async function removeBanner(): Promise<{ bannerUrl: null }> {
+    await api.delete("/users/me/banner");
+    return { bannerUrl: null };
+}
+
 /** Obtener estadísticas del perfil — GET /users/me/stats */
 export interface UserStats {
     servicesCount: number;
@@ -72,7 +100,15 @@ export async function verifyPhoneWithFirebase(firebaseIdToken: string): Promise<
     await api.post('/users/me/verify-phone', { firebaseIdToken });
 }
 
-/** Eliminar cuenta — DELETE /users/me */
-export async function deleteAccountService(password: string): Promise<void> {
-    await api.delete('/users/me', { data: { password } });
+export interface DeleteAccountResult {
+    /** ISO date when the deactivated account is purged. Absent on older backends. */
+    deletionScheduledAt?: string;
+}
+
+/** Desactiva la cuenta con 30 días de gracia — DELETE /users/me (409 ACTIVE_ORDERS si hay órdenes activas) */
+export type DeleteAccountCredentials = { password: string } | { googleIdToken: string };
+
+export async function deleteAccountService(credentials: DeleteAccountCredentials): Promise<DeleteAccountResult> {
+    const { data } = await api.delete<DeleteAccountResult | undefined>('/users/me', { data: credentials });
+    return data ?? {};
 }

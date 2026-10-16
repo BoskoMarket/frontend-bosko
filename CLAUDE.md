@@ -137,6 +137,7 @@ src/
   stores/                    ← Zustand (UI state)
     chat.store.ts            ← conversaciones, unread, socket, typing
     favorites.store.ts       ← favoritos con persist AsyncStorage
+    preferences.store.ts     ← preferencias de usuario con persist (reelsAutoplay)
     marketplace.store.ts     ← categoría seleccionada, filtros, search query
   hooks/queries/             ← TanStack Query (server state)
     useProfileQuery.ts

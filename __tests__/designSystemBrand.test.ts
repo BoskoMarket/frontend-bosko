@@ -36,6 +36,10 @@ describe('design system brand layer', () => {
     expect(TOKENS.onMedia.solid).toBe(BRAND.colors.white);
     expect(TOKENS.onMedia.fill).toBe('rgba(255,255,255,0.16)');
     expect(TOKENS.onMedia.border).toBe('rgba(255,255,255,0.24)');
+    expect(TOKENS.onMedia.canvas).toBe(BRAND.colors.black);
+    expect(TOKENS.scrim.heavy).toBe('rgba(0,0,0,0.95)');
+    expect(TOKENS.color.onPrimarySub).toBe('rgba(255,255,255,0.7)');
+    expect(TOKENS.color.onPrimaryDim).toBe('rgba(255,255,255,0.35)');
     expect(TOKENS.shadow.glow.shadowColor).toBe(BRAND.colors.signal);
   });
 

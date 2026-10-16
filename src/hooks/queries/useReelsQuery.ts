@@ -119,7 +119,7 @@ export function useDeleteReelComment(reelId: string) {
 
 export function useReportReel() {
   return useMutation({
-    mutationFn: ({ reelId, reason }: { reelId: string; reason?: string }) =>
-      reportReel(reelId, reason),
+    mutationFn: ({ reelId, reason, details }: { reelId: string; reason?: string; details?: string }) =>
+      reportReel(reelId, reason, details),
   });
 }

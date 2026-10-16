@@ -1,6 +1,6 @@
 ﻿/**
- * EditProfileScreen — Editar perfil con avatar upload.
- * PATCH /users/me + POST /users/me/avatar
+ * EditProfileScreen — Editar perfil con avatar y portada.
+ * PATCH /users/me + POST /users/me/avatar + POST/DELETE /users/me/banner (propuesto, BR01)
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -20,7 +20,10 @@ import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import { useUploadAvatar } from '@/hooks/queries/useProfileQuery';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useUploadAvatar, useUploadBanner, useRemoveBanner } from '@/hooks/queries/useProfileQuery';
+import { getBannerErrorMessage } from '@/features/profile/utils/bannerErrors';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import {
   TOKENS,
@@ -29,6 +32,7 @@ import {
   Button,
   Card,
   EmptyState,
+  GRADIENTS,
   Input,
   ScreenHeader,
   Text,
@@ -54,6 +58,10 @@ export default function EditProfileScreen() {
   const { mutateAsync: uploadAvatar } = useUploadAvatar();
   const [avatarUri, setAvatarUri] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const { mutateAsync: uploadBanner } = useUploadBanner();
+  const { mutateAsync: removeBanner } = useRemoveBanner();
+  const [bannerUri, setBannerUri] = useState<string | null>(null);
+  const [updatingBanner, setUpdatingBanner] = useState(false);
   const [saving, setSaving] = useState(false);
   const seeded = useRef(!!profile);
 
@@ -68,15 +76,74 @@ export default function EditProfileScreen() {
     }
   }, [profile]);
 
-  const pickImage = useCallback(async () => {
+  const ensureGalleryPermission = useCallback(async (purpose: string) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería para cambiar el avatar.', [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Abrir ajustes', onPress: () => { Linking.openSettings(); } },
-      ]);
-      return;
+    if (status === 'granted') return true;
+    Alert.alert('Permiso requerido', `Necesitamos acceso a tu galería para cambiar ${purpose}.`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Abrir ajustes', onPress: () => { Linking.openSettings(); } },
+    ]);
+    return false;
+  }, []);
+
+  const bannerBusy = useRef(false);
+
+  const pickBanner = useCallback(async () => {
+    if (bannerBusy.current) return;
+    bannerBusy.current = true;
+    try {
+      if (!(await ensureGalleryPermission('la portada'))) return;
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [3, 1],
+        quality: 0.8,
+      });
+      if (result.canceled || !result.assets[0]) return;
+      const uri = result.assets[0].uri;
+      setBannerUri(uri);
+      setUpdatingBanner(true);
+      try {
+        await uploadBanner(uri);
+        toast.success('Portada actualizada');
+      } catch (err) {
+        toast.error('No se pudo actualizar la portada', getBannerErrorMessage(err));
+      } finally {
+        setBannerUri(null);
+        setUpdatingBanner(false);
+      }
+    } finally {
+      bannerBusy.current = false;
     }
+  }, [ensureGalleryPermission, uploadBanner]);
+
+  const confirmRemoveBanner = useCallback(() => {
+    if (bannerBusy.current) return;
+    Alert.alert('Quitar portada', '¿Querés quitar tu portada? Se va a mostrar la imagen por defecto.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Quitar',
+        style: 'destructive',
+        onPress: async () => {
+          if (bannerBusy.current) return;
+          bannerBusy.current = true;
+          setUpdatingBanner(true);
+          try {
+            await removeBanner();
+            toast.success('Portada quitada');
+          } catch (err) {
+            toast.error('No se pudo quitar la portada', getBannerErrorMessage(err));
+          } finally {
+            setUpdatingBanner(false);
+            bannerBusy.current = false;
+          }
+        },
+      },
+    ]);
+  }, [removeBanner]);
+
+  const pickImage = useCallback(async () => {
+    if (!(await ensureGalleryPermission('el avatar'))) return;
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -100,7 +167,7 @@ export default function EditProfileScreen() {
         setUploadingAvatar(false);
       }
     }
-  }, [uploadAvatar]);
+  }, [uploadAvatar, ensureGalleryPermission]);
 
   const trimmedFirstName = firstName.trim();
   const firstNameError = firstName.length > 0 && !trimmedFirstName ? 'El nombre es obligatorio' : undefined;
@@ -112,7 +179,7 @@ export default function EditProfileScreen() {
     phone !== (profile?.phone ?? '') ||
     coordinates !== null;
 
-  const canSave = hasChanges && !!trimmedFirstName && !saving && !uploadingAvatar;
+  const canSave = hasChanges && !!trimmedFirstName && !saving && !uploadingAvatar && !updatingBanner;
 
   const handleSave = useCallback(async () => {
     if (!canSave) return;
@@ -154,6 +221,7 @@ export default function EditProfileScreen() {
   }, []);
 
   const displayUri = avatarUri || profile?.avatarUrl;
+  const bannerDisplayUri = bannerUri || profile?.bannerUrl;
 
   // First load in flight with no cached profile / load failed: nothing to edit yet.
   if (!profile) {
@@ -195,6 +263,54 @@ export default function EditProfileScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Portada */}
+        <View style={styles.bannerSection}>
+          <Text variant="label">Portada</Text>
+          <View style={[styles.bannerPreview, { backgroundColor: tc.surface2 }]}>
+            {bannerDisplayUri ? (
+              <Image
+                source={{ uri: bannerDisplayUri }}
+                style={StyleSheet.absoluteFill}
+                contentFit="cover"
+                accessibilityLabel="Vista previa de la portada"
+              />
+            ) : (
+              <LinearGradient
+                colors={GRADIENTS.brandDeep}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+            )}
+            {updatingBanner ? (
+              <View style={[styles.bannerOverlay, { backgroundColor: TOKENS.scrim.medium }]}>
+                <ActivityIndicator color={TOKENS.onMedia.icon} />
+              </View>
+            ) : null}
+          </View>
+          <View style={styles.bannerActions}>
+            <Button
+              label="Cambiar portada"
+              variant="secondary"
+              size="sm"
+              loading={updatingBanner}
+              disabled={updatingBanner}
+              onPress={pickBanner}
+              accessibilityLabel="Cambiar portada"
+            />
+            {profile?.bannerUrl ? (
+              <Button
+                label="Quitar"
+                variant="ghost"
+                size="sm"
+                disabled={updatingBanner}
+                onPress={confirmRemoveBanner}
+                accessibilityLabel="Quitar portada"
+              />
+            ) : null}
+          </View>
+        </View>
+
         {/* Avatar */}
         <MotiView
           from={{ opacity: 0, scale: 0.85 }}
@@ -331,6 +447,15 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     gap: 24,
   },
+  bannerSection: { gap: 8 },
+  bannerPreview: {
+    width: '100%',
+    aspectRatio: 3,
+    borderRadius: TOKENS.radius.md,
+    overflow: 'hidden',
+  },
+  bannerOverlay: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
+  bannerActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   avatarSection: { alignItems: 'center', gap: 8 },
   avatarOverlay: {
     ...StyleSheet.absoluteFillObject,

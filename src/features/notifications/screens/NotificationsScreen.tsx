@@ -19,6 +19,7 @@ import { router } from 'expo-router';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useNotifications } from '../state/NotificationsContext';
 import { Notification } from '../services/notifications.service';
+import { getNotificationRoute } from '../utils/notificationRoute';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useThemeColors, FullScreenModal } from '@/core/design-system';
 import { useNotificationsOpen, closeNotifications } from '@/stores/notificationsUI.store';
@@ -143,17 +144,9 @@ export default function NotificationsScreen() {
   const handlePress = async (item: Notification) => {
     if (!item.read) await markRead(item.id);
 
-    const type = item.type.toLowerCase();
     closeNotifications();
-    if (item.data?.orderId) {
-      router.push(`/orders/${item.data.orderId}`);
-    } else if (type === 'new_message' && item.data?.conversationId) {
-      router.push(`/chat/${item.data.conversationId}`);
-    } else if (type.startsWith('identity') || type === 'background_check') {
-      router.push('/(tabs)/profile/become-provider');
-    } else if (type === 'payment_released') {
-      router.push('/(tabs)/orders');
-    }
+    const route = getNotificationRoute(item);
+    if (route) router.push(route as any);
   };
 
   const handleClearAll = () => {

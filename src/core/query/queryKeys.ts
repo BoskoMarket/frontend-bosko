@@ -15,6 +15,7 @@ export const QUERY_KEYS = {
 
   clientOrders:     ['orders', 'client']                                 as const,
   providerOrders:   ['orders', 'provider']                               as const,
+  myPlan:           ['plans', 'my']                                      as const,
   orderById:        (id: string) => ['orders', id]                       as const,
 
   paymentHistory:   (page = 1) => ['payments', 'history', page]          as const,

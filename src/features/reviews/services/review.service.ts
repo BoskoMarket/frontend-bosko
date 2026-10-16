@@ -4,6 +4,7 @@
  */
 
 import api from '@/core/api/axiosinstance';
+import type { ReportPayload } from '@/features/reports/services/report.service';
 
 export interface ReviewPayload {
   orderId: string;
@@ -34,7 +35,10 @@ export async function replyToReview(reviewId: string, reply: string): Promise<Re
   return data;
 }
 
-/** Reportar reseña — POST /reviews/:id/report */
-export async function reportReview(reviewId: string): Promise<void> {
-  await api.post(`/reviews/${reviewId}/report`);
+/**
+ * Reportar reseña — POST /reviews/:id/report
+ * The endpoint exists; the `{ reason, details? }` body is proposed — BR03 (today it takes no body).
+ */
+export async function reportReview(reviewId: string, payload: ReportPayload): Promise<void> {
+  await api.post(`/reviews/${reviewId}/report`, payload);
 }

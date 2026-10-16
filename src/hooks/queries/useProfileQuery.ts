@@ -4,6 +4,8 @@ import {
   getCurrentUserProfile,
   updateUserProfile,
   uploadAvatar,
+  uploadBanner,
+  removeBanner,
   toggleAvailabilityService,
   getUserStats,
   type UpdateProfilePayload,
@@ -86,6 +88,33 @@ export function useUploadAvatar() {
       qc.setQueryData(QUERY_KEYS.profile, (old: any) =>
         old ? { ...old, avatarUrl } : old,
       );
+    },
+  });
+}
+
+/** Portada — endpoint propuesto (BR01), ver `uploadBanner`. */
+export function useUploadBanner() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (fileUri: string) => uploadBanner(fileUri),
+    onSuccess: ({ bannerUrl }) => {
+      qc.setQueryData(QUERY_KEYS.profile, (old: any) =>
+        old ? { ...old, bannerUrl } : old,
+      );
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.profile });
+    },
+  });
+}
+
+export function useRemoveBanner() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => removeBanner(),
+    onSuccess: () => {
+      qc.setQueryData(QUERY_KEYS.profile, (old: any) =>
+        old ? { ...old, bannerUrl: undefined } : old,
+      );
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.profile });
     },
   });
 }

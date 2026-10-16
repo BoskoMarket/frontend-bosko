@@ -18,22 +18,17 @@ import {
   Pressable,
   RefreshControl,
   ActivityIndicator,
-  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { EmptyState } from '@/core/components/EmptyState';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { Animated } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { fetchConversations, Conversation } from '../services/chat.service';
+import { chatStatusBadge } from '../constants/chatOrderRules';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { useChatStore, useConversationsList } from '@/stores/chat.store';
-import { useThemeColors } from '@/stores/theme.store';
-import { TOKENS } from '@/core/design-system/tokens';
-import { GRADIENTS } from '@/core/design-system/gradients';
-import { FONT_FAMILY } from '@/core/design-system/typography';
+import { Avatar, Badge, EmptyState, FONT_FAMILY, NoticeBanner, TOKENS, useThemeColors, withAlpha } from '@/core/design-system';
 
 type MessagePreview = { icon?: React.ComponentProps<typeof Ionicons>['name']; label: string };
 
@@ -93,32 +88,23 @@ function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
   }, [hasUnread]);
 
   const preview = getMessagePreview(item.lastMessage?.content);
+  const statusBadge = chatStatusBadge(item.orderStatus);
 
   return (
     <Animated.View style={{ opacity: fadeAnim }}>
       <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`Chat con ${name}${hasUnread ? `, ${item.unreadCount} sin leer` : ''}. ${preview.label}`}
         style={({ pressed }) => [
           styles.item,
-          { backgroundColor: tc.card, borderColor: hasUnread ? 'rgba(255,45,111,0.3)' : tc.cardBorder },
+          { backgroundColor: tc.card, borderColor: hasUnread ? withAlpha(TOKENS.color.signal, 0.3) : tc.cardBorder },
           pressed && styles.itemPressed,
         ]}
         onPress={() => router.push({ pathname: '/chat/[id]', params: { id: item.orderId } })}
       >
         {/* Avatar */}
         <View style={styles.avatarContainer}>
-          {other?.avatarUrl ? (
-            <Image source={{ uri: other.avatarUrl }} style={[styles.avatar, { backgroundColor: tc.surface2 }]} />
-          ) : hasUnread ? (
-            <LinearGradient colors={GRADIENTS.brand} style={styles.avatarPlaceholder}>
-              <Text style={styles.avatarInitial}>{(other?.firstName || 'U').charAt(0).toUpperCase()}</Text>
-            </LinearGradient>
-          ) : (
-            <View style={[styles.avatarPlaceholder, { backgroundColor: tc.accent, borderWidth: 1, borderColor: 'rgba(255,45,111,0.25)' }]}>
-              <Text style={[styles.avatarInitial, { color: TOKENS.color.primary }]}>
-                {(other?.firstName || 'U').charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
+          <Avatar uri={other?.avatarUrl} name={name} size={52} />
           {hasUnread && (
             <Animated.View style={[styles.onlineDot, { backgroundColor: tc.mint, borderColor: tc.card, opacity: pulse }]} />
           )}
@@ -147,6 +133,7 @@ function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
                 {preview.label}
               </Text>
             </View>
+            {statusBadge && <Badge label={statusBadge.label} tone={statusBadge.tone} size="sm" />}
             {hasUnread && (
               <View style={styles.unreadBadge}>
                 <Text style={styles.unreadCount}>
@@ -248,6 +235,13 @@ export default function ConversationsListScreen() {
           )}
           contentContainerStyle={[styles.listContent, { paddingBottom: insets.bottom + 100 }]}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            loadError && conversations.length > 0 ? (
+              <NoticeBanner variant="error" style={styles.errorBanner}>
+                No pudimos actualizar tus mensajes. Deslizá hacia abajo para reintentar.
+              </NoticeBanner>
+            ) : null
+          }
           ListEmptyComponent={
             loadError ? (
               <EmptyState
@@ -307,9 +301,10 @@ const styles = StyleSheet.create({
   headerBadgeText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#fff',
+    color: TOKENS.color.onPrimary,
   },
   loader: { flex: 1 },
+  errorBanner: { marginBottom: 8 },
   listContent: {
     paddingTop: 8,
     paddingHorizontal: 16,
@@ -326,24 +321,6 @@ const styles = StyleSheet.create({
   },
   itemPressed: { opacity: 0.9, transform: [{ scale: 0.99 }] },
   avatarContainer: { position: 'relative' },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-  },
-  avatarPlaceholder: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarInitial: {
-    fontSize: 20,
-    fontWeight: '700',
-    fontFamily: FONT_FAMILY.display,
-    color: '#fff',
-  },
   onlineDot: {
     position: 'absolute',
     bottom: 2,
@@ -405,6 +382,6 @@ const styles = StyleSheet.create({
   unreadCount: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#fff',
+    color: TOKENS.color.onPrimary,
   },
 });

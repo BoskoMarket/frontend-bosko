@@ -28,6 +28,8 @@ export interface AuthResponse {
   accessToken:  string;
   refreshToken: string;
   user:         AuthUser;
+  /** true when this login cancelled a scheduled account deletion (grace period). */
+  reactivated?: boolean;
 }
 
 /**
