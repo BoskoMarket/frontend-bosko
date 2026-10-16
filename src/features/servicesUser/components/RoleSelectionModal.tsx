@@ -9,8 +9,7 @@ import React, { useRef, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { FullScreenModal, GRADIENTS, TOKENS, useThemeColors } from '@/core/design-system';
+import { FullScreenModal, BRAND_RADIAL_FILL, TOKENS, useThemeColors } from '@/core/design-system';
 
 export const ROLE_MODAL_SEEN_KEY = 'BOSKO_ROLE_MODAL_SEEN';
 
@@ -63,7 +62,7 @@ export function RoleSelectionModal({ visible, onSelectClient, onSelectProvider }
             </Text>
 
             <Pressable onPress={onSelectProvider} style={styles.optionShadow}>
-              <LinearGradient colors={GRADIENTS.brand} style={styles.optionCard}>
+              <View style={[styles.optionCard, BRAND_RADIAL_FILL]}>
                 <View style={styles.optionIconWrap}>
                   <Ionicons name="briefcase" size={22} color={TOKENS.color.onPrimary} />
                 </View>
@@ -72,7 +71,7 @@ export function RoleSelectionModal({ visible, onSelectClient, onSelectProvider }
                   <Text style={styles.optionSub}>Publicá lo que sabés hacer y recibí clientes</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={TOKENS.onMedia.textSub} />
-              </LinearGradient>
+              </View>
             </Pressable>
 
             <Pressable

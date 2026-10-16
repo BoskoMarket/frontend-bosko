@@ -2,6 +2,8 @@
 // Keys must match the family names in BRAND.fonts. A rebrand swaps the imports
 // here together with BRAND.fonts in brand.ts.
 import {
+  Archivo_400Regular,
+  Archivo_500Medium,
   Archivo_600SemiBold,
   Archivo_700Bold,
   Archivo_800ExtraBold,
@@ -14,4 +16,6 @@ export const FONT_ASSETS = {
   [BRAND.fonts.heading]: Archivo_700Bold,
   [BRAND.fonts.headingMedium]: Archivo_600SemiBold,
   [BRAND.fonts.mono]: JetBrainsMono_500Medium,
+  [BRAND.fonts.body]: Archivo_400Regular,
+  [BRAND.fonts.bodyMedium]: Archivo_500Medium,
 };

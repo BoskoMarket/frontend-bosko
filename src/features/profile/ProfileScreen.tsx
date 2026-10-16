@@ -24,6 +24,7 @@ import { getUserStats, UserStats } from '@/features/profile/services/profile';
 import {
   TOKENS,
   GRADIENTS,
+  BRAND_RADIAL_FILL,
   Avatar,
   Badge,
   Button,
@@ -524,12 +525,7 @@ export const ProfileScreen: React.FC = () => {
                 accessibilityLabel="¿Querés ofrecer servicios? Verificá tu identidad y empezá a publicar"
                 style={ss.providerCta}
               >
-                <LinearGradient
-                  colors={GRADIENTS.brand}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={ss.providerCtaGrad}
-                >
+                <View style={[ss.providerCtaGrad, BRAND_RADIAL_FILL]}>
                   <View style={[ss.providerCtaIcon, { backgroundColor: TOKENS.onMedia.fill }]}>
                     <Ionicons name="briefcase-outline" size={22} color={TOKENS.color.onPrimary} />
                   </View>
@@ -538,7 +534,7 @@ export const ProfileScreen: React.FC = () => {
                     <Text variant="caption" color={TOKENS.onMedia.textSub}>Verificá tu identidad y empezá a publicar</Text>
                   </View>
                   <Ionicons name="chevron-forward" size={20} color={TOKENS.onMedia.textSub} />
-                </LinearGradient>
+                </View>
               </Pressable>
             </View>
           </Animated.View>

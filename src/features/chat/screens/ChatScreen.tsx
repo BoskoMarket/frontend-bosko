@@ -45,7 +45,6 @@ import {
 import { BlurView } from '@/core/components/BlurView';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { MaterialIcons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import {
@@ -69,7 +68,7 @@ import { CHAT_ORDER_CLOSED_TOAST, isChatReadOnly, isOrderClosedError } from '../
 import {
   Avatar,
   FONT_FAMILY,
-  GRADIENTS,
+  BRAND_RADIAL_FILL,
   NoticeBanner,
   TOKENS,
   toast,
@@ -297,9 +296,9 @@ const MessageBubble = React.memo(function MessageBubble({ msg, myUserId }: { msg
     <View style={[styles.bubbleRow, isMine && styles.bubbleRowMine]}>
       {!isMine && <Avatar name={msg.sender?.firstName} size={28} />}
       {isMine ? (
-        <LinearGradient colors={GRADIENTS.brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.bubble, styles.bubbleMine]}>
+        <View style={[styles.bubble, styles.bubbleMine, BRAND_RADIAL_FILL]}>
           {bubbleContent}
-        </LinearGradient>
+        </View>
       ) : (
         <View style={[styles.bubble, styles.bubbleOther, { backgroundColor: tc.surface2, borderColor: tc.border }]}>
           {bubbleContent}
@@ -1032,27 +1031,27 @@ export default function ChatScreen() {
       {showAttachMenu && !readOnly && (
         <View style={[styles.attachMenu, { backgroundColor: tc.surface, borderTopColor: tc.divider }]}>
           <Pressable onPress={handleCameraPhoto} style={styles.attachOption} accessibilityRole="button" accessibilityLabel="Sacar una foto">
-            <LinearGradient colors={GRADIENTS.brand} style={styles.attachIcon}>
+            <View style={[styles.attachIcon, BRAND_RADIAL_FILL]}>
               <MaterialIcons name="camera-alt" size={20} color={TOKENS.color.onPrimary} />
-            </LinearGradient>
+            </View>
             <Text style={[styles.attachOptionText, { color: tc.textSub }]}>Foto</Text>
           </Pressable>
           <Pressable onPress={handleCameraVideo} style={styles.attachOption} accessibilityRole="button" accessibilityLabel="Grabar un video">
-            <LinearGradient colors={GRADIENTS.brand} style={styles.attachIcon}>
+            <View style={[styles.attachIcon, BRAND_RADIAL_FILL]}>
               <MaterialIcons name="videocam" size={20} color={TOKENS.color.onPrimary} />
-            </LinearGradient>
+            </View>
             <Text style={[styles.attachOptionText, { color: tc.textSub }]}>Video</Text>
           </Pressable>
           <Pressable onPress={handlePickMedia} style={styles.attachOption} accessibilityRole="button" accessibilityLabel="Elegir de la galería">
-            <LinearGradient colors={GRADIENTS.brand} style={styles.attachIcon}>
+            <View style={[styles.attachIcon, BRAND_RADIAL_FILL]}>
               <MaterialIcons name="photo-library" size={20} color={TOKENS.color.onPrimary} />
-            </LinearGradient>
+            </View>
             <Text style={[styles.attachOptionText, { color: tc.textSub }]}>Galería</Text>
           </Pressable>
           <Pressable onPress={handlePickDocument} style={styles.attachOption} accessibilityRole="button" accessibilityLabel="Adjuntar un documento">
-            <LinearGradient colors={GRADIENTS.brand} style={styles.attachIcon}>
+            <View style={[styles.attachIcon, BRAND_RADIAL_FILL]}>
               <MaterialIcons name="insert-drive-file" size={20} color={TOKENS.color.onPrimary} />
-            </LinearGradient>
+            </View>
             <Text style={[styles.attachOptionText, { color: tc.textSub }]}>Documento</Text>
           </Pressable>
         </View>
@@ -1123,7 +1122,7 @@ export default function ChatScreen() {
               style={[styles.rightBtn, (!input.trim() || sending) && { backgroundColor: tc.surface2 }]}
             >
               {!!input.trim() && !sending && (
-                <LinearGradient colors={GRADIENTS.brand} style={styles.rightBtnGradient} />
+                <View style={[styles.rightBtnGradient, BRAND_RADIAL_FILL]} />
               )}
               {sending ? <ActivityIndicator color={TOKENS.color.onPrimary} size="small" /> : <MaterialIcons name="send" size={20} color={TOKENS.color.onPrimary} />}
             </Pressable>
@@ -1168,7 +1167,7 @@ export default function ChatScreen() {
                 if (!recordingLockedRef.current && isRecordingRef.current) cancelRecording();
               }}
             >
-              {!isRecording && <LinearGradient colors={GRADIENTS.brand} style={styles.rightBtnGradient} />}
+              {!isRecording && <View style={[styles.rightBtnGradient, BRAND_RADIAL_FILL]} />}
               <MaterialIcons name="mic" size={20} color={TOKENS.color.onPrimary} />
             </View>
           )}

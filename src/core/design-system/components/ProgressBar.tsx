@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { GRADIENTS } from '../gradients';
+import { BRAND_RADIAL_FILL } from '../gradients';
 import { TOKENS } from '../tokens';
 import { useThemeColors } from '@/stores/theme.store';
 
@@ -24,12 +23,7 @@ export function ProgressBar({ value, accessibilityLabel, style }: ProgressBarPro
       accessibilityValue={{ min: 0, max: 100, now: Math.round(clamped * 100) }}
       style={[styles.track, { backgroundColor: tc.border }, style]}
     >
-      <LinearGradient
-        colors={GRADIENTS.brand}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={[styles.fill, { width: `${clamped * 100}%` }]}
-      />
+      <View style={[styles.fill, { width: `${clamped * 100}%` }, BRAND_RADIAL_FILL]} />
     </View>
   );
 }

@@ -10,12 +10,10 @@ import {
   Pressable,
   StatusBar,
   StyleSheet,
-  Text,
   TextInput,
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { safeBack } from '@/core/navigation/safeBack';
@@ -23,9 +21,17 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { useSearch } from "@/contexts/SearchContext";
-import { TOKENS } from "@/core/design-system/tokens";
-const SIGNAL = TOKENS.color.signal;
-import { useThemeColors } from "@/stores/theme.store";
+import {
+  Avatar,
+  Badge,
+  EmptyState,
+  SPACING,
+  Text,
+  TOKENS,
+  useIsDark,
+  useThemeColors,
+  withAlpha,
+} from "@/core/design-system";
 import type { Category } from "@/interfaces/category";
 import type { Provider } from "@/interfaces/provider";
 import type { Service } from "@/interfaces/service";
@@ -41,6 +47,8 @@ const isServiceArray = (value: unknown): value is Service[] =>
 
 export const SearchPage = () => {
   const tc = useThemeColors();
+  const isDark = useIsDark();
+  const SIGNAL = tc.signal;
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const inputRef = useRef<TextInput>(null);
@@ -71,54 +79,55 @@ export const SearchPage = () => {
     return list;
   }, [results, debouncedValue]);
 
+  const handleSubmit = () => {
+    const q = value.trim();
+    Keyboard.dismiss();
+    if (q) runSearch(q).catch(() => {});
+  };
+
   const renderItem = ({ item }: { item: ResultItem }) => {
     if (item.type === "category") {
       return (
         <Pressable
           onPress={() => router.push({ pathname: "/(tabs)/services/category/[id]", params: { id: item.data.id, from: "search" } })}
+          accessibilityRole="button"
+          accessibilityLabel={`Categoría ${item.data.name}`}
           style={[s.card, { backgroundColor: tc.card, borderColor: tc.border }]}
         >
           <View style={[s.categoryAccent, { backgroundColor: SIGNAL }]} />
           <View style={{ flex: 1, gap: 4 }}>
-            <Text style={[s.cardTitle, { color: tc.text }]}>{item.data.name}</Text>
+            <Text variant="subtitle" color={tc.text}>{item.data.name}</Text>
             {item.data.description ? (
-              <Text style={[s.cardSub, { color: tc.textSub }]} numberOfLines={1}>{item.data.description}</Text>
+              <Text variant="bodySmall" color={tc.textSub} numberOfLines={1}>{item.data.description}</Text>
             ) : null}
           </View>
-          <View style={s.pill}>
-            <Text style={s.pillText}>Categoría</Text>
-          </View>
+          <Badge label="Categoría" tone="brand" size="sm" />
         </Pressable>
       );
     }
 
     if (item.type === "provider") {
-      const initial = (item.data.name?.[0] ?? "?").toUpperCase();
       return (
         <Pressable
           onPress={() => router.push({ pathname: "/(tabs)/services/provider/[id]", params: { id: item.data.id as string, from: "search" } })}
+          accessibilityRole="button"
+          accessibilityLabel={`Profesional ${item.data.name}`}
           style={[s.card, { backgroundColor: tc.card, borderColor: tc.border }]}
         >
-          {item.data.avatar ? (
-            <Image source={{ uri: item.data.avatar }} style={s.avatar} contentFit="cover" />
-          ) : (
-            <View style={[s.avatarFallback, { backgroundColor: SIGNAL + "22" }]}>
-              <Text style={[s.avatarInitial, { color: SIGNAL }]}>{initial}</Text>
-            </View>
-          )}
+          <Avatar uri={item.data.avatar} name={item.data.name} size={44} />
           <View style={{ flex: 1, gap: 3 }}>
-            <Text style={[s.cardTitle, { color: tc.text }]}>{item.data.name}</Text>
+            <Text variant="subtitle" color={tc.text}>{item.data.name}</Text>
             {item.data.title ? (
-              <Text style={[s.cardSub, { color: tc.textSub }]} numberOfLines={1}>{item.data.title}</Text>
+              <Text variant="bodySmall" color={tc.textSub} numberOfLines={1}>{item.data.title}</Text>
             ) : null}
             {item.data.rating != null ? (
               <View style={s.ratingRow}>
-                <Ionicons name="star" size={11} color="#F59E0B" />
-                <Text style={s.ratingText}>{Number(item.data.rating).toFixed(1)}</Text>
+                <Ionicons name="star" size={11} color={TOKENS.color.rating} />
+                <Text variant="caption" weight="700" color={TOKENS.color.rating}>{Number(item.data.rating).toFixed(1)}</Text>
                 {item.data.location ? (
                   <>
-                    <Text style={[s.dot, { color: tc.border }]}>·</Text>
-                    <Text style={[s.cardSub, { color: tc.textSub }]} numberOfLines={1}>{item.data.location}</Text>
+                    <Text variant="caption" weight="700" color={tc.border}>·</Text>
+                    <Text variant="bodySmall" color={tc.textSub} numberOfLines={1}>{item.data.location}</Text>
                   </>
                 ) : null}
               </View>
@@ -133,28 +142,28 @@ export const SearchPage = () => {
       return (
         <Pressable
           onPress={() => router.push({ pathname: "/(tabs)/services/provider/[id]", params: { id: item.data.providerId ?? item.data.userId ?? "", from: "search" } })}
+          accessibilityRole="button"
+          accessibilityLabel={`Servicio ${item.data.title}`}
           style={[s.card, { backgroundColor: tc.card, borderColor: tc.border }]}
         >
-          <View style={[s.serviceIcon, { backgroundColor: SIGNAL + "15" }]}>
+          <View style={[s.serviceIcon, { backgroundColor: withAlpha(SIGNAL, 0.13) }]}>
             <Ionicons name="briefcase-outline" size={20} color={SIGNAL} />
           </View>
           <View style={{ flex: 1, gap: 3 }}>
-            <Text style={[s.cardTitle, { color: tc.text }]}>{item.data.title}</Text>
+            <Text variant="subtitle" color={tc.text}>{item.data.title}</Text>
             {item.data.description ? (
-              <Text style={[s.cardSub, { color: tc.textSub }]} numberOfLines={2}>{item.data.description}</Text>
+              <Text variant="bodySmall" color={tc.textSub} numberOfLines={2}>{item.data.description}</Text>
             ) : null}
             <View style={s.ratingRow}>
               {item.data.categoryName ? (
-                <View style={s.pill}>
-                  <Text style={s.pillText}>{item.data.categoryName}</Text>
-                </View>
+                <Badge label={item.data.categoryName} tone="brand" size="sm" />
               ) : null}
               {item.data.price ? (
-                <Text style={[s.priceText, { color: SIGNAL }]}>
+                <Text variant="bodySmall" weight="700" color={SIGNAL}>
                   Desde ${item.data.price}
                 </Text>
               ) : (
-                <Text style={[s.cardSub, { color: tc.textSub }]}>Consultar precio</Text>
+                <Text variant="bodySmall" color={tc.textSub}>Consultar precio</Text>
               )}
             </View>
           </View>
@@ -172,17 +181,23 @@ export const SearchPage = () => {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={[s.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
-        <StatusBar barStyle={tc.bg === '#F7F5FB' ? 'dark-content' : 'light-content'} />
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
         {/* Header */}
         <View style={[s.header, { borderBottomColor: tc.border }]}>
-          <Pressable onPress={() => safeBack(router, '/(tabs)')} hitSlop={10} style={s.backBtn}>
+          <Pressable
+            onPress={() => safeBack(router, '/(tabs)')}
+            hitSlop={10}
+            style={s.backBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Volver"
+          >
             <Ionicons name="arrow-back" size={22} color={tc.text} />
           </Pressable>
           <View style={[
             s.inputWrap,
             { backgroundColor: tc.card, borderColor: focused ? SIGNAL : tc.border },
-            focused && s.inputWrapFocused,
+            focused && [s.inputWrapFocused, { shadowColor: SIGNAL }],
           ]}>
             <Ionicons name="search-outline" size={17} color={focused ? SIGNAL : tc.textSub} />
             <TextInput
@@ -190,16 +205,24 @@ export const SearchPage = () => {
               style={[s.input, { color: tc.text }]}
               placeholder="Buscar servicios, profesionales…"
               placeholderTextColor={tc.textSub}
+              selectionColor={SIGNAL}
               value={value}
               onChangeText={setValue}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
+              onSubmitEditing={handleSubmit}
               returnKeyType="search"
               autoCapitalize="none"
               autoCorrect={false}
+              accessibilityLabel="Buscar servicios y profesionales"
             />
             {value.length > 0 && (
-              <Pressable onPress={() => setValue("")} hitSlop={8}>
+              <Pressable
+                onPress={() => setValue("")}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Borrar búsqueda"
+              >
                 <Ionicons name="close-circle" size={17} color={tc.textSub} />
               </Pressable>
             )}
@@ -215,32 +238,30 @@ export const SearchPage = () => {
 
         {/* Error */}
         {error && !loading && (
-          <View style={s.centered}>
-            <Ionicons name="alert-circle-outline" size={36} color={tc.textSub} />
-            <Text style={[s.feedbackText, { color: tc.textSub }]}>{error}</Text>
-          </View>
+          <EmptyState
+            icon="alert-circle-outline"
+            title="No pudimos buscar"
+            subtitle={error}
+            cta={{ label: "Reintentar", onPress: () => { runSearch(lastQuery || value).catch(() => {}); } }}
+          />
         )}
 
         {/* Empty result */}
         {showEmpty && (
-          <View style={s.centered}>
-            <Ionicons name="search-outline" size={42} color={tc.textSub} />
-            <Text style={[s.feedbackTitle, { color: tc.text }]}>Sin resultados</Text>
-            <Text style={[s.feedbackText, { color: tc.textSub }]}>
-              No encontramos nada para "{lastQuery}"
-            </Text>
-          </View>
+          <EmptyState
+            icon="search-outline"
+            title="Sin resultados"
+            subtitle={`No encontramos nada para "${lastQuery}"`}
+          />
         )}
 
         {/* Initial state */}
         {showInitial && (
-          <View style={s.centered}>
-            <Ionicons name="search-outline" size={42} color={tc.textSub} />
-            <Text style={[s.feedbackTitle, { color: tc.text }]}>¿Qué estás buscando?</Text>
-            <Text style={[s.feedbackText, { color: tc.textSub }]}>
-              Buscá servicios, profesionales o categorías
-            </Text>
-          </View>
+          <EmptyState
+            icon="search-outline"
+            title="¿Qué estás buscando?"
+            subtitle="Buscá servicios, profesionales o categorías"
+          />
         )}
 
         {/* Results */}
@@ -265,8 +286,8 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
     borderBottomWidth: 1,
   },
   backBtn: {
@@ -279,14 +300,13 @@ const s = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    borderRadius: 12,
+    gap: SPACING.sm,
+    borderRadius: TOKENS.radius.sm,
     borderWidth: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: SPACING.md,
     paddingVertical: 9,
   },
   inputWrapFocused: {
-    shadowColor: SIGNAL,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.35,
     shadowRadius: 4,
@@ -301,37 +321,19 @@ const s = StyleSheet.create({
     paddingTop: 32,
     alignItems: "center",
   },
-  centered: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    paddingHorizontal: 40,
-    paddingBottom: 60,
-  },
-  feedbackTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  feedbackText: {
-    fontSize: 14,
-    textAlign: "center",
-    lineHeight: 20,
-  },
   list: {
-    padding: 16,
+    padding: SPACING.lg,
     gap: 10,
-    paddingBottom: 40,
+    paddingBottom: SPACING.huge,
   },
   card: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    borderRadius: 16,
+    gap: SPACING.md,
+    borderRadius: TOKENS.radius.md,
     padding: 14,
     borderWidth: 1,
-    shadowColor: "#000",
+    ...TOKENS.shadow.soft,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -343,22 +345,6 @@ const s = StyleSheet.create({
     borderRadius: 4,
     opacity: 0.85,
   },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-  },
-  avatarFallback: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarInitial: {
-    fontSize: 17,
-    fontWeight: "700",
-  },
   serviceIcon: {
     width: 44,
     height: 44,
@@ -366,41 +352,10 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  cardSub: {
-    fontSize: 13,
-  },
   ratingRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
     flexWrap: "wrap",
-  },
-  ratingText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#F59E0B",
-  },
-  dot: {
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  pill: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 99,
-    backgroundColor: SIGNAL + "15",
-  },
-  pillText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: SIGNAL,
-  },
-  priceText: {
-    fontSize: 13,
-    fontWeight: "700",
   },
 });

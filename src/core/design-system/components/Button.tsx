@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, Pressable, PressableProps, StyleSheet, View, ViewStyle } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { TOKENS } from '../tokens';
 import { SPACING } from '../spacing';
-import { GRADIENTS } from '../gradients';
+import { BRAND_RADIAL_FILL } from '../gradients';
 import { withAlpha } from '../color';
 import { Text } from './Text';
 import { useThemeColors } from '@/stores/theme.store';
@@ -105,9 +104,9 @@ export function Button({
           {...rest}
           style={[styles.pressable, fullWidth && { width: '100%' }, { transform: [{ scale: pressed ? 0.97 : 1 }] }, style]}
         >
-          <LinearGradient colors={GRADIENTS.brand} style={shell}>
+          <View style={[shell, BRAND_RADIAL_FILL]}>
             {content}
-          </LinearGradient>
+          </View>
         </Pressable>
       </View>
     );

@@ -6,7 +6,7 @@ import { PALETTE } from '@/core/design-system/palette';
 import { TOKENS } from '@/core/design-system/tokens';
 import { PREMIUM_PALETTE, PREMIUM_SHADOWS } from '@/core/design-system/premium';
 import { GRADIENTS } from '@/core/design-system/gradients';
-import { FONT_FAMILY } from '@/core/design-system/typography';
+import { FONT_FAMILY, TYPE_SCALE } from '@/core/design-system/typography';
 import { FONT_ASSETS } from '@/core/design-system/brand/fonts';
 
 describe('design system brand layer', () => {
@@ -89,8 +89,16 @@ describe('design system brand layer', () => {
   it('fonts derive from BRAND.fonts', () => {
     expect(FONT_FAMILY.heading).toBe(BRAND.fonts.heading);
     expect(Object.keys(FONT_ASSETS).sort()).toEqual(
-      [BRAND.fonts.display, BRAND.fonts.heading, BRAND.fonts.headingMedium, BRAND.fonts.mono].sort(),
+      [
+        BRAND.fonts.display,
+        BRAND.fonts.heading,
+        BRAND.fonts.headingMedium,
+        BRAND.fonts.mono,
+        BRAND.fonts.body,
+        BRAND.fonts.bodyMedium,
+      ].sort(),
     );
+    expect(TYPE_SCALE.body.fontFamily).toBe(BRAND.fonts.body);
   });
 
   it('has no raw color literals outside brand.ts', () => {

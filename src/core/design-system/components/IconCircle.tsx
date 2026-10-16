@@ -3,7 +3,7 @@ import { View, StyleSheet, Animated, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { TOKENS } from '../tokens';
-import { GRADIENTS } from '../gradients';
+import { GRADIENTS, BRAND_RADIAL_FILL } from '../gradients';
 import { MOTION } from '../motion';
 import { withAlpha } from '../color';
 import { useThemeColors } from '@/stores/theme.store';
@@ -46,9 +46,9 @@ export function IconCircle({ name, variant = 'neutral', size = 80, iconSize, ico
     // fondo transparente dibuja una caja negra detrás (mismo fix que Button/Card).
     return (
       <View style={[shell, { backgroundColor: tc.bg }, TOKENS.shadow.glow, style]}>
-        <LinearGradient colors={GRADIENTS.brand} style={shell}>
+        <View style={[shell, BRAND_RADIAL_FILL]}>
           <Ionicons name={name} size={resolvedIconSize} color={iconColor ?? TOKENS.color.onPrimary} />
-        </LinearGradient>
+        </View>
       </View>
     );
   }

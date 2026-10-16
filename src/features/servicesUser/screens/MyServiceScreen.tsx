@@ -11,7 +11,6 @@ import {
   Pressable,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useFocusEffect, useRouter } from "expo-router";
 import { safeBack } from '@/core/navigation/safeBack';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,7 +18,7 @@ import { useMyServices, useDeleteService } from "@/hooks/queries/useMarketplaceQ
 import type { Service } from "@/features/servicesUser/services/service";
 import { EmptyState } from '@/core/components/EmptyState';
 import { getUserErrorMessage } from '@/lib/errors';
-import { GRADIENTS, TOKENS, useThemeColors } from '@/core/design-system';
+import { BRAND_RADIAL_FILL, TOKENS, useThemeColors } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -152,10 +151,10 @@ export default function MyServiceScreen() {
           onPress={() => router.push('/service-form')}
           hitSlop={8}
         >
-          <LinearGradient colors={GRADIENTS.brand} style={styles.addBtn}>
+          <View style={[styles.addBtn, BRAND_RADIAL_FILL]}>
             <Ionicons name="add" size={15} color={TOKENS.color.onPrimary} />
             <Text style={styles.addBtnText}>Publicar</Text>
-          </LinearGradient>
+          </View>
         </Pressable>
       </View>
       <Text style={[styles.planMessage, { color: tc.textSub }]}>{planMessage}</Text>

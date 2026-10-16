@@ -1,9 +1,8 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { TOKENS } from '../tokens';
-import { GRADIENTS } from '../gradients';
+import { BRAND_RADIAL_FILL } from '../gradients';
 import { Text } from './Text';
 import { useThemeColors } from '@/stores/theme.store';
 
@@ -59,7 +58,7 @@ function Dot({ status, icon }: { status: StepStatus; icon: TimelineStep['icon'] 
   }
   return (
     <View style={[styles.dot, status === 'active' && styles.dotActiveGlow]}>
-      <LinearGradient colors={GRADIENTS.brand} style={StyleSheet.absoluteFillObject} />
+      <View style={[StyleSheet.absoluteFillObject, BRAND_RADIAL_FILL]} />
       <Ionicons name={icon} size={12} color={TOKENS.color.onPrimary} style={{ zIndex: 1 }} />
     </View>
   );

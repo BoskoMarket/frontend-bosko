@@ -89,6 +89,7 @@ export const BRAND = {
     heading: 'Archivo_700Bold',
     headingMedium: 'Archivo_600SemiBold',
     mono: 'JetBrainsMono_500Medium',
-    body: undefined, // system font
+    body: 'Archivo_400Regular',
+    bodyMedium: 'Archivo_500Medium',
   },
 } as const;

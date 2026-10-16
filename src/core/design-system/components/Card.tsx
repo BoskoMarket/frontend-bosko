@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ViewProps, ViewStyle, Pressable } from 'react-native';
+import { View, ViewProps, ViewStyle, Pressable, Platform } from 'react-native';
 import { BlurView } from '@/core/components/BlurView';
 import { useIsDark, useThemeColors } from '@/stores/theme.store';
 import { TOKENS } from '../tokens';
@@ -39,7 +39,13 @@ export function Card({
   const outerStyle: ViewStyle = {
     borderRadius: radiusValue,
     overflow: 'visible',
-    ...(elevated ? TOKENS.shadow.glow : null),
+    // Android: `elevation` paints its shadow through the translucent glass
+    // surface (visible inner square). boxShadow is clipped under the element.
+    ...(elevated
+      ? Platform.OS === 'android'
+        ? { boxShadow: TOKENS.shadow.glowBox }
+        : TOKENS.shadow.glow
+      : null),
   };
 
   const surfaceStyle: ViewStyle = {

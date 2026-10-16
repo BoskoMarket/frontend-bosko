@@ -86,6 +86,12 @@ export const TOKENS = {
       shadowRadius: 24,
       elevation: 6,
     },
+    // Same glow as `glow`, as CSS boxShadow (Fabric). Android-safe for
+    // translucent surfaces: an outset boxShadow is clipped under the element,
+    // while `elevation` paints its shadow through glass backgrounds.
+    glowBox: [
+      { offsetX: 0, offsetY: 8, blurRadius: 24, color: withAlpha(C.signal, 0.4) },
+    ],
     button: {
       shadowColor: C.primary,
       shadowOffset: { width: 0, height: 6 },
