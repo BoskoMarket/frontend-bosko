@@ -1,14 +1,13 @@
 /**
  * LogInView — Pantalla de inicio de sesión.
  * Rebrand "Señal Nocturna": insignia bo, glass sobre negro profundo, usa los
- * componentes reales del design system (`Input`, `Button`) para los campos y
- * el CTA en vez de duplicar estilos a mano.
+ * componentes reales del design system (`AuthBackdrop`, `AuthCard`, `Input`,
+ * `Button`) en vez de duplicar estilos a mano.
  */
 
 import React, { useRef, useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TextInput,
   Pressable,
@@ -16,34 +15,37 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  Dimensions,
   Animated,
-  Easing,
-  ActivityIndicator,
   ScrollView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from '@/core/components/BlurView';
-import { Input } from '@/core/components/Input';
-import { Button } from '@/core/design-system';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import {
+  AuthBackdrop,
+  AuthCard,
+  Button,
+  Divider,
+  Input,
+  SPACING,
+  Text,
+  TOKENS,
+  useThemeColors,
+} from '@/core/design-system';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useGoogleSignIn } from '@/features/auth/hooks/useGoogleSignIn';
 import { getUserErrorMessage } from '@/lib/errors';
 import { BrandMark } from '@/components/BrandMark';
 import { WELCOME_VIDEO_PENDING_KEY } from '@/features/auth/constants';
 
-const { width } = Dimensions.get('window');
 const REMEMBERED_EMAIL_KEY = 'BOSKO_REMEMBERED_EMAIL';
 
 export default function LogInView({ toRegister }: { toRegister?: () => void }) {
+  const tc = useThemeColors();
   const { login, isLoading, error, clearError } = useAuth();
   const { loading: googleLoading, signInWithGoogle } = useGoogleSignIn();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
-  const glow = useRef(new Animated.Value(0.7)).current;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -69,14 +71,6 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
       Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
       Animated.spring(slideAnim, { toValue: 0, damping: 20, useNativeDriver: true }),
     ]).start();
-
-    // Glow de fondo pulsante — mismo lenguaje que AnimatedSplashScreen, le da vida al gradiente estático
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glow, { toValue: 1, duration: 2600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(glow, { toValue: 0.7, duration: 2600, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ]),
-    ).start();
   }, []);
 
   const handleLogin = async () => {
@@ -122,27 +116,8 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.background}>
-        <LinearGradient colors={['#0A0910', '#1a000d', '#0A0910']} style={StyleSheet.absoluteFill} />
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.glow,
-            {
-              opacity: glow.interpolate({ inputRange: [0.7, 1], outputRange: [0.5, 1] }),
-              transform: [{ scale: glow.interpolate({ inputRange: [0.7, 1], outputRange: [1, 1.18] }) }, { rotate: '-8deg' }],
-            },
-          ]}
-        >
-          <LinearGradient
-            colors={['rgba(255,45,111,0.24)', 'rgba(255,45,111,0.10)', 'rgba(255,45,111,0)']}
-            locations={[0, 0.55, 1]}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={StyleSheet.absoluteFill}
-          />
-        </Animated.View>
-
+      <View style={styles.flex}>
+      <AuthBackdrop tilt={-8}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.flex}
@@ -153,16 +128,14 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-          <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-            <BrandMark variant="mark" size={68} />
-            <View style={{ height: 14 }} />
-            <BrandMark variant="wordmark" size={30} color="#fff" tagline />
-            <View style={{ height: 28 }} />
+            <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+              <BrandMark variant="mark" size={68} />
+              <View style={styles.markGap} />
+              <BrandMark variant="wordmark" size={30} color={tc.text} tagline />
+              <View style={styles.wordmarkGap} />
 
-            <View style={[styles.cardGlow, { backgroundColor: '#0A0910' }]}>
-            <View style={[styles.cardShadow, { backgroundColor: '#0A0910' }]}>
-              <BlurView intensity={30} tint="dark" style={styles.card}>
-                <Text style={styles.cardTitle}>Iniciar sesión</Text>
+              <AuthCard>
+                <Text variant="h3" style={styles.cardTitle}>Iniciar sesión</Text>
 
                 <View style={styles.fieldGap}>
                   <Input
@@ -195,103 +168,69 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
                   />
                 </View>
 
-                {!!displayError && <Text style={styles.errorText}>{displayError}</Text>}
+                {!!displayError && (
+                  <Text variant="bodySmall" color={TOKENS.color.error} style={styles.errorText}>{displayError}</Text>
+                )}
 
                 <View style={styles.optionsRow}>
                   <Pressable onPress={() => setRememberMe(v => !v)} style={styles.rememberRow} hitSlop={8}>
                     <Ionicons
                       name={rememberMe ? 'checkbox' : 'square-outline'}
                       size={19}
-                      color={rememberMe ? '#FF2D6F' : 'rgba(237,234,245,0.55)'}
+                      color={rememberMe ? TOKENS.color.signal : tc.textSub}
                     />
-                    <Text style={styles.rememberText}>Recuérdame</Text>
+                    <Text variant="bodySmall" weight="500" color={tc.textSub}>Recuérdame</Text>
                   </Pressable>
 
                   <Pressable onPress={() => router.push('/login/forgot-password')} hitSlop={8}>
-                    <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+                    <Text variant="bodySmall" weight="500" color={TOKENS.color.signal}>¿Olvidaste tu contraseña?</Text>
                   </Pressable>
                 </View>
 
                 <Button label="Ingresar" onPress={handleLogin} loading={isLoading} fullWidth style={styles.ctaButton} />
 
                 <View style={styles.dividerRow}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>o</Text>
-                  <View style={styles.dividerLine} />
+                  <Divider style={styles.dividerLine} />
+                  <Text variant="caption" weight="600" color={tc.textMuted}>o</Text>
+                  <Divider style={styles.dividerLine} />
                 </View>
 
-                <Pressable
+                <Button
+                  label="Continuar con Google"
+                  variant="secondary"
+                  size="lg"
+                  icon={<Ionicons name="logo-google" size={18} color={tc.text} />}
                   onPress={handleGoogleSignIn}
-                  disabled={googleLoading}
-                  style={({ pressed }) => [styles.googleButton, pressed && styles.googleButtonPressed]}
-                >
-                  {googleLoading ? (
-                    <ActivityIndicator size="small" color="#EDEAF5" />
-                  ) : (
-                    <>
-                      <Ionicons name="logo-google" size={18} color="#EDEAF5" />
-                      <Text style={styles.googleButtonText}>Continuar con Google</Text>
-                    </>
-                  )}
-                </Pressable>
+                  loading={googleLoading}
+                  fullWidth
+                  style={styles.googleButton}
+                />
 
                 <View style={styles.registerRow}>
-                  <Text style={styles.registerPrompt}>¿No tenés cuenta? </Text>
+                  <Text variant="body" color={tc.textSub}>¿No tenés cuenta? </Text>
                   <Pressable onPress={toRegister}>
-                    <Text style={styles.registerLink}>Registrarse</Text>
+                    <Text variant="body" weight="600" color={TOKENS.color.signal}>Registrarse</Text>
                   </Pressable>
                 </View>
-              </BlurView>
-            </View>
-            </View>
-          </Animated.View>
+              </AuthCard>
+            </Animated.View>
           </ScrollView>
         </KeyboardAvoidingView>
+      </AuthBackdrop>
       </View>
     </TouchableWithoutFeedback>
   );
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1, backgroundColor: '#0A0910' },
-  glow: {
-    position: 'absolute',
-    top: -180,
-    left: -40,
-    right: -40,
-    height: 520,
-    opacity: 0.9,
-  },
   flex: { flex: 1 },
-  scrollContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 40 },
+  scrollContent: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: SPACING.xxl, paddingVertical: SPACING.huge },
   container: { alignItems: 'center' },
-  cardShadow: {
-    borderRadius: 26,
-    shadowColor: '#FF2D6F',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.28,
-    shadowRadius: 34,
-    elevation: 12,
-  },
-  cardGlow: {
-    borderRadius: 26,
-    shadowColor: '#fff',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.06,
-    shadowRadius: 20,
-  },
-  card: {
-    width: width - 48,
-    borderRadius: 26,
-    overflow: 'hidden',
-    padding: 30,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  cardTitle: { fontSize: 22, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: '#EDEAF5', marginBottom: 30 },
-  fieldGap: { marginBottom: 20 },
-  errorText: { fontSize: 13, color: '#FF4D4D', marginBottom: 14, marginLeft: 4 },
+  markGap: { height: 14 },
+  wordmarkGap: { height: 28 },
+  cardTitle: { fontSize: 22, marginBottom: 30 },
+  fieldGap: { marginBottom: SPACING.xl },
+  errorText: { marginBottom: 14, marginLeft: SPACING.xs },
   optionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -300,28 +239,10 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 28,
   },
-  rememberRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  rememberText: { fontSize: 13, color: 'rgba(237,234,245,0.75)', fontWeight: '500' },
-  forgotText: { fontSize: 13, color: '#FF2D6F', fontWeight: '500' },
+  rememberRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   ctaButton: { marginBottom: 26 },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.1)' },
-  dividerText: { fontSize: 12, color: 'rgba(237,234,245,0.4)', fontWeight: '600' },
-  googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    minHeight: 54,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    marginBottom: 24,
-  },
-  googleButtonPressed: { opacity: 0.8 },
-  googleButtonText: { fontSize: 15, fontWeight: '600', color: '#EDEAF5' },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.xl },
+  dividerLine: { flex: 1 },
+  googleButton: { marginBottom: SPACING.xxl },
   registerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-  registerPrompt: { fontSize: 14, color: 'rgba(237,234,245,0.55)' },
-  registerLink: { fontSize: 14, color: '#FF2D6F', fontWeight: '600' },
 });

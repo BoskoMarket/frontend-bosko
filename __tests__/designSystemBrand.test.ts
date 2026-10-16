@@ -45,6 +45,13 @@ describe('design system brand layer', () => {
     expect(GRADIENTS.overlayFadeUp[0]).toBe(TOKENS.scrim.light);
   });
 
+  it('auth backdrop gradient wraps bg around the wine tint, glow fades out', () => {
+    expect(PALETTE.dark.bgWine).toBe(BRAND.colors.dark.wine);
+    expect(GRADIENTS.backdrop(PALETTE.dark)).toEqual([PALETTE.dark.bg, PALETTE.dark.bgWine, PALETTE.dark.bg]);
+    expect(GRADIENTS.glow[0]).toBe('rgba(255,45,111,0.24)');
+    expect(GRADIENTS.glow[2]).toBe('rgba(255,45,111,0)');
+  });
+
   it('fonts derive from BRAND.fonts', () => {
     expect(FONT_FAMILY.heading).toBe(BRAND.fonts.heading);
     expect(Object.keys(FONT_ASSETS).sort()).toEqual(

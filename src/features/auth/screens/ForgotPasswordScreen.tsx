@@ -1,7 +1,7 @@
 /**
  * ForgotPasswordScreen — Recuperación de contraseña.
  * Rebrand "Señal Nocturna" — misma lógica (POST /auth/forgot-password),
- * usa los componentes reales del design system (`Input`, `Button`, `AnimatedBackground`).
+ * usa los componentes reales del design system (`Input`, `Button`, `AuthCard`, `IconCircle`) y `AnimatedBackground`.
  *
  * Sin pantalla intermedia de "email enviado": si el correo está registrado
  * pasamos directo a VerifyResetCodeScreen. El success final vive solo en
@@ -11,28 +11,32 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  Pressable,
   KeyboardAvoidingView,
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  Dimensions,
   Animated,
 } from 'react-native';
-import { BlurView } from '@/core/components/BlurView';
-import { Input } from '@/core/components/Input';
-import { Button, TOKENS, MOTION } from '@/core/design-system';
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import {
+  AuthCard,
+  BackButton,
+  Button,
+  IconCircle,
+  Input,
+  MOTION,
+  SPACING,
+  Text,
+  TOKENS,
+  useThemeColors,
+} from '@/core/design-system';
 import { safeBack } from '@/core/navigation/safeBack';
 import { forgotPasswordService } from '@/features/auth/services/auth';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
-const { width } = Dimensions.get('window');
-
 export default function ForgotPasswordScreen() {
+  const tc = useThemeColors();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -101,7 +105,7 @@ export default function ForgotPasswordScreen() {
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-      <View style={styles.background}>
+      <View style={[styles.background, { backgroundColor: tc.bg }]}>
         <AnimatedBackground variant="minimal" />
 
         <KeyboardAvoidingView
@@ -109,47 +113,47 @@ export default function ForgotPasswordScreen() {
           style={styles.flex}
         >
           <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY }] }]}>
-            <Pressable onPress={() => safeBack(router, '/login')} style={styles.backButton} hitSlop={12}>
-              <Ionicons name="chevron-back" size={22} color="#EDEAF5" />
-            </Pressable>
+            <BackButton onPress={() => safeBack(router, '/login')} style={styles.backButton} />
 
             <Animated.View style={{ opacity: formExitAnim }}>
-              <Animated.View style={[styles.heroIconCircle, fadeUpStyle(heroAnim)]}>
-                <Ionicons name="key-outline" size={36} color={TOKENS.color.signal} />
+              <Animated.View style={[styles.hero, fadeUpStyle(heroAnim)]}>
+                <IconCircle name="key-outline" size={80} iconSize={36} />
               </Animated.View>
 
-              <Animated.Text style={[styles.title, fadeUpStyle(titleAnim)]}>¿Olvidaste tu contraseña?</Animated.Text>
-              <Animated.Text style={[styles.description, fadeUpStyle(descAnim)]}>
-                Ingresá tu email y te enviamos un código para restablecerla.
-              </Animated.Text>
+              <Animated.View style={fadeUpStyle(titleAnim)}>
+                <Text variant="h3" center style={styles.title}>¿Olvidaste tu contraseña?</Text>
+              </Animated.View>
+              <Animated.View style={fadeUpStyle(descAnim)}>
+                <Text variant="body" center color={tc.textSub} style={styles.description}>
+                  Ingresá tu email y te enviamos un código para restablecerla.
+                </Text>
+              </Animated.View>
 
               <Animated.View style={fadeUpStyle(cardAnim)}>
-                <View style={[styles.cardGlow, { backgroundColor: '#0A0910' }]}>
-                  <View style={[styles.cardShadow, { backgroundColor: '#0A0910' }]}>
-                    <BlurView intensity={30} tint="dark" style={styles.card}>
-                      <Text style={styles.cardTitle}>Recuperar contraseña</Text>
+                <AuthCard padding={28}>
+                  <Text variant="title" style={styles.cardTitle}>Recuperar contraseña</Text>
 
-                      <View style={styles.fieldGap}>
-                        <Input
-                          leftIcon="mail-outline"
-                          placeholder="Correo electrónico"
-                          value={email}
-                          onChangeText={text => { setEmail(text); setError(''); }}
-                          keyboardType="email-address"
-                          autoCapitalize="none"
-                          autoCorrect={false}
-                          returnKeyType="done"
-                          onSubmitEditing={handleSend}
-                          autoFocus
-                        />
-                      </View>
-
-                      {!!error && <Text style={styles.errorText}>{error}</Text>}
-
-                      <Button label="Enviar código" onPress={handleSend} loading={isLoading} fullWidth />
-                    </BlurView>
+                  <View style={styles.fieldGap}>
+                    <Input
+                      leftIcon="mail-outline"
+                      placeholder="Correo electrónico"
+                      value={email}
+                      onChangeText={text => { setEmail(text); setError(''); }}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      returnKeyType="done"
+                      onSubmitEditing={handleSend}
+                      autoFocus
+                    />
                   </View>
-                </View>
+
+                  {!!error && (
+                    <Text variant="bodySmall" color={TOKENS.color.error} style={styles.errorText}>{error}</Text>
+                  )}
+
+                  <Button label="Enviar código" onPress={handleSend} loading={isLoading} fullWidth />
+                </AuthCard>
               </Animated.View>
             </Animated.View>
           </Animated.View>
@@ -160,76 +164,25 @@ export default function ForgotPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1, backgroundColor: '#0A0910' },
+  background: { flex: 1 },
   flex: { flex: 1 },
   container: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingHorizontal: SPACING.xxl,
+    paddingBottom: SPACING.huge,
   },
   backButton: {
     position: 'absolute',
     top: 60,
-    left: 24,
-    padding: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    left: SPACING.xxl,
     zIndex: 10,
   },
-  heroIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255,45,111,0.14)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    fontFamily: 'Archivo_700Bold',
-    color: '#EDEAF5',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  description: {
-    fontSize: 14,
-    color: 'rgba(237,234,245,0.55)',
-    textAlign: 'center',
-    marginBottom: 28,
-    lineHeight: 20,
-    paddingHorizontal: 8,
-  },
-  cardShadow: {
-    borderRadius: 26,
-    shadowColor: '#FF2D6F',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.28,
-    shadowRadius: 34,
-    elevation: 12,
-  },
-  cardGlow: {
-    borderRadius: 26,
-    shadowColor: '#fff',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.06,
-    shadowRadius: 20,
-  },
-  card: {
-    width: width - 48,
-    borderRadius: 26,
-    overflow: 'hidden',
-    padding: 28,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  cardTitle: { fontSize: 18, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: '#EDEAF5', marginBottom: 20 },
+  hero: { alignItems: 'center', marginBottom: 10 },
+  title: { fontSize: 24, fontWeight: '800', marginBottom: 10 },
+  description: { marginBottom: 28, paddingHorizontal: SPACING.sm },
+  cardTitle: { fontSize: 18, marginBottom: SPACING.xl },
   fieldGap: { marginBottom: 14 },
-  errorText: { fontSize: 13, color: '#FF4D4D', marginBottom: 14, marginLeft: 4 },
+  errorText: { marginBottom: 14, marginLeft: SPACING.xs },
 });

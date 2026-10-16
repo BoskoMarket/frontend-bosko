@@ -222,6 +222,7 @@ All of it lives under `src/core/design-system/` — the one folder to check befo
 
 - Fuera de `src/core/design-system/` **no** puede haber literales de diseño: nada de hex (`'#fff'`, `'#850021'`), `rgb()/rgba()`, nombres de color (`'white'`), `fontFamily` literal, arrays de gradiente a mano, ni sombras/radios sueltos. Siempre tokens (`tc.*`, `TOKENS`, `GRADIENTS`, `FONT_FAMILY`, `TYPE_SCALE`, `SPACING`, `PREMIUM`).
 - Siempre usar los componentes del DS (`Button`, `Text`, `Card`, …) antes de armar UI a mano.
+- **Toda pantalla sigue el tema claro/oscuro** (`tc.*` de `useThemeColors()`). Nada de pantallas "siempre dark". Excepción: contenido sobre video/imagen usa `TOKENS.onMedia` / `TOKENS.scrim` por legibilidad.
 - Si falta un token o un componente: **se agrega primero al design system** (y se exporta en el barrel), después se usa. Nunca resolverlo local en la pantalla.
 - Objetivo: rebranding cambiando solo la capa de marca. Plan de migración del código existente: `odd/tasks/design-system-centralization.md`.
 
@@ -231,12 +232,12 @@ All of it lives under `src/core/design-system/` — the one folder to check befo
 - **`typography.ts`** → `TYPE_SCALE` (h1/h2/h3/title/subtitle/body/bodySmall/caption/label/button presets) + `FONT_FAMILY` (`display`/`heading`/`headingMedium` = Archivo, `mono` = JetBrains Mono, `body` = system; loaded in `app/_layout.tsx` via `useFonts`).
 - **`gradients.ts`** → `GRADIENTS.brand/brandDeep/brandActive/overlayFadeDown/overlayFadeUp` (named presets, replace hand-typed `LinearGradient colors={[...]}` arrays) + `wash(tc)`, the theme-aware replacement for the old hardcoded light-only wash gradient.
 - **`components/`** → all UI primitives, theme-aware, zero raw literals (a test enforces it). Import from the barrel. Adopt incrementally: most existing screens still hand-roll `StyleSheet.create`.
-  - `Button` (variant primary|secondary|outline|ghost|danger × size, loading; `primary` IS the brand-gradient CTA), `Text` (wraps `TYPE_SCALE`), `Card` (glass surface)
+  - `Button` (variant primary|secondary|outline|ghost|danger × size, loading, `icon` + `iconPosition`; `primary` IS the brand-gradient CTA), `Text` (wraps `TYPE_SCALE`), `Card` (glass surface)
   - `Input` (label/error/leftIcon/rightIcon, password eye toggle, animated focus glow; old path `@/core/components/Input` re-exports it), `OtpInput` (controlled one-box-per-digit code, paste support)
   - `EmptyState` (icon + copy + brand CTA + text CTA), `ToastRoot` + `toast.success|error|warning` (old path re-exports), `NoticeBanner` (info|trust), `Skeleton`/`SkeletonRow`
   - `Badge` (tone = `TOKENS.status` key | brand | neutral; status pill), `Chip` (filter chip, selected = brand gradient), `Avatar` (photo or gradient initial, online dot), `IconCircle`
   - `ListRow` (settings row: icon tile + label/subtitle + chevron/right slot, `danger`), `SectionHeader` (title + "Ver todo" link), `Divider`, `ScreenHeader`, `StepTimeline`
-  - `AuthCard` (glass auth card with signal glow), `FullScreenModal`
+  - `AuthCard` (glass auth card with signal glow), `AuthBackdrop` (auth/splash screen root: bg → wine tint gradient + pulsing glow; `forceDark` for always-dark screens), `BackButton` (glass chevron-back), `FullScreenModal`
 - **Theme hooks** (also re-exported from the barrel): `useThemeColors()` (`tc.bg`, `tc.text`, `tc.surface2`, `tc.border`, etc.), `useIsDark()` (for `BlurView tint`), `useToggleTheme()`.
 - **Convention**: every screen must call `const tc = useThemeColors()` and apply dynamic colors inline (`backgroundColor: tc.bg`, etc.). Never hardcode `#FAFAFC`, `rgba(255,255,255,0.75)`, etc. for backgrounds/text.
 - **`premium.ts`** → `PREMIUM` — gold-on-dark visual treatment for premium/provider-tier UI (`ProviderCTA`, `PremiumButton`, `PremiumBanner`, `EditProfileModal`, `FeaturesSection`, `ProfesionalCard`, `PromoBanner`, `ServiceDetailModal`, `OnBoardingSlide`, `CategoryVideoCarousel`). Deliberately separate from `PALETTE` dark/light — always renders on dark regardless of theme toggle. Replaces the old `Colors.ts` (removed) 1:1, same values.

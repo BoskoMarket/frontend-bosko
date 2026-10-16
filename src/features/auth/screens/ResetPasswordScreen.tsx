@@ -2,33 +2,37 @@
  * ResetPasswordScreen — Restablecer contraseña con código OTP de 6 dígitos.
  * POST /auth/reset-password — body: { email, code, newPassword }
  * Rebrand "Señal Nocturna" — usa los componentes reales del design system
- * (`Input`, `Button`), mismo chrome que el resto del flujo de auth.
+ * (`Input`, `Button`, `AuthCard`), mismo chrome que el resto del flujo de auth.
  */
 
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  Pressable,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   Animated,
-  Dimensions,
 } from 'react-native';
-import { BlurView } from '@/core/components/BlurView';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
-import { Input } from '@/core/components/Input';
-import { Button, TOKENS, MOTION } from '@/core/design-system';
-import { Ionicons } from '@expo/vector-icons';
+import {
+  AuthCard,
+  BackButton,
+  Button,
+  IconCircle,
+  Input,
+  MOTION,
+  SPACING,
+  Text,
+  TOKENS,
+  useThemeColors,
+} from '@/core/design-system';
 import { router, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { resetPasswordService } from '@/features/auth/services/auth';
 
-const { width } = Dimensions.get('window');
-
 export default function ResetPasswordScreen() {
+  const tc = useThemeColors();
   // email y code vienen del OTP screen
   const { email = '', code = '' } = useLocalSearchParams<{ email: string; code: string }>();
 
@@ -104,31 +108,25 @@ export default function ResetPasswordScreen() {
 
   if (success) {
     return (
-      <View style={styles.background}>
+      <View style={[styles.background, { backgroundColor: tc.bg }]}>
         <AnimatedBackground variant="minimal" />
         <View style={styles.successContainer}>
           <Animated.View
-            style={[
-              styles.cardGlow,
-              {
-                backgroundColor: '#0A0910',
-                opacity: successFadeAnim,
-                transform: [{ scale: successFadeAnim.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }) }],
-              },
-            ]}
+            style={{
+              opacity: successFadeAnim,
+              transform: [{ scale: successFadeAnim.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }) }],
+            }}
           >
-          <View style={[styles.cardShadow, { backgroundColor: '#0A0910' }]}>
-            <BlurView intensity={30} tint="dark" style={[styles.card, styles.successCard]}>
-              <View style={styles.successIconCircle}>
-                <Ionicons name="checkmark-circle" size={48} color="#00E5A0" />
+            <AuthCard padding={28}>
+              <View style={styles.successCard}>
+                <IconCircle name="checkmark" variant="success" size={80} iconSize={40} />
+                <Text variant="h3" center>¡Contraseña actualizada!</Text>
+                <Text variant="body" center color={tc.textSub}>
+                  Tu contraseña fue restablecida correctamente. Ya podés iniciar sesión.
+                </Text>
+                <Button label="Iniciar sesión" onPress={() => router.replace('/login')} fullWidth />
               </View>
-              <Text style={styles.successTitle}>¡Contraseña actualizada!</Text>
-              <Text style={styles.successText}>
-                Tu contraseña fue restablecida correctamente. Ya podés iniciar sesión.
-              </Text>
-              <Button label="Iniciar sesión" onPress={() => router.replace('/login')} fullWidth />
-            </BlurView>
-          </View>
+            </AuthCard>
           </Animated.View>
         </View>
       </View>
@@ -136,29 +134,29 @@ export default function ResetPasswordScreen() {
   }
 
   return (
-    <View style={styles.background}>
+    <View style={[styles.background, { backgroundColor: tc.bg }]}>
       <AnimatedBackground variant="minimal" />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <Pressable onPress={() => safeBack(router, '/login')} hitSlop={12} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={22} color="#EDEAF5" />
-          </Pressable>
+          <BackButton onPress={() => safeBack(router, '/login')} style={styles.backBtn} />
 
           <Animated.View style={{ opacity: Animated.multiply(fadeAnim, formExitAnim), transform: [{ translateY }] }}>
             <View style={styles.titleRow}>
-              <Animated.View style={[styles.heroIconCircle, fadeUpStyle(heroAnim)]}>
-                <Ionicons name="key-outline" size={32} color={TOKENS.color.signal} />
+              <Animated.View style={[styles.hero, fadeUpStyle(heroAnim)]}>
+                <IconCircle name="key-outline" size={72} iconSize={32} />
               </Animated.View>
-              <Animated.Text style={[styles.title, fadeUpStyle(titleAnim)]}>Nueva contraseña</Animated.Text>
-              <Animated.Text style={[styles.subtitle, fadeUpStyle(subtitleAnim)]}>
-                Elegí una contraseña segura de al menos 8 caracteres.
-              </Animated.Text>
+              <Animated.View style={fadeUpStyle(titleAnim)}>
+                <Text variant="h3" center style={styles.title}>Nueva contraseña</Text>
+              </Animated.View>
+              <Animated.View style={fadeUpStyle(subtitleAnim)}>
+                <Text variant="body" center color={tc.textSub} style={styles.subtitle}>
+                  Elegí una contraseña segura de al menos 8 caracteres.
+                </Text>
+              </Animated.View>
             </View>
 
             <Animated.View style={fadeUpStyle(cardAnim)}>
-            <View style={[styles.cardGlow, { backgroundColor: '#0A0910' }]}>
-            <View style={[styles.cardShadow, { backgroundColor: '#0A0910' }]}>
-              <BlurView intensity={30} tint="dark" style={styles.card}>
+              <AuthCard padding={28}>
                 <View style={styles.fieldGap}>
                   <Input
                     leftIcon="lock-closed-outline"
@@ -181,12 +179,12 @@ export default function ResetPasswordScreen() {
                   />
                 </View>
 
-                {!!error && <Text style={styles.errorText}>{error}</Text>}
+                {!!error && (
+                  <Text variant="bodySmall" color={TOKENS.color.error} style={styles.errorText}>{error}</Text>
+                )}
 
                 <Button label="Restablecer contraseña" onPress={handleSubmit} loading={loading} fullWidth />
-              </BlurView>
-            </View>
-            </View>
+              </AuthCard>
             </Animated.View>
           </Animated.View>
         </ScrollView>
@@ -196,84 +194,16 @@ export default function ResetPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1, backgroundColor: '#0A0910' },
+  background: { flex: 1 },
   flex: { flex: 1 },
-  scroll: { paddingTop: 60, paddingBottom: 40, paddingHorizontal: 24 },
-  backBtn: {
-    alignSelf: 'flex-start',
-    padding: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    marginBottom: 20,
-  },
-  heroIconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: 'rgba(255,45,111,0.14)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
+  scroll: { paddingTop: 60, paddingBottom: SPACING.huge, paddingHorizontal: SPACING.xxl },
+  backBtn: { marginBottom: SPACING.xl },
+  hero: { alignItems: 'center', marginBottom: SPACING.sm },
   titleRow: { alignItems: 'center', marginBottom: 28 },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    fontFamily: 'Archivo_700Bold',
-    color: '#EDEAF5',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: 'rgba(237,234,245,0.55)',
-    textAlign: 'center',
-    lineHeight: 20,
-    paddingHorizontal: 8,
-  },
-  cardShadow: {
-    borderRadius: 26,
-    shadowColor: '#FF2D6F',
-    shadowOffset: { width: 0, height: 14 },
-    shadowOpacity: 0.28,
-    shadowRadius: 34,
-    elevation: 12,
-  },
-  cardGlow: {
-    borderRadius: 26,
-    shadowColor: '#fff',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.06,
-    shadowRadius: 20,
-  },
-  card: {
-    width: width - 48,
-    borderRadius: 26,
-    overflow: 'hidden',
-    padding: 28,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
+  title: { fontSize: 24, fontWeight: '800', marginBottom: SPACING.sm },
+  subtitle: { paddingHorizontal: SPACING.sm },
   fieldGap: { marginBottom: 14 },
-  errorText: { fontSize: 13, color: '#FF4D4D', marginBottom: 14, marginLeft: 4 },
-  successContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  errorText: { marginBottom: 14, marginLeft: SPACING.xs },
+  successContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: SPACING.xxl },
   successCard: { alignItems: 'center', gap: 14 },
-  successIconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(0,229,160,0.14)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  successTitle: { fontSize: 20, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: '#EDEAF5', textAlign: 'center' },
-  successText: {
-    fontSize: 14,
-    color: 'rgba(237,234,245,0.55)',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
 });

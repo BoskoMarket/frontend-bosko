@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, StyleSheet, Animated, Easing } from 'react-native';
+import { AuthBackdrop, PALETTE, TOKENS, withAlpha } from '@/core/design-system';
 import { BrandMark } from '@/components/BrandMark';
 
 type Props = {
@@ -17,7 +17,6 @@ type Props = {
  * draw-in) → wordmark y tagline entran → barra de progreso llena en 2s → onDone().
  */
 export function AnimatedSplashScreen({ onDone }: Props) {
-  const glow = useRef(new Animated.Value(0.7)).current;
   const ripple1 = useRef(new Animated.Value(0)).current;
   const ripple2 = useRef(new Animated.Value(0)).current;
   const ripple3 = useRef(new Animated.Value(0)).current;
@@ -26,13 +25,6 @@ export function AnimatedSplashScreen({ onDone }: Props) {
   const bar = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glow, { toValue: 1, duration: 1300, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(glow, { toValue: 0.7, duration: 1300, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ]),
-    ).start();
-
     const rippleLoop = (val: Animated.Value, delay: number) =>
       Animated.loop(
         Animated.sequence([
@@ -59,17 +51,7 @@ export function AnimatedSplashScreen({ onDone }: Props) {
   });
 
   return (
-    <View style={styles.root}>
-      <LinearGradient colors={['#07060C', '#07060C']} style={StyleSheet.absoluteFill} />
-      <Animated.View style={[styles.glow, { opacity: glow, transform: [{ scale: glow.interpolate({ inputRange: [0.7, 1], outputRange: [1, 1.16] }) }, { rotate: '-10deg' }] }]}>
-        <LinearGradient
-          colors={['rgba(255,45,111,0.24)', 'rgba(255,45,111,0.10)', 'rgba(255,45,111,0)']}
-          locations={[0, 0.55, 1]}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      </Animated.View>
+    <AuthBackdrop forceDark tilt={-10} duration={1300} style={styles.root}>
       <Animated.View style={[styles.ripple, rippleStyle(ripple1)]} />
       <Animated.View style={[styles.ripple, rippleStyle(ripple2)]} />
       <Animated.View style={[styles.ripple, rippleStyle(ripple3)]} />
@@ -85,14 +67,13 @@ export function AnimatedSplashScreen({ onDone }: Props) {
       <View style={styles.barTrack}>
         <Animated.View style={[styles.barFill, { transform: [{ scaleX: bar }] }]} />
       </View>
-    </View>
+    </AuthBackdrop>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#07060C', alignItems: 'center', justifyContent: 'center' },
-  glow: { position: 'absolute', top: -180, left: -40, right: -40, height: 520, opacity: 0.9 },
-  ripple: { position: 'absolute', width: 180, height: 180, borderRadius: 90, borderWidth: 1, borderColor: 'rgba(255,45,111,0.4)' },
-  barTrack: { position: 'absolute', bottom: 64, width: 132, height: 2, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.1)', overflow: 'hidden' },
-  barFill: { height: '100%', width: '100%', backgroundColor: '#FF2D6F', transformOrigin: 'left' },
+  root: { alignItems: 'center', justifyContent: 'center' },
+  ripple: { position: 'absolute', width: 180, height: 180, borderRadius: 90, borderWidth: 1, borderColor: withAlpha(TOKENS.color.signal, 0.4) },
+  barTrack: { position: 'absolute', bottom: 64, width: 132, height: 2, borderRadius: 2, backgroundColor: PALETTE.dark.border, overflow: 'hidden' },
+  barFill: { height: '100%', width: '100%', backgroundColor: TOKENS.color.signal, transformOrigin: 'left' },
 });
