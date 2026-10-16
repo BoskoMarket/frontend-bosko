@@ -172,7 +172,7 @@ describe('design system components', () => {
         <Button label="B" icon={<Divider />} testID="btn-left" />
       </>,
     );
-    const kids = (id: string) => getByTestId(id).findAll((n) => typeof n.type === 'string').length;
+    const kids = (id: string) => getByTestId(id).findAll((n: { type: unknown }) => typeof n.type === 'string').length;
     expect(kids('btn-right')).toBeGreaterThan(0);
     expect(kids('btn-left')).toBeGreaterThan(0);
   });
