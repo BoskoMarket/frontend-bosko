@@ -6,7 +6,8 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { StackActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUnreadTotal } from '@/stores/chat.store';
-import { TOKENS, useThemeColors, withAlpha, FONT_FAMILY } from '@/core/design-system';
+import { useIsProvider } from '@/hooks/queries/useProfileQuery';
+import { TOKENS, useThemeColors, withAlpha, FONT_FAMILY, Text as DSText } from '@/core/design-system';
 import type { ThemeColors } from '@/core/design-system';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -68,8 +69,15 @@ export function getVisibleRoutes(
     });
 }
 
+/** Label shown under each tab; "Pedidos" reads "Órdenes" for providers. */
+export function getTabLabel(routeName: string, isProvider: boolean): string {
+  if (routeName === 'orders' && isProvider) return 'Órdenes';
+  return TABS[routeName]?.label ?? '';
+}
+
 export function CustomTabBar({ state, navigation, descriptors }: BottomTabBarProps) {
   const unread = useUnreadTotal();
+  const isProvider = useIsProvider();
   const insets   = useSafeAreaInsets();
   const tc = useThemeColors();
   const styles = useMemo(() => createStyles(tc), [tc]);
@@ -165,12 +173,16 @@ export function CustomTabBar({ state, navigation, descriptors }: BottomTabBarPro
             {visible.map(({ route, routeIndex: idx }) => {
               const cfg     = TABS[route.name];
               const focused = idx === state.index;
+              const label   = getTabLabel(route.name, isProvider);
+              const badge   = route.name === 'chat' ? unread : 0;
               return (
                 <TabSlot
                   key={route.key}
                   icon={cfg.icon}
+                  label={label}
+                  a11yLabel={badge > 0 ? `${label}, ${badge} sin leer` : label}
                   focused={focused}
-                  badge={route.name === 'chat' ? unread : 0}
+                  badge={badge}
                   onPress={() => onPress(idx)}
                   onLongPress={() => onLongPress(idx)}
                 />
@@ -195,17 +207,18 @@ export function CustomTabBar({ state, navigation, descriptors }: BottomTabBarPro
 }
 
 // ── Tab slot ──────────────────────────────────────────────────────────────────
-function TabSlot({ icon, focused, badge, onPress, onLongPress }: {
-  icon: IconName; focused: boolean; badge: number;
+function TabSlot({ icon, label, a11yLabel, focused, badge, onPress, onLongPress }: {
+  icon: IconName; label: string; a11yLabel: string; focused: boolean; badge: number;
   onPress: () => void; onLongPress: () => void;
 }) {
   const tc = useThemeColors();
   const styles = useMemo(() => createStyles(tc), [tc]);
-  const opacity = useRef(new Animated.Value(focused ? 0 : 0.42)).current;
+  // The icon of the focused tab lives in the floating bubble, so only its label stays in the bar.
+  const opacity = useRef(new Animated.Value(focused ? 0 : 0.55)).current;
 
   useEffect(() => {
     Animated.spring(opacity, {
-      toValue: focused ? 0 : 0.42,
+      toValue: focused ? 0 : 0.55,
       ...SPRING,
     }).start();
   }, [focused]);
@@ -213,8 +226,9 @@ function TabSlot({ icon, focused, badge, onPress, onLongPress }: {
   return (
     <Pressable
       style={styles.slot}
-      accessibilityRole="button"
-      accessibilityState={focused ? { selected: true } : {}}
+      accessibilityRole="tab"
+      accessibilityLabel={a11yLabel}
+      accessibilityState={{ selected: focused }}
       onPress={onPress}
       onLongPress={onLongPress}
       hitSlop={8}
@@ -227,6 +241,14 @@ function TabSlot({ icon, focused, badge, onPress, onLongPress }: {
           </View>
         )}
       </Animated.View>
+      <DSText
+        variant="caption"
+        numberOfLines={1}
+        color={focused ? tc.text : tc.textSub}
+        style={styles.label}
+      >
+        {label}
+      </DSText>
     </Pressable>
   );
 }
@@ -271,9 +293,14 @@ const createStyles = (tc: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  label: {
+    fontSize: 10,
+    lineHeight: 12,
+    textAlign: 'center',
+  },
   iconWrap: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },

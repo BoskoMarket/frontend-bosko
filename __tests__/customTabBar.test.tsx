@@ -1,0 +1,105 @@
+import React from 'react';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { fireEvent, render } from '@testing-library/react-native';
+import { CustomTabBar, getTabLabel, getVisibleRoutes } from '@/components/CustomTabBar';
+
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
+jest.mock('react-native-svg', () => {
+  const { View } = require('react-native');
+  return { __esModule: true, default: View, Path: View };
+});
+
+const mockUnread = jest.fn();
+const mockIsProvider = jest.fn();
+jest.mock('@/stores/chat.store', () => ({ useUnreadTotal: () => mockUnread() }));
+jest.mock('@/hooks/queries/useProfileQuery', () => ({ useIsProvider: () => mockIsProvider() }));
+
+const ORDER = ['index', 'reels', 'orders', 'chat', 'profile', 'services'];
+
+function makeProps(focusedName: string, hidden: string[] = ['services']) {
+  const routes = ORDER.map((name) => ({ key: `${name}-key`, name }));
+  const descriptors: Record<string, { options: { href?: null } }> = {};
+  routes.forEach((r) => {
+    descriptors[r.key] = { options: hidden.includes(r.name) ? { href: null } : {} };
+  });
+  const navigation = {
+    emit: jest.fn(() => ({ defaultPrevented: false })),
+    navigate: jest.fn(),
+    dispatch: jest.fn(),
+  };
+  return {
+    props: {
+      state: { index: ORDER.indexOf(focusedName), routes, key: 'tab', routeNames: ORDER, type: 'tab', stale: false },
+      descriptors,
+      navigation,
+    } as unknown as BottomTabBarProps,
+    navigation,
+  };
+}
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  mockUnread.mockReturnValue(0);
+  mockIsProvider.mockReturnValue(false);
+});
+
+describe('CustomTabBar', () => {
+  it('renders five labeled tabs in order and skips the hidden services route', () => {
+    const { props } = makeProps('index');
+    const { getAllByRole, queryByText } = render(<CustomTabBar {...props} />);
+    const tabs = getAllByRole('tab');
+    expect(tabs.map((t) => t.props.accessibilityLabel)).toEqual(['Inicio', 'Reels', 'Pedidos', 'Mensajes', 'Perfil']);
+    expect(queryByText('Servicios')).toBeNull();
+  });
+
+  it('marks only the focused tab as selected', () => {
+    const { props } = makeProps('chat');
+    const { getAllByRole } = render(<CustomTabBar {...props} />);
+    const selected = getAllByRole('tab').filter((t) => t.props.accessibilityState?.selected);
+    expect(selected).toHaveLength(1);
+    expect(selected[0].props.accessibilityLabel).toBe('Mensajes');
+  });
+
+  it('labels Pedidos as Órdenes for providers', () => {
+    mockIsProvider.mockReturnValue(true);
+    const { props } = makeProps('index');
+    const { getByText, queryByText } = render(<CustomTabBar {...props} />);
+    expect(getByText('Órdenes')).toBeTruthy();
+    expect(queryByText('Pedidos')).toBeNull();
+  });
+
+  it('announces the unread count on Mensajes', () => {
+    mockUnread.mockReturnValue(3);
+    const { props } = makeProps('index');
+    const { getByLabelText } = render(<CustomTabBar {...props} />);
+    expect(getByLabelText('Mensajes, 3 sin leer')).toBeTruthy();
+  });
+
+  it('navigates to the route behind the pressed visible tab', () => {
+    const { props, navigation } = makeProps('index');
+    const { getByLabelText } = render(<CustomTabBar {...props} />);
+    fireEvent.press(getByLabelText('Perfil'));
+    expect(navigation.navigate).toHaveBeenCalledWith('profile', undefined);
+  });
+
+  it('keeps all five tabs rendered while a hidden route is focused', () => {
+    const { props } = makeProps('services');
+    const { getAllByRole } = render(<CustomTabBar {...props} />);
+    expect(getAllByRole('tab')).toHaveLength(5);
+  });
+});
+
+describe('tab helpers', () => {
+  it('getVisibleRoutes drops routes without a TABS entry or with href null', () => {
+    const { props } = makeProps('index', ['services', 'reels']);
+    expect(getVisibleRoutes(props.state, props.descriptors).map((v) => v.route.name)).toEqual(['index', 'orders', 'chat', 'profile']);
+  });
+
+  it('getTabLabel resolves role-aware labels', () => {
+    expect(getTabLabel('orders', false)).toBe('Pedidos');
+    expect(getTabLabel('orders', true)).toBe('Órdenes');
+    expect(getTabLabel('profile', true)).toBe('Perfil');
+  });
+});

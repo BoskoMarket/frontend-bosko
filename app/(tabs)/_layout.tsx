@@ -54,12 +54,12 @@ export default function TabsLayout() {
           )}
         >
           <Tabs.Screen name="index"    options={{ title: 'Inicio'    }} />
-          {/* Catalog + category/provider stack: hidden from the bar, still routable. */}
-          <Tabs.Screen name="services" options={{ title: 'Servicios', href: null }} />
-          <Tabs.Screen name="orders"   options={{ title: isProvider ? 'Órdenes' : 'Pedidos' }} />
           <Tabs.Screen name="reels"    options={{ title: 'Reels'     }} />
+          <Tabs.Screen name="orders"   options={{ title: isProvider ? 'Órdenes' : 'Pedidos' }} />
           <Tabs.Screen name="chat"     options={{ title: 'Mensajes'  }} />
           <Tabs.Screen name="profile"  options={{ title: 'Perfil'    }} />
+          {/* Catalog + category/provider stack: hidden from the bar, still routable. */}
+          <Tabs.Screen name="services" options={{ title: 'Servicios', href: null }} />
         </Tabs>
       </ErrorBoundary>
     </SafeAreaView>
