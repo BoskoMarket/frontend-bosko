@@ -1,107 +1,27 @@
 import React, { useEffect, useRef } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  Pressable,
   ScrollView,
   ActivityIndicator,
   Animated,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useKYC } from '../state/KYCContext';
 import { KYCStatus } from '../types/kyc.types';
-import { TOKENS, GRADIENTS, useThemeColors } from '@/core/design-system';
+import { KYC_STATUS, toneColors } from '../constants/kycStatus';
+import { TOKENS, Button, Card, ScreenHeader, Text, useThemeColors } from '@/core/design-system';
 import { MotiView } from '@/core/components/MotiView';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
-type StatusUIConfig = {
-  title: string;
-  description: string;
-  color: string;
-  bg: string;
-  icon: any;
-};
-
-const STATUS_UI: Record<KYCStatus, StatusUIConfig> = {
-  not_started: {
-    title: 'Verificación no iniciada',
-    description: 'Para publicar servicios y crear órdenes necesitás verificar tu identidad.',
-    color: TOKENS.color.signal,
-    bg: 'rgba(255,45,111,0.12)',
-    icon: 'shield',
-  },
-  in_progress: {
-    title: 'En revisión',
-    description: 'Tu documentación está siendo revisada. Te notificamos cuando esté listo.',
-    color: TOKENS.status.progress.fg,
-    bg: TOKENS.status.progress.bg,
-    icon: 'hourglass-empty',
-  },
-  pending: {
-    title: 'En revisión',
-    description: 'Tu documentación está siendo revisada. Te notificamos cuando esté listo.',
-    color: TOKENS.status.progress.fg,
-    bg: TOKENS.status.progress.bg,
-    icon: 'hourglass-empty',
-  },
-  approved: {
-    title: '¡Verificado!',
-    description: 'Tu identidad fue verificada exitosamente. Podés publicar servicios y crear órdenes.',
-    color: TOKENS.status.done.fg,
-    bg: TOKENS.status.done.bg,
-    icon: 'verified',
-  },
-  rejected: {
-    title: 'Verificación rechazada',
-    description: 'Hubo un problema con tus documentos. Podés volver a intentarlo.',
-    color: TOKENS.status.cancelled.fg,
-    bg: TOKENS.status.cancelled.bg,
-    icon: 'cancel',
-  },
-  declined: {
-    title: 'Verificación rechazada',
-    description: 'Hubo un problema con tus documentos. Podés volver a intentarlo.',
-    color: TOKENS.status.cancelled.fg,
-    bg: TOKENS.status.cancelled.bg,
-    icon: 'cancel',
-  },
-  failed: {
-    title: 'Error en verificación',
-    description: 'Hubo un error técnico. Podés volver a intentarlo.',
-    color: TOKENS.status.cancelled.fg,
-    bg: TOKENS.status.cancelled.bg,
-    icon: 'error-outline',
-  },
-  expired: {
-    title: 'Verificación vencida',
-    description: 'Tu verificación expiró. Necesitás iniciar el proceso nuevamente.',
-    color: TOKENS.status.pending.fg,
-    bg: TOKENS.status.pending.bg,
-    icon: 'timer-off',
-  },
-};
-
-function FadeSlide({ delay, children }: { delay: number; children: React.ReactNode }) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const ty = useRef(new Animated.Value(20)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: 400, delay, useNativeDriver: true }),
-      Animated.timing(ty, { toValue: 0, duration: 400, delay, useNativeDriver: true }),
-    ]).start();
-  }, []);
-
-  return (
-    <Animated.View style={{ opacity, transform: [{ translateY: ty }] }}>
-      {children}
-    </Animated.View>
-  );
-}
+const BENEFITS: { icon: React.ComponentProps<typeof MaterialIcons>['name']; text: string }[] = [
+  { icon: 'work', text: 'Publicar servicios en el marketplace' },
+  { icon: 'shopping-cart', text: 'Contratar servicios de otros proveedores' },
+  { icon: 'verified-user', text: 'Badge de verificado en tu perfil' },
+  { icon: 'security', text: 'Mayor confianza de los clientes' },
+];
 
 export default function KYCStatusScreen() {
   const { verification, loading, refresh } = useKYC();
@@ -130,28 +50,32 @@ export default function KYCStatusScreen() {
   const rawStatus = (verification?.status?.toLowerCase() ?? 'not_started') as KYCStatus;
   // pending sin inquiryId significa que nunca se inició el proceso
   const status: KYCStatus = (rawStatus === 'pending' && !verification?.inquiryId) ? 'not_started' : rawStatus;
-  const ui = STATUS_UI[status] ?? STATUS_UI['not_started'];
+  const ui = KYC_STATUS[status] ?? KYC_STATUS.not_started;
+  const tone = toneColors(ui.tone, tc);
+
+  const canRetry = (status === 'rejected' || status === 'declined') && !!verification && verification.attemptCount < verification.maxAttempts;
+  const cta =
+    status === 'not_started' || status === 'expired' || status === 'failed'
+      ? { label: 'Iniciar verificación', icon: 'arrow-forward' as const }
+      : status === 'in_progress' || status === 'pending'
+        ? { label: 'Continuar verificación', icon: 'arrow-forward' as const }
+        : canRetry
+          ? { label: 'Reintentar verificación', icon: 'refresh' as const }
+          : null;
 
   return (
     <View style={[s.background, { backgroundColor: tc.bg }]}>
       <AnimatedBackground variant="app" />
       <ScrollView contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={s.header}>
-          <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={12} style={[s.backButton, { backgroundColor: tc.surface }]}>
-            <MaterialIcons name="arrow-back" size={24} color={tc.text} />
-          </Pressable>
-          <Text style={[s.headerTitle, { color: tc.text }]}>Verificación de identidad</Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <ScreenHeader title="Verificación de identidad" onBack={() => safeBack(router, '/(tabs)/profile')} />
 
         {/* Status visual */}
         <Animated.View style={[s.statusContainer, { opacity: iconOpacity, transform: [{ scale: iconScale }] }]}>
-          <View style={[s.iconCircle, { backgroundColor: ui.bg }]}>
-            <MaterialIcons name={ui.icon} size={48} color={ui.color} />
+          <View style={[s.iconCircle, { backgroundColor: tone.bg }]}>
+            <MaterialIcons name={ui.icon} size={48} color={tone.fg} />
           </View>
-          <Text style={[s.statusTitle, { color: ui.color }]}>{ui.title}</Text>
-          <Text style={[s.statusDescription, { color: tc.textSub }]}>{ui.description}</Text>
+          <Text variant="h3" color={tone.fg} center>{ui.title}</Text>
+          <Text variant="body" color={tc.textSub} center style={s.statusDescription}>{ui.description}</Text>
         </Animated.View>
 
         {/* Beneficios (solo si no está aprobado) */}
@@ -161,22 +85,17 @@ export default function KYCStatusScreen() {
             animate={{ opacity: 1, translateY: 0 }}
             transition={{ type: 'timing', duration: 400, delay: 200 }}
           >
-            <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
-              <Text style={[s.cardTitle, { color: tc.text }]}>¿Por qué verificar tu identidad?</Text>
-              {[
-                { icon: 'work', text: 'Publicar servicios en el marketplace' },
-                { icon: 'shopping-cart', text: 'Contratar servicios de otros proveedores' },
-                { icon: 'verified-user', text: 'Badge de verificado en tu perfil' },
-                { icon: 'security', text: 'Mayor confianza de los clientes' },
-              ].map(item => (
+            <Card padding="xl" radius="lg" contentStyle={s.cardContent}>
+              <Text variant="subtitle">¿Por qué verificar tu identidad?</Text>
+              {BENEFITS.map(item => (
                 <View key={item.icon} style={s.benefitRow}>
                   <View style={[s.benefitIcon, { backgroundColor: tc.accent }]}>
-                    <MaterialIcons name={item.icon as any} size={16} color={TOKENS.color.primary} />
+                    <MaterialIcons name={item.icon} size={16} color={TOKENS.color.primary} />
                   </View>
-                  <Text style={[s.benefitText, { color: tc.text }]}>{item.text}</Text>
+                  <Text variant="body" style={s.benefitText}>{item.text}</Text>
                 </View>
               ))}
-            </View>
+            </Card>
           </MotiView>
         )}
 
@@ -184,7 +103,7 @@ export default function KYCStatusScreen() {
         {verification && (
           <View style={[s.attemptsCard, { backgroundColor: tc.surface, borderColor: tc.border }]}>
             <MaterialIcons name="info-outline" size={16} color={tc.textSub} />
-            <Text style={[s.attemptsText, { color: tc.textSub }]}>
+            <Text variant="bodySmall" color={tc.textSub}>
               Intentos utilizados: {verification.attemptCount} de 3
             </Text>
           </View>
@@ -197,71 +116,26 @@ export default function KYCStatusScreen() {
           transition={{ type: 'timing', duration: 400, delay: 300 }}
           style={s.ctaContainer}
         >
-          {(status === 'not_started' || status === 'expired' || status === 'failed') && (
-            <View style={s.primaryButtonShadow}>
-              <Pressable
-                style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
-                onPress={() => router.push('/(tabs)/profile/kyc/intro')}
-              >
-                <LinearGradient
-                  colors={GRADIENTS.brand}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={s.buttonGradient}
-                >
-                  <Text style={s.primaryButtonText}>Iniciar verificación</Text>
-                  <MaterialIcons name="arrow-forward" size={18} color="#fff" />
-                </LinearGradient>
-              </Pressable>
-            </View>
-          )}
-
-          {(status === 'in_progress' || status === 'pending') && (
-            <View style={s.primaryButtonShadow}>
-              <Pressable
-                style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
-                onPress={() => router.push('/(tabs)/profile/kyc/intro')}
-              >
-                <LinearGradient
-                  colors={GRADIENTS.brand}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={s.buttonGradient}
-                >
-                  <Text style={s.primaryButtonText}>Continuar verificación</Text>
-                  <MaterialIcons name="arrow-forward" size={18} color="#fff" />
-                </LinearGradient>
-              </Pressable>
-            </View>
-          )}
-
-          {(status === 'rejected' || status === 'declined') && verification && verification.attemptCount < verification.maxAttempts && (
-            <View style={s.primaryButtonShadow}>
-              <Pressable
-                style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
-                onPress={() => router.push('/(tabs)/profile/kyc/intro')}
-              >
-                <LinearGradient
-                  colors={GRADIENTS.brand}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={s.buttonGradient}
-                >
-                  <Text style={s.primaryButtonText}>Reintentar verificación</Text>
-                  <MaterialIcons name="refresh" size={18} color="#fff" />
-                </LinearGradient>
-              </Pressable>
-            </View>
+          {cta && (
+            <Button
+              label={cta.label}
+              size="lg"
+              fullWidth
+              iconPosition="right"
+              icon={<MaterialIcons name={cta.icon} size={18} color={TOKENS.color.onPrimary} />}
+              onPress={() => router.push('/(tabs)/profile/kyc/intro')}
+            />
           )}
 
           {status === 'approved' && (
-            <Pressable
-              style={({ pressed }) => [s.successButton, { backgroundColor: TOKENS.status.done.bg, borderColor: TOKENS.status.done.fg }, pressed && s.buttonPressed]}
+            <Button
+              label="Ir a mi perfil"
+              variant="secondary"
+              size="lg"
+              fullWidth
+              icon={<MaterialIcons name="home" size={18} color={TOKENS.status.done.fg} />}
               onPress={() => router.push('/(tabs)/profile')}
-            >
-              <MaterialIcons name="home" size={18} color={TOKENS.status.done.fg} />
-              <Text style={[s.successButtonText, { color: TOKENS.status.done.fg }]}>Ir a mi perfil</Text>
-            </Pressable>
+            />
           )}
         </MotiView>
       </ScrollView>
@@ -273,18 +147,6 @@ const s = StyleSheet.create({
   background: { flex: 1 },
   centered: { alignItems: 'center', justifyContent: 'center' },
   container: { paddingTop: 60, paddingBottom: 40, paddingHorizontal: 24, gap: 16 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  backButton: {
-    padding: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-  },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: TOKENS.color.text },
   statusContainer: { alignItems: 'center', gap: 12, paddingVertical: 24 },
   iconCircle: {
     width: 100,
@@ -294,78 +156,24 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 8,
   },
-  statusTitle: { fontSize: 22, fontWeight: '800', textAlign: 'center' },
-  statusDescription: {
-    fontSize: 15,
-    color: TOKENS.color.sub,
-    textAlign: 'center',
-    lineHeight: 22,
-    paddingHorizontal: 8,
-  },
-  card: {
-    borderRadius: 20,
-    padding: 20,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.9)',
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: TOKENS.color.text, marginBottom: 4 },
+  statusDescription: { paddingHorizontal: 8 },
+  cardContent: { gap: 12 },
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   benefitIcon: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(133,0,33,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  benefitText: { fontSize: 14, color: TOKENS.color.text, flex: 1 },
+  benefitText: { flex: 1 },
   attemptsCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     padding: 12,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.8)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.7)',
   },
-  attemptsText: { fontSize: 13, color: TOKENS.color.sub },
   ctaContainer: { gap: 12 },
-  primaryButton: {
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  primaryButtonShadow: {
-    borderRadius: 14,
-    ...TOKENS.shadow.glow,
-  },
-  buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  buttonGradient: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  primaryButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  successButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 14,
-    backgroundColor: 'rgba(22,163,74,0.1)',
-    borderWidth: 1.5,
-    borderColor: '#16a34a',
-  },
-  successButtonText: { fontSize: 16, fontWeight: '700', color: '#16a34a' },
 });

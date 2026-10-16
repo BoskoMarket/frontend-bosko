@@ -1,23 +1,28 @@
 import React, { useEffect, useRef } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  Pressable,
   ScrollView,
-  ActivityIndicator,
   Animated,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useKYC } from '../state/KYCContext';
-import { TOKENS, GRADIENTS, useThemeColors } from '@/core/design-system';
+import {
+  TOKENS,
+  Button,
+  Card,
+  IconCircle,
+  NoticeBanner,
+  ScreenHeader,
+  Text,
+  useThemeColors,
+} from '@/core/design-system';
 import { MotiView } from '@/core/components/MotiView';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
-const STEPS = [
+const STEPS: { icon: React.ComponentProps<typeof MaterialIcons>['name']; title: string; description: string }[] = [
   {
     icon: 'badge',
     title: 'Foto de tu documento',
@@ -61,65 +66,50 @@ export default function KYCIntroScreen() {
     <View style={[s.background, { backgroundColor: tc.bg }]}>
       <AnimatedBackground variant="minimal" />
       <ScrollView contentContainerStyle={s.container} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={s.header}>
-          <Pressable onPress={() => safeBack(router, '/(tabs)/profile/kyc')} hitSlop={12} style={[s.backButton, { backgroundColor: tc.surface }]}>
-            <MaterialIcons name="arrow-back" size={24} color={tc.text} />
-          </Pressable>
-          <Text style={[s.headerTitle, { color: tc.text }]}>Verificación</Text>
-          <View style={{ width: 40 }} />
-        </View>
+        <ScreenHeader title="Verificación" onBack={() => safeBack(router, '/(tabs)/profile/kyc')} />
 
         {/* Hero */}
         <FadeSlide delay={100}>
-          <View style={[s.heroIcon, { backgroundColor: tc.accent }]}>
-            <MaterialIcons name="verified-user" size={56} color={TOKENS.color.signal} />
-          </View>
-          <Text style={[s.heroTitle, { color: tc.text }]}>Verificá tu identidad</Text>
-          <Text style={[s.heroSubtitle, { color: tc.textSub }]}>
-            El proceso toma menos de 5 minutos y solo se realiza una vez.
-          </Text>
-        </FadeSlide>
-
-        {/* Steps card */}
-        <FadeSlide delay={200}>
-          <View style={[s.card, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
-            <Text style={[s.cardTitle, { color: tc.text }]}>¿Qué vas a necesitar?</Text>
-            {STEPS.map((step, idx) => (
-              <View key={idx} style={s.stepRow}>
-                <View style={s.stepNumber}>
-                  <Text style={s.stepNumberText}>{idx + 1}</Text>
-                </View>
-                <View style={[s.stepIcon, { backgroundColor: tc.accent }]}>
-                  <MaterialIcons name={step.icon as any} size={20} color={TOKENS.color.signal} />
-                </View>
-                <View style={s.stepText}>
-                  <Text style={[s.stepTitle, { color: tc.text }]}>{step.title}</Text>
-                  <Text style={[s.stepDesc, { color: tc.textSub }]}>{step.description}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </FadeSlide>
-
-        {/* Privacy banner */}
-        <FadeSlide delay={300}>
-          <View style={[s.privacyBanner, { backgroundColor: TOKENS.status.done.bg, borderColor: 'rgba(0,229,160,0.25)' }]}>
-            <MaterialIcons name="security" size={18} color={TOKENS.status.done.fg} />
-            <Text style={[s.privacyText, { color: tc.textSub }]}>
-              Tus datos se encriptan y nunca se comparten con terceros.
-              Solo se usan para verificar tu identidad.
+          <View style={s.hero}>
+            <IconCircle name="shield-checkmark" size={100} iconSize={56} />
+            <Text variant="h3" center>Verificá tu identidad</Text>
+            <Text variant="body" color={tc.textSub} center>
+              El proceso toma menos de 5 minutos y solo se realiza una vez.
             </Text>
           </View>
         </FadeSlide>
 
+        {/* Steps card */}
+        <FadeSlide delay={200}>
+          <Card padding="xl" radius="lg" contentStyle={s.cardContent}>
+            <Text variant="subtitle">¿Qué vas a necesitar?</Text>
+            {STEPS.map((step, idx) => (
+              <View key={idx} style={s.stepRow}>
+                <View style={s.stepNumber}>
+                  <Text variant="caption" weight="800" color={TOKENS.color.onPrimary}>{idx + 1}</Text>
+                </View>
+                <View style={[s.stepIcon, { backgroundColor: tc.accent }]}>
+                  <MaterialIcons name={step.icon} size={20} color={TOKENS.color.signal} />
+                </View>
+                <View style={s.stepText}>
+                  <Text variant="label">{step.title}</Text>
+                  <Text variant="bodySmall" color={tc.textSub}>{step.description}</Text>
+                </View>
+              </View>
+            ))}
+          </Card>
+        </FadeSlide>
+
+        {/* Privacy banner */}
+        <FadeSlide delay={300}>
+          <NoticeBanner variant="trust" icon="shield-checkmark-outline">
+            Tus datos se encriptan y nunca se comparten con terceros.
+            Solo se usan para verificar tu identidad.
+          </NoticeBanner>
+        </FadeSlide>
+
         {/* Error */}
-        {!!error && (
-          <View style={{ backgroundColor: TOKENS.status.cancelled.bg, borderRadius: 12, padding: 14, flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
-            <MaterialIcons name="error-outline" size={18} color={TOKENS.status.cancelled.fg} />
-            <Text style={{ flex: 1, fontSize: 13, color: TOKENS.status.cancelled.fg, lineHeight: 18 }}>{error}</Text>
-          </View>
-        )}
+        {!!error && <NoticeBanner variant="error">{error}</NoticeBanner>}
 
         {/* CTA */}
         <MotiView
@@ -128,35 +118,21 @@ export default function KYCIntroScreen() {
           transition={{ type: 'timing', duration: 400, delay: 400 }}
           style={s.ctaContainer}
         >
-          <View style={s.primaryButtonShadow}>
-            <Pressable
-              style={({ pressed }) => [s.primaryButton, pressed && s.buttonPressed]}
-              onPress={start}
-              disabled={loading}
-            >
-            <LinearGradient
-              colors={GRADIENTS.brand}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={s.buttonGradient}
-            >
-              {loading
-                ? <ActivityIndicator color="#fff" size="small" />
-                : <>
-                  <Text style={s.primaryButtonText}>Comenzar ahora</Text>
-                  <MaterialIcons name="arrow-forward" size={18} color="#fff" />
-                </>
-              }
-            </LinearGradient>
-          </Pressable>
-          </View>
+          <Button
+            label="Comenzar ahora"
+            size="lg"
+            fullWidth
+            loading={loading}
+            iconPosition="right"
+            icon={<MaterialIcons name="arrow-forward" size={18} color={TOKENS.color.onPrimary} />}
+            onPress={start}
+          />
 
-          <Pressable
+          <Button
+            label="Lo haré más tarde"
+            variant="ghost"
             onPress={() => safeBack(router, '/(tabs)/profile/kyc')}
-            style={({ pressed }) => [s.secondaryButton, pressed && s.buttonPressed]}
-          >
-            <Text style={[s.secondaryButtonText, { color: tc.textSub }]}>Lo haré más tarde</Text>
-          </Pressable>
+          />
         </MotiView>
       </ScrollView>
     </View>
@@ -166,43 +142,8 @@ export default function KYCIntroScreen() {
 const s = StyleSheet.create({
   background: { flex: 1 },
   container: { paddingTop: 60, paddingBottom: 40, paddingHorizontal: 24, gap: 16 },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  backButton: {
-    padding: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-  },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: TOKENS.color.text },
   hero: { alignItems: 'center', gap: 12, paddingVertical: 20 },
-  heroIcon: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: 'rgba(133,0,33,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroTitle: { fontSize: 24, fontWeight: '800', color: TOKENS.color.text, textAlign: 'center' },
-  heroSubtitle: { fontSize: 15, color: TOKENS.color.sub, textAlign: 'center', lineHeight: 22 },
-  card: {
-    borderRadius: 20,
-    padding: 20,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.9)',
-    gap: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: TOKENS.color.text },
+  cardContent: { gap: 16 },
   stepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   stepNumber: {
     width: 24,
@@ -213,52 +154,13 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 2,
   },
-  stepNumberText: { fontSize: 12, fontWeight: '800', color: '#fff' },
   stepIcon: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(133,0,33,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepText: { flex: 1 },
-  stepTitle: { fontSize: 14, fontWeight: '700', color: TOKENS.color.text, marginBottom: 2 },
-  stepDesc: { fontSize: 13, color: TOKENS.color.sub, lineHeight: 18 },
-  privacyBanner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    backgroundColor: 'rgba(22,163,74,0.08)',
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(22,163,74,0.2)',
-  },
-  privacyText: { flex: 1, fontSize: 13, color: TOKENS.color.sub, lineHeight: 18 },
+  stepText: { flex: 1, gap: 2 },
   ctaContainer: { gap: 12 },
-  primaryButton: {
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  primaryButtonShadow: {
-    borderRadius: 14,
-    ...TOKENS.shadow.glow,
-  },
-  buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
-  buttonGradient: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  primaryButtonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  secondaryButton: {
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderRadius: 14,
-  },
-  secondaryButtonText: { fontSize: 15, color: TOKENS.color.sub, fontWeight: '500' },
 });
