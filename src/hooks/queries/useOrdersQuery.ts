@@ -36,6 +36,21 @@ export function useProviderOrders() {
   });
 }
 
+/**
+ * Number of provider orders still waiting for a response (status "pending").
+ * Shares the provider-orders cache entry (same key/fn) and only runs for
+ * providers; `select` derives the count without an extra request.
+ */
+export function usePendingProviderRequestsCount(enabled: boolean) {
+  const { data } = useQuery({
+    queryKey: QUERY_KEYS.providerOrders,
+    queryFn: () => fetchOrdersAsProvider(),
+    enabled,
+    select: (orders: Order[]) => orders.filter((o) => o.status === 'pending').length,
+  });
+  return enabled ? data ?? 0 : 0;
+}
+
 export function useOrder(id: string | undefined) {
   return useQuery({
     queryKey: QUERY_KEYS.orderById(id!),

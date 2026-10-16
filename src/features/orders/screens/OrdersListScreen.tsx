@@ -21,12 +21,22 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOrders } from '../state/OrdersContext';
+import { useIsProvider } from '@/hooks/queries/useProfileQuery';
 import { Order, OrderStatus } from '../types/orders.types';
 import { ORDER_STATUS } from '../constants/orderStatus';
 import { Badge, EmptyState, ScreenHeader, SkeletonList, TOKENS, useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 type TabType = 'client' | 'provider';
+
+/**
+ * Which segment the list opens on: an explicit `?tab=` always wins; otherwise
+ * providers land on the orders they received and clients on the ones they hired.
+ */
+export function resolveOrdersSegment(tabParam: string | undefined, isProvider: boolean): TabType {
+  if (tabParam === 'provider' || tabParam === 'client') return tabParam;
+  return isProvider ? 'provider' : 'client';
+}
 
 function StatusBadge({ status }: { status: OrderStatus }) {
   const info = ORDER_STATUS[status] || ORDER_STATUS.pending;
@@ -96,10 +106,11 @@ export default function OrdersListScreen() {
   const { clientOrders, providerOrders, loading, loadClientOrders, loadProviderOrders } = useOrders();
   // `?tab=provider` (e.g. from the provider home) opens the provider list.
   const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
-  const [activeTab, setActiveTab] = useState<TabType>(tabParam === 'provider' ? 'provider' : 'client');
-  useEffect(() => {
-    if (tabParam === 'provider' || tabParam === 'client') setActiveTab(tabParam);
-  }, [tabParam]);
+  const isProvider = useIsProvider();
+  // A manual segment pick overrides the default until a new `?tab=` arrives.
+  const [pickedTab, setActiveTab] = useState<TabType | null>(null);
+  useEffect(() => { setActiveTab(null); }, [tabParam]);
+  const activeTab = pickedTab ?? resolveOrdersSegment(tabParam, isProvider);
   const [refreshing, setRefreshing] = useState(false);
 
   // Carga inicial de ambas listas
@@ -122,7 +133,7 @@ export default function OrdersListScreen() {
         icon="receipt-outline"
         title="Todavía no pediste nada"
         subtitle="Explorá servicios, cotizá con profesionales y hacé tu primer pedido."
-        cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)/services') }}
+        cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)') }}
       />
     ) : (
       <EmptyState

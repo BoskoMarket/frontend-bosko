@@ -8,6 +8,32 @@ Validación: el destino tiene que existir como ruta en `app/` (respetando grupos
 
 Estados: ✅ ok · ❌ roto · ⚠️ dudoso (ruta dinámica armada con string, param opcional, destino condicional).
 
+## Estructura de tabs (2026-10-16)
+
+5 tabs con label visible, en este orden (el orden sale de los `Tabs.Screen` de `app/(tabs)/_layout.tsx`):
+
+| # | Tab | Ruta | Notas por rol |
+|---|---|---|---|
+| 1 | Inicio | `/(tabs)` | Cliente: explorar (`ClientHome`). Proveedor: trabajo (`ProviderHome`). |
+| 2 | Reels | `/(tabs)/reels` | - |
+| 3 | Pedidos / Órdenes | `/(tabs)/orders` | Label "Órdenes" para proveedores. Abre en el segmento "Como proveedor" si es proveedor (un `?tab=` explícito gana). Badge = órdenes recibidas con status `pending`. |
+| 4 | Mensajes | `/(tabs)/chat` | Badge = no leídos (`useUnreadTotal`). |
+| 5 | Perfil | `/(tabs)/profile` | Grupo por rol: proveedor "Mi negocio", cliente "Mi actividad" (`profileSections.ts`). |
+
+**Servicios ya no es un tab.** `app/(tabs)/services/*` sigue dentro de `(tabs)` con `href: null` en su `Tabs.Screen`: queda fuera de la barra pero sigue ruteable (catálogo, `category/[id]`, `provider/[id]`), así que los deep links y los `/(tabs)/services/...` existentes no cambian. `Tabs` usa `backBehavior="history"` para que el back desde una ruta oculta vuelva al tab de origen. `CustomTabBar` ignora rutas sin entrada en `TABS` o con `href: null` (el cálculo del pill usa solo los tabs visibles).
+
+Cambios de destino de esta reestructura:
+
+| Disparador | Antes | Ahora |
+|---|---|---|
+| Home cliente: "Contratar" (PathCard) | `/(tabs)/services` | `/search` |
+| Home cliente: "Ver todas" (categorías), "Servicios populares", "Explorar categorías" | `/(tabs)/services` | `/(tabs)/services` (catálogo oculto, sin cambio) |
+| Empty state "Explorar servicios" en Mensajes, Favoritos y Pedidos | `/(tabs)/services` | `/(tabs)` (Inicio) |
+| Home proveedor: resumen de órdenes | `/(tabs)/orders?tab=provider` | sin cambio |
+| Perfil proveedor: "Servicios", "Órdenes", "Reseñas", "Mis reels" (acceso rápido) | `/(tabs)/profile/Services`, `/(tabs)/orders`, `/(tabs)/profile/my-reviews`, `/(tabs)/profile/my-reels` | grupo "Mi negocio": Mis servicios, Publicar servicio (`/service-form`), Mis reels, Mis reseñas, Verificación (`/(tabs)/profile/kyc`), Antecedentes, Plan (`/(tabs)/profile/plans`). "Órdenes" se quitó (es un tab). |
+| Perfil cliente: "Mis pedidos", "Mensajes" (acceso rápido) + CTA "¿Querés ofrecer servicios?" | `/(tabs)/orders`, `/(tabs)/chat`, `/(tabs)/profile/become-provider` | grupo "Mi actividad": Favoritos (`/(tabs)/profile/favorites`), Convertirme en proveedor (`/(tabs)/profile/become-provider`) |
+| Perfil: "Cambiar Contraseña" | grupo "Preferencias" | grupo "Seguridad" |
+
 ## Rutas existentes (`app/`)
 
 Generado con `npm run routes:generate` (`scripts/generate-routes.cjs` → `.expo/types/router.d.ts`, ignorado por git, no se commitea) y contrastado con `git ls-files app`. 48 pantallas + 9 layouts. Los grupos `(tabs)` no aparecen en la URL pública (`/(tabs)/profile` ≡ `/profile`).
@@ -103,11 +129,11 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Layout tabs (`/(tabs)/*`) | `app/(tabs)/_layout.tsx:25` | Sin sesión (guard) | `<Redirect>` | `/login` | - | ✅ |
 | Layout raíz | `app/_layout.tsx:70` | Sin sesión y segmento protegido (`(tabs)`, `orders`, `chat`, `admin`, `service-form`, `search`) | `router.replace` (effect) | `/login` | - | ✅ |
 | Rutas duplicadas | `app/login/LogInView.tsx`, `app/login/RegisterView.tsx` | - | Wrappers de ruta que renderizan la vista sin props | - | - | ⚠️ ver "Enlaces rotos / dudosos" |
-| Tab bar (`/(tabs)/*`) | `src/components/CustomTabBar.tsx` (`onPress`) | Tap en un tab no enfocado (Inicio, Servicios, Pedidos, Reels, Mensajes, Perfil) | `navigation.navigate` | `/(tabs)`, `/(tabs)/services`, `/(tabs)/orders`, `/(tabs)/reels`, `/(tabs)/chat`, `/(tabs)/profile` | `route.params` | ✅ los 6 existen en `app/(tabs)/_layout.tsx` |
+| Tab bar (`/(tabs)/*`) | `src/components/CustomTabBar.tsx` (`onPress`) | Tap en un tab no enfocado (Inicio, Reels, Pedidos/Órdenes, Mensajes, Perfil) | `navigation.navigate` | `/(tabs)`, `/(tabs)/reels`, `/(tabs)/orders`, `/(tabs)/chat`, `/(tabs)/profile` | `route.params` | ✅ los 5 existen en `app/(tabs)/_layout.tsx`; `services` está oculto (`href: null`) |
 | Tab bar (`/(tabs)/*`) | `src/components/CustomTabBar.tsx` (`onPress`) | Tap en el tab ya enfocado con stack anidado | `StackActions.popToTop` | Raíz del stack del tab (ej. `/(tabs)/profile`) | - | ✅ |
 | Perfil (`/(tabs)/profile`) | `src/features/profile/ProfileScreen.tsx:349` | Tap en el avatar del hero | `router.push` | `/(tabs)/profile/EditProfile` | - | ✅ |
 | Perfil (`/(tabs)/profile`) | `src/features/profile/ProfileScreen.tsx:408` | "Editar perfil" (botón del hero) | `router.push` | `/(tabs)/profile/EditProfile` | - | ✅ |
-| Perfil (`/(tabs)/profile`) | `src/features/profile/ProfileScreen.tsx:578` | "Editar Perfil" (grupo "Mi cuenta") | `router.push` | `/(tabs)/profile/EditProfile` | - | ✅ |
+| Perfil (`/(tabs)/profile`) | `src/features/profile/ProfileScreen.tsx` | "Editar Perfil" (grupo "Mi cuenta") | `router.push` | `/(tabs)/profile/EditProfile` | - | ✅ |
 | Editar perfil (`/(tabs)/profile/EditProfile`) | `src/features/users/screens/EditProfileScreen.tsx` | "Verificar" teléfono | `router.push` | `/(tabs)/profile/verify-phone` | - | ✅ |
 | Proveedor (`/(tabs)/services/provider/[id]`) | `src/features/servicesUser/components/ServiceDetailModal.tsx:162` | "Solicitar Servicio" (modal de detalle) | cierra el modal + `router.push({ pathname, params })` | `/orders/quote` | `serviceId`, `serviceTitle`, `providerName` (los lee `QuoteRequestScreen`) | ✅ |
 | Proveedor (`/(tabs)/services/provider/[id]`) | `src/features/servicesUser/components/ServiceDetailModal.tsx` | Abrir/cerrar detalle de servicio (lo monta `ProviderProfileScreen`) | `Modal` | - (modal, sin ruta) | - | ✅ |

@@ -164,7 +164,7 @@ export default function ClientHome() {
   }, [categoriesQuery, servicesQuery]);
 
   const goSearch = () => router.push('/search');
-  const goServices = () => router.push('/(tabs)/services');
+  const goServices = () => router.push('/(tabs)/services'); // catalog: hidden route, not a tab
   const goBecomeProvider = () => router.push('/(tabs)/profile/become-provider');
   const goCategory = (id: string) =>
     router.push({ pathname: '/(tabs)/services/category/[id]', params: { id, from: 'home' } });
@@ -199,7 +199,7 @@ export default function ClientHome() {
             title="Contratar"
             description="Profesionales verificados con reseñas reales."
             linkLabel="Buscar servicios →"
-            onPress={goServices}
+            onPress={goSearch}
           />
           <PathCard
             icon="construct-outline"

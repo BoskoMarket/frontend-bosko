@@ -253,7 +253,7 @@ export default function ConversationsListScreen() {
                 icon="chatbubbles-outline"
                 title="Sin mensajes todavía"
                 subtitle="Las conversaciones aparecen cuando cotizás un servicio o te contratan como prestador."
-                cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)/services') }}
+                cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)') }}
               />
             )
           }

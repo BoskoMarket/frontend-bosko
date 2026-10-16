@@ -6,7 +6,9 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { StackActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUnreadTotal } from '@/stores/chat.store';
-import { TOKENS, useThemeColors, withAlpha, FONT_FAMILY } from '@/core/design-system';
+import { useIsProvider } from '@/hooks/queries/useProfileQuery';
+import { usePendingProviderRequestsCount } from '@/hooks/queries/useOrdersQuery';
+import { TOKENS, useThemeColors, withAlpha, FONT_FAMILY, Text as DSText } from '@/core/design-system';
 import type { ThemeColors } from '@/core/design-system';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -25,7 +27,6 @@ type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const TABS: Record<string, { icon: IconName; active: IconName; label: string }> = {
   index:    { icon: 'home-outline',                active: 'home',                label: 'Inicio'    },
-  services: { icon: 'grid-outline',                active: 'grid',                label: 'Servicios' },
   orders:   { icon: 'receipt-outline',             active: 'receipt',             label: 'Pedidos'   },
   reels:    { icon: 'play-circle-outline',         active: 'play-circle',         label: 'Reels'     },
   chat:     { icon: 'chatbubble-ellipses-outline', active: 'chatbubble-ellipses', label: 'Mensajes'  },
@@ -51,31 +52,65 @@ function buildPath(W: number, cx: number): string {
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
+/**
+ * Routes that get a slot in the bar: they have a TABS entry and are not hidden
+ * with `href: null` (hidden routes stay navigable, e.g. the services catalog).
+ * Each entry keeps its navigator route index so presses target the right route.
+ */
+export function getVisibleRoutes(
+  state: BottomTabBarProps['state'],
+  descriptors: BottomTabBarProps['descriptors'],
+) {
+  return state.routes
+    .map((route, routeIndex) => ({ route, routeIndex }))
+    .filter(({ route }) => {
+      if (!TABS[route.name]) return false;
+      const href = (descriptors[route.key]?.options as { href?: string | null } | undefined)?.href;
+      return href !== null;
+    });
+}
+
+/** Label shown under each tab; "Pedidos" reads "Órdenes" for providers. */
+export function getTabLabel(routeName: string, isProvider: boolean): string {
+  if (routeName === 'orders' && isProvider) return 'Órdenes';
+  return TABS[routeName]?.label ?? '';
+}
+
+export function CustomTabBar({ state, navigation, descriptors }: BottomTabBarProps) {
   const unread = useUnreadTotal();
+  const isProvider = useIsProvider();
+  const pendingRequests = usePendingProviderRequestsCount(isProvider);
   const insets   = useSafeAreaInsets();
   const tc = useThemeColors();
   const styles = useMemo(() => createStyles(tc), [tc]);
   const [barW, setBarW] = useState(Dimensions.get('window').width - 32);
 
-  const tabCount = state.routes.length;
+  const visible = useMemo(() => getVisibleRoutes(state, descriptors), [state, descriptors]);
+  // Position of the focused route among visible tabs. On a hidden route (e.g. the
+  // services catalog) keep the pill where it was instead of jumping.
+  const lastVisibleIndex = useRef(0);
+  const focusedVisible = visible.findIndex(v => v.routeIndex === state.index);
+  if (focusedVisible >= 0) lastVisibleIndex.current = focusedVisible;
+  const activeIndex = lastVisibleIndex.current;
+
+  const tabCount = visible.length;
   const tabW     = barW / Math.max(1, tabCount);
   const getCx    = (idx: number) => idx * tabW + tabW / 2;
 
   // Bubble translateX — react-native Animated (works in Expo Go)
-  const bubbleAnim = useRef(new Animated.Value(getCx(state.index) - BR)).current;
+  const bubbleAnim = useRef(new Animated.Value(getCx(activeIndex) - BR)).current;
 
   // SVG path updated in JS (no reanimated needed)
-  const [pathD, setPathD] = useState(() => buildPath(barW, getCx(state.index)));
+  const [pathD, setPathD] = useState(() => buildPath(barW, getCx(activeIndex)));
 
   // Interpolate notch position alongside bubble for smooth SVG update
-  const notchAnim = useRef(new Animated.Value(getCx(state.index))).current;
+  const notchAnim = useRef(new Animated.Value(getCx(activeIndex))).current;
 
   useEffect(() => {
-    const cx = getCx(state.index);
+    const cx = getCx(activeIndex);
     Animated.spring(bubbleAnim, { toValue: cx - BR, ...SPRING }).start();
     Animated.spring(notchAnim,  { toValue: cx,      ...SPRING }).start();
-  }, [state.index, tabW]);
+  }, [activeIndex, tabW]);
 
   // Drive SVG path from notchAnim listener
   useEffect(() => {
@@ -87,7 +122,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 
   // Reset on barW change
   useEffect(() => {
-    const cx = getCx(state.index);
+    const cx = getCx(activeIndex);
     bubbleAnim.setValue(cx - BR);
     notchAnim.setValue(cx);
     setPathD(buildPath(barW, cx));
@@ -113,7 +148,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     if (route) navigation.emit({ type: 'tabLongPress', target: route.key });
   }, [navigation, state.routes]);
 
-  const activeTab = TABS[state.routes[state.index]?.name ?? ''] ?? TABS.index;
+  const activeTab = TABS[visible[activeIndex]?.route.name ?? ''] ?? TABS.index;
 
   return (
     <View
@@ -137,15 +172,20 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           </Svg>
 
           <View style={styles.row}>
-            {state.routes.map((route, idx) => {
-              const cfg     = TABS[route.name] ?? TABS.index;
+            {visible.map(({ route, routeIndex: idx }) => {
+              const cfg     = TABS[route.name];
               const focused = idx === state.index;
+              const label   = getTabLabel(route.name, isProvider);
+              const badge   = route.name === 'chat' ? unread : route.name === 'orders' ? pendingRequests : 0;
+              const badgeNoun = route.name === 'orders' ? 'pendientes' : 'sin leer';
               return (
                 <TabSlot
                   key={route.key}
                   icon={cfg.icon}
+                  label={label}
+                  a11yLabel={badge > 0 ? `${label}, ${badge} ${badgeNoun}` : label}
                   focused={focused}
-                  badge={route.name === 'chat' ? unread : 0}
+                  badge={badge}
                   onPress={() => onPress(idx)}
                   onLongPress={() => onLongPress(idx)}
                 />
@@ -170,17 +210,18 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 }
 
 // ── Tab slot ──────────────────────────────────────────────────────────────────
-function TabSlot({ icon, focused, badge, onPress, onLongPress }: {
-  icon: IconName; focused: boolean; badge: number;
+function TabSlot({ icon, label, a11yLabel, focused, badge, onPress, onLongPress }: {
+  icon: IconName; label: string; a11yLabel: string; focused: boolean; badge: number;
   onPress: () => void; onLongPress: () => void;
 }) {
   const tc = useThemeColors();
   const styles = useMemo(() => createStyles(tc), [tc]);
-  const opacity = useRef(new Animated.Value(focused ? 0 : 0.42)).current;
+  // The icon of the focused tab lives in the floating bubble, so only its label stays in the bar.
+  const opacity = useRef(new Animated.Value(focused ? 0 : 0.55)).current;
 
   useEffect(() => {
     Animated.spring(opacity, {
-      toValue: focused ? 0 : 0.42,
+      toValue: focused ? 0 : 0.55,
       ...SPRING,
     }).start();
   }, [focused]);
@@ -188,8 +229,9 @@ function TabSlot({ icon, focused, badge, onPress, onLongPress }: {
   return (
     <Pressable
       style={styles.slot}
-      accessibilityRole="button"
-      accessibilityState={focused ? { selected: true } : {}}
+      accessibilityRole="tab"
+      accessibilityLabel={a11yLabel}
+      accessibilityState={{ selected: focused }}
       onPress={onPress}
       onLongPress={onLongPress}
       hitSlop={8}
@@ -202,6 +244,14 @@ function TabSlot({ icon, focused, badge, onPress, onLongPress }: {
           </View>
         )}
       </Animated.View>
+      <DSText
+        variant="caption"
+        numberOfLines={1}
+        color={focused ? tc.text : tc.textSub}
+        style={styles.label}
+      >
+        {label}
+      </DSText>
     </Pressable>
   );
 }
@@ -246,9 +296,14 @@ const createStyles = (tc: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  label: {
+    fontSize: 10,
+    lineHeight: 12,
+    textAlign: 'center',
+  },
   iconWrap: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 28,
     alignItems: 'center',
     justifyContent: 'center',
   },
