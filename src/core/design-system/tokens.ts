@@ -13,6 +13,7 @@ export const TOKENS = {
     primaryMid: C.primaryMid,
     signal: C.signal,         // acento "señal", solo en gradiente con primary
     mint: C.mint,             // verificado / completado / en vivo
+    mintDeep: C.mintDeep,     // fin de la rampa de éxito (gradiente mint → mintDeep)
     /** @deprecated use useThemeColors() (tc.bg / tc.text / tc.textSub) */
     bg: C.legacy.bg,
     /** @deprecated use useThemeColors() (tc.bg / tc.text / tc.textSub) */

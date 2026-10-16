@@ -4,6 +4,7 @@ import { onlineManager } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/core/design-system';
+import { TOKENS } from '@/core/design-system/tokens';
 
 /**
  * Banda persistente arriba de la app cuando no hay conexión — se suscribe al
@@ -24,7 +25,7 @@ export function OfflineBanner() {
 
   return (
     <View style={[styles.banner, { paddingTop: insets.top + 8 }]} pointerEvents="none">
-      <Ionicons name="cloud-offline-outline" size={16} color="#fff" />
+      <Ionicons name="cloud-offline-outline" size={16} color={TOKENS.color.onPrimary} />
       <Text variant="caption" style={styles.text}>
         Sin conexión a internet
       </Text>
@@ -39,7 +40,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 999,
-    backgroundColor: '#B91C1C',
+    backgroundColor: TOKENS.color.error,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -47,7 +48,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   text: {
-    color: '#fff',
+    color: TOKENS.color.onPrimary,
     fontWeight: '600',
   },
 });

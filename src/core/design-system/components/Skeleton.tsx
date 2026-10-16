@@ -2,6 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Easing, DimensionValue } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MOTION } from '../motion';
+import { TOKENS } from '../tokens';
+import { withAlpha } from '../color';
+import { useThemeColors } from '@/stores/theme.store';
 
 export interface SkeletonProps {
   width?: DimensionValue;
@@ -15,6 +18,7 @@ export interface SkeletonProps {
  * nunca para reemplazar la lista entera.
  */
 export function Skeleton({ width = '100%', height = 14, radius = 8 }: SkeletonProps) {
+  const tc = useThemeColors();
   const shimmer = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -28,10 +32,10 @@ export function Skeleton({ width = '100%', height = 14, radius = 8 }: SkeletonPr
   const translateX = shimmer.interpolate({ inputRange: [0, 1], outputRange: [-200, 200] });
 
   return (
-    <View style={[styles.block, { width, height, borderRadius: radius }]}>
+    <View style={[styles.block, { width, height, borderRadius: radius, backgroundColor: tc.surface2 }]}>
       <Animated.View style={[StyleSheet.absoluteFillObject, { transform: [{ translateX }] }]}>
         <LinearGradient
-          colors={['transparent', 'rgba(255,45,111,0.18)', 'transparent']}
+          colors={['transparent', withAlpha(TOKENS.color.signal, 0.18), 'transparent']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={StyleSheet.absoluteFillObject}
@@ -55,7 +59,7 @@ export function SkeletonRow() {
 }
 
 const styles = StyleSheet.create({
-  block: { backgroundColor: 'rgba(255,255,255,0.06)', overflow: 'hidden' },
+  block: { overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   lines: { flex: 1, gap: 6 },
 });

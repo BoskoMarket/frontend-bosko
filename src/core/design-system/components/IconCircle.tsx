@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { TOKENS } from '../tokens';
 import { GRADIENTS } from '../gradients';
 import { MOTION } from '../motion';
+import { withAlpha } from '../color';
+import { useThemeColors } from '@/stores/theme.store';
 
 export type IconCircleVariant = 'neutral' | 'brand' | 'success' | 'danger';
 
@@ -27,6 +29,7 @@ export interface IconCircleProps {
  * - `danger`: status-cancelled-bg + borde. Eliminar cuenta, rechazos.
  */
 export function IconCircle({ name, variant = 'neutral', size = 80, iconSize, iconColor, style }: IconCircleProps) {
+  const tc = useThemeColors();
   const pop = useRef(new Animated.Value(variant === 'success' ? 0.4 : 1)).current;
   const resolvedIconSize = iconSize ?? Math.round(size * 0.42);
 
@@ -42,9 +45,9 @@ export function IconCircle({ name, variant = 'neutral', size = 80, iconSize, ico
     // Glow vive en un wrapper opaco separado — elevation de Android sobre un
     // fondo transparente dibuja una caja negra detrás (mismo fix que Button/Card).
     return (
-      <View style={[shell, styles.opaqueShadowBase, TOKENS.shadow.glow, style]}>
+      <View style={[shell, { backgroundColor: tc.bg }, TOKENS.shadow.glow, style]}>
         <LinearGradient colors={GRADIENTS.brand} style={shell}>
-          <Ionicons name={name} size={resolvedIconSize} color={iconColor ?? '#fff'} />
+          <Ionicons name={name} size={resolvedIconSize} color={iconColor ?? TOKENS.color.onPrimary} />
         </LinearGradient>
       </View>
     );
@@ -53,10 +56,10 @@ export function IconCircle({ name, variant = 'neutral', size = 80, iconSize, ico
   if (variant === 'success') {
     return (
       <Animated.View
-        style={[shell, styles.opaqueShadowBase, styles.successShadow, { opacity: pop, transform: [{ scale: pop }] }, style]}
+        style={[shell, { backgroundColor: tc.bg }, styles.successShadow, { opacity: pop, transform: [{ scale: pop }] }, style]}
       >
-        <LinearGradient colors={[TOKENS.color.mint, '#00b382']} style={shell}>
-          <Ionicons name={name} size={resolvedIconSize} color={iconColor ?? '#fff'} />
+        <LinearGradient colors={GRADIENTS.success} style={shell}>
+          <Ionicons name={name} size={resolvedIconSize} color={iconColor ?? TOKENS.color.onPrimary} />
         </LinearGradient>
       </Animated.View>
     );
@@ -72,22 +75,20 @@ export function IconCircle({ name, variant = 'neutral', size = 80, iconSize, ico
 
   // neutral
   return (
-    <View style={[shell, styles.neutralCircle, style]}>
+    <View style={[shell, { backgroundColor: tc.accent }, style]}>
       <Ionicons name={name} size={resolvedIconSize} color={iconColor ?? TOKENS.color.signal} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  opaqueShadowBase: { backgroundColor: '#0A0910' },
-  neutralCircle: { backgroundColor: 'rgba(255,45,111,0.14)' },
   dangerCircle: {
     backgroundColor: TOKENS.status.cancelled.bg,
     borderWidth: 2,
-    borderColor: 'rgba(255,77,77,0.35)',
+    borderColor: withAlpha(TOKENS.color.error, 0.35),
   },
   successShadow: {
-    shadowColor: '#00E5A0',
+    shadowColor: TOKENS.color.mint,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
     shadowRadius: 24,

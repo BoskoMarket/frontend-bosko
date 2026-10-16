@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { TOKENS } from '../tokens';
 import { GRADIENTS } from '../gradients';
 import { Text } from './Text';
+import { useThemeColors } from '@/stores/theme.store';
 
 export type StepStatus = 'done' | 'active' | 'pending';
 
@@ -17,9 +18,10 @@ export interface TimelineStep {
 /**
  * Timeline de pasos — OrderDetail, OrderStatus, KYCIntro, BecomeProvider.
  * Dot 28px + conector 2px. done → var(--brand) sólido, active → brand-gradient
- * con glow (0 0 12px rgba(255,45,111,.5)), pending → surface-2 + borde.
+ * con glow (TOKENS.color.signal), pending → surface-2 + borde.
  */
 export function StepTimeline({ steps }: { steps: TimelineStep[] }) {
+  const tc = useThemeColors();
   return (
     <View>
       {steps.map((step, i) => {
@@ -29,12 +31,12 @@ export function StepTimeline({ steps }: { steps: TimelineStep[] }) {
             <View style={styles.rail}>
               <Dot status={step.status} icon={step.icon} />
               {!isLast && (
-                <View style={[styles.connector, step.status === 'done' && styles.connectorDone]} />
+                <View style={[styles.connector, { backgroundColor: step.status === 'done' ? TOKENS.color.primary : tc.border }]} />
               )}
             </View>
             <Text
               variant={step.status === 'pending' ? 'body' : 'label'}
-              color={step.status === 'pending' ? 'rgba(237,234,245,0.55)' : '#EDEAF5'}
+              color={step.status === 'pending' ? tc.textSub : tc.text}
               style={styles.label}
             >
               {step.label}
@@ -47,17 +49,18 @@ export function StepTimeline({ steps }: { steps: TimelineStep[] }) {
 }
 
 function Dot({ status, icon }: { status: StepStatus; icon: TimelineStep['icon'] }) {
+  const tc = useThemeColors();
   if (status === 'pending') {
     return (
-      <View style={[styles.dot, styles.dotPending]}>
-        <Ionicons name={icon} size={12} color="rgba(237,234,245,0.3)" />
+      <View style={[styles.dot, styles.dotPending, { backgroundColor: tc.surface2, borderColor: tc.border }]}>
+        <Ionicons name={icon} size={12} color={tc.textMuted} />
       </View>
     );
   }
   return (
     <View style={[styles.dot, status === 'active' && styles.dotActiveGlow]}>
       <LinearGradient colors={GRADIENTS.brand} style={StyleSheet.absoluteFillObject} />
-      <Ionicons name={icon} size={12} color="#fff" style={{ zIndex: 1 }} />
+      <Ionicons name={icon} size={12} color={TOKENS.color.onPrimary} style={{ zIndex: 1 }} />
     </View>
   );
 }
@@ -73,11 +76,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  dotPending: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
+  dotPending: { borderWidth: 1 },
   dotActiveGlow: {
     shadowColor: TOKENS.color.signal,
     shadowOffset: { width: 0, height: 0 },
@@ -85,7 +84,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 6,
   },
-  connector: { width: 2, height: 22, backgroundColor: 'rgba(255,255,255,0.1)' },
-  connectorDone: { backgroundColor: TOKENS.color.primary },
+  connector: { width: 2, height: 22 },
   label: { paddingTop: 5, paddingBottom: 16 },
 });

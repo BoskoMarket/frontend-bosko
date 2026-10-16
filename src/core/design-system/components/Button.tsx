@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { TOKENS } from '../tokens';
 import { SPACING } from '../spacing';
 import { GRADIENTS } from '../gradients';
+import { withAlpha } from '../color';
 import { Text } from './Text';
 import { useThemeColors } from '@/stores/theme.store';
 
@@ -58,7 +59,7 @@ export function Button({
     ...(fullWidth ? { width: '100%' } : null),
   };
 
-  const textColor = variant === 'outline' || variant === 'ghost' ? '#FF2D6F' : '#fff';
+  const textColor = variant === 'outline' || variant === 'ghost' ? TOKENS.color.signal : TOKENS.color.onPrimary;
 
   const content = loading ? (
     <ActivityIndicator color={textColor} />
@@ -79,7 +80,7 @@ export function Button({
       // Android: elevation sin backgroundColor opaco dibuja una caja negra
       // detrás en vez de respetar el borderRadius — mismo fix que cards/inputs.
       backgroundColor: tc.bg,
-      shadowColor: '#FF2D6F',
+      shadowColor: TOKENS.color.signal,
       shadowOffset: { width: 0, height: pressed ? 4 : 8 },
       shadowOpacity: pressed ? 0.55 : 0.4,
       shadowRadius: pressed ? 30 : 24,
@@ -107,7 +108,7 @@ export function Button({
 
   if (variant === 'danger') {
     return (
-      <Pressable disabled={isDisabled} {...press} {...rest} style={[shell, { backgroundColor: '#FF4D4D', transform: [{ scale: pressed ? 0.97 : 1 }] }, style]}>
+      <Pressable disabled={isDisabled} {...press} {...rest} style={[shell, { backgroundColor: TOKENS.color.error, transform: [{ scale: pressed ? 0.97 : 1 }] }, style]}>
         {content}
       </Pressable>
     );
@@ -121,9 +122,9 @@ export function Button({
         {...press}
         {...rest}
         style={[shell, {
-          backgroundColor: pressed ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.06)',
+          backgroundColor: pressed ? tc.border : tc.surface2,
           borderWidth: 1,
-          borderColor: 'rgba(255,255,255,0.1)',
+          borderColor: tc.border,
         }, style]}
       >
         {loading ? <ActivityIndicator color={tc.text} /> : <>{icon}<Text variant="button" color={tc.text}>{label}</Text></>}
@@ -138,9 +139,9 @@ export function Button({
         {...press}
         {...rest}
         style={[shell, {
-          backgroundColor: pressed ? 'rgba(255,45,111,0.14)' : 'transparent',
+          backgroundColor: pressed ? tc.accent : 'transparent',
           borderWidth: 1.5,
-          borderColor: 'rgba(255,45,111,0.5)',
+          borderColor: withAlpha(TOKENS.color.signal, 0.5),
         }, style]}
       >
         {content}
@@ -154,7 +155,7 @@ export function Button({
       disabled={isDisabled}
       {...press}
       {...rest}
-      style={[shell, { backgroundColor: pressed ? 'rgba(255,45,111,0.14)' : 'transparent' }, style]}
+      style={[shell, { backgroundColor: pressed ? tc.accent : 'transparent' }, style]}
     >
       {content}
     </Pressable>
