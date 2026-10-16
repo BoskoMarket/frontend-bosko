@@ -46,6 +46,13 @@ describe('design system components', () => {
     expect(getByPlaceholderText('pw').props.secureTextEntry).toBe(false);
   });
 
+  it('Input supports multiline and merges a custom style onto the field', () => {
+    const { getByPlaceholderText } = render(<Input placeholder="desc" multiline style={{ minHeight: 200 }} />);
+    const field = getByPlaceholderText('desc');
+    expect(field.props.multiline).toBe(true);
+    expect(JSON.stringify(field.props.style)).toContain('"minHeight":200');
+  });
+
   it('EmptyState renders copy and fires CTAs', () => {
     const onCta = jest.fn();
     const onSecondary = jest.fn();

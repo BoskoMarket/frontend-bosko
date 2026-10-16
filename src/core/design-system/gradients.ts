@@ -1,3 +1,4 @@
+import { BRAND } from './brand/brand';
 import { TOKENS } from './tokens';
 import { withAlpha } from './color';
 
@@ -12,6 +13,10 @@ export const GRADIENTS = {
 
   // 3-stop — hero, splash, banners grandes
   brandDeep: [TOKENS.color.signal, TOKENS.color.primary, TOKENS.color.primaryDark] as const,
+
+  // Hero banners decorativos (texto blanco encima, igual en ambos temas)
+  aurora: BRAND.colors.hero.aurora,
+  midnight: BRAND.colors.hero.midnight,
 
   // Overlays sobre imagen/video (reels, hero) — derivados de TOKENS.scrim
   overlayFadeDown: ['transparent', TOKENS.scrim.strong] as const,

@@ -1,15 +1,16 @@
 import { Stack } from "expo-router";
-import { TOKENS } from "@/core/design-system/tokens";
+import { useThemeColors } from "@/core/design-system";
 
 export default function ServicesLayout() {
+  const tc = useThemeColors();
   return (
     <Stack
       screenOptions={{
         headerShown: false,
-        headerTintColor: TOKENS.color.text,
+        headerTintColor: tc.text,
         headerTitleAlign: "center",
         headerShadowVisible: false,
-        contentStyle: { backgroundColor: TOKENS.color.bg },
+        contentStyle: { backgroundColor: tc.bg },
       }}
     >
       <Stack.Screen

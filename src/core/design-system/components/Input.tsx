@@ -28,7 +28,7 @@ export interface InputProps extends TextInputProps {
  * Colores 100% theme-aware (`tc.*`) + tokens de marca.
  */
 export const Input = forwardRef<TextInput, InputProps>(
-  ({ label, error, containerStyle, leftIcon, rightIcon, onRightIconPress, secureTextEntry, ...rest }, ref) => {
+  ({ label, error, containerStyle, leftIcon, rightIcon, onRightIconPress, secureTextEntry, style, multiline, ...rest }, ref) => {
     const tc = useThemeColors();
     const [hidden, setHidden] = useState(secureTextEntry ?? false);
     const glow = React.useRef(new Animated.Value(0)).current;
@@ -57,6 +57,7 @@ export const Input = forwardRef<TextInput, InputProps>(
           <Animated.View
             style={[
               styles.wrap,
+              multiline && styles.wrapMultiline,
               { backgroundColor: tc.surface2, borderColor: tc.border },
               borderStyle,
               !!error && { borderColor: TOKENS.color.error },
@@ -65,7 +66,8 @@ export const Input = forwardRef<TextInput, InputProps>(
             {leftIcon ? <Ionicons name={leftIcon} size={19} color={iconColor} style={styles.leftIcon} /> : null}
             <TextInput
               ref={ref}
-              style={[styles.input, { color: tc.text }]}
+              style={[styles.input, multiline && styles.inputMultiline, { color: tc.text }, style]}
+              multiline={multiline}
               placeholderTextColor={withAlpha(tc.text, 0.4)}
               selectionColor={TOKENS.color.signal}
               onFocus={handleFocus}
@@ -118,7 +120,9 @@ const styles = StyleSheet.create({
     minHeight: 54,
     gap: SPACING.sm,
   },
+  wrapMultiline: { alignItems: 'flex-start' },
   leftIcon: { marginRight: 2 },
+  inputMultiline: { minHeight: 120, textAlignVertical: 'top' },
   input: { flex: 1, fontSize: 15, paddingVertical: SPACING.md },
   rightBtn: { paddingLeft: SPACING.sm },
 });

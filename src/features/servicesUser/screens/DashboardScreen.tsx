@@ -38,13 +38,20 @@ import { useNotifications } from '@/features/notifications/state/NotificationsCo
 import { openNotifications } from '@/stores/notificationsUI.store';
 import { fetchFeaturedServices } from '@/features/servicesUser/services/services';
 import type { ServiceSummary } from '@/types/services';
-import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors, useIsDark } from '@/stores/theme.store';
+import {
+  Button,
+  FONT_FAMILY,
+  GRADIENTS,
+  SectionHeader,
+  TOKENS,
+  useIsDark,
+  useThemeColors,
+  withAlpha,
+} from '@/core/design-system';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { RoleSelectionModal, ROLE_MODAL_SEEN_KEY } from '@/features/servicesUser/components/RoleSelectionModal';
 import { FeaturedCard } from '@/features/servicesUser/components/FeaturedCard';
-import { GRADIENTS } from '@/core/design-system';
 
 const { width: W } = Dimensions.get('window');
 
@@ -68,13 +75,13 @@ const HERO_SLIDES_CLIENT = [
   {
     id: '1', title: 'Encontrá el\nprofesional ideal', subtitle: 'Miles de expertos cerca tuyo',
     cta: 'Explorar', icon: 'search' as const,
-    gradient: [TOKENS.color.signal, TOKENS.color.primary, TOKENS.color.primaryDark] as const,
+    gradient: GRADIENTS.brandDeep,
     route: '/(tabs)/services' as const,
   },
   {
     id: '3', title: 'Gestión de\npedidos', subtitle: 'Seguí tus órdenes en tiempo real',
     cta: 'Ver pedidos', icon: 'clipboard' as const,
-    gradient: ['#2D1B69', '#11998E', '#38EF7D'] as const,
+    gradient: GRADIENTS.aurora,
     route: '/(tabs)/orders' as const,
   },
 ];
@@ -83,19 +90,19 @@ const HERO_SLIDES_PROVIDER = [
   {
     id: '1', title: 'Encontrá el\nprofesional ideal', subtitle: 'Miles de expertos cerca tuyo',
     cta: 'Explorar', icon: 'search' as const,
-    gradient: [TOKENS.color.signal, TOKENS.color.primary, TOKENS.color.primaryDark] as const,
+    gradient: GRADIENTS.brandDeep,
     route: '/(tabs)/services' as const,
   },
   {
     id: '2', title: 'Publicá\ntu servicio', subtitle: 'Llega a nuevos clientes hoy',
     cta: 'Publicar', icon: 'add-circle' as const,
-    gradient: ['#1A1A2E', '#16213E', '#0F3460'] as const,
+    gradient: GRADIENTS.midnight,
     route: '/service-form' as const,
   },
   {
     id: '3', title: 'Gestión de\npedidos', subtitle: 'Seguí tus órdenes en tiempo real',
     cta: 'Ver pedidos', icon: 'clipboard' as const,
-    gradient: ['#2D1B69', '#11998E', '#38EF7D'] as const,
+    gradient: GRADIENTS.aurora,
     route: '/(tabs)/orders' as const,
   },
 ];
@@ -103,16 +110,16 @@ const HERO_SLIDES_PROVIDER = [
 // Antes: pasteles sólidos (#E8F4FD + #2196F3, etc). Ahora: vidrio uniforme +
 // ícono tintado en signal/mint — coherente con la superficie glass del resto.
 const QUICK_ACTIONS_CLIENT = [
-  { id: 'search', label: 'Buscar',   icon: 'search' as const,      iconColor: '#4C9DFF' },
-  { id: 'orders', label: 'Pedidos',  icon: 'list' as const,        iconColor: '#00E5A0' },
-  { id: 'chat',   label: 'Mensajes', icon: 'chatbubbles' as const, iconColor: '#FFB020' },
+  { id: 'search', label: 'Buscar',   icon: 'search' as const,      iconColor: TOKENS.color.info },
+  { id: 'orders', label: 'Pedidos',  icon: 'list' as const,        iconColor: TOKENS.color.mint },
+  { id: 'chat',   label: 'Mensajes', icon: 'chatbubbles' as const, iconColor: TOKENS.color.warning },
 ];
 
 const QUICK_ACTIONS_PROVIDER = [
-  { id: 'search', label: 'Buscar',   icon: 'search' as const,      iconColor: '#4C9DFF' },
-  { id: 'post',   label: 'Publicar', icon: 'add-circle' as const,  iconColor: '#FF2D6F' },
-  { id: 'orders', label: 'Pedidos',  icon: 'list' as const,        iconColor: '#00E5A0' },
-  { id: 'chat',   label: 'Mensajes', icon: 'chatbubbles' as const, iconColor: '#FFB020' },
+  { id: 'search', label: 'Buscar',   icon: 'search' as const,      iconColor: TOKENS.color.info },
+  { id: 'post',   label: 'Publicar', icon: 'add-circle' as const,  iconColor: TOKENS.color.signal },
+  { id: 'orders', label: 'Pedidos',  icon: 'list' as const,        iconColor: TOKENS.color.mint },
+  { id: 'chat',   label: 'Mensajes', icon: 'chatbubbles' as const, iconColor: TOKENS.color.warning },
 ];
 
 function getGreeting(): string {
@@ -120,20 +127,6 @@ function getGreeting(): string {
   if (h < 12) return 'Buenos días';
   if (h < 18) return 'Buenas tardes';
   return 'Buenas noches';
-}
-
-function SectionHeader({ title, onPress }: { title: string; onPress?: () => void }) {
-  const tc = useThemeColors();
-  return (
-    <View style={ds.sectionRow}>
-      <Text style={[ds.sectionTitle, { color: tc.text }]}>{title}</Text>
-      {onPress && (
-        <Pressable onPress={onPress} hitSlop={8}>
-          <Text style={[ds.sectionLink, { color: TOKENS.color.signal }]}>Ver todo</Text>
-        </Pressable>
-      )}
-    </View>
-  );
 }
 
 function resolveCategoryIcon(icon?: string): React.ComponentProps<typeof Ionicons>['name'] {
@@ -167,13 +160,13 @@ function CategoryTile({
         style={[
           ds.categoryTile,
           featured
-            ? { backgroundColor: tc.card, borderColor: 'rgba(255,45,111,0.45)' }
+            ? { backgroundColor: tc.card, borderColor: withAlpha(TOKENS.color.signal, 0.45) }
             : { backgroundColor: tc.surface2, borderColor: tc.border },
         ]}
       >
         {featured ? (
           <LinearGradient colors={GRADIENTS.brand} style={[ds.categoryIconWrap, ds.categoryIconGlow]}>
-            <Ionicons name={iconName} size={18} color="#fff" />
+            <Ionicons name={iconName} size={18} color={TOKENS.color.onPrimary} />
           </LinearGradient>
         ) : (
           <View style={[ds.categoryIconWrap, { backgroundColor: tc.accent }]}>
@@ -211,6 +204,7 @@ function FeaturedServiceCard({ item, categoryIcon, delay }: { item: ServiceSumma
 function QuickActionBtn({
   icon, label, iconColor, onPress, delay,
 }: { icon: React.ComponentProps<typeof Ionicons>['name']; label: string; iconColor: string; onPress: () => void; delay: number }) {
+  const tc = useThemeColors();
   const anim = useRef(new Animated.Value(0)).current;
   const scaleA = useRef(new Animated.Value(1)).current;
 
@@ -226,7 +220,7 @@ function QuickActionBtn({
         onPress={onPress}
         style={ds.qaBtn}
       >
-        <Animated.View style={[ds.qaIcon, { transform: [{ scale: scaleA }] }]}>
+        <Animated.View style={[ds.qaIcon, { backgroundColor: tc.surface2, borderColor: tc.border, transform: [{ scale: scaleA }] }]}>
           <Ionicons name={icon} size={22} color={iconColor} />
         </Animated.View>
         <QALabel label={label} />
@@ -342,7 +336,7 @@ export default function DashboardScreen() {
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="light-content" backgroundColor={C.bg} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={C.bg} />
       <AnimatedBackground variant="app" />
 
       <Animated.View style={[s.header, sectionStyle(0)]}>
@@ -350,7 +344,7 @@ export default function DashboardScreen() {
           {profile?.avatarUrl ? (
             <Image source={{ uri: profile.avatarUrl }} style={s.avatar} contentFit="cover" />
           ) : (
-            <LinearGradient colors={[TOKENS.color.signal, TOKENS.color.primary]} style={s.avatarGrad}>
+            <LinearGradient colors={GRADIENTS.brand} style={s.avatarGrad}>
               <Text style={s.avatarInitial}>{(profile?.firstName?.[0] ?? 'U').toUpperCase()}</Text>
             </LinearGradient>
           )}
@@ -371,14 +365,14 @@ export default function DashboardScreen() {
           <Ionicons name="search-outline" size={18} color={C.sub} />
           <Text style={s.searchPlaceholder}>Buscar servicios, profesionales…</Text>
           <View style={s.searchFilter}>
-            <Ionicons name="options-outline" size={16} color="#fff" />
+            <Ionicons name="options-outline" size={16} color={TOKENS.color.onPrimary} />
           </View>
         </Pressable>
       </Animated.View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 90 }]}>
         <Animated.View style={[s.section, sectionStyle(1)]}>
-          <SectionHeader title="Categorías" onPress={() => router.push('/(tabs)/services')} />
+          <SectionHeader title="Categorías" onActionPress={() => router.push('/(tabs)/services')} style={ds.sectionRow} />
           {categoriesQuery.isLoading && !categories.length ? (
             <View style={s.categoryGrid}>
               {[0, 1, 2, 3, 4, 5].map(i => (
@@ -436,7 +430,7 @@ export default function DashboardScreen() {
         </Animated.View>
 
         <Animated.View style={[s.section, sectionStyle(4)]}>
-          <SectionHeader title="Servicios populares" onPress={() => router.push('/(tabs)/services')} />
+          <SectionHeader title="Servicios populares" onActionPress={() => router.push('/(tabs)/services')} style={ds.sectionRow} />
           {featuredLoading ? (
             <SkeletonGrid s={s} C={C} />
           ) : featuredError ? (
@@ -478,9 +472,7 @@ function ErrorBanner({ message, onRetry, C }: { message: string; onRetry: () => 
     <View style={{ alignItems: 'center', paddingVertical: 24, gap: 10 }}>
       <Ionicons name="cloud-offline-outline" size={32} color={C.sub} />
       <Text style={{ color: C.sub, fontSize: 13 }}>{message}</Text>
-      <Pressable onPress={onRetry} style={{ backgroundColor: C.signal, borderRadius: 10, paddingHorizontal: 18, paddingVertical: 8 }}>
-        <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Reintentar</Text>
-      </Pressable>
+      <Button label="Reintentar" size="sm" onPress={onRetry} />
     </View>
   );
 }
@@ -497,7 +489,7 @@ function HeroSlide({ slide, s, C }: { slide: typeof HERO_SLIDES_CLIENT[number] |
 
           <View style={s.heroContent}>
             <View style={s.heroIconWrap}>
-              <Ionicons name={slide.icon} size={26} color="rgba(255,255,255,0.9)" />
+              <Ionicons name={slide.icon} size={26} color={TOKENS.onMedia.icon} />
             </View>
             <Text style={s.heroTitle}>{slide.title}</Text>
             <Text style={s.heroSubtitle}>{slide.subtitle}</Text>
@@ -529,7 +521,7 @@ function CTABanner({ s }: { s: ReturnType<typeof makeStyles> }) {
       onPress={() => router.push('/(tabs)/profile')}
     >
       <Animated.View style={{ transform: [{ scale: scaleA }] }}>
-        <LinearGradient colors={['#FF2D6F', '#850021', '#3C0014']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.ctaBanner}>
+        <LinearGradient colors={GRADIENTS.brandDeep} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.ctaBanner}>
           <View style={s.ctaLeft}>
             <Text style={s.ctaTitle}>¿Ofrecés servicios?</Text>
             <Text style={s.ctaSub}>Publicá tu perfil y conseguí más clientes</Text>
@@ -547,15 +539,16 @@ function CTABanner({ s }: { s: ReturnType<typeof makeStyles> }) {
 }
 
 function SkeletonGrid({ s, C }: { s: ReturnType<typeof makeStyles>; C: CPalette }) {
+  const tc = useThemeColors();
   return (
     <View style={s.servicesGrid}>
       {Array.from({ length: 4 }).map((_, i) => (
         <View key={i} style={[s.serviceCardShadow, { width: (W - 48) / 2, backgroundColor: C.card }]}>
-          <View style={[s.serviceCard, { backgroundColor: 'rgba(255,255,255,0.045)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.09)' }]}>
-            <View style={[s.serviceThumb, { backgroundColor: 'rgba(255,255,255,0.06)' }]} />
+          <View style={[s.serviceCard, { backgroundColor: tc.card, borderWidth: 1, borderColor: tc.cardBorder }]}>
+            <View style={[s.serviceThumb, { backgroundColor: tc.surface2 }]} />
             <View style={s.serviceInfo}>
-              <View style={{ height: 12, width: '80%', backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 6, marginBottom: 6 }} />
-              <View style={{ height: 10, width: '50%', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 6 }} />
+              <View style={{ height: 12, width: '80%', backgroundColor: tc.surface2, borderRadius: 6, marginBottom: 6 }} />
+              <View style={{ height: 10, width: '50%', backgroundColor: tc.surface2, borderRadius: 6 }} />
             </View>
           </View>
         </View>
@@ -565,16 +558,14 @@ function SkeletonGrid({ s, C }: { s: ReturnType<typeof makeStyles>; C: CPalette 
 }
 
 const ds = StyleSheet.create({
-  sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', fontFamily: 'Archivo_700Bold', letterSpacing: -0.2 },
-  sectionLink: { fontSize: 13, fontWeight: '500' },
+  sectionRow: { marginBottom: 14 },
   categoryTile: { flex: 1, borderRadius: 18, borderWidth: 1.5, padding: 13, paddingHorizontal: 10, gap: 9 },
   categoryIconWrap: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  categoryIconGlow: { shadowColor: '#FF2D6F', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.35, shadowRadius: 14, elevation: 4 },
-  categoryTileName: { fontSize: 12, fontWeight: '700', fontFamily: 'Archivo_700Bold', lineHeight: 15 },
-  categoryTileCount: { fontSize: 11, fontFamily: 'JetBrainsMono_500Medium', fontWeight: '700' },
+  categoryIconGlow: { shadowColor: TOKENS.color.signal, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.35, shadowRadius: 14, elevation: 4 },
+  categoryTileName: { fontSize: 12, fontWeight: '700', fontFamily: FONT_FAMILY.heading, lineHeight: 15 },
+  categoryTileCount: { fontSize: 11, fontFamily: FONT_FAMILY.mono, fontWeight: '700' },
   qaBtn: { alignItems: 'center', gap: 7 },
-  qaIcon: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  qaIcon: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
   qaLabel: { fontSize: 11.5, fontWeight: '500' },
 });
 
@@ -583,14 +574,14 @@ function makeStyles(C: CPalette) { return StyleSheet.create({
 
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 6 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  avatar: { width: 42, height: 42, borderRadius: 14, borderWidth: 2, borderColor: C.signal + '30' },
+  avatar: { width: 42, height: 42, borderRadius: 14, borderWidth: 2, borderColor: withAlpha(C.signal, 0.19) },
   avatarGrad: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  avatarInitial: { color: '#fff', fontSize: 17, fontWeight: '700', fontFamily: 'Archivo_700Bold' },
-  greeting: { fontSize: 11, fontFamily: 'JetBrainsMono_500Medium', letterSpacing: 1, textTransform: 'uppercase', color: C.sub, marginBottom: 3 },
-  userName: { fontSize: 16, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: C.text },
+  avatarInitial: { color: TOKENS.color.onPrimary, fontSize: 17, fontWeight: '700', fontFamily: FONT_FAMILY.heading },
+  greeting: { fontSize: 11, fontFamily: FONT_FAMILY.mono, letterSpacing: 1, textTransform: 'uppercase', color: C.sub, marginBottom: 3 },
+  userName: { fontSize: 16, fontWeight: '700', fontFamily: FONT_FAMILY.heading, color: C.text },
   notifBtn: {
     width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: C.surface2, borderWidth: 1, borderColor: C.border,
   },
   notifDot: { position: 'absolute', top: 9, right: 9, width: 7, height: 7, borderRadius: 3.5, backgroundColor: C.signal, borderWidth: 1.5, borderColor: C.bg },
 
@@ -606,44 +597,38 @@ function makeStyles(C: CPalette) { return StyleSheet.create({
 
   heroSlide: { width: '100%', height: 224, borderRadius: 26, overflow: 'hidden' },
   heroGrad: { flex: 1, padding: 24, justifyContent: 'flex-end', overflow: 'hidden' },
-  heroBubble: { position: 'absolute', borderRadius: 999, backgroundColor: '#FFFFFF' },
+  heroBubble: { position: 'absolute', borderRadius: 999, backgroundColor: TOKENS.onMedia.solid },
   heroContent: { gap: 6 },
-  heroIconWrap: { width: 38, height: 38, borderRadius: 13, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
-  heroTitle: { fontSize: 22, fontWeight: '800', fontFamily: 'Archivo_800ExtraBold', color: '#FFFFFF', lineHeight: 28, letterSpacing: -0.4 },
-  heroSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginBottom: 4 },
-  heroCta: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#FFFFFF', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7, alignSelf: 'flex-start' },
+  heroIconWrap: { width: 38, height: 38, borderRadius: 13, backgroundColor: TOKENS.onMedia.fill, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
+  heroTitle: { fontSize: 22, fontWeight: '800', fontFamily: FONT_FAMILY.display, color: TOKENS.onMedia.text, lineHeight: 28, letterSpacing: -0.4 },
+  heroSubtitle: { fontSize: 13, color: TOKENS.onMedia.textSub, marginBottom: 4 },
+  heroCta: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: TOKENS.onMedia.solid, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7, alignSelf: 'flex-start' },
   heroCtaText: { fontSize: 13, fontWeight: '700', color: C.primary },
 
   dotsRow: { flexDirection: 'row', justifyContent: 'center', gap: 6, paddingTop: 12, paddingBottom: 2 },
   dot: { height: 5, borderRadius: 2.5 },
   dotActive: { width: 20, backgroundColor: C.signal },
-  dotInactive: { width: 5, backgroundColor: 'rgba(255,255,255,0.18)' },
+  dotInactive: { width: 5, backgroundColor: C.border },
 
   section: { paddingHorizontal: 16, marginTop: 20 },
-  sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', fontFamily: 'Archivo_700Bold', color: C.text, letterSpacing: -0.2 },
-  sectionLink: { fontSize: 13, fontWeight: '500', color: C.signal },
 
   qaRow: { flexDirection: 'row', gap: 8 },
-  qaBtn: { alignItems: 'center', gap: 7 },
-  qaIcon: { width: 54, height: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  qaLabel: { fontSize: 11.5, fontWeight: '500', color: C.text },
 
   categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 9 },
   categoryTileSkeleton: { width: '31%', height: 92, borderRadius: 18 },
 
   servicesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
-  serviceCardShadow: { borderRadius: 22, shadowColor: '#FF2D6F', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.14, shadowRadius: 18, elevation: 4 },
+  serviceCardShadow: { borderRadius: 22, shadowColor: TOKENS.color.signal, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.14, shadowRadius: 18, elevation: 4 },
   serviceCard: { borderRadius: 22, overflow: 'hidden' },
   serviceThumb: { width: '100%', height: 110, alignItems: 'center', justifyContent: 'center' },
   serviceInfo: { padding: 11, gap: 5 },
 
   ctaBanner: { borderRadius: 26, padding: 22, overflow: 'hidden', minHeight: 120 },
   ctaLeft: { flex: 1, gap: 4, zIndex: 1 },
-  ctaTitle: { fontSize: 18, fontWeight: '800', fontFamily: 'Archivo_800ExtraBold', color: '#FFFFFF', letterSpacing: -0.3 },
-  ctaSub: { fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 19, marginBottom: 10 },
-  ctaBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#FFFFFF', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7, alignSelf: 'flex-start' },
+  ctaTitle: { fontSize: 18, fontWeight: '800', fontFamily: FONT_FAMILY.display, color: TOKENS.onMedia.text, letterSpacing: -0.3 },
+  ctaSub: { fontSize: 13, color: TOKENS.onMedia.textSub, lineHeight: 19, marginBottom: 10 },
+  ctaBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: TOKENS.onMedia.solid, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7, alignSelf: 'flex-start' },
   ctaBtnText: { fontSize: 13, fontWeight: '700', color: C.primary },
-  ctaBubble1: { position: 'absolute', width: 120, height: 120, borderRadius: 60, backgroundColor: 'rgba(255,255,255,0.08)', right: -20, top: -20 },
-  ctaBubble2: { position: 'absolute', width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(255,255,255,0.06)', right: 50, bottom: -20 },
+  ctaBubble1: { position: 'absolute', width: 120, height: 120, borderRadius: 60, backgroundColor: TOKENS.onMedia.fillFaint, right: -20, top: -20 },
+  ctaBubble2: { position: 'absolute', width: 80, height: 80, borderRadius: 40, backgroundColor: TOKENS.onMedia.fillFaint, right: 50, bottom: -20 },
 }); }

@@ -17,7 +17,7 @@ import {
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { TOKENS, GRADIENTS, useThemeColors } from '@/core/design-system';
+import { Badge, FONT_FAMILY, GRADIENTS, SPACING, TOKENS, useThemeColors } from '@/core/design-system';
 
 interface FeaturedCardProps {
   title: string;
@@ -85,12 +85,10 @@ export function FeaturedCard({
               <View style={s.panelBlob} />
             </LinearGradient>
           )}
-          <Ionicons name={icon} size={34} color="rgba(255,255,255,0.9)" />
+          <Ionicons name={icon} size={34} color={TOKENS.onMedia.icon} />
 
           {verified && (
-            <View style={s.verifiedPill}>
-              <Text style={s.verifiedText}>VERIFICADO</Text>
-            </View>
+            <Badge label="VERIFICADO" tone="done" size="sm" style={s.verifiedPill} />
           )}
 
           {onToggleFavorite && (
@@ -99,7 +97,7 @@ export function FeaturedCard({
                 <Ionicons
                   name={isFavorite ? 'heart' : 'heart-outline'}
                   size={14}
-                  color={isFavorite ? TOKENS.color.signal : 'rgba(255,255,255,0.9)'}
+                  color={isFavorite ? TOKENS.color.signal : TOKENS.onMedia.icon}
                 />
               </Animated.View>
             </Pressable>
@@ -122,7 +120,7 @@ export function FeaturedCard({
 
 const s = StyleSheet.create({
   card: {
-    borderRadius: 22,
+    borderRadius: TOKENS.radius.lg,
     overflow: 'hidden',
     borderWidth: 1,
   },
@@ -137,28 +135,15 @@ const s = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: '#fff',
+    backgroundColor: TOKENS.onMedia.solid,
     opacity: 0.08,
     bottom: -34,
     left: -24,
   },
   verifiedPill: {
     position: 'absolute',
-    top: 9,
-    left: 9,
-    backgroundColor: 'rgba(0,229,160,0.16)',
-    borderWidth: 1,
-    borderColor: 'rgba(0,229,160,0.4)',
-    borderRadius: 99,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  verifiedText: {
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.6,
-    color: TOKENS.color.mint,
-    fontFamily: 'JetBrainsMono_500Medium',
+    top: SPACING.sm + 1,
+    left: SPACING.sm + 1,
   },
   heartBtn: {
     position: 'absolute',
@@ -167,7 +152,7 @@ const s = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: 'rgba(0,0,0,0.35)',
+    backgroundColor: TOKENS.scrim.light,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -178,7 +163,7 @@ const s = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
     color: TOKENS.color.mint,
-    fontFamily: 'JetBrainsMono_500Medium',
+    fontFamily: FONT_FAMILY.mono,
   },
   divider: { height: 1 },
   ctaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },

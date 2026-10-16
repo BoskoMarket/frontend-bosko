@@ -10,10 +10,7 @@ import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { FullScreenModal } from '@/core/design-system';
-import { TOKENS } from '@/core/design-system/tokens';
-import { GRADIENTS } from '@/core/design-system/gradients';
-import { useThemeColors } from '@/stores/theme.store';
+import { FullScreenModal, GRADIENTS, TOKENS, useThemeColors } from '@/core/design-system';
 
 export const ROLE_MODAL_SEEN_KEY = 'BOSKO_ROLE_MODAL_SEEN';
 
@@ -56,7 +53,7 @@ export function RoleSelectionModal({ visible, onSelectClient, onSelectProvider }
               <Ionicons name="close" size={18} color={tc.textSub} />
             </Pressable>
 
-            <View style={styles.iconWrap}>
+            <View style={[styles.iconWrap, { backgroundColor: tc.accent }]}>
               <Ionicons name="hand-left" size={30} color={TOKENS.color.signal} />
             </View>
 
@@ -68,13 +65,13 @@ export function RoleSelectionModal({ visible, onSelectClient, onSelectProvider }
             <Pressable onPress={onSelectProvider} style={styles.optionShadow}>
               <LinearGradient colors={GRADIENTS.brand} style={styles.optionCard}>
                 <View style={styles.optionIconWrap}>
-                  <Ionicons name="briefcase" size={22} color="#fff" />
+                  <Ionicons name="briefcase" size={22} color={TOKENS.color.onPrimary} />
                 </View>
                 <View style={styles.optionText}>
                   <Text style={styles.optionTitle}>Quiero ofrecer servicios</Text>
                   <Text style={styles.optionSub}>Publicá lo que sabés hacer y recibí clientes</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.85)" />
+                <Ionicons name="chevron-forward" size={20} color={TOKENS.onMedia.textSub} />
               </LinearGradient>
             </Pressable>
 
@@ -82,7 +79,7 @@ export function RoleSelectionModal({ visible, onSelectClient, onSelectProvider }
               onPress={onSelectClient}
               style={[styles.optionCardOutline, { borderColor: tc.border, backgroundColor: tc.surface2 }]}
             >
-              <View style={[styles.optionIconWrap, { backgroundColor: 'rgba(255,45,111,0.12)' }]}>
+              <View style={[styles.optionIconWrap, { backgroundColor: tc.accent }]}>
                 <Ionicons name="search" size={22} color={TOKENS.color.signal} />
               </View>
               <View style={styles.optionText}>
@@ -101,7 +98,7 @@ export function RoleSelectionModal({ visible, onSelectClient, onSelectProvider }
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: TOKENS.scrim.medium,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
@@ -127,7 +124,6 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: 'rgba(255,45,111,0.14)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
@@ -159,11 +155,11 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 13,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: TOKENS.onMedia.fill,
     alignItems: 'center',
     justifyContent: 'center',
   },
   optionText: { flex: 1, gap: 2 },
-  optionTitle: { fontSize: 15, fontWeight: '700', color: '#fff' },
-  optionSub: { fontSize: 12, color: 'rgba(255,255,255,0.8)' },
+  optionTitle: { fontSize: 15, fontWeight: '700', color: TOKENS.color.onPrimary },
+  optionSub: { fontSize: 12, color: TOKENS.onMedia.textSub },
 });

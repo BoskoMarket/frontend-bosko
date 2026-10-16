@@ -1,5 +1,6 @@
 import React, { useCallback } from "react";
 import { AccessibilityActionEvent, Pressable, StyleSheet, Text, View } from "react-native";
+import { SPACING, TOKENS, useThemeColors } from "@/core/design-system";
 
 type StarRatingProps = {
   value: number;
@@ -18,6 +19,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
   editable = true,
   label = "Calificación",
 }) => {
+  const tc = useThemeColors();
   const roundedValue = Math.round(value);
 
   const handleAccessibilityAction = useCallback(
@@ -68,7 +70,7 @@ export const StarRating: React.FC<StarRatingProps> = ({
             style={[
               styles.star,
               { fontSize: size },
-              filled ? styles.starFilled : styles.starEmpty,
+              { color: filled ? TOKENS.color.rating : tc.textMuted },
             ]}
           >
             {filled ? "★" : "☆"}
@@ -109,18 +111,10 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: SPACING.sm,
   },
   starWrapper: {
     padding: 2,
   },
-  star: {
-    color: "#F59E0B",
-  },
-  starFilled: {
-    color: "#F59E0B",
-  },
-  starEmpty: {
-    color: "#D1D5DB",
-  },
+  star: {},
 });

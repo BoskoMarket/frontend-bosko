@@ -9,11 +9,8 @@ import {
   Image,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   View,
   Pressable,
-  Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { LinearGradient } from "expo-linear-gradient";
@@ -25,15 +22,12 @@ import { uploadServiceImages } from "@/features/servicesUser/services/service";
 import { useCategories, useMyServices, useUpdateService } from "@/hooks/queries/useMarketplaceQuery";
 import { useAddServiceWithPlanLimit } from "@/features/servicesUser/hooks/useAddServiceWithPlanLimit";
 import { fetchServiceById } from "../services/services";
-import { TOKENS } from '@/core/design-system/tokens';
-import { GRADIENTS } from '@/core/design-system/gradients';
-import { useThemeColors } from '@/stores/theme.store';
+import { Button, Card, Chip, GRADIENTS, Input, SPACING, Text, TOKENS, useThemeColors } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
 import { toast } from '@/core/components/Toast';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
-const BRAND = TOKENS.color.signal;
 const MIN_DESCRIPTION = 20;
 
 type FormState = {
@@ -51,6 +45,20 @@ const EMPTY_FORM: FormState = {
   categoryId: undefined,
   image: undefined,
 };
+
+/** Titled surface used by every block of the form. */
+function FormCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+  const tc = useThemeColors();
+  return (
+    <Card>
+      <View style={styles.cardBody}>
+        <Text variant="subtitle" color={tc.text}>{title}</Text>
+        {subtitle ? <Text variant="bodySmall" color={tc.textSub} style={styles.cardSubtitle}>{subtitle}</Text> : null}
+        {children}
+      </View>
+    </Card>
+  );
+}
 
 function extractPrice(price: any): string {
   if (price == null) return '';
@@ -244,82 +252,61 @@ export default function ServiceFormScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Datos principales */}
-        <View style={[styles.card, { backgroundColor: tc.card }]}>
-          <Text style={[styles.cardTitle, { color: tc.text }]}>Información del servicio</Text>
-
-          <Text style={[styles.label, { color: tc.textSub }]}>Título *</Text>
-          <TextInput
-            style={[styles.input, { color: tc.text, borderColor: tc.border, backgroundColor: tc.surface2 }]}
+        <FormCard title="Información del servicio">
+          <Input
+            label="Título *"
             placeholder="Ej: Plomería de urgencia"
-            placeholderTextColor={tc.textMuted}
             value={form.title}
             onChangeText={(t) => setForm((p) => ({ ...p, title: t }))}
           />
 
-          <Text style={[styles.label, { color: tc.textSub }]}>Descripción *</Text>
-          <TextInput
-            style={[styles.input, styles.textArea, { color: tc.text, borderColor: tc.border, backgroundColor: tc.surface2 }]}
+          <Input
+            label="Descripción *"
             placeholder="Contá qué incluye tu servicio, cuánto tardás, qué materiales usás…"
-            placeholderTextColor={tc.textMuted}
             value={form.description}
             multiline
             numberOfLines={5}
             textAlignVertical="top"
             onChangeText={(t) => setForm((p) => ({ ...p, description: t }))}
           />
-          <Text style={[styles.hint, { color: tc.textMuted }]}>
+          <Text variant="caption" color={tc.textMuted}>
             {form.description.trim().length}/{MIN_DESCRIPTION} caracteres mínimos
           </Text>
-        </View>
+        </FormCard>
 
         {/* Precio */}
-        <View style={[styles.card, { backgroundColor: tc.card }]}>
-          <Text style={[styles.cardTitle, { color: tc.text }]}>Precio</Text>
-          <Text style={[styles.cardSubtitle, { color: tc.textSub }]}>
-            Podés dejar el precio en blanco si preferís cotizar por chat.
-          </Text>
-          <TextInput
-            style={[styles.input, { color: tc.text, borderColor: tc.border, backgroundColor: tc.surface2 }]}
+        <FormCard
+          title="Precio"
+          subtitle="Podés dejar el precio en blanco si preferís cotizar por chat."
+        >
+          <Input
             placeholder="Ej: 5000 (opcional)"
-            placeholderTextColor={tc.textMuted}
             keyboardType="numeric"
             value={form.price}
             onChangeText={(t) => setForm((p) => ({ ...p, price: t.replace(/[^0-9.,]/g, "") }))}
           />
-        </View>
+        </FormCard>
 
         {/* Categoría */}
-        <View style={[styles.card, { backgroundColor: tc.card }]}>
-          <Text style={[styles.cardTitle, { color: tc.text }]}>Categoría *</Text>
+        <FormCard title="Categoría *">
           {categoriesLoading ? (
-            <ActivityIndicator color={BRAND} style={{ marginVertical: 8 }} />
+            <ActivityIndicator color={TOKENS.color.signal} style={{ marginVertical: SPACING.sm }} />
           ) : (
             <View style={styles.chipsWrap}>
-              {categories.map((cat) => {
-                const selected = form.categoryId === cat.id;
-                return (
-                  <Pressable
-                    key={cat.id}
-                    style={[styles.chip, selected && styles.chipSelected, !selected && { backgroundColor: tc.card, borderColor: tc.border }]}
-                    onPress={() => setForm((p) => ({ ...p, categoryId: cat.id }))}
-                  >
-                    {cat.icon ? (
-                      <Text style={styles.chipIcon}>{cat.icon}</Text>
-                    ) : null}
-                    <Text style={[styles.chipText, selected && styles.chipTextSelected, !selected && { color: tc.textSub }]}>
-                      {cat.name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+              {categories.map((cat) => (
+                <Chip
+                  key={cat.id}
+                  label={cat.icon ? `${cat.icon} ${cat.name}` : cat.name}
+                  selected={form.categoryId === cat.id}
+                  onPress={() => setForm((p) => ({ ...p, categoryId: cat.id }))}
+                />
+              ))}
             </View>
           )}
-        </View>
+        </FormCard>
 
         {/* Imagen principal */}
-        <View style={[styles.card, { backgroundColor: tc.card }]}>
-          <Text style={[styles.cardTitle, { color: tc.text }]}>Foto principal</Text>
-          <Text style={[styles.cardSubtitle, { color: tc.textSub }]}>Una imagen que represente tu servicio.</Text>
+        <FormCard title="Foto principal" subtitle="Una imagen que represente tu servicio.">
           <Pressable style={[styles.imagePicker, { backgroundColor: tc.surface2 }]} onPress={handlePickImage}>
             {imageUri ? (
               <>
@@ -331,17 +318,14 @@ export default function ServiceFormScreen() {
             ) : (
               <View style={[styles.imagePlaceholder, { borderColor: tc.border }]}>
                 <Text style={styles.imagePlaceholderIcon}>📷</Text>
-                <Text style={[styles.imagePlaceholderText, { color: tc.textMuted }]}>Tocá para agregar una foto</Text>
+                <Text variant="body" weight="500" color={tc.textMuted}>Tocá para agregar una foto</Text>
               </View>
             )}
           </Pressable>
-        </View>
+        </FormCard>
 
         {/* Galería */}
-        <View style={[styles.card, { backgroundColor: tc.card }]}>
-          <Text style={[styles.cardTitle, { color: tc.text }]}>Galería de trabajos</Text>
-          <Text style={[styles.cardSubtitle, { color: tc.textSub }]}>Subí hasta 5 fotos mostrando tus trabajos anteriores.</Text>
-
+        <FormCard title="Galería de trabajos" subtitle="Subí hasta 5 fotos mostrando tus trabajos anteriores.">
           <View style={styles.galleryGrid}>
             {galleryImages.map((uri, i) => (
               <View key={i} style={styles.galleryThumbWrap}>
@@ -377,8 +361,13 @@ export default function ServiceFormScreen() {
           </View>
 
           {galleryImages.length > 0 && isEditing && selectedService?.id && (
-            <Pressable
-              style={[styles.outlineBtn, uploadingImages && { opacity: 0.5 }]}
+            <Button
+              variant="outline"
+              size="sm"
+              fullWidth
+              label={`Subir ${galleryImages.length} imagen${galleryImages.length !== 1 ? "es" : ""}`}
+              loading={uploadingImages}
+              disabled={uploadingImages}
               onPress={async () => {
                 if (!selectedService?.id || uploadingImages) return;
                 setUploadingImages(true);
@@ -392,23 +381,14 @@ export default function ServiceFormScreen() {
                   setUploadingImages(false);
                 }
               }}
-              disabled={uploadingImages}
-            >
-              {uploadingImages ? (
-                <ActivityIndicator color={BRAND} size="small" />
-              ) : (
-                <Text style={styles.outlineBtnText}>
-                  Subir {galleryImages.length} imagen{galleryImages.length !== 1 ? "es" : ""}
-                </Text>
-              )}
-            </Pressable>
+            />
           )}
           {galleryImages.length > 0 && !isEditing && (
-            <Text style={[styles.hint, { color: tc.textMuted }]}>
+            <Text variant="caption" color={tc.textMuted}>
               Las fotos de la galería se podrán subir luego de publicar el servicio.
             </Text>
           )}
-        </View>
+        </FormCard>
 
         {error ? (
           <View style={[styles.errorBox, { backgroundColor: TOKENS.status.cancelled.bg, borderColor: TOKENS.status.cancelled.fg }]}>
@@ -416,21 +396,14 @@ export default function ServiceFormScreen() {
           </View>
         ) : null}
 
-        <Pressable
+        <Button
+          size="lg"
+          fullWidth
+          label={isEditing ? "Guardar cambios" : "Publicar servicio"}
+          loading={submitting}
+          disabled={categoriesLoading}
           onPress={handleSubmit}
-          disabled={submitting || categoriesLoading}
-          style={(submitting || categoriesLoading) && styles.submitBtnDisabled}
-        >
-          <LinearGradient colors={GRADIENTS.brand} style={styles.submitBtn}>
-            {submitting ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.submitBtnText}>
-                {isEditing ? "Guardar cambios" : "Publicar servicio"}
-              </Text>
-            )}
-          </LinearGradient>
-        </Pressable>
+        />
       </ScrollView>
     </View>
   );
@@ -439,7 +412,6 @@ export default function ServiceFormScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#F3F4F6",
   },
   header: {
     flexDirection: "row",
@@ -451,13 +423,13 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: TOKENS.onMedia.fill,
     alignItems: "center",
     justifyContent: "center",
   },
   backIcon: {
     fontSize: 28,
-    color: "#fff",
+    color: TOKENS.onMedia.text,
     lineHeight: 32,
     marginTop: -2,
   },
@@ -466,7 +438,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 18,
     fontWeight: "700",
-    color: "#fff",
+    color: TOKENS.onMedia.text,
   },
   scroll: {
     flex: 1,
@@ -475,88 +447,21 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 16,
   },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    gap: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#111827",
+  cardBody: {
+    gap: SPACING.sm + 2,
   },
   cardSubtitle: {
-    fontSize: 13,
-    color: "#6B7280",
-    marginTop: -4,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#374151",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 10,
-    paddingHorizontal: 13,
-    paddingVertical: 11,
-    fontSize: 14,
-    color: "#111827",
-    backgroundColor: "#FAFAFA",
-  },
-  textArea: {
-    minHeight: 120,
-    textAlignVertical: "top",
-  },
-  hint: {
-    fontSize: 12,
-    color: "#9CA3AF",
-    marginTop: -4,
+    marginTop: -SPACING.xs,
   },
   chipsWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
   },
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingVertical: 7,
-    paddingHorizontal: 13,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: "#E5E7EB",
-    backgroundColor: "#fff",
-  },
-  chipSelected: {
-    backgroundColor: BRAND,
-    borderColor: BRAND,
-  },
-  chipIcon: {
-    fontSize: 14,
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#374151",
-  },
-  chipTextSelected: {
-    color: "#fff",
-    fontWeight: "600",
-  },
   imagePicker: {
     borderRadius: 12,
     overflow: "hidden",
     minHeight: 180,
-    backgroundColor: "#F3F4F6",
   },
   imagePreview: {
     width: "100%",
@@ -567,12 +472,12 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: TOKENS.scrim.light,
     paddingVertical: 8,
     alignItems: "center",
   },
   imageOverlayText: {
-    color: "#fff",
+    color: TOKENS.onMedia.text,
     fontSize: 14,
     fontWeight: "600",
   },
@@ -583,17 +488,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#E5E7EB",
     borderStyle: "dashed",
     gap: 8,
   },
   imagePlaceholderIcon: {
     fontSize: 36,
-  },
-  imagePlaceholderText: {
-    fontSize: 14,
-    color: "#9CA3AF",
-    fontWeight: "500",
   },
   galleryGrid: {
     flexDirection: "row",
@@ -607,7 +506,6 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 10,
-    backgroundColor: "#E5E7EB",
   },
   galleryRemove: {
     position: "absolute",
@@ -621,7 +519,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   galleryRemoveText: {
-    color: "#fff",
+    color: TOKENS.color.onPrimary,
     fontSize: 11,
     fontWeight: "700",
   },
@@ -630,64 +528,26 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#D1D5DB",
     borderStyle: "dashed",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F9FAFB",
     gap: 2,
   },
   galleryAddIcon: {
     fontSize: 24,
-    color: "#6B7280",
     lineHeight: 28,
   },
   galleryAddLabel: {
     fontSize: 10,
-    color: "#6B7280",
     fontWeight: "600",
-  },
-  outlineBtn: {
-    borderWidth: 1.5,
-    borderColor: BRAND,
-    paddingVertical: 11,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  outlineBtnText: {
-    color: BRAND,
-    fontWeight: "600",
-    fontSize: 14,
   },
   errorBox: {
-    backgroundColor: "#FEF2F2",
     borderRadius: 10,
     padding: 12,
     borderWidth: 1,
-    borderColor: "#FCA5A5",
   },
   errorText: {
-    color: "#DC2626",
     fontSize: 14,
     textAlign: "center",
-  },
-  submitBtn: {
-    backgroundColor: BRAND,
-    paddingVertical: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    shadowColor: BRAND,
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-  submitBtnDisabled: {
-    opacity: 0.6,
-  },
-  submitBtnText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 16,
   },
 });

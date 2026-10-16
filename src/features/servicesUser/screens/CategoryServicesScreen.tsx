@@ -24,42 +24,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCategories, useServicesByCategory } from '@/hooks/queries/useMarketplaceQuery';
 import type { ServiceSummary } from '@/types/services';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
-import { TOKENS } from '@/core/design-system/tokens';
-import { GRADIENTS } from '@/core/design-system/gradients';
-import { useThemeColors } from '@/stores/theme.store';
+import { GRADIENTS, Skeleton, TOKENS, useIsDark, useThemeColors } from '@/core/design-system';
 import { RadialBlob } from '@/core/components/RadialBlob';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const { width: W } = Dimensions.get('window');
 
-const AMBER = '#F59E0B';
-
 function useC() {
   const tc = useThemeColors();
-  return { bg: tc.bg, card: tc.card, text: tc.text, sub: tc.textSub, border: tc.border, surface2: tc.surface2, amber: AMBER };
-}
-
-// ── Shimmer skeleton ──────────────────────────────────────────────────────────
-function Shimmer({ width, height, radius = 12 }: { width: import('react-native').DimensionValue; height: number; radius?: number }) {
-  const tc = useThemeColors();
-  const anim = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.loop(
-      Animated.timing(anim, { toValue: 1, duration: 1100, useNativeDriver: true })
-    ).start();
-  }, []);
-  const tx = anim.interpolate({ inputRange: [0, 1], outputRange: [-300, 300] });
-  return (
-    <View style={{ width, height, borderRadius: radius, backgroundColor: tc.surface2, overflow: 'hidden' }}>
-      <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateX: tx }] }]}>
-        <LinearGradient
-          colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.55)', 'rgba(255,255,255,0)']}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-          style={{ flex: 1 }}
-        />
-      </Animated.View>
-    </View>
-  );
+  return { bg: tc.bg, card: tc.card, text: tc.text, sub: tc.textSub, border: tc.border, surface2: tc.surface2, muted: tc.textMuted, amber: TOKENS.color.rating };
 }
 
 function SkeletonList() {
@@ -68,11 +41,11 @@ function SkeletonList() {
     <View style={{ paddingHorizontal: 16, gap: 12, paddingTop: 4 }}>
       {[0, 1, 2, 3].map(i => (
         <View key={i} style={[{ backgroundColor: c.card }, sk.card, { opacity: 1 - i * 0.15 }]}>
-          <Shimmer width={64} height={64} radius={18} />
+          <Skeleton width={64} height={64} radius={18} />
           <View style={{ flex: 1, gap: 8 }}>
-            <Shimmer width="75%" height={14} radius={7} />
-            <Shimmer width="50%" height={11} radius={6} />
-            <Shimmer width="40%" height={11} radius={6} />
+            <Skeleton width="75%" height={14} radius={7} />
+            <Skeleton width="50%" height={11} radius={6} />
+            <Skeleton width="40%" height={11} radius={6} />
           </View>
         </View>
       ))}
@@ -141,9 +114,9 @@ const ServiceCard = memo(function ServiceCard({
           {item.thumbnail ? (
             <Image source={{ uri: item.thumbnail }} style={s.avatar} contentFit="cover" />
           ) : (
-            <LinearGradient colors={['#e8ecf2', '#d0d7e2']} style={s.avatarFallback}>
-              <Ionicons name="person-outline" size={24} color="#9CA3AF" />
-            </LinearGradient>
+            <View style={[s.avatarFallback, { backgroundColor: c.surface2 }]}>
+              <Ionicons name="person-outline" size={24} color={c.sub} />
+            </View>
           )}
           {item.isAvailable !== undefined && (
             <View style={[s.availDot, { backgroundColor: item.isAvailable ? TOKENS.color.mint : c.sub, borderColor: c.card }]} />
@@ -175,11 +148,11 @@ const ServiceCard = memo(function ServiceCard({
               <Ionicons
                 name={fav ? 'heart' : 'heart-outline'}
                 size={20}
-                color={fav ? TOKENS.color.signal : c.border}
+                color={fav ? TOKENS.color.signal : c.muted}
               />
             </Animated.View>
           </Pressable>
-          <Ionicons name="chevron-forward" size={16} color={c.border} />
+          <Ionicons name="chevron-forward" size={16} color={c.muted} />
         </View>
       </Pressable>
     </Animated.View>
@@ -215,13 +188,13 @@ function Hero({
       {/* Blobs */}
       <RadialBlob
         size={200}
-        color="rgb(255,255,255)"
+        color={TOKENS.onMedia.solid}
         opacity={0.3}
         style={{ position: 'absolute', top: -60, right: -40 }}
       />
       <RadialBlob
         size={120}
-        color="rgb(255,255,255)"
+        color={TOKENS.onMedia.solid}
         opacity={0.2}
         style={{ position: 'absolute', bottom: -30, right: 80 }}
       />
@@ -282,6 +255,7 @@ export default function CategoryServicesScreen() {
   }, [hasMore, isLoadingMore, servicesQuery]);
 
   const c = useC();
+  const isDark = useIsDark();
 
   const ListHeader = (
     <>
@@ -326,7 +300,7 @@ export default function CategoryServicesScreen() {
   return (
     <View style={[s.root, { backgroundColor: c.bg, paddingTop: insets.top }]}>
       <Stack.Screen options={{ headerShown: false }} />
-      <StatusBar barStyle="dark-content" backgroundColor={c.bg} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={c.bg} />
       <AnimatedBackground variant="minimal" />
 
       <FlatList
@@ -383,7 +357,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'flex-start',
-    shadowColor: '#000',
+    shadowColor: TOKENS.color.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.10,
     shadowRadius: 6,
@@ -397,9 +371,9 @@ const s = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    backgroundColor: TOKENS.onMedia.fill,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.22)',
+    borderColor: TOKENS.onMedia.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -409,12 +383,12 @@ const s = StyleSheet.create({
   heroTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: TOKENS.onMedia.text,
     letterSpacing: -0.4,
   },
   heroDesc: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.65)',
+    color: TOKENS.onMedia.textMuted,
     lineHeight: 19,
   },
 
@@ -464,7 +438,6 @@ const s = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 9,
-    backgroundColor: '#F9FAFB', // overridden inline via c.surface2
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -492,7 +465,6 @@ const s = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
   },
   info: {
     flex: 1,
@@ -518,7 +490,6 @@ const s = StyleSheet.create({
   ratingText: {
     fontSize: 12,
     fontWeight: '700',
-    color: AMBER,
   },
   reviewCount: {
     fontSize: 11,

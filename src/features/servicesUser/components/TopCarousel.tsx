@@ -1,12 +1,14 @@
-import { View, Text, FlatList, Pressable } from "react-native";
+import { FlatList, Pressable } from "react-native";
 import React, { useEffect, useRef, useState } from "react";
-import { Image } from "expo-image";
+import { SPACING, Text, useIsDark, useThemeColors } from "@/core/design-system";
 
 export default function TopCarousel({
   users,
 }: {
   users: { id: string; image: string }[];
 }) {
+  const tc = useThemeColors();
+  const isDark = useIsDark();
   const flatListRef = useRef<FlatList>(null);
   const [index, setIndex] = useState(0);
 
@@ -31,16 +33,13 @@ export default function TopCarousel({
             width: 350,
             height: 300,
             marginRight: 40,
-            backgroundColor: "white",
+            backgroundColor: tc.surface,
           }}
         >
           <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "bold",
-              textAlign: "center",
-              marginBottom: 10,
-            }}
+            variant="subtitle"
+            center
+            style={{ marginBottom: SPACING.sm + 2 }}
           >
             {item.name}
           </Text>
@@ -48,7 +47,7 @@ export default function TopCarousel({
       )}
       // contentContainerStyle={{ paddingBottom: 20 }}
       showsHorizontalScrollIndicator
-      indicatorStyle="black"
+      indicatorStyle={isDark ? "white" : "black"}
       pagingEnabled
       bouncesZoom
       centerContent
