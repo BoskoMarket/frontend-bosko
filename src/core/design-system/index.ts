@@ -1,4 +1,7 @@
 // Superficie única del design system — import { TOKENS, SPACING, ... } from '@/core/design-system'
+export { BRAND } from './brand/brand';
+export { FONT_ASSETS } from './brand/fonts';
+export { withAlpha } from './color';
 export { TOKENS } from './tokens';
 export { PREMIUM } from './premium';
 export { PALETTE } from './palette';

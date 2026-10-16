@@ -1,14 +1,17 @@
 // Tipografía "Señal Nocturna": Archivo (ancho variable) para toda la interfaz —
 // Expanded 118%/800/mayúscula solo en h1/h2 — más JetBrains Mono para
 // metadatos técnicos (ratings, timestamps, IDs, estados en vivo).
+import { BRAND } from './brand/brand';
+
 // Reemplaza Space Grotesk. Instalar:
 //   npx expo install @expo-google-fonts/archivo @expo-google-fonts/jetbrains-mono
+// Family names live in BRAND.fonts (brand/brand.ts).
 export const FONT_FAMILY = {
-  display: 'Archivo_800ExtraBold',      // h1/h2 — usar junto a letterSpacing negativo + textTransform uppercase
-  heading: 'Archivo_700Bold',           // h3/title
-  headingMedium: 'Archivo_600SemiBold', // subtitle/label
-  mono: 'JetBrainsMono_500Medium',      // NUEVO — meta: ratings, counts, timestamps, IDs, "EN VIVO"
-  body: undefined,                       // system font
+  display: BRAND.fonts.display,         // h1/h2 — usar junto a letterSpacing negativo + textTransform uppercase
+  heading: BRAND.fonts.heading,         // h3/title
+  headingMedium: BRAND.fonts.headingMedium, // subtitle/label
+  mono: BRAND.fonts.mono,               // meta: ratings, counts, timestamps, IDs, "EN VIVO"
+  body: BRAND.fonts.body,               // system font
 } as const;
 
 type TypeStyle = {

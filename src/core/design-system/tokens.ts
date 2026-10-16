@@ -1,54 +1,76 @@
 // /theme/tokens.ts
 // Identidad "Señal Nocturna" — el bordo se enciende en rosa señal.
+// Todo derivado de BRAND.colors (sin literales).
+import { BRAND } from './brand/brand';
+import { withAlpha } from './color';
+
+const C = BRAND.colors;
+
 export const TOKENS = {
   color: {
-    primary: '#850021',       // bordo Bosko (ancla, fijo en ambos temas)
-    primaryDark: '#3C0014',
-    primaryMid: '#A0032A',
-    signal: '#FF2D6F',        // NUEVO — acento "señal", solo en gradiente con primary
-    mint: '#00E5A0',          // NUEVO — verificado / completado / en vivo
-    bg: '#FAFAFC',
-    text: '#1E1E1E',
-    sub: '#6B6B6B',
-    error: '#FF4D4D',
-    warning: '#FFB020',
-    success: '#00E5A0',
+    primary: C.primary,       // bordo (ancla, fijo en ambos temas)
+    primaryDark: C.primaryDark,
+    primaryMid: C.primaryMid,
+    signal: C.signal,         // acento "señal", solo en gradiente con primary
+    mint: C.mint,             // verificado / completado / en vivo
+    /** @deprecated use useThemeColors() (tc.bg / tc.text / tc.textSub) */
+    bg: C.legacy.bg,
+    /** @deprecated use useThemeColors() (tc.bg / tc.text / tc.textSub) */
+    text: C.legacy.text,
+    /** @deprecated use useThemeColors() (tc.bg / tc.text / tc.textSub) */
+    sub: C.legacy.sub,
+    error: C.error,
+    warning: C.warning,
+    success: C.mint,
+    /** Text/icon color on top of the brand gradient (theme-independent). */
+    onPrimary: C.white,
+  },
+  /** Fixed colors for text/icons over video/images (theme-independent). */
+  onMedia: {
+    text: C.white,
+    textSub: withAlpha(C.white, 0.75),
+    icon: C.white,
+  },
+  /** Black scrims over media. Alpha-only variants of the same base. */
+  scrim: {
+    light: withAlpha(C.black, 0.35),
+    medium: withAlpha(C.black, 0.55),
+    strong: withAlpha(C.black, 0.75),
   },
   // Colores semánticos de ciclo de vida (órdenes, KYC) — fg + bg translúcido a juego.
-  // Fuente: Sistema de patrones reutilizables, sección tokens/colors.css.
   status: {
-    pending:   { fg: '#FFB020', bg: 'rgba(255,176,32,0.14)' },
-    accepted:  { fg: '#4C9DFF', bg: 'rgba(76,157,255,0.14)' },
-    progress:  { fg: '#B07CFF', bg: 'rgba(176,124,255,0.14)' },
-    done:      { fg: '#00E5A0', bg: 'rgba(0,229,160,0.14)' },
-    cancelled: { fg: '#FF4D4D', bg: 'rgba(255,77,77,0.14)' },
+    pending:   { fg: C.warning, bg: withAlpha(C.warning, 0.14) },
+    accepted:  { fg: C.info,    bg: withAlpha(C.info, 0.14) },
+    progress:  { fg: C.progress, bg: withAlpha(C.progress, 0.14) },
+    done:      { fg: C.mint,    bg: withAlpha(C.mint, 0.14) },
+    cancelled: { fg: C.error,   bg: withAlpha(C.error, 0.14) },
   },
-  radius: { sm: 12, md: 16, lg: 22, xl: 26, pill: 999 }, // sm/xl actualizados (10→12, 28→26)
+  radius: { sm: 12, md: 16, lg: 22, xl: 26, pill: 999 },
   shadow: {
-    soft: { shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 12, elevation: 3 },
+    soft: { shadowColor: C.black, shadowOpacity: 0.08, shadowRadius: 12, elevation: 3 },
     card: {
-      shadowColor: '#000',
+      shadowColor: C.black,
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.08,
       shadowRadius: 24,
       elevation: 4,
     },
-    // NUEVO — glow rosa, reemplaza la sombra negra genérica en botones/CTAs primarios
+    // glow rosa, reemplaza la sombra negra genérica en botones/CTAs primarios
     glow: {
-      shadowColor: '#FF2D6F',
+      shadowColor: C.signal,
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.4,
       shadowRadius: 24,
       elevation: 6,
     },
     button: {
-      shadowColor: '#850021',
+      shadowColor: C.primary,
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.35,
       shadowRadius: 12,
       elevation: 4,
     },
   },
-  glass: { bg: 'rgba(255,255,255,0.55)' },
-  text: { color: '#fff', fontWeight: '700' },
+  glass: { bg: withAlpha(C.white, 0.55) },
+  text: { color: C.white, fontWeight: '700' },
 };

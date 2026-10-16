@@ -218,16 +218,23 @@ Real-time chat tied to orders (no free DMs).
 
 All of it lives under `src/core/design-system/` — the one folder to check before touching colors, spacing, typography, gradients, or reaching for a Button/Text/Card. Import from the barrel: `import { TOKENS, SPACING, TYPE_SCALE, GRADIENTS, useThemeColors, Button, Text, Card } from '@/core/design-system'`.
 
+#### Regla obligatoria: nada hardcodeado (desde 2026-10-05)
+
+- Fuera de `src/core/design-system/` **no** puede haber literales de diseño: nada de hex (`'#fff'`, `'#850021'`), `rgb()/rgba()`, nombres de color (`'white'`), `fontFamily` literal, arrays de gradiente a mano, ni sombras/radios sueltos. Siempre tokens (`tc.*`, `TOKENS`, `GRADIENTS`, `FONT_FAMILY`, `TYPE_SCALE`, `SPACING`, `PREMIUM`).
+- Siempre usar los componentes del DS (`Button`, `Text`, `Card`, …) antes de armar UI a mano.
+- Si falta un token o un componente: **se agrega primero al design system** (y se exporta en el barrel), después se usa. Nunca resolverlo local en la pantalla.
+- Objetivo: rebranding cambiando solo la capa de marca. Plan de migración del código existente: `odd/tasks/design-system-centralization.md`.
+
 - **`tokens.ts`** → `TOKENS` — **static** values only: brand color `#850021`, radius, shadows, glass. Never use `TOKENS.color.bg/text/sub` for dynamic UI — those are light-mode only remnants.
 - **`palette.ts`** → `PALETTE.dark / PALETTE.light` — the real dark/light color data. `src/stores/theme.store.ts` imports this and only adds the toggle/persist (Zustand) on top; `THEME_COLORS` there is just `= PALETTE`.
 - **`spacing.ts`** → `SPACING` — base-4 scale (`xs`4 · `sm`8 · `md`12 · `lg`16 · `xl`20 · `xxl`24 · `xxxl`32 · `huge`40 · `giant`64).
-- **`typography.ts`** → `TYPE_SCALE` (h1/h2/h3/title/subtitle/body/bodySmall/caption/label/button presets) + `FONT_FAMILY` (Space Grotesk for headings, loaded in `app/_layout.tsx` via `useFonts`).
+- **`typography.ts`** → `TYPE_SCALE` (h1/h2/h3/title/subtitle/body/bodySmall/caption/label/button presets) + `FONT_FAMILY` (`display`/`heading`/`headingMedium` = Archivo, `mono` = JetBrains Mono, `body` = system; loaded in `app/_layout.tsx` via `useFonts`).
 - **`gradients.ts`** → `GRADIENTS.brand/brandDeep/brandActive/overlayFadeDown/overlayFadeUp` (named presets, replace hand-typed `LinearGradient colors={[...]}` arrays) + `wash(tc)`, the theme-aware replacement for the old hardcoded light-only wash gradient.
 - **`components/`** → `Button` (variant × size, loading, theme-aware), `Text` (Typography primitive, wraps `TYPE_SCALE`), `Card` (surface with `tc.card`/`cardBorder`/radius/shadow). Adopt incrementally — most existing screens still hand-roll `StyleSheet.create` and haven't been migrated to these yet.
 - **Theme hooks** (also re-exported from the barrel): `useThemeColors()` (`tc.bg`, `tc.text`, `tc.surface2`, `tc.border`, etc.), `useIsDark()` (for `BlurView tint`), `useToggleTheme()`.
 - **Convention**: every screen must call `const tc = useThemeColors()` and apply dynamic colors inline (`backgroundColor: tc.bg`, etc.). Never hardcode `#FAFAFC`, `rgba(255,255,255,0.75)`, etc. for backgrounds/text.
 - **`premium.ts`** → `PREMIUM` — gold-on-dark visual treatment for premium/provider-tier UI (`ProviderCTA`, `PremiumButton`, `PremiumBanner`, `EditProfileModal`, `FeaturesSection`, `ProfesionalCard`, `PromoBanner`, `ServiceDetailModal`, `OnBoardingSlide`, `CategoryVideoCarousel`). Deliberately separate from `PALETTE` dark/light — always renders on dark regardless of theme toggle. Replaces the old `Colors.ts` (removed) 1:1, same values.
-- **Fonts**: Space Grotesk (`@expo-google-fonts/space-grotesk`) — loaded once in `app/_layout.tsx` (`useFonts` + `SplashScreen` hold). Body text uses the system font; only `TYPE_SCALE.h1/h2/h3` reference the custom family.
+- **Fonts**: Archivo (`@expo-google-fonts/archivo`) + JetBrains Mono (`@expo-google-fonts/jetbrains-mono`) — loaded once in `app/_layout.tsx` (`useFonts` + `SplashScreen` hold). Body text uses the system font. Always reference them via `FONT_FAMILY` / `TYPE_SCALE`, never by string name.
 - **MotiView**: `src/core/components/MotiView.ios.tsx` / `.android.tsx` — thin re-export of `moti`. Requires dev build (TurboModule).
 
 ### SVG support
