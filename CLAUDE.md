@@ -54,7 +54,8 @@ npx jest __tests__/login.test.tsx
 ```
 app/index.tsx          → Gate: authenticated → /(tabs), else → OnBoarding
 app/login/             → Login / Register flow
-app/(tabs)/            → Authenticated tab navigator (Inicio, Servicios, Reels, Perfil, Mensajes)
+app/(tabs)/            → Authenticated tab navigator: 5 labeled tabs (Inicio · Reels · Pedidos/Órdenes · Mensajes · Perfil)
+app/(tabs)/services/   → Catalog + category/[id] + provider/[id] stack. NOT a tab: hidden with `href: null`, still routable at /(tabs)/services/...
 app/chat/[id].tsx      → Individual chat screen (outside tabs, id = orderId)
 app/search.tsx         → Search screen
 ```
@@ -63,6 +64,14 @@ Auth guards:
 - `app/index.tsx` — primary gate
 - `app/(tabs)/_layout.tsx` — secondary guard, redirects to `/login` if no token
 - `app/login/_layout.tsx` — inverse guard, redirects to `/(tabs)` if authenticated
+
+Tab bar rules (`src/components/CustomTabBar.tsx`, map in `odd/nav-map.md`):
+- Visible tabs = routes with an entry in `TABS` and without `href: null`; the bubble/notch math uses only those. Adding a tab means adding a `Tabs.Screen` (order = bar order) and a `TABS` entry.
+- Labels are always visible; Pedidos reads "Órdenes" for providers. Each tab exposes `accessibilityRole="tab"`, label and selected state.
+- Badges: Mensajes = `useUnreadTotal()`; Pedidos/Órdenes (providers only) = `usePendingProviderRequestsCount()` (pending provider orders, shares the `providerOrders` query cache).
+- Orders opens on the provider segment for providers; an explicit `?tab=client|provider` always wins (`resolveOrdersSegment`).
+- Perfil groups its role rows in `src/features/profile/utils/profileSections.ts` (provider "Mi negocio", client "Mi actividad").
+- To browse the catalog use `/search` (Inicio already shows categories/popular services); link to category/provider pages via `/(tabs)/services/category/[id]` and `/(tabs)/services/provider/[id]`.
 
 ### State Management
 

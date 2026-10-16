@@ -123,3 +123,16 @@ describe('tab helpers', () => {
     expect(getTabLabel('profile', true)).toBe('Perfil');
   });
 });
+
+describe('tabs layout', () => {
+  const layout = require('fs').readFileSync(
+    require('path').resolve(__dirname, '../app/(tabs)/_layout.tsx'),
+    'utf8',
+  ) as string;
+
+  it('declares the visible tabs in bar order and hides services', () => {
+    const names = [...layout.matchAll(/<Tabs\.Screen name="(\w+)"/g)].map((m) => m[1]);
+    expect(names).toEqual(['index', 'reels', 'orders', 'chat', 'profile', 'services']);
+    expect(layout).toMatch(/name="services"[^>]*href: null/);
+  });
+});
