@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { PremiumButton } from "@/components/PremiumButton";
 import { PREMIUM_SHADOWS, TOKENS, withAlpha } from "@/core/design-system";
+import { FONT_FAMILY } from '@/core/design-system';
 
 export function PromoBanner() {
   return (
@@ -32,6 +33,6 @@ const styles = StyleSheet.create({
     backgroundColor: TOKENS.color.primary,
     ...PREMIUM_SHADOWS.global,
   },
-  title: { color: TOKENS.color.onPrimary, fontSize: 18, fontWeight: "800" },
+  title: { color: TOKENS.color.onPrimary, fontSize: 18, fontFamily: FONT_FAMILY.display },
   desc: { color: withAlpha(TOKENS.color.onPrimary, 0.85), marginVertical: 6 },
 });

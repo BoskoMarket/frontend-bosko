@@ -28,8 +28,7 @@ import {
   TOKENS,
   useIsDark,
   useThemeColors,
-  dialog,
-} from '@/core/design-system';
+  dialog, FONT_FAMILY } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { paymentBreakdown } from '@/features/payments/services/mockPayments';
 import { getUserErrorMessage } from '@/lib/errors';
@@ -247,7 +246,7 @@ const s = StyleSheet.create({
   card: { gap: 10 },
   sectionLabel: {
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
     letterSpacing: 0.8,
     marginBottom: 2,
   },
@@ -256,25 +255,25 @@ const s = StyleSheet.create({
   thumb:          { width: 54, height: 54, borderRadius: TOKENS.radius.sm },
   thumbFallback:  { width: 54, height: 54, borderRadius: TOKENS.radius.sm, alignItems: 'center', justifyContent: 'center' },
   serviceInfo:    { flex: 1, gap: 3 },
-  serviceName:    { fontSize: 16, fontWeight: '700' },
-  serviceProvider:{ fontSize: 13 },
+  serviceName:    { fontSize: 16, fontFamily: FONT_FAMILY.heading },
+  serviceProvider:{ fontSize: 13, fontFamily: FONT_FAMILY.body },
 
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  infoText: { fontSize: 13, flex: 1 },
+  infoText: { fontSize: 13, fontFamily: FONT_FAMILY.body, flex: 1 },
 
   priceRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  priceLabel: { fontSize: 14 },
-  priceValue: { fontSize: 14, fontWeight: '500' },
+  priceLabel: { fontSize: 14, fontFamily: FONT_FAMILY.body },
+  priceValue: { fontSize: 14, fontFamily: FONT_FAMILY.bodyMedium },
 
   feeRow:    { flexDirection: 'row', alignItems: 'center', gap: 6 },
 
-  totalLabel:   { fontSize: 16, fontWeight: '700' },
-  totalValue:   { fontSize: 18, fontWeight: '800' },
+  totalLabel:   { fontSize: 16, fontFamily: FONT_FAMILY.heading },
+  totalValue:   { fontSize: 18, fontFamily: FONT_FAMILY.display },
 
   methodCard:  { flexDirection: 'row', alignItems: 'center', gap: 14 },
   methodIcon:  { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  methodTitle: { fontSize: 14, fontWeight: '600' },
-  methodSub:   { fontSize: 12, lineHeight: 17, marginTop: 2 },
+  methodTitle: { fontSize: 14, fontFamily: FONT_FAMILY.headingMedium },
+  methodSub:   { fontSize: 12, fontFamily: FONT_FAMILY.body, lineHeight: 17, marginTop: 2 },
 
   footer: {
     position: 'absolute',
@@ -289,9 +288,9 @@ const s = StyleSheet.create({
     borderTopWidth: 1,
     ...TOKENS.shadow.card,
   },
-  footerTotal: { fontSize: 20, fontWeight: '800', minWidth: 100 },
+  footerTotal: { fontSize: 20, fontFamily: FONT_FAMILY.display, minWidth: 100 },
 
-  errorText:    { fontSize: 15, marginBottom: SPACING.md },
+  errorText:    { fontSize: 15, fontFamily: FONT_FAMILY.body, marginBottom: SPACING.md },
   backLink:     { paddingHorizontal: SPACING.lg, paddingVertical: 10 },
-  backLinkText: { fontWeight: '600' },
+  backLinkText: { fontFamily: FONT_FAMILY.headingMedium },
 });

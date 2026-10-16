@@ -17,6 +17,7 @@ import { ServiceSummary } from "@/types/services";
 import { GRADIENTS, TOKENS, useIsDark, usePremiumColors, withAlpha } from "@/core/design-system";
 import type { PremiumColors } from "@/core/design-system";
 import { LinearGradient } from "expo-linear-gradient";
+import { FONT_FAMILY } from '@/core/design-system';
 
 interface ServiceDetailModalProps {
     visible: boolean;
@@ -262,7 +263,7 @@ const createStyles = (pc: PremiumColors) => StyleSheet.create({
     categoryText: {
         color: TOKENS.color.onPrimary,
         fontSize: 12,
-        fontWeight: '600',
+        fontFamily: FONT_FAMILY.headingMedium,
     },
     ratingChip: {
         flexDirection: 'row',
@@ -276,11 +277,11 @@ const createStyles = (pc: PremiumColors) => StyleSheet.create({
     ratingText: {
         color: pc.goldFill,
         fontSize: 12,
-        fontWeight: 'bold',
+        fontFamily: FONT_FAMILY.heading,
     },
     title: {
         fontSize: 28,
-        fontWeight: 'bold',
+        fontFamily: FONT_FAMILY.heading,
         color: TOKENS.onMedia.text,
         textShadowColor: TOKENS.scrim.medium,
         textShadowOffset: { width: 0, height: 1 },
@@ -296,12 +297,13 @@ const createStyles = (pc: PremiumColors) => StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 18,
-        fontWeight: 'bold',
+        fontFamily: FONT_FAMILY.heading,
         color: pc.textPrimary,
         marginBottom: 12,
     },
     description: {
         fontSize: 15,
+        fontFamily: FONT_FAMILY.body,
         color: pc.textSecondary,
         lineHeight: 24,
     },
@@ -313,6 +315,7 @@ const createStyles = (pc: PremiumColors) => StyleSheet.create({
     },
     detailText: {
         fontSize: 15,
+        fontFamily: FONT_FAMILY.body,
         color: pc.textPrimary,
     },
     footer: {
@@ -342,7 +345,7 @@ const createStyles = (pc: PremiumColors) => StyleSheet.create({
     },
     hireButtonText: {
         fontSize: 18,
-        fontWeight: 'bold',
+        fontFamily: FONT_FAMILY.heading,
         color: TOKENS.color.onPrimary,
     },
 });

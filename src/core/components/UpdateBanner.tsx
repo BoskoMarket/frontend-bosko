@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text } from '@/core/design-system';
+import { Text, FONT_FAMILY } from '@/core/design-system';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useAppUpdates } from '@/core/updates/useAppUpdates';
 
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   },
   action: {
     color: TOKENS.color.onPrimary,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
     textDecorationLine: 'underline',
   },
 });

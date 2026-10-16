@@ -23,7 +23,7 @@ import api from '@/core/api/axiosinstance';
 import { safeBack } from '@/core/navigation/safeBack';
 import { ServiceDetailModal } from '../components/ServiceDetailModal';
 import type { ServiceSummary } from '@/types/services';
-import { Button, GRADIENTS, BRAND_RADIAL_FILL, TOKENS, useIsDark, useThemeColors, withAlpha, type ReportSheetSubmit, dialog } from '@/core/design-system';
+import { Button, GRADIENTS, BRAND_RADIAL_FILL, TOKENS, useIsDark, useThemeColors, withAlpha, type ReportSheetSubmit, dialog, FONT_FAMILY } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { ReportFlow } from '@/features/reports/components/ReportFlow';
@@ -531,15 +531,15 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 2, borderColor: TOKENS.onMedia.border,
   },
-  avatarInitials: { fontSize: 28, fontWeight: '700', color: TOKENS.onMedia.text },
+  avatarInitials: { fontSize: 28, fontFamily: FONT_FAMILY.heading, color: TOKENS.onMedia.text },
   heroInfo: { flex: 1, gap: 6 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' },
-  heroName: { fontSize: 20, fontWeight: '800', color: TOKENS.onMedia.text, letterSpacing: -0.3 },
+  heroName: { fontSize: 20, fontFamily: FONT_FAMILY.display, color: TOKENS.onMedia.text, letterSpacing: -0.3 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  locationText: { fontSize: 12, color: TOKENS.onMedia.textSub },
+  locationText: { fontSize: 12, fontFamily: FONT_FAMILY.body, color: TOKENS.onMedia.textSub },
   statsRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statText: { fontSize: 13, fontWeight: '700', color: TOKENS.color.rating },
-  statSub: { fontSize: 12, color: TOKENS.onMedia.textMuted },
+  statText: { fontSize: 13, fontFamily: FONT_FAMILY.heading, color: TOKENS.color.rating },
+  statSub: { fontSize: 12, fontFamily: FONT_FAMILY.body, color: TOKENS.onMedia.textMuted },
   // Footer CTA
   footer: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
@@ -554,7 +554,7 @@ const s = StyleSheet.create({
     paddingVertical: 15,
     ...TOKENS.shadow.glow,
   },
-  ctaBtnText: { fontSize: 16, fontWeight: '700', color: TOKENS.color.onPrimary },
+  ctaBtnText: { fontSize: 16, fontFamily: FONT_FAMILY.heading, color: TOKENS.color.onPrimary },
 
   // Sections
   section: {
@@ -562,9 +562,9 @@ const s = StyleSheet.create({
     padding: 18, gap: 12,
     borderWidth: 1,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '700' },
-  sectionCount: { fontWeight: '400' },
-  bioText: { fontSize: 14, lineHeight: 21 },
+  sectionTitle: { fontSize: 16, fontFamily: FONT_FAMILY.heading },
+  sectionCount: { fontFamily: FONT_FAMILY.body },
+  bioText: { fontSize: 14, fontFamily: FONT_FAMILY.body, lineHeight: 21 },
 
   // Verification badges
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -572,7 +572,7 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 5,
     paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20,
   },
-  badgeText: { fontSize: 12, fontWeight: '600' },
+  badgeText: { fontSize: 12, fontFamily: FONT_FAMILY.headingMedium },
 
   // Service row
   serviceRow: {
@@ -584,9 +584,9 @@ const s = StyleSheet.create({
     width: 56, height: 56, borderRadius: 14,
     alignItems: 'center', justifyContent: 'center',
   },
-  serviceTitle: { fontSize: 14, fontWeight: '600' },
-  serviceSummary: { fontSize: 12, lineHeight: 17, marginTop: 2 },
-  servicePrice: { fontSize: 13, fontWeight: '600', marginTop: 4 },
+  serviceTitle: { fontSize: 14, fontFamily: FONT_FAMILY.headingMedium },
+  serviceSummary: { fontSize: 12, fontFamily: FONT_FAMILY.body, lineHeight: 17, marginTop: 2 },
+  servicePrice: { fontSize: 13, fontFamily: FONT_FAMILY.headingMedium, marginTop: 4 },
 
   // Reviews
   reviewCard: { gap: 8, paddingVertical: 10, borderBottomWidth: 1 },
@@ -595,21 +595,21 @@ const s = StyleSheet.create({
     width: 36, height: 36, borderRadius: 18,
     alignItems: 'center', justifyContent: 'center',
   },
-  reviewInitial: { fontSize: 15, fontWeight: '700', color: TOKENS.color.onPrimary },
-  reviewName: { fontSize: 13, fontWeight: '600' },
+  reviewInitial: { fontSize: 15, fontFamily: FONT_FAMILY.heading, color: TOKENS.color.onPrimary },
+  reviewName: { fontSize: 13, fontFamily: FONT_FAMILY.headingMedium },
   starsRow: { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 2 },
-  reviewDate: { fontSize: 11, marginLeft: 4 },
-  reviewComment: { fontSize: 13, lineHeight: 19 },
+  reviewDate: { fontSize: 11, fontFamily: FONT_FAMILY.body, marginLeft: 4 },
+  reviewComment: { fontSize: 13, fontFamily: FONT_FAMILY.body, lineHeight: 19 },
   reportReviewBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
-  reportReviewText: { fontSize: 11 },
+  reportReviewText: { fontSize: 11, fontFamily: FONT_FAMILY.body },
   replyBox: { marginTop: 6, padding: 10, borderRadius: 8, borderLeftWidth: 3 },
-  replyLabel: { fontSize: 11, fontWeight: '700', marginBottom: 2 },
-  replyText: { fontSize: 13, lineHeight: 18 },
+  replyLabel: { fontSize: 11, fontFamily: FONT_FAMILY.heading, marginBottom: 2 },
+  replyText: { fontSize: 13, fontFamily: FONT_FAMILY.body, lineHeight: 18 },
 
   // Empty
   emptyServices: { alignItems: 'center', paddingVertical: 24 },
-  emptySub: { fontSize: 14, textAlign: 'center' },
-  errorTitle: { fontSize: 18, fontWeight: '700', marginTop: 16 },
-  errorSub: { fontSize: 14, marginTop: 6 },
+  emptySub: { fontSize: 14, fontFamily: FONT_FAMILY.body, textAlign: 'center' },
+  errorTitle: { fontSize: 18, fontFamily: FONT_FAMILY.heading, marginTop: 16 },
+  errorSub: { fontSize: 14, fontFamily: FONT_FAMILY.body, marginTop: 6 },
   retryBtn: { marginTop: 20 },
 });

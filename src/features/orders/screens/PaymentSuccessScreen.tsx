@@ -20,8 +20,7 @@ import {
   SPACING,
   TOKENS,
   useIsDark,
-  useThemeColors,
-} from '@/core/design-system';
+  useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useOrderPayment } from '@/hooks/queries/usePaymentsQuery';
 
@@ -87,8 +86,8 @@ export function PaymentSuccessScreen() {
   if (paymentQuery.isLoading) return <View style={[s.root, { backgroundColor: tc.bg, justifyContent: 'center' }]}><ActivityIndicator color={TOKENS.color.signal} /></View>;
   if (!payment?.simulated || payment.status !== 'paid') return (
     <View style={[s.root, { backgroundColor: tc.bg, justifyContent: 'center', padding: SPACING.xxl }]}>
-      <Text style={{ color: tc.text }}>No encontramos una simulación confirmada para esta orden.</Text>
-      <Pressable onPress={goHome}><Text style={{ color: TOKENS.color.signal, marginTop: SPACING.xxl }}>Volver al inicio</Text></Pressable>
+      <Text style={{ color: tc.text, fontFamily: FONT_FAMILY.body }}>No encontramos una simulación confirmada para esta orden.</Text>
+      <Pressable onPress={goHome}><Text style={{ color: TOKENS.color.signal, marginTop: SPACING.xxl, fontFamily: FONT_FAMILY.heading }}>Volver al inicio</Text></Pressable>
     </View>
   );
 
@@ -246,11 +245,12 @@ const s = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '800',
+    fontFamily: FONT_FAMILY.display,
     letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 15,
+    fontFamily: FONT_FAMILY.body,
     textAlign: 'center',
     lineHeight: 22,
     maxWidth: 280,
@@ -261,18 +261,19 @@ const s = StyleSheet.create({
     gap: SPACING.xs,
     paddingHorizontal: 28,
   },
-  amountLabel: { fontSize: 12, fontWeight: '500' },
-  amountValue: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
+  amountLabel: { fontSize: 12, fontFamily: FONT_FAMILY.bodyMedium },
+  amountValue: { fontSize: 26, fontFamily: FONT_FAMILY.display, letterSpacing: -0.5 },
 
   detailWrap: { width: '100%' },
   detailCard: { gap: 10 },
   detailRow:     { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
   detailIcon:    { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  detailLabel:   { fontSize: 11, marginBottom: 1 },
-  detailValue:   { fontSize: 14, fontWeight: '600' },
+  detailLabel:   { fontSize: 11, fontFamily: FONT_FAMILY.body, marginBottom: 1 },
+  detailValue:   { fontSize: 14, fontFamily: FONT_FAMILY.headingMedium },
 
   escrowNote: {
     fontSize: 12,
+    fontFamily: FONT_FAMILY.body,
     textAlign: 'center',
     lineHeight: 18,
     maxWidth: 280,

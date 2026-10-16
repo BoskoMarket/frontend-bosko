@@ -25,8 +25,7 @@ import {
   SPACING,
   Text,
   TOKENS,
-  useThemeColors,
-} from '@/core/design-system';
+  useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { router, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { resetPasswordService } from '@/features/auth/services/auth';
@@ -200,7 +199,7 @@ const styles = StyleSheet.create({
   backBtn: { marginBottom: SPACING.xl },
   hero: { alignItems: 'center', marginBottom: SPACING.sm },
   titleRow: { alignItems: 'center', marginBottom: 28 },
-  title: { fontSize: 24, fontWeight: '800', marginBottom: SPACING.sm },
+  title: { fontSize: 24, fontFamily: FONT_FAMILY.display, marginBottom: SPACING.sm },
   subtitle: { paddingHorizontal: SPACING.sm },
   fieldGap: { marginBottom: 14 },
   errorText: { marginBottom: 14, marginLeft: SPACING.xs },

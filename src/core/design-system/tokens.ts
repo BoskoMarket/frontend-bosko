@@ -101,5 +101,5 @@ export const TOKENS = {
     },
   },
   glass: { bg: withAlpha(C.white, 0.55) },
-  text: { color: C.white, fontWeight: '700' },
+  text: { color: C.white, fontFamily: BRAND.fonts.heading },
 };

@@ -28,8 +28,7 @@ import {
   SPACING,
   Text,
   TOKENS,
-  useThemeColors,
-} from '@/core/design-system';
+  useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { WELCOME_VIDEO_PENDING_KEY } from '@/features/auth/constants';
 import { extractApiError, getUserErrorMessage } from '@/lib/errors';
@@ -189,7 +188,7 @@ const styles = StyleSheet.create({
   backBtn: { marginBottom: SPACING.xl },
   hero: { marginBottom: SPACING.sm },
   titleRow: { alignItems: 'center', marginBottom: 22, gap: SPACING.sm },
-  title: { fontSize: 24, fontWeight: '800' },
+  title: { fontSize: 24, fontFamily: FONT_FAMILY.display },
   errorText: { marginTop: 14, marginBottom: -2 },
   btnGap: { marginTop: SPACING.xl },
   resendRow: { alignItems: 'center', paddingVertical: 14 },

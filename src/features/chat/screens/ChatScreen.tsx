@@ -1192,8 +1192,8 @@ const styles = StyleSheet.create({
   },
   backButton: { padding: 6, borderRadius: 10 },
   headerInfo: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
-  headerName: { fontSize: 16, fontWeight: '700', fontFamily: FONT_FAMILY.heading },
-  headerOrder: { fontSize: 12, marginTop: 1 },
+  headerName: { fontSize: 16, fontFamily: FONT_FAMILY.heading },
+  headerOrder: { fontSize: 12, fontFamily: FONT_FAMILY.body, marginTop: 1 },
   headerOrderBtn: {
     width: 38, height: 38, borderRadius: 13,
     alignItems: 'center', justifyContent: 'center',
@@ -1204,9 +1204,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   orderBarText: { flex: 1, minWidth: 0 },
-  orderBarTitle: { fontSize: 13, fontWeight: '700', fontFamily: FONT_FAMILY.heading },
+  orderBarTitle: { fontSize: 13, fontFamily: FONT_FAMILY.heading },
   orderBarMeta: {
-    fontSize: 10, fontWeight: '700', fontFamily: FONT_FAMILY.mono,
+    fontSize: 10, fontFamily: FONT_FAMILY.mono,
     letterSpacing: 0.8, textTransform: 'uppercase', color: TOKENS.color.signal,
   },
   messagesList: { flex: 1 },
@@ -1216,7 +1216,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12, paddingVertical: 6,
     borderRadius: 10, marginVertical: 4,
   },
-  systemText: { fontSize: 12, textAlign: 'center' },
+  systemText: { fontSize: 12, fontFamily: FONT_FAMILY.body, textAlign: 'center' },
   bubbleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginBottom: 4 },
   bubbleRowMine: { flexDirection: 'row-reverse' },
   bubble: { maxWidth: '75%', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 18, gap: 4 },
@@ -1244,11 +1244,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 5, paddingVertical: 2,
     borderRadius: 8,
   },
-  mediaTimestampText: { color: TOKENS.onMedia.text, fontSize: 10 },
+  mediaTimestampText: { color: TOKENS.onMedia.text, fontSize: 10, fontFamily: FONT_FAMILY.body },
   bubbleImage: { width: 220, height: 165 },
   bubbleVideo: { width: 220, height: 165, backgroundColor: TOKENS.onMedia.canvas },
-  bubbleText: { fontSize: 15, lineHeight: 20 },
-  bubbleTime: { fontSize: 10, alignSelf: 'flex-end' },
+  bubbleText: { fontSize: 15, fontFamily: FONT_FAMILY.body, lineHeight: 20 },
+  bubbleTime: { fontSize: 10, fontFamily: FONT_FAMILY.body, alignSelf: 'flex-end' },
   lightboxBackdrop: {
     flex: 1, backgroundColor: TOKENS.scrim.heavy,
     alignItems: 'center', justifyContent: 'center',
@@ -1270,10 +1270,10 @@ const styles = StyleSheet.create({
   },
   waveform: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 2, height: 24 },
   waveBar: { width: 3, borderRadius: 2 },
-  audioTime: { fontSize: 11, fontWeight: '600', minWidth: 32 },
+  audioTime: { fontSize: 11, fontFamily: FONT_FAMILY.headingMedium, minWidth: 32 },
   // Document bubble
   docBubble: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4, minWidth: 160, maxWidth: 220 },
-  docName: { flex: 1, fontSize: 13, fontWeight: '500' },
+  docName: { flex: 1, fontSize: 13, fontFamily: FONT_FAMILY.bodyMedium },
   // Attach menu
   attachMenu: {
     flexDirection: 'row',
@@ -1294,7 +1294,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     ...TOKENS.shadow.glow,
   },
-  attachOptionText: { fontSize: 11, fontWeight: '500' },
+  attachOptionText: { fontSize: 11, fontFamily: FONT_FAMILY.bodyMedium },
   // Input bar
   inputBar: {
     padding: 12,
@@ -1312,7 +1312,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   leftBtn: { padding: 4 },
-  input: { flex: 1, fontSize: 15, maxHeight: 100, paddingTop: 4 },
+  input: { flex: 1, fontSize: 15, fontFamily: FONT_FAMILY.body, maxHeight: 100, paddingTop: 4 },
   rightBtn: {
     width: 36, height: 36, borderRadius: 18,
     backgroundColor: TOKENS.color.signal,
@@ -1327,8 +1327,8 @@ const styles = StyleSheet.create({
   // Recording
   recordingBar: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
   recordingDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: TOKENS.color.error },
-  recordingTimer: { fontSize: 15, fontWeight: '700', color: TOKENS.color.error, minWidth: 36 },
-  recordingHint: { flex: 1, fontSize: 12 },
+  recordingTimer: { fontSize: 15, fontFamily: FONT_FAMILY.heading, color: TOKENS.color.error, minWidth: 36 },
+  recordingHint: { flex: 1, fontSize: 12, fontFamily: FONT_FAMILY.body },
   // Empty + typing
   emptyChat: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 8, paddingHorizontal: 32 },
   emptyChatIconWrap: {
@@ -1336,8 +1336,8 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 4,
   },
-  emptyChatText: { fontSize: 16, fontWeight: '800', fontFamily: FONT_FAMILY.display },
-  emptyChatSubtext: { fontSize: 14, textAlign: 'center' },
+  emptyChatText: { fontSize: 16, fontFamily: FONT_FAMILY.display },
+  emptyChatSubtext: { fontSize: 14, fontFamily: FONT_FAMILY.body, textAlign: 'center' },
   quickRepliesRow: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 8,
     justifyContent: 'center', marginTop: 8,
@@ -1346,7 +1346,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderRadius: 99,
     paddingHorizontal: 14, paddingVertical: 8,
   },
-  quickReplyText: { fontSize: 13, fontWeight: '500' },
+  quickReplyText: { fontSize: 13, fontFamily: FONT_FAMILY.bodyMedium },
   typingBubbleRow: { paddingHorizontal: 16, paddingVertical: 4 },
   typingBubble: {
     flexDirection: 'row',

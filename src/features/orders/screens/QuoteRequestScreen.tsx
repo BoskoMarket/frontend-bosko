@@ -27,8 +27,7 @@ import {
   SPACING,
   TOKENS,
   useThemeColors,
-  dialog,
-} from '@/core/design-system';
+  dialog, FONT_FAMILY } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -200,25 +199,28 @@ const styles = StyleSheet.create({
   serviceInfoText: { flex: 1 },
   serviceTitle: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: FONT_FAMILY.headingMedium,
   },
   providerName: {
     fontSize: 13,
+    fontFamily: FONT_FAMILY.body,
     marginTop: 2,
   },
   card: { gap: SPACING.xs },
   fieldContainer: { marginBottom: SPACING.lg },
   fieldLabel: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
     marginBottom: SPACING.xs,
   },
   fieldHint: {
     fontSize: 12,
+    fontFamily: FONT_FAMILY.body,
     marginBottom: SPACING.sm,
   },
   charCount: {
     fontSize: 11,
+    fontFamily: FONT_FAMILY.body,
     textAlign: 'right',
     marginTop: SPACING.xs,
   },

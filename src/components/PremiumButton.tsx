@@ -13,6 +13,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { PREMIUM_SHADOWS, TOKENS, usePremiumColors } from "@/core/design-system";
 import type { PremiumColors } from "@/core/design-system";
+import { FONT_FAMILY } from '@/core/design-system';
 
 type ButtonVariant = "primary" | "secondary" | "outline" | "ghost";
 type ButtonSize = "small" | "medium" | "large";
@@ -55,6 +56,7 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
           height: 36,
           paddingHorizontal: 16,
           fontSize: 14,
+          fontFamily: FONT_FAMILY.body,
           iconSize: 16,
         };
       case "large":
@@ -62,6 +64,7 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
           height: 56,
           paddingHorizontal: 32,
           fontSize: 18,
+          fontFamily: FONT_FAMILY.body,
           iconSize: 24,
         };
       default: // medium
@@ -69,6 +72,7 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
           height: 48,
           paddingHorizontal: 24,
           fontSize: 16,
+          fontFamily: FONT_FAMILY.body,
           iconSize: 20,
         };
     }
@@ -220,7 +224,7 @@ const createStyles = (pc: PremiumColors) => StyleSheet.create({
     zIndex: 1,
   },
   text: {
-    fontWeight: "600",
+    fontFamily: FONT_FAMILY.headingMedium,
     letterSpacing: 0.5,
     textAlign: "center",
   },

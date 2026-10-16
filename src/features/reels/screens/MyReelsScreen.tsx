@@ -19,7 +19,7 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
-import { Button, EmptyState, GRADIENTS, TOKENS, toast, useThemeColors, dialog } from '@/core/design-system';
+import { Button, EmptyState, GRADIENTS, TOKENS, toast, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useMyReels, useUpdateReel, useDeleteReel } from '@/hooks/queries/useReelsQuery';
@@ -301,9 +301,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  header: { fontSize: 18, fontWeight: '700' },
+  header: { fontSize: 18, fontFamily: FONT_FAMILY.heading },
   summaryRow: { paddingBottom: 12 },
-  summaryText: { fontSize: 13, fontWeight: '500' },
+  summaryText: { fontSize: 13, fontFamily: FONT_FAMILY.bodyMedium },
   loader: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   listContent: { gap: GAP, paddingBottom: 32 },
 
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   tileStat: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  tileStatText: { color: TOKENS.onMedia.text, fontSize: 12, fontWeight: '700' },
+  tileStatText: { color: TOKENS.onMedia.text, fontSize: 12, fontFamily: FONT_FAMILY.heading },
 
   // ── Edit sheet ────────────────────────────────────────────────────────────
   backdrop: { backgroundColor: TOKENS.scrim.medium },
@@ -341,13 +341,14 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   handle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 14 },
-  sheetTitle: { fontSize: 15, fontWeight: '700', textAlign: 'center', marginBottom: 18 },
-  fieldLabel: { fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 8 },
+  sheetTitle: { fontSize: 15, fontFamily: FONT_FAMILY.heading, textAlign: 'center', marginBottom: 18 },
+  fieldLabel: { fontSize: 12, fontFamily: FONT_FAMILY.heading, textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 8 },
   textarea: {
     borderRadius: 14,
     borderWidth: 1,
     padding: 14,
     fontSize: 15,
+    fontFamily: FONT_FAMILY.body,
     minHeight: 90,
     lineHeight: 21,
     marginBottom: 16,
@@ -361,13 +362,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
-  tagChipText: { fontSize: 13, fontWeight: '600' },
+  tagChipText: { fontSize: 13, fontFamily: FONT_FAMILY.headingMedium },
   tagInput: {
     borderRadius: 12,
     borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
+    fontFamily: FONT_FAMILY.body,
     marginBottom: 4,
   },
   sheetActions: { flexDirection: 'row', gap: 10, marginTop: 20 },

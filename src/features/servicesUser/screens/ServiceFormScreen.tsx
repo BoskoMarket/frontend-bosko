@@ -21,7 +21,7 @@ import { uploadServiceImages } from "@/features/servicesUser/services/service";
 import { useCategories, useMyServices, useUpdateService } from "@/hooks/queries/useMarketplaceQuery";
 import { useAddServiceWithPlanLimit } from "@/features/servicesUser/hooks/useAddServiceWithPlanLimit";
 import { fetchServiceById } from "../services/services";
-import { Button, Card, Chip, GRADIENTS, Input, SPACING, Text, TOKENS, useThemeColors, dialog } from '@/core/design-system';
+import { Button, Card, Chip, GRADIENTS, Input, SPACING, Text, TOKENS, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
 import { toast } from '@/core/components/Toast';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "center",
     fontSize: 18,
-    fontWeight: "700",
+    fontFamily: FONT_FAMILY.heading,
     color: TOKENS.onMedia.text,
   },
   scroll: {
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
   imageOverlayText: {
     color: TOKENS.onMedia.text,
     fontSize: 14,
-    fontWeight: "600",
+    fontFamily: FONT_FAMILY.headingMedium,
   },
   imagePlaceholder: {
     flex: 1,
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
   galleryRemoveText: {
     color: TOKENS.color.onPrimary,
     fontSize: 11,
-    fontWeight: "700",
+    fontFamily: FONT_FAMILY.heading,
   },
   galleryAdd: {
     width: 80,
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
   },
   galleryAddLabel: {
     fontSize: 10,
-    fontWeight: "600",
+    fontFamily: FONT_FAMILY.headingMedium,
   },
   errorBox: {
     borderRadius: 10,
