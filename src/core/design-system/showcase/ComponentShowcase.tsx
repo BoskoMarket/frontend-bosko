@@ -35,6 +35,7 @@ import {
   PathCard,
   ProgressBar,
   ReasonDialog,
+  RequestRow,
   ReportSheet,
   ScreenHeader,
   SectionHeader,
@@ -46,6 +47,7 @@ import {
   SPACING,
   StatTile,
   StepCard,
+  SummaryCard,
   StepTimeline,
   Text,
   TOKENS,
@@ -529,6 +531,12 @@ function HomeSection() {
           <CategoryTile icon="color-palette-outline" label="Pintura" onPress={() => {}} />
           <CategoryTile icon="leaf-outline" label="Jardín" onPress={() => {}} />
         </Row>
+      </Section>
+      <Section name="SummaryCard">
+        <SummaryCard eyebrow="Hola, Martín" title="Tenés 2 solicitudes nuevas" actionLabel="Ver solicitudes" onAction={() => {}} />
+      </Section>
+      <Section name="RequestRow">
+        <RequestRow name="Laura P." title="Laura P. · Instalación de tomas" subtitle="Palermo · Sábado por la mañana" badge="Nueva" onPress={() => {}} />
       </Section>
       <Section name="StatTile">
         <Row style={styles.cardRow}>

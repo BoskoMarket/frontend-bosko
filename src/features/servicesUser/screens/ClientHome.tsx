@@ -7,22 +7,18 @@
  * profile (name/zone) → ProfileContext, unread dot → NotificationsContext.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StatusBar, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, StatusBar, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { useProfile } from '@/features/profile/state/ProfileContext';
 import { useCategories, useFeaturedServices } from '@/hooks/queries/useMarketplaceQuery';
-import { useNotifications } from '@/features/notifications/state/NotificationsContext';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
-import { openNotifications } from '@/stores/notificationsUI.store';
-import { BrandMark } from '@/components/BrandMark';
+import { HomeTopBar } from '@/features/servicesUser/components/HomeTopBar';
 import { RoleSelectionModal, ROLE_MODAL_SEEN_KEY } from '@/features/servicesUser/components/RoleSelectionModal';
 import type { ServiceSummary } from '@/types/services';
 import {
-  Badge,
   Button,
   CategoryTile,
   EmptyState,
@@ -134,8 +130,6 @@ export default function ClientHome() {
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();
   const isDark = useIsDark();
-  const { profile } = useProfile();
-  const { unreadCount } = useNotifications();
   const { isFavorite, toggle } = useFavorites();
 
   const categoriesQuery = useCategories();
@@ -189,22 +183,7 @@ export default function ClientHome() {
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 90 }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={tc.signal} />}
       >
-        <View style={styles.topBar}>
-          <BrandMark variant="lockup" size={30} />
-          <View style={styles.topRight}>
-            {profile?.location ? <Badge label={profile.location} icon="location-outline" tone="neutral" /> : null}
-            <Pressable
-              onPress={openNotifications}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={unreadCount > 0 ? 'Notificaciones, hay nuevas' : 'Notificaciones'}
-              style={[styles.bell, { backgroundColor: tc.surface2, borderColor: tc.border }]}
-            >
-              <Ionicons name="notifications-outline" size={18} color={tc.text} />
-              {unreadCount > 0 ? <View style={[styles.dot, { backgroundColor: tc.signal, borderColor: tc.bg }]} /> : null}
-            </Pressable>
-          </View>
-        </View>
+        <HomeTopBar />
 
         <ValueHero
           eyebrow="Servicios en red · ARG"
@@ -318,10 +297,6 @@ export default function ClientHome() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   content: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.sm, gap: SPACING.xl + 2 },
-  topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  topRight: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  bell: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  dot: { position: 'absolute', top: 7, right: 8, width: 8, height: 8, borderRadius: 4, borderWidth: 1.5 },
   paths: { flexDirection: 'row', gap: SPACING.sm + 2 },
   section: { gap: SPACING.md },
   steps: { flexDirection: 'row', gap: SPACING.sm },
