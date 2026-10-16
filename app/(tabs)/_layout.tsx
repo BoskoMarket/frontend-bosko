@@ -34,6 +34,9 @@ export default function TabsLayout() {
     >
       <ErrorBoundary>
         <Tabs
+          // Hidden routes (services catalog) are reached by push: `history` makes
+          // back return to the tab the user came from instead of the first tab.
+          backBehavior="history"
           screenOptions={{
             headerShown: false,
             sceneStyle: { backgroundColor: tc.bg },
@@ -51,7 +54,8 @@ export default function TabsLayout() {
           )}
         >
           <Tabs.Screen name="index"    options={{ title: 'Inicio'    }} />
-          <Tabs.Screen name="services" options={{ title: 'Servicios' }} />
+          {/* Catalog + category/provider stack: hidden from the bar, still routable. */}
+          <Tabs.Screen name="services" options={{ title: 'Servicios', href: null }} />
           <Tabs.Screen name="orders"   options={{ title: isProvider ? 'Órdenes' : 'Pedidos' }} />
           <Tabs.Screen name="reels"    options={{ title: 'Reels'     }} />
           <Tabs.Screen name="chat"     options={{ title: 'Mensajes'  }} />

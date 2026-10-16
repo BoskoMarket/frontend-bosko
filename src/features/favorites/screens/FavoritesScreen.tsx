@@ -179,7 +179,7 @@ export function FavoritesScreen() {
             icon="heart-outline"
             title="Sin favoritos todavía"
             subtitle="Guardá los servicios que te gusten tocando el corazón para encontrarlos rápido."
-            cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)/services') }}
+            cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)') }}
             iconColor={TOKENS.color.error}
             iconBg={TOKENS.status.cancelled.bg}
           />

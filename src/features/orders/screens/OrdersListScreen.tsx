@@ -122,7 +122,7 @@ export default function OrdersListScreen() {
         icon="receipt-outline"
         title="Todavía no pediste nada"
         subtitle="Explorá servicios, cotizá con profesionales y hacé tu primer pedido."
-        cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)/services') }}
+        cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)') }}
       />
     ) : (
       <EmptyState

@@ -50,7 +50,7 @@ describe('ClientHome', () => {
     expect(router.push).toHaveBeenCalledWith('/search');
 
     fireEvent.press(getByText('Buscar servicios →'));
-    expect(router.push).toHaveBeenCalledWith('/(tabs)/services');
+    expect(router.push).toHaveBeenLastCalledWith('/search');
 
     fireEvent.press(getByText('Empezar a ofrecer →'));
     expect(router.push).toHaveBeenCalledWith('/(tabs)/profile/become-provider');

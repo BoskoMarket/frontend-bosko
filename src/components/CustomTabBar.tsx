@@ -25,7 +25,6 @@ type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const TABS: Record<string, { icon: IconName; active: IconName; label: string }> = {
   index:    { icon: 'home-outline',                active: 'home',                label: 'Inicio'    },
-  services: { icon: 'grid-outline',                active: 'grid',                label: 'Servicios' },
   orders:   { icon: 'receipt-outline',             active: 'receipt',             label: 'Pedidos'   },
   reels:    { icon: 'play-circle-outline',         active: 'play-circle',         label: 'Reels'     },
   chat:     { icon: 'chatbubble-ellipses-outline', active: 'chatbubble-ellipses', label: 'Mensajes'  },
@@ -51,31 +50,57 @@ function buildPath(W: number, cx: number): string {
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
-export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
+/**
+ * Routes that get a slot in the bar: they have a TABS entry and are not hidden
+ * with `href: null` (hidden routes stay navigable, e.g. the services catalog).
+ * Each entry keeps its navigator route index so presses target the right route.
+ */
+export function getVisibleRoutes(
+  state: BottomTabBarProps['state'],
+  descriptors: BottomTabBarProps['descriptors'],
+) {
+  return state.routes
+    .map((route, routeIndex) => ({ route, routeIndex }))
+    .filter(({ route }) => {
+      if (!TABS[route.name]) return false;
+      const href = (descriptors[route.key]?.options as { href?: string | null } | undefined)?.href;
+      return href !== null;
+    });
+}
+
+export function CustomTabBar({ state, navigation, descriptors }: BottomTabBarProps) {
   const unread = useUnreadTotal();
   const insets   = useSafeAreaInsets();
   const tc = useThemeColors();
   const styles = useMemo(() => createStyles(tc), [tc]);
   const [barW, setBarW] = useState(Dimensions.get('window').width - 32);
 
-  const tabCount = state.routes.length;
+  const visible = useMemo(() => getVisibleRoutes(state, descriptors), [state, descriptors]);
+  // Position of the focused route among visible tabs. On a hidden route (e.g. the
+  // services catalog) keep the pill where it was instead of jumping.
+  const lastVisibleIndex = useRef(0);
+  const focusedVisible = visible.findIndex(v => v.routeIndex === state.index);
+  if (focusedVisible >= 0) lastVisibleIndex.current = focusedVisible;
+  const activeIndex = lastVisibleIndex.current;
+
+  const tabCount = visible.length;
   const tabW     = barW / Math.max(1, tabCount);
   const getCx    = (idx: number) => idx * tabW + tabW / 2;
 
   // Bubble translateX — react-native Animated (works in Expo Go)
-  const bubbleAnim = useRef(new Animated.Value(getCx(state.index) - BR)).current;
+  const bubbleAnim = useRef(new Animated.Value(getCx(activeIndex) - BR)).current;
 
   // SVG path updated in JS (no reanimated needed)
-  const [pathD, setPathD] = useState(() => buildPath(barW, getCx(state.index)));
+  const [pathD, setPathD] = useState(() => buildPath(barW, getCx(activeIndex)));
 
   // Interpolate notch position alongside bubble for smooth SVG update
-  const notchAnim = useRef(new Animated.Value(getCx(state.index))).current;
+  const notchAnim = useRef(new Animated.Value(getCx(activeIndex))).current;
 
   useEffect(() => {
-    const cx = getCx(state.index);
+    const cx = getCx(activeIndex);
     Animated.spring(bubbleAnim, { toValue: cx - BR, ...SPRING }).start();
     Animated.spring(notchAnim,  { toValue: cx,      ...SPRING }).start();
-  }, [state.index, tabW]);
+  }, [activeIndex, tabW]);
 
   // Drive SVG path from notchAnim listener
   useEffect(() => {
@@ -87,7 +112,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 
   // Reset on barW change
   useEffect(() => {
-    const cx = getCx(state.index);
+    const cx = getCx(activeIndex);
     bubbleAnim.setValue(cx - BR);
     notchAnim.setValue(cx);
     setPathD(buildPath(barW, cx));
@@ -113,7 +138,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
     if (route) navigation.emit({ type: 'tabLongPress', target: route.key });
   }, [navigation, state.routes]);
 
-  const activeTab = TABS[state.routes[state.index]?.name ?? ''] ?? TABS.index;
+  const activeTab = TABS[visible[activeIndex]?.route.name ?? ''] ?? TABS.index;
 
   return (
     <View
@@ -137,8 +162,8 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
           </Svg>
 
           <View style={styles.row}>
-            {state.routes.map((route, idx) => {
-              const cfg     = TABS[route.name] ?? TABS.index;
+            {visible.map(({ route, routeIndex: idx }) => {
+              const cfg     = TABS[route.name];
               const focused = idx === state.index;
               return (
                 <TabSlot
