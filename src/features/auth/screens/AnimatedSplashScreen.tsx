@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
-import { AuthBackdrop, PALETTE, TOKENS, withAlpha } from '@/core/design-system';
+import { AuthBackdrop, TOKENS, useThemeColors, withAlpha } from '@/core/design-system';
 import { BrandMark } from '@/components/BrandMark';
 
 type Props = {
@@ -17,6 +17,7 @@ type Props = {
  * draw-in) → wordmark y tagline entran → barra de progreso llena en 2s → onDone().
  */
 export function AnimatedSplashScreen({ onDone }: Props) {
+  const tc = useThemeColors();
   const ripple1 = useRef(new Animated.Value(0)).current;
   const ripple2 = useRef(new Animated.Value(0)).current;
   const ripple3 = useRef(new Animated.Value(0)).current;
@@ -51,7 +52,7 @@ export function AnimatedSplashScreen({ onDone }: Props) {
   });
 
   return (
-    <AuthBackdrop forceDark tilt={-10} duration={1300} style={styles.root}>
+    <AuthBackdrop tilt={-10} duration={1300} style={styles.root}>
       <Animated.View style={[styles.ripple, rippleStyle(ripple1)]} />
       <Animated.View style={[styles.ripple, rippleStyle(ripple2)]} />
       <Animated.View style={[styles.ripple, rippleStyle(ripple3)]} />
@@ -64,7 +65,7 @@ export function AnimatedSplashScreen({ onDone }: Props) {
         <BrandMark variant="wordmark" size={68} tagline />
       </Animated.View>
 
-      <View style={styles.barTrack}>
+      <View style={[styles.barTrack, { backgroundColor: tc.border }]}>
         <Animated.View style={[styles.barFill, { transform: [{ scaleX: bar }] }]} />
       </View>
     </AuthBackdrop>
@@ -74,6 +75,6 @@ export function AnimatedSplashScreen({ onDone }: Props) {
 const styles = StyleSheet.create({
   root: { alignItems: 'center', justifyContent: 'center' },
   ripple: { position: 'absolute', width: 180, height: 180, borderRadius: 90, borderWidth: 1, borderColor: withAlpha(TOKENS.color.signal, 0.4) },
-  barTrack: { position: 'absolute', bottom: 64, width: 132, height: 2, borderRadius: 2, backgroundColor: PALETTE.dark.border, overflow: 'hidden' },
+  barTrack: { position: 'absolute', bottom: 64, width: 132, height: 2, borderRadius: 2, overflow: 'hidden' },
   barFill: { height: '100%', width: '100%', backgroundColor: TOKENS.color.signal, transformOrigin: 'left' },
 });

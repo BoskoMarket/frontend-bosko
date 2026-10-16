@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Text,
   StyleSheet,
@@ -11,7 +11,8 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { PREMIUM } from "@/core/design-system";
+import { PREMIUM_SHADOWS, TOKENS, usePremiumColors } from "@/core/design-system";
+import type { PremiumColors } from "@/core/design-system";
 
 type ButtonVariant = "primary" | "secondary" | "outline" | "ghost";
 type ButtonSize = "small" | "medium" | "large";
@@ -43,6 +44,9 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
   textStyle,
   gradientColors,
 }) => {
+  const pc = usePremiumColors();
+  const styles = useMemo(() => createStyles(pc), [pc]);
+
   // Determine sizing
   const getSizeStyles = () => {
     switch (size) {
@@ -81,7 +85,7 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
         return {
           backgroundColor: "transparent",
           borderWidth: 1.5,
-          borderColor: PREMIUM.gold,
+          borderColor: pc.gold,
         };
       case "ghost":
         return {
@@ -89,34 +93,33 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
         };
       case "secondary":
         return {
-          backgroundColor: PREMIUM.card,
+          backgroundColor: pc.card,
           borderWidth: 1,
-          borderColor: PREMIUM.borderSubtle,
-          ...styles.shadowMedium,
+          borderColor: pc.borderSubtle,
+          ...PREMIUM_SHADOWS.medium,
         };
       default: // primary
         return {
-          ...styles.shadowGold, // Spectacular shadow for primary
+          ...PREMIUM_SHADOWS.brand, // Spectacular shadow for primary
         };
     }
   };
 
   const getTextColor = () => {
-    if (disabled) return PREMIUM.textTertiary;
+    if (disabled) return pc.textTertiary;
     switch (variant) {
       case "outline":
       case "ghost":
-        return PREMIUM.gold;
+        return pc.gold;
       case "secondary":
-        return PREMIUM.textPrimary;
+        return pc.textPrimary;
       default:
-        return PREMIUM.textPrimary; // Text on gradient
+        return TOKENS.color.onPrimary; // Text on brand gradient (theme-independent)
     }
   };
 
   // Primary gradient colors
-  const defaultGradient: readonly [string, string, ...string[]] = [PREMIUM.colorPrimary, PREMIUM.colorPrimaryDark]; // Deep red/burgundy gradient from palette
-  // Alternative Gold Gradient if needed: [PREMIUM.gold, '#B8860B']
+  const defaultGradient: readonly [string, string, ...string[]] = [pc.primary, pc.primaryDark]; // Brand burgundy gradient
 
   // We render content inside a function to reuse it
   const renderContent = () => (
@@ -203,7 +206,7 @@ export const PremiumButton: React.FC<PremiumButtonProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (pc: PremiumColors) => StyleSheet.create({
   base: {
     flexDirection: "row",
     alignItems: "center",
@@ -222,22 +225,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   disabledProperties: {
-    backgroundColor: PREMIUM.inputBackground,
+    backgroundColor: pc.inputBackground,
     borderColor: "transparent",
-  },
-  // Shadows
-  shadowGold: {
-    shadowColor: PREMIUM.colorPrimary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
-    elevation: 10,
-  },
-  shadowMedium: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    elevation: 8,
   },
 });

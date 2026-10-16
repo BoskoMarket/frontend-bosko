@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PALETTE } from '@/core/design-system/palette';
+import type { PaletteColors } from '@/core/design-system/palette';
+import { PREMIUM_PALETTE } from '@/core/design-system/premium';
 
 export type ThemeMode = 'dark' | 'light';
 
@@ -9,7 +11,7 @@ export type ThemeMode = 'dark' | 'light';
 // Este store solo agrega el toggle/persist encima.
 export const THEME_COLORS = PALETTE;
 
-export type ThemeColors = typeof THEME_COLORS.dark;
+export type ThemeColors = PaletteColors;
 
 interface ThemeState {
   mode: ThemeMode;
@@ -36,3 +38,5 @@ export const useThemeMode   = () => useThemeStore((s) => s.mode);
 export const useThemeColors = () => THEME_COLORS[useThemeStore((s) => s.mode)];
 export const useToggleTheme = () => useThemeStore((s) => s.toggle);
 export const useIsDark      = () => useThemeStore((s) => s.mode === 'dark');
+// Premium (gold) palette follows the same light/dark mode.
+export const usePremiumColors = () => PREMIUM_PALETTE[useThemeStore((s) => s.mode)];

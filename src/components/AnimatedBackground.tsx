@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, Easing } from 'react-native';
 import { RadialBlob } from '@/core/components/RadialBlob';
+import { TOKENS } from '@/core/design-system';
 
 export function AnimatedBackground({ variant = 'app' }: { variant?: 'app' | 'minimal' }) {
   const a = useRef(new Animated.Value(0)).current;
@@ -30,16 +31,16 @@ export function AnimatedBackground({ variant = 'app' }: { variant?: 'app' | 'min
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <Animated.View style={[styles.blobArea, styles.blob1, blobStyle(a, 24, 16)]}>
-        <RadialBlob size={400} color="rgb(255,45,111)" opacity={0.16} />
+        <RadialBlob size={400} color={TOKENS.color.signal} opacity={0.16} />
       </Animated.View>
 
       <Animated.View style={[styles.blobArea, styles.blob2, blobStyle(b, -20, -14)]}>
-        <RadialBlob size={360} color="rgb(133,0,33)" opacity={0.18} />
+        <RadialBlob size={360} color={TOKENS.color.primary} opacity={0.18} />
       </Animated.View>
 
       {variant === 'app' && (
         <Animated.View style={[styles.blobArea, styles.blob3, blobStyle(c, 10, -18)]}>
-          <RadialBlob size={280} color="rgb(0,229,160)" opacity={0.06} />
+          <RadialBlob size={280} color={TOKENS.color.mint} opacity={0.06} />
         </Animated.View>
       )}
     </View>

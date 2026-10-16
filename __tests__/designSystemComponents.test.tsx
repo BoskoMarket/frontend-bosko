@@ -151,10 +151,10 @@ describe('design system components', () => {
     expect(getByText('Iniciar sesión')).toBeTruthy();
   });
 
-  it('AuthBackdrop renders children over the backdrop (themed and forced dark)', () => {
+  it('AuthBackdrop renders children over the backdrop', () => {
     const { getByText, rerender } = render(<AuthBackdrop><SectionHeader title="Hola" /></AuthBackdrop>);
     expect(getByText('Hola')).toBeTruthy();
-    rerender(<AuthBackdrop forceDark tilt={-10} duration={1300}><SectionHeader title="Hola" /></AuthBackdrop>);
+    rerender(<AuthBackdrop tilt={-10} duration={1300}><SectionHeader title="Hola" /></AuthBackdrop>);
     expect(getByText('Hola')).toBeTruthy();
   });
 

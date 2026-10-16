@@ -72,6 +72,7 @@ Forecast: muy por encima de ~400 líneas → PRs encadenados, una tarea (o featu
 | 1 — regla, brand layer, guardia | `feat/design-system-centralization` | `dev` | `570e447` `23c9164` `5cb9cb7` `4ce0c02` `c0caff3` | listo para PR |
 | 2 — componentes DS (T3) | `feat/ds-t3-components` | `feat/design-system-centralization` | `fc05bf3` `4f6cb90` | listo para PR |
 | 3 — migración auth (T4) | `feat/ds-t4-auth` | `feat/ds-t3-components` | `f778e7e` `e9b7e49` `62215d2` | listo para PR |
+| 4 — componentes compartidos + premium theme-aware (T5) | `feat/ds-t5-shared` | `feat/ds-t4-auth` | `335c95a` `69a7162` `46f9c0c` `daae378` + docs | listo para PR |
 
 ## Inventario de componentes (T3)
 
@@ -105,7 +106,7 @@ Cambios al DS existente en esta tarea: sacados todos los literales de `Button`, 
 | T2 | Guardia ESLint en `warn` + script de conteo de violaciones (baseline registrado aquí) | inline | ✅ `5cb9cb7` |
 | T3 | Inventario y alta de componentes faltantes en el DS: `Input` (mover desde `core/components`), `GradientButton`/variante brand de `Button`, `Chip`, `Badge/StatusPill`, `Avatar`, `OtpInput`, `AuthCard`, `EmptyState`, `Toast`, banners, `BrandMark` | delegada | ✅ |
 | T4 | Migrar `features/auth` (~14 pantallas) | delegada | ✅ `f778e7e` `e9b7e49` |
-| T5 | Migrar `src/components` + `src/core/components` compartidos (TabBar, ThemeToggle, ProviderCTA, Premium*, banners) + pasar Splash / Onboarding / WelcomeVideo a theme-aware (regla "todo sigue el tema") | delegada | ⬜ |
+| T5 | Migrar `src/components` + `src/core/components` compartidos (TabBar, ThemeToggle, ProviderCTA, Premium*, banners) + pasar Splash / Onboarding / WelcomeVideo a theme-aware (regla "todo sigue el tema") | delegada | ✅ `335c95a` `69a7162` `46f9c0c` `daae378` |
 | T6 | Migrar `features/servicesUser` (~16 archivos, incl. Dashboard, ServiceForm, ProviderProfile) | delegada | ⬜ |
 | T7 | Migrar `features/orders` + `features/payments` + `features/plans` | delegada | ⬜ |
 | T8 | Migrar `features/kyc` + `features/admin` | delegada | ⬜ |
@@ -134,13 +135,14 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 - **Siempre**: registrar en "Hallazgos" bugs, UX rotos, código muerto o pantallas sin entrada de navegación (archivo:línea + 1 línea de descripción).
 - **Arreglar en el momento** solo lo trivial y local (≤ ~10 líneas, sin decisión de producto): typo, color que falla en light/dark, `key` faltante, import muerto. Va en un commit `fix(...)` separado del de migración.
 - **Mapa de navegación**: por cada pantalla migrada, registrar todas sus salidas (push/replace/back, `Link`, `Redirect`, guards, modales, URLs externas) en `odd/nav-map.md` y validar que el destino exista en `app/`. Rotos → sección "Enlaces rotos" de ese archivo (no se arreglan en la migración salvo que sea trivial).
+- **Backlog de correcciones** (decisión del usuario 2026-10-05): todo lo que **no se usa, está roto, no navega o es un stub** va a `odd/backlog-fixes.md` con ID `Bnn`, archivo:línea + símbolo exacto, qué hace hoy y qué debería hacer (marcar *(propuesto)* si es inferencia). No se corrige en la migración salvo trivial; se corrige después. Verificar antes de anotar (ej. buscar importadores) — no inventar.
 - **No** mezclar en la migración: cambios de comportamiento, navegación nueva, prototipos o refactors grandes. La migración tiene que ser visualmente equivalente para poder verificarla; lo demás se convierte en tarea propia al final.
 
 ## Hallazgos
 
 | Archivo:línea | Problema | Acción |
 |---|---|---|
-| `src/core/design-system/premium.ts` (`colorPrimary`) | `#850221` / `#5c0117` ≠ brand `#850021` / `#3C0014`; probable typo heredado de `Colors.ts`. Guardados aparte en `BRAND.colors.premium.*` | Decidir en T5 si se unifica (cambio visual mínimo) |
+| `src/core/design-system/premium.ts` (`colorPrimary`) | `#850221` / `#5c0117` ≠ brand `#850021` / `#3C0014`; probable typo heredado de `Colors.ts`. Guardados aparte en `BRAND.colors.premium.*` | ✅ Resuelto en T5: `PREMIUM_PALETTE.*.primary/primaryDark` = brand |
 | `src/core/design-system/tokens.ts` | `TOKENS.color.success` === `mint` (duplicado) | Unificar en T13 |
 | `src/features/auth/screens/VerifyEmailScreen.tsx:80-90` | Cajas OTP con `maxLength={1}`: pegar/autocompletar el código no funciona | T4: reemplazar por `OtpInput` |
 | `src/features/servicesUser/components/CategoryChips.tsx:34` | Fondo blanco + borde `rgba(0,0,0,0.06)` fijos → se rompe en dark | T6: `Chip` |
@@ -148,13 +150,16 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 | `src/features/profile/ProfileScreen.tsx:215` | Chevron con `tc.border` → casi invisible | T9: `ListRow` |
 | `src/core/design-system/components/OtpInput` | Borrar un dígito del medio corre los siguientes a la izquierda (`value` string) | Aceptado; pasar a `string[]` si molesta |
 | DS components (`Button`, `Card`, `IconCircle`, …) | En T3 dejaron de forzar look dark en light mode (ahora usan `tc.*`) | **Revisar visualmente en light** en T4 → pendiente de verificación en dispositivo (pantallas auth ahora siguen el tema, ver Progreso T4) |
-| `src/features/auth/components/OnBoardingSlide.tsx` | Componente sin ningún import en `src/` ni `app/` (código muerto; el onboarding real es `screens/OnBoarding.tsx`). Se migró igual a tokens para no dejar violaciones | Borrar en T13 (o ahora si se confirma) |
+| `src/features/auth/components/OnBoardingSlide.tsx` | Componente sin ningún import en `src/` ni `app/` (código muerto; el onboarding real es `screens/OnBoarding.tsx`). Se migró igual a tokens para no dejar violaciones | ✅ Borrado en T5 (`daae378`) |
 | `src/features/auth/screens/VerifyEmailScreen.tsx` (`handleResend`) | Stub: no llama a ningún endpoint (TODO backend `POST /auth/resend-verification`); `resending` y `cooldown` nunca se activan → la UI de "Reenviar en Ns" es inalcanzable | Tarea propia cuando el backend exponga el endpoint |
 | `src/features/auth/screens/VerifyEmailScreen.tsx` | La vista del OTP no monta `AnimatedBackground` (la de éxito sí) → fondo distinto entre ambos estados; las demás pantallas del flujo sí lo tienen | Decidir si se agrega (cambio visual) |
 | `src/features/auth/screens/LoginIndex.tsx` + `app/login/LogInView.tsx` / `RegisterView.tsx` | Rutas duplicadas huérfanas; el prop `toRegister` de `RegisterView` en realidad "vuelve a login" (nombre engañoso) y sin él los botones no hacen nada | Borrar las 2 rutas o renombrar prop (T13 / tarea propia) |
 | `src/features/auth/screens/ForgotPasswordScreen.tsx` | El círculo hero (icono llave) quedaba alineado a la izquierda del bloque (sin `alignSelf`); al migrar a `IconCircle` quedó centrado | Verificar en dispositivo (se asume que era un bug) |
-| `src/features/auth/state/AuthContext.tsx:263-266` | Pantalla de "Reintentar conexión / Cerrar sesión" usa `Button` nativo de RN (sin estilo del DS) y `Text` suelto | T5/T11: `Button` del DS |
-| `src/components/BrandMark.tsx`, `src/components/AnimatedBackground.tsx` | Siguen con literales (`#EDEAF5`, `#850021`, `rgb(255,45,111)`…); las pantallas auth los usan | T5 (`src/components`) |
+| `src/features/auth/state/AuthContext.tsx:263-266` | Pantalla de "Reintentar conexión / Cerrar sesión" usa `Button` nativo de RN (sin estilo del DS) y `Text` suelto | ✅ Resuelto en T5: `Button`/`Text` del DS |
+| `src/components/BrandMark.tsx`, `src/components/AnimatedBackground.tsx` | Siguen con literales (`#EDEAF5`, `#850021`, `rgb(255,45,111)`…); las pantallas auth los usan | ✅ Resuelto en T5 (BrandMark ahora sigue el tema: tinta `tc.text`) |
+| `src/components/{PremiumBanner,ProviderCTA,FeaturesSection,CategoryVideoCarousel}.tsx`, `src/features/servicesUser/components/{PromoBanner,ProfesionalCard,ProfesionalCarousel}.tsx` | Sin importadores (código muerto; `ProfesionalCard` solo lo usa `ProfesionalCarousel`). Migrados igual a tokens/tema. Varios botones sin navegación (`onPress` no-op / ausente), ver `odd/nav-map.md` | Borrar o conectar (T6 / T13) |
+| `src/features/servicesUser/components/ServiceDetailModal.tsx` | `formatRate` declarada y sin uso; estilos `priceRow/priceLabel/priceValue` sin uso (se eliminaron al migrar) | Decidir si el modal debe mostrar el precio (T6) |
+| `__tests__/designSystemComponents.test.tsx:175` | `tsc` fallaba por `n` implícito (error ya existente desde T4: `tsc` no estaba limpio) | ✅ Corregido en T5 (`46f9c0c`) |
 | Auth flow (`/auth/*`, `/welcome-video`, `/login/termsAndConditions`) | Sin guard inverso / sin entrada de navegación; detalle en `odd/nav-map.md` → "Enlaces rotos / dudosos" | Tarea de navegación (T14) |
 
 ## Progreso / evidencia
@@ -176,9 +181,12 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 | T2 (baseline) | 1095 | 78 |
 | T3 | 1067 | 73 |
 | T4 | 835 | 61 |
+| T5 | 765 | 47 |
+
+- 2026-10-05 T5 ✅ `335c95a` `69a7162` `46f9c0c` `daae378`: **Premium theme-aware**: `PREMIUM` (siempre dark) reemplazado por `PREMIUM_PALETTE.dark/.light` + `usePremiumColors()` (en `theme.store.ts`, exportado por el barrel) + `PREMIUM_SHADOWS` estáticas; `BRAND.colors.premium` ahora trae `gold/goldDeep/onGold` + `dark/light` (background, card, cardEnd, panel, panelEnd, goldText). `gold` en light = `#7A5800` (contraste >= 4.5:1, con test); `goldFill/goldFillEnd/onGold` iguales en ambos temas. `primary/primaryDark` = brand (hallazgo `#850221` resuelto, cambio visual mínimo). Otros añadidos al DS: `TOKENS.color.shadow`, `TOKENS.blurTint`, `PALETTE.*.switchTrack` (+ `BRAND.colors.dark.track`); `PaletteColors`/`PremiumColors` ensanchados a `string` (para pasar `tc`/`pc` a `createStyles`). `AuthBackdrop.forceDark` eliminado (sin usos). Migrados (0 violaciones): AnimatedBackground, BrandMark (tinta `tc.text`), CategoryVideoCarousel, CustomTabBar (barra `tc.surface`, íconos `tc.text`, badge `TOKENS.color.error`), FeaturesSection, PremiumBanner, PremiumButton, ProviderCTA, ThemeToggle, `BlurView.android`, EditProfileModal, ProfesionalCard (ahora `tc.surface`), PromoBanner, ServiceDetailModal (BlurView tint según tema, hero con `onMedia/scrim`); `AuthContext` retry usa `Button`/`Text` del DS; Splash/Onboarding/WelcomeVideo theme-aware (Welcome: "Saltar" sobre video con `scrim`/`onMedia`; Onboarding: `StatusBar` cambia con el tema). `core/components` restante (AppBackground, OfflineBanner, UpdateBanner, RadialBlob, ErrorBoundary, BiometricLockGate) ya estaba limpio desde T3: sin cambios. `OnBoardingSlide` borrado (sin importadores). Tests: `sharedComponents.test.tsx` (hook premium cambia con el modo, render dark/light, guardia de literales en `src/components` y `src/core/components`) + premium en `designSystemBrand`. Checks: `tsc` limpio, `lint` 0 errores, `npm test` 11 suites / 79 tests, `lint:ds` **765** (-70, todos los archivos de T5 = 0). Nav-map: +15 filas (tab bar, modales, CTAs sin navegación), 0 rotas, 3 filas dudosas nuevas. **Verificar en dispositivo (dark + light)**: tab bar (barra `tc.surface`; antes siempre `#141414`), BrandMark (tinta `tc.text`, oscura en light), Splash/Onboarding/Welcome en light, ThemeToggle (iconos con `TOKENS.status.progress.fg` / `TOKENS.color.warning`), ProfesionalCard (fondo según tema), Editar perfil (bottom sheet premium en light: footer, inputs Paper), ServiceDetailModal en light (BlurView), AuthContext retry.
 
 - 2026-10-05 **Decisión del usuario:** todas las pantallas siguen tema claro y oscuro (se aprueba el cambio de T4 en auth). Única excepción: texto/íconos **sobre video o imagen** usan `TOKENS.onMedia` / `scrim` por legibilidad, no por tema. Splash, Onboarding y WelcomeVideo (hoy siempre dark) pasan a theme-aware en T5. `PREMIUM` (siempre dark por diseño) contradice la regla → resolver en T5.
 
 ## Próximo paso
 
-T5: migrar `src/components` + `src/core/components` compartidos (TabBar, ThemeToggle, ProviderCTA, Premium*, banners; incluye `BrandMark` y `AnimatedBackground`, que usan las pantallas auth). Antes: verificar en dispositivo (dark + light) las pantallas auth de T4.
+T6: migrar `features/servicesUser` (~16 archivos, incl. Dashboard, ServiceForm, ProviderProfile). Antes: verificar en dispositivo (dark + light) lo tocado en T4/T5 (ver Progreso T5). Para cualquier tratamiento dorado usar `usePremiumColors()`; `PremiumButton` ya sigue el tema.

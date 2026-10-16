@@ -18,7 +18,7 @@ Roles: **client** (usuario común) · **pending** (inició KYC, no aprobado aún
 | `/login/termsAndConditions` | `TermsAndConditionsScreen` | anónimo | T&C (requerido en registro) |
 | `/auth/verify-email` | `VerifyEmailScreen` | recién registrado | Verificación de email post-registro |
 | `/welcome-video` | `WelcomeVideoScreen` | recién registrado | Video de bienvenida (una sola vez) |
-| — | `OnBoarding` | primer uso | Slides de onboarding (`OnBoardingSlide`) |
+| — | `OnBoarding` | primer uso | Slides de onboarding (`screens/OnBoarding.tsx`) |
 | `(tabs)/profile/ChangePassword` | `ChangePasswordScreen` (auth) | autenticado | Cambio de contraseña desde perfil |
 
 **Guards** (3 capas, ver CLAUDE.md): `app/index.tsx` (gate primario) → `(tabs)/_layout.tsx` (redirect a `/login` si no hay token) → `login/_layout.tsx` (redirect a `/(tabs)` si ya autenticado).

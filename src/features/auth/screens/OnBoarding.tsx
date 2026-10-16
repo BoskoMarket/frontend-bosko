@@ -15,14 +15,11 @@ import LottieView from "lottie-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { Button, GRADIENTS, PALETTE, TOKENS, Text } from "@/core/design-system";
+import { Button, GRADIENTS, TOKENS, Text, useIsDark, useThemeColors } from "@/core/design-system";
 import { BrandMark } from "@/components/BrandMark";
 
 const { width: W, height: H } = Dimensions.get("window");
 const CARD_H = 340;
-// Onboarding is intentionally always dark, regardless of the theme toggle.
-const DARK = PALETTE.dark;
-
 type Slide = { key: string; title: string; subtitle: string; lottie: any };
 
 // Copy sin cambios respecto al OnBoarding.tsx actual — solo cambia el chrome visual.
@@ -38,6 +35,8 @@ export default function OnBoarding() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
   const insets = useSafeAreaInsets();
+  const tc = useThemeColors();
+  const isDark = useIsDark();
 
   const scrollX = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef<FlatList<Slide>>(null);
@@ -87,10 +86,10 @@ export default function OnBoarding() {
   const isLast = currentIndex === SLIDES.length - 1;
 
   return (
-    <View style={[styles.root, { backgroundColor: DARK.bg }]}>
-      <StatusBar barStyle="light-content" />
-      {/* Fondo: negro profundo con glow rosa señal (antes: bordo oscuro) */}
-      <LinearGradient colors={GRADIENTS.backdrop(DARK)} style={StyleSheet.absoluteFill} />
+    <View style={[styles.root, { backgroundColor: tc.bg }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+      {/* Fondo: bg del tema con tinte vino y glow rosa señal */}
+      <LinearGradient colors={GRADIENTS.backdrop(tc)} style={StyleSheet.absoluteFill} />
 
       <FlatList
         ref={flatListRef}
@@ -128,9 +127,9 @@ export default function OnBoarding() {
       />
 
       <View style={[styles.header, { paddingTop: insets.top + 22 }]}>
-        <BrandMark variant="lockup" size={30} color={TOKENS.onMedia.text} />
+        <BrandMark variant="lockup" size={30} />
         <Pressable onPress={complete} hitSlop={14}>
-          <Text variant="bodySmall" weight="500" color={DARK.textSub} style={styles.skipText}>Saltar</Text>
+          <Text variant="bodySmall" weight="500" color={tc.textSub} style={styles.skipText}>Saltar</Text>
         </Pressable>
       </View>
 
@@ -138,14 +137,14 @@ export default function OnBoarding() {
         style={[
           styles.card,
           {
-            backgroundColor: DARK.card, // vidrio — antes tc.card sólido
-            borderColor: DARK.border,
+            backgroundColor: tc.card,
+            borderColor: tc.border,
             height: CARD_H + Math.max(insets.bottom, 16),
             paddingBottom: Math.max(insets.bottom, 16) + 24,
           },
         ]}
       >
-        <View style={styles.handle} />
+        <View style={[styles.handle, { backgroundColor: tc.textMuted }]} />
 
         <View style={styles.dotsRow}>
           {SLIDES.map((_, i) => {
@@ -164,8 +163,8 @@ export default function OnBoarding() {
         </View>
 
         <Animated.View style={{ flex: 1, justifyContent: "center", opacity: titleOpacity, transform: [{ translateY: titleTranslate }] }}>
-          <Text variant="h3" color={DARK.text} style={styles.title}>{slide.title}</Text>
-          <Text variant="body" color={DARK.textSub} style={styles.subtitle}>{slide.subtitle}</Text>
+          <Text variant="h3" style={styles.title}>{slide.title}</Text>
+          <Text variant="body" color={tc.textSub} style={styles.subtitle}>{slide.subtitle}</Text>
         </Animated.View>
 
         <Button
@@ -199,7 +198,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderBottomWidth: 0,
     ...TOKENS.shadow.card, shadowOffset: { width: 0, height: -8 }, shadowOpacity: 0.4, shadowRadius: 30, elevation: 24,
   },
-  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: DARK.textMuted, alignSelf: "center", marginBottom: 6 },
+  handle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 6 },
   dotsRow: { flexDirection: "row", alignItems: "center", height: 18, gap: 5 },
   dot: { height: 7, borderRadius: 3.5 },
   title: { fontSize: 26, fontWeight: "800", letterSpacing: -0.4, lineHeight: 32 },

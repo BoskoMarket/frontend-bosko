@@ -1,15 +1,18 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
-import { PREMIUM } from '@/core/design-system';
+import { PREMIUM_SHADOWS, TOKENS, usePremiumColors } from '@/core/design-system';
+import type { PremiumColors } from '@/core/design-system';
 import { PremiumButton } from '@/components/PremiumButton';
 
 const { width } = Dimensions.get('window');
 const CURVE_HEIGHT = 60;
 
 export const ProviderCTA = () => {
+    const pc = usePremiumColors();
+    const styles = useMemo(() => createStyles(pc), [pc]);
     const opacity = useRef(new Animated.Value(0)).current;
     const translateY = useRef(new Animated.Value(50)).current;
 
@@ -31,19 +34,19 @@ export const ProviderCTA = () => {
                 >
                     <Path
                         d={`M0,${CURVE_HEIGHT} L0,0 C${width * 0.3},${CURVE_HEIGHT * 0.8} ${width * 0.5},${CURVE_HEIGHT} ${width},0 L${width},${CURVE_HEIGHT} Z`}
-                        fill="#1a0505"
+                        fill={pc.panel}
                     />
                 </Svg>
             </View>
 
             <Animated.View style={[styles.container, { opacity, transform: [{ translateY }] }]}>
                 <LinearGradient
-                    colors={['#1a0505', '#2d0a0a']}
+                    colors={[pc.panel, pc.panelEnd]}
                     style={styles.contentContainer}
                 >
                     <View style={styles.headerRow}>
                         <View style={styles.iconCircle}>
-                            <MaterialCommunityIcons name="crown" size={32} color={PREMIUM.gold} />
+                            <MaterialCommunityIcons name="crown" size={32} color={pc.gold} />
                         </View>
                         <View style={styles.textBlock}>
                             <Text style={styles.mainText}>Únete a la Élite</Text>
@@ -53,17 +56,17 @@ export const ProviderCTA = () => {
 
                     <View style={styles.featuresRow}>
                         <View style={styles.featureItem}>
-                            <MaterialCommunityIcons name="cash-multiple" size={20} color={PREMIUM.gold} />
+                            <MaterialCommunityIcons name="cash-multiple" size={20} color={pc.gold} />
                             <Text style={styles.featureText}>Pagos Rápidos</Text>
                         </View>
                         <View style={styles.divider} />
                         <View style={styles.featureItem}>
-                            <MaterialCommunityIcons name="calendar-check" size={20} color={PREMIUM.gold} />
+                            <MaterialCommunityIcons name="calendar-check" size={20} color={pc.gold} />
                             <Text style={styles.featureText}>Tu Horario</Text>
                         </View>
                         <View style={styles.divider} />
                         <View style={styles.featureItem}>
-                            <MaterialCommunityIcons name="shield-check" size={20} color={PREMIUM.gold} />
+                            <MaterialCommunityIcons name="shield-check" size={20} color={pc.gold} />
                             <Text style={styles.featureText}>Seguro</Text>
                         </View>
                     </View>
@@ -73,8 +76,8 @@ export const ProviderCTA = () => {
                         iconRight="arrow-forward"
                         variant="primary"
                         onPress={() => { }}
-                        gradientColors={[PREMIUM.gold, '#B8860B']}
-                        textStyle={{ color: '#1a0505', fontSize: 16, fontWeight: 'bold' }}
+                        gradientColors={[pc.goldFill, pc.goldFillEnd]}
+                        textStyle={{ color: pc.onGold, fontSize: 16, fontWeight: 'bold' }}
                         style={styles.ctaButton}
                     />
                 </LinearGradient>
@@ -83,7 +86,7 @@ export const ProviderCTA = () => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (pc: PremiumColors) => StyleSheet.create({
     wrapper: {
         marginTop: 20,
         marginBottom: 40,
@@ -93,7 +96,7 @@ const styles = StyleSheet.create({
         marginBottom: -1, // Fix 1px gap line
     },
     svg: {
-        shadowColor: "#000",
+        shadowColor: TOKENS.color.shadow,
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -101,7 +104,7 @@ const styles = StyleSheet.create({
         zIndex: 1,
     },
     container: {
-        backgroundColor: '#1a0505',
+        backgroundColor: pc.panel,
     },
     contentContainer: {
         paddingHorizontal: 24,
@@ -118,12 +121,12 @@ const styles = StyleSheet.create({
         width: 60,
         height: 60,
         borderRadius: 30,
-        backgroundColor: 'rgba(255, 215, 0, 0.1)',
+        backgroundColor: pc.goldLight,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: PREMIUM.goldBorder,
-        ...PREMIUM.shadows.gold,
+        borderColor: pc.goldBorder,
+        ...PREMIUM_SHADOWS.gold,
     },
     textBlock: {
         flex: 1,
@@ -131,23 +134,23 @@ const styles = StyleSheet.create({
     mainText: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: PREMIUM.textPrimary,
+        color: pc.textPrimary,
         marginBottom: 4,
     },
     subText: {
         fontSize: 14,
-        color: PREMIUM.textSecondary,
+        color: pc.textSecondary,
     },
     featuresRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.03)',
+        backgroundColor: pc.surfaceSubtle,
         padding: 16,
         borderRadius: 16,
         marginBottom: 24,
         borderWidth: 1,
-        borderColor: PREMIUM.borderSubtle,
+        borderColor: pc.borderSubtle,
     },
     featureItem: {
         flexDirection: 'row',
@@ -156,17 +159,17 @@ const styles = StyleSheet.create({
     },
     featureText: {
         fontSize: 12,
-        color: PREMIUM.textPrimary,
+        color: pc.textPrimary,
         fontWeight: '600',
     },
     divider: {
         width: 1,
         height: 20,
-        backgroundColor: PREMIUM.borderSubtle,
+        backgroundColor: pc.borderSubtle,
     },
     ctaButton: {
         borderRadius: 16,
-        ...PREMIUM.shadows.gold,
+        ...PREMIUM_SHADOWS.gold,
     },
 
 });
