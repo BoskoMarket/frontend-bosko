@@ -31,7 +31,7 @@ Every text in the app renders in the Bosko typography (Archivo for UI/body, JetB
 | T2 | Auth + app gate: `src/features/auth/**`, `src/features/appConfig/**` | delegated | ✅ | feaaa33 |
 | T3 | Marketplace: `src/features/servicesUser/**`, `src/features/search/**` | delegated | ✅ | 8b704a9 |
 | T4 | Orders, payments, plans, chat, notifications | delegated | ✅ | d26aaf8 |
-| T5 | KYC, admin, profile, users, reels, reviews, favorites + guard test (no `fontWeight` and no RN `Text` without `fontFamily` outside DS — at minimum a `fontWeight` guard) | delegated | ⬜ | |
+| T5 | KYC, admin, profile, users, reels, reviews, favorites + guard test (no `fontWeight` and no RN `Text` without `fontFamily` outside DS — at minimum a `fontWeight` guard) | delegated | ✅ | af080bd |
 
 ## Acceptance criteria
 
@@ -46,3 +46,5 @@ Every text in the app renders in the Bosko typography (Archivo for UI/body, JetB
 - 2026-10-15 T2 done (feaaa33): 5 files (most auth screens already used DS Text/Input). Checks clean.
 - 2026-10-15 T3 done (8b704a9): 16 files. Size-only styles used by DS Text were left alone (variant already sets the family). Checks clean.
 - 2026-10-15 T4 done (d26aaf8): 10 files. Checks clean.
+- 2026-10-15 T5 done (af080bd): reels (2 files) + DS TOKENS.text fontWeight -> BRAND.fonts.heading + guard test __tests__/noFontWeight.test.ts (no allowlist needed). kyc/admin/profile/users/reviews/favorites already used DS Text, no change. rg fontWeight outside DS = 0. tsc/jest(431)/lint:ds clean.
+- Exceptions: none for fontWeight. Size-only styles on DS Text (auth cardTitle/stepLabel, ServiceForm icons) intentionally untouched (variant sets family). Nested Text inherits parent family (ChatScreen status, QuoteRequest asterisk).
