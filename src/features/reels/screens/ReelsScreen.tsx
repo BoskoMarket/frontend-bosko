@@ -40,7 +40,7 @@ import {
   useReportReel,
 } from '@/hooks/queries/useReelsQuery';
 import { useFollowUser, useUnfollowUser } from '@/hooks/mutations/useFollowMutations';
-import { Avatar, Button, GRADIENTS, TOKENS, toast, useThemeColors, type ReportSheetSubmit, dialog } from '@/core/design-system';
+import { Avatar, Button, GRADIENTS, TOKENS, toast, useThemeColors, type ReportSheetSubmit, dialog, FONT_FAMILY } from '@/core/design-system';
 import { useReelsAutoplay } from '@/stores/preferences.store';
 import { useConnectionType } from '@/hooks/useConnectionType';
 import { shouldAutoplay } from '@/features/reels/utils/shouldAutoplay';
@@ -907,12 +907,13 @@ const s = StyleSheet.create({
   emptyTitle: {
     color: TOKENS.onMedia.text,
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
     textAlign: 'center',
   },
   emptySubtitle: {
     color: TOKENS.onMedia.textMuted,
     fontSize: 14,
+    fontFamily: FONT_FAMILY.body,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -923,11 +924,12 @@ const s = StyleSheet.create({
   errorTitle: {
     marginTop: 8,
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
     color: TOKENS.onMedia.text,
   },
   errorSub: {
     fontSize: 13,
+    fontFamily: FONT_FAMILY.body,
     color: TOKENS.onMedia.textSub,
   },
   footerLoader: {
@@ -1053,7 +1055,7 @@ const s = StyleSheet.create({
   },
   commentsTitle: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -1064,10 +1066,11 @@ const s = StyleSheet.create({
   },
   commentsEmptyText: {
     fontSize: 13,
+    fontFamily: FONT_FAMILY.body,
   },
   commentsRetry: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
   },
   commentItem: {
     flexDirection: 'row',
@@ -1088,10 +1091,11 @@ const s = StyleSheet.create({
   },
   commentUser: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
   },
   commentText: {
     fontSize: 13,
+    fontFamily: FONT_FAMILY.body,
     lineHeight: 18,
   },
   commentDelete: {
@@ -1111,6 +1115,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
+    fontFamily: FONT_FAMILY.body,
     maxHeight: 100,
   },
   commentsSendBtn: {
@@ -1126,7 +1131,7 @@ const s = StyleSheet.create({
   },
   actionLabel: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: FONT_FAMILY.headingMedium,
     color: TOKENS.onMedia.text,
     textShadowColor: TOKENS.scrim.medium,
     textShadowOffset: { width: 0, height: 1 },
@@ -1143,7 +1148,7 @@ const s = StyleSheet.create({
   },
   username: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
     color: TOKENS.onMedia.text,
     textShadowColor: TOKENS.scrim.medium,
     textShadowOffset: { width: 0, height: 1 },
@@ -1151,6 +1156,7 @@ const s = StyleSheet.create({
   },
   description: {
     fontSize: 14,
+    fontFamily: FONT_FAMILY.body,
     color: TOKENS.onMedia.text,
     lineHeight: 19,
     textShadowColor: TOKENS.scrim.medium,
@@ -1160,7 +1166,7 @@ const s = StyleSheet.create({
   tags: {
     fontSize: 13,
     color: TOKENS.onMedia.textSub,
-    fontWeight: '600',
+    fontFamily: FONT_FAMILY.headingMedium,
   },
   musicRow: {
     flexDirection: 'row',
@@ -1169,6 +1175,7 @@ const s = StyleSheet.create({
   },
   musicText: {
     fontSize: 12,
+    fontFamily: FONT_FAMILY.body,
     color: TOKENS.onMedia.textSub,
     flex: 1,
   },
@@ -1186,7 +1193,7 @@ const s = StyleSheet.create({
   baLabelRight: { right: 12 },
   baLabelText: {
     fontSize: 11,
-    fontWeight: '800',
+    fontFamily: FONT_FAMILY.display,
     color: TOKENS.onMedia.text,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
@@ -1227,7 +1234,7 @@ const s = StyleSheet.create({
   },
   beforeAfterBadgeText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontFamily: FONT_FAMILY.headingMedium,
     color: TOKENS.onMedia.text,
   },
 
@@ -1252,7 +1259,7 @@ const s = StyleSheet.create({
   },
   availableText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.heading,
     color: TOKENS.color.mint,
     letterSpacing: 0.2,
   },
@@ -1293,7 +1300,7 @@ const s = StyleSheet.create({
   },
   topTab: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: FONT_FAMILY.headingMedium,
     color: TOKENS.onMedia.textMuted,
   },
   topTabActive: {
