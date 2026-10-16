@@ -15,18 +15,26 @@ import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { usePayments } from '../state/PaymentContext';
 import { PaymentHistoryItem, EarningsItem, PaymentStatus } from '../services/payments';
-import { TOKENS } from '@/core/design-system/tokens';
-import { useThemeColors, wash } from '@/core/design-system';
+import {
+  Badge,
+  EmptyState,
+  ScreenHeader,
+  SPACING,
+  TOKENS,
+  useThemeColors,
+  wash,
+} from '@/core/design-system';
+import type { BadgeTone } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 type Tab = 'history' | 'earnings';
 
-const STATUS_CONFIG: Record<PaymentStatus, { label: string; color: string; bg: string }> = {
-  pending: { label: 'Pendiente', color: '#92400e', bg: '#fef3c7' },
-  paid: { label: 'Pagado', color: '#065f46', bg: '#d1fae5' },
-  released: { label: 'Liberado', color: '#1e40af', bg: '#dbeafe' },
-  refunded: { label: 'Reembolsado', color: '#6b21a8', bg: '#f3e8ff' },
-  failed: { label: 'Fallido', color: '#dc2626', bg: '#fee2e2' },
+const STATUS_CONFIG: Record<PaymentStatus, { label: string; tone: BadgeTone }> = {
+  pending: { label: 'Pendiente', tone: 'pending' },
+  paid: { label: 'Pagado', tone: 'done' },
+  released: { label: 'Liberado', tone: 'accepted' },
+  refunded: { label: 'Reembolsado', tone: 'progress' },
+  failed: { label: 'Fallido', tone: 'cancelled' },
 };
 
 function formatCurrency(amount: number, currency = 'ARS') {
@@ -41,11 +49,7 @@ function formatDate(iso: string) {
 
 function StatusBadge({ status }: { status: PaymentStatus }) {
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
-  return (
-    <View style={[s.badge, { backgroundColor: cfg.bg }]}>
-      <Text style={[s.badgeText, { color: cfg.color }]}>{cfg.label}</Text>
-    </View>
-  );
+  return <Badge label={cfg.label} tone={cfg.tone} size="sm" />;
 }
 
 function AnimatedItem({ index, children }: { index: number; children: React.ReactNode }) {
@@ -86,15 +90,15 @@ export default function PaymentsScreen() {
           <View style={[s.cardInner, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
             <View style={s.cardRow}>
               <View style={[s.cardIcon, { backgroundColor: tc.accent }]}>
-                <MaterialIcons name="payment" size={22} color={TOKENS.color.primary} />
+                <MaterialIcons name="payment" size={22} color={TOKENS.color.signal} />
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={s.flex}>
                 <Text style={[s.cardTitle, { color: tc.text }]} numberOfLines={1}>
                   {item.order?.title ?? `Orden #${item.orderId.slice(-6)}`}
                 </Text>
                 <Text style={[s.cardDate, { color: tc.textSub }]}>{formatDate(item.createdAt)}</Text>
               </View>
-              <View style={{ alignItems: 'flex-end', gap: 4 }}>
+              <View style={s.amountCol}>
                 <Text style={[s.cardAmount, { color: tc.text }]}>{formatCurrency(item.amount, item.currency)}</Text>
                 <StatusBadge status={item.status} />
               </View>
@@ -108,17 +112,17 @@ export default function PaymentsScreen() {
   const renderEarningsItem = ({ item, index }: { item: EarningsItem; index: number }) => (
     <AnimatedItem index={index}>
       <View style={[s.earningsCard, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
-        <View style={s.earningsIcon}>
-          <MaterialIcons name="attach-money" size={22} color="#065f46" />
+        <View style={[s.earningsIcon, { backgroundColor: TOKENS.status.done.bg }]}>
+          <MaterialIcons name="attach-money" size={22} color={TOKENS.status.done.fg} />
         </View>
-        <View style={{ flex: 1 }}>
+        <View style={s.flex}>
           <Text style={[s.cardTitle, { color: tc.text }]} numberOfLines={1}>
             {item.order?.title ?? `Orden #${item.orderId.slice(-6)}`}
           </Text>
           <Text style={[s.cardDate, { color: tc.textSub }]}>{formatDate(item.createdAt)}</Text>
         </View>
-        <View style={{ alignItems: 'flex-end', gap: 4 }}>
-          <Text style={s.earningsAmount}>{formatCurrency(item.amount, item.currency)}</Text>
+        <View style={s.amountCol}>
+          <Text style={[s.earningsAmount, { color: TOKENS.status.done.fg }]}>{formatCurrency(item.amount, item.currency)}</Text>
           <StatusBadge status={item.status} />
         </View>
       </View>
@@ -138,11 +142,7 @@ export default function PaymentsScreen() {
 
       {/* Header */}
       <View style={s.header}>
-        <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.surface }]}>
-          <MaterialIcons name="arrow-back" size={24} color={tc.text} />
-        </Pressable>
-        <Text style={[s.headerTitle, { color: tc.text }]}>Pagos simulados</Text>
-        <View style={{ width: 40 }} />
+        <ScreenHeader title="Pagos simulados" onBack={() => safeBack(router, '/(tabs)/profile')} />
       </View>
 
       {/* Tabs */}
@@ -154,38 +154,32 @@ export default function PaymentsScreen() {
           <Pressable
             key={t.key}
             onPress={() => setTab(t.key)}
-            style={[s.tab, tab === t.key && s.tabActive]}
+            style={[s.tab, tab === t.key && { backgroundColor: tc.accent }]}
           >
             <MaterialIcons
               name={t.icon}
               size={18}
-              color={tab === t.key ? TOKENS.color.primary : tc.textSub}
+              color={tab === t.key ? TOKENS.color.signal : tc.textSub}
             />
-            <Text style={[s.tabText, { color: tc.textSub }, tab === t.key && s.tabTextActive]}>{t.label}</Text>
+            <Text style={[s.tabText, { color: tab === t.key ? TOKENS.color.signal : tc.textSub }]}>{t.label}</Text>
           </Pressable>
         ))}
       </View>
 
       {loading && (
         <View style={s.loadingWrap}>
-          <ActivityIndicator color={TOKENS.color.primary} size="large" />
+          <ActivityIndicator color={TOKENS.color.signal} size="large" />
         </View>
       )}
 
       {!loading && isEmpty && (
-        <View style={s.emptyWrap}>
-          <MaterialIcons
-            name={tab === 'history' ? 'receipt-long' : 'account-balance-wallet'}
-            size={56}
-            color="rgba(133,0,33,0.2)"
-          />
-          <Text style={[s.emptyTitle, { color: tc.text }]}>{tab === 'history' ? 'Sin pagos' : 'Sin ganancias'}</Text>
-          <Text style={[s.emptyText, { color: tc.textSub }]}>
-            {tab === 'history'
-              ? 'Tus pagos aparecerán aquí cuando completes una orden.'
-              : 'Tus ganancias aparecerán aquí cuando recibas pagos por servicios.'}
-          </Text>
-        </View>
+        <EmptyState
+          icon={tab === 'history' ? 'receipt-outline' : 'wallet-outline'}
+          title={tab === 'history' ? 'Sin pagos' : 'Sin ganancias'}
+          subtitle={tab === 'history'
+            ? 'Tus pagos aparecerán aquí cuando completes una orden.'
+            : 'Tus ganancias aparecerán aquí cuando recibas pagos por servicios.'}
+        />
       )}
 
       {!loading && !isEmpty && tab === 'history' && (
@@ -196,7 +190,7 @@ export default function PaymentsScreen() {
           contentContainerStyle={s.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={loading} onRefresh={() => loadHistory()} colors={[TOKENS.color.primary]} />
+            <RefreshControl refreshing={loading} onRefresh={() => loadHistory()} colors={[TOKENS.color.signal]} />
           }
         />
       )}
@@ -209,7 +203,7 @@ export default function PaymentsScreen() {
           contentContainerStyle={s.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={loading} onRefresh={() => loadEarnings()} colors={[TOKENS.color.primary]} />
+            <RefreshControl refreshing={loading} onRefresh={() => loadEarnings()} colors={[TOKENS.color.signal]} />
           }
         />
       )}
@@ -219,29 +213,19 @@ export default function PaymentsScreen() {
 
 const s = StyleSheet.create({
   bg: { flex: 1 },
+  flex: { flex: 1 },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingTop: 60,
-    paddingHorizontal: 24,
-    paddingBottom: 16,
+    paddingHorizontal: SPACING.xxl,
+    paddingBottom: SPACING.lg,
   },
-  backBtn: {
-    padding: 8,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-  },
-  headerTitle: { fontSize: 20, fontWeight: '800', color: TOKENS.color.text },
   tabBar: {
     flexDirection: 'row',
-    marginHorizontal: 24,
+    marginHorizontal: SPACING.xxl,
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.9)',
-    backgroundColor: 'rgba(255,255,255,0.85)',
-    marginBottom: 16,
+    marginBottom: SPACING.lg,
   },
   tab: {
     flex: 1,
@@ -249,75 +233,53 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingVertical: SPACING.md,
+    borderRadius: SPACING.md,
   },
-  tabActive: { backgroundColor: 'rgba(133,0,33,0.08)' },
-  tabText: { fontSize: 14, fontWeight: '600', color: TOKENS.color.sub },
-  tabTextActive: { color: TOKENS.color.primary },
+  tabText: { fontSize: 14, fontWeight: '600' },
   loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  emptyWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    paddingHorizontal: 40,
-  },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: TOKENS.color.text },
-  emptyText: { fontSize: 14, color: TOKENS.color.sub, textAlign: 'center', lineHeight: 20 },
-  listContent: { paddingHorizontal: 24, paddingBottom: 40, gap: 12 },
+  listContent: { paddingHorizontal: SPACING.xxl, paddingBottom: SPACING.huge, gap: SPACING.md },
   card: {
-    borderRadius: 16,
+    borderRadius: TOKENS.radius.md,
     overflow: 'hidden',
   },
   cardShadow: {
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    borderRadius: TOKENS.radius.md,
+    ...TOKENS.shadow.soft,
   },
   cardPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   cardInner: {
-    padding: 16,
+    padding: SPACING.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.9)',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: TOKENS.radius.md,
   },
   earningsCard: {
-    borderRadius: 16,
+    borderRadius: TOKENS.radius.md,
     overflow: 'hidden',
-    padding: 16,
+    padding: SPACING.lg,
     borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.9)',
-    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: SPACING.md,
   },
-  cardRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  cardRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  amountCol: { alignItems: 'flex-end', gap: SPACING.xs },
   cardIcon: {
     width: 42,
     height: 42,
-    borderRadius: 12,
-    backgroundColor: 'rgba(133,0,33,0.08)',
+    borderRadius: SPACING.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   earningsIcon: {
     width: 42,
     height: 42,
-    borderRadius: 12,
-    backgroundColor: '#d1fae5',
+    borderRadius: SPACING.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: TOKENS.color.text },
-  cardDate: { fontSize: 12, color: TOKENS.color.sub, marginTop: 2 },
-  cardAmount: { fontSize: 16, fontWeight: '800', color: TOKENS.color.text },
-  earningsAmount: { fontSize: 16, fontWeight: '800', color: '#065f46' },
-  badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
-  badgeText: { fontSize: 11, fontWeight: '700' },
+  cardTitle: { fontSize: 14, fontWeight: '700' },
+  cardDate: { fontSize: 12, marginTop: 2 },
+  cardAmount: { fontSize: 16, fontWeight: '800' },
+  earningsAmount: { fontSize: 16, fontWeight: '800' },
 });
