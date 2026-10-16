@@ -162,7 +162,7 @@ export interface AlertButton {
 }
 
 export interface AlertOptions {
-  /** false = backdrop / back button do nothing (default: true). */
+  /** true = backdrop / back button dismiss the dialog (default: false, like native Android `Alert`). */
   cancelable?: boolean;
   /** Called when dismissed without pressing a button. */
   onDismiss?: () => void;
@@ -236,7 +236,7 @@ export const dialog = {
       title,
       message: message ?? undefined,
       actions,
-      dismissable: options?.cancelable !== false,
+      dismissable: options?.cancelable === true,
       onDismiss: () => {
         if (cancelIndex >= 0) list[cancelIndex].onPress?.();
         options?.onDismiss?.();

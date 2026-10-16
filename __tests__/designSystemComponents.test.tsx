@@ -384,15 +384,15 @@ describe('dialog imperative API', () => {
       dialog.fromAlert('Salir', undefined, [
         { text: 'No', style: 'cancel', onPress: onNo },
         { text: 'Si', onPress: onYes },
-      ]);
+      ], { cancelable: true });
     });
     fireEvent.press(getByLabelText('Cerrar'));
     expect(onNo).toHaveBeenCalledTimes(1);
   });
 
-  it('fromAlert honours cancelable:false and defaults to a single OK button', () => {
+  it('fromAlert is not dismissable by default and falls back to a single OK button', () => {
     const { getByText, getByLabelText, queryByText } = render(<DialogRoot />);
-    act(() => { dialog.fromAlert('Aviso', 'Solo OK', undefined, { cancelable: false }); });
+    act(() => { dialog.fromAlert('Aviso', 'Solo OK'); });
     fireEvent.press(getByLabelText('Cerrar'));
     expect(getByText('Aviso')).toBeTruthy();
     fireEvent.press(getByText('OK'));
