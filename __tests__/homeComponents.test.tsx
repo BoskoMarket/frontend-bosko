@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import {
+  CategoryTile,
   PathCard,
   ServiceCard,
   StatTile,
@@ -97,5 +98,14 @@ describe.each(['dark', 'light'] as const)('home components (%s theme)', (mode) =
       </>,
     );
     ['01', 'Buscá', 'Por rubro', 'Verificada', 'Identidad', '4.8', 'Rating'].forEach((t) => expect(getByText(t)).toBeTruthy());
+  });
+});
+
+describe('CategoryTile', () => {
+  it('renders the label and is pressable', () => {
+    const onPress = jest.fn();
+    const { getByText } = render(<CategoryTile icon="flash-outline" label="Electricidad" onPress={onPress} />);
+    fireEvent.press(getByText('Electricidad'));
+    expect(onPress).toHaveBeenCalledTimes(1);
   });
 });

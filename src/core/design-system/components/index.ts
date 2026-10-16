@@ -64,5 +64,5 @@ export { ServiceCard, formatServicePrice } from './ServiceCard';
 export type { ServiceCardProps, ServiceCardRate } from './ServiceCard';
 export { ValueHero } from './ValueHero';
 export type { ValueHeroProps } from './ValueHero';
-export { PathCard, StepCard, TrustRow, StatTile } from './HomeCards';
-export type { PathCardProps, StepCardProps, TrustRowProps, StatTileProps } from './HomeCards';
+export { PathCard, StepCard, TrustRow, StatTile, CategoryTile } from './HomeCards';
+export type { PathCardProps, StepCardProps, TrustRowProps, StatTileProps, CategoryTileProps } from './HomeCards';

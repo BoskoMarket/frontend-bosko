@@ -24,7 +24,7 @@ The home tells a first-time user what Bosko is (find someone to do a job, or off
 | T1 | Fix regression: `dialog.fromAlert` not dismissable by backdrop/back by default (parity with native Android `Alert`), keep explicit `cancelable: true` opt-in; test. Prevents duplicate orders after "¡Solicitud enviada!" | delegated | ✅ | f6242e4 |
 | T2 | Home shows the real Dashboard in dev builds; showcase reachable at `/dev/components` (dev-only entry, e.g. long-press logo or a dev row in Profile) | delegated | ✅ | see git log (`chore(home)`) |
 | T3 | DS components for the home: `ServiceCard` (B), `ValueHero` (value prop + search trigger), `PathCard` (Contratar/Ofrecer), `StepCard`, `TrustRow`, `StatTile`; showcase entries + tests | delegated | ✅ | see git log (`feat(design-system)`) |
-| T4 | Client home rewrite (`DashboardScreen`): top bar (logo, zone, notifications), value hero with search → `/search`, two paths (Contratar → services/search, Ofrecer → become-provider or provider tools), how-it-works, categories, popular services (ServiceCard, skeleton/error/empty), trust rows, "Ganá con tu oficio" CTA | delegated | ⬜ | |
+| T4 | Client home rewrite (`DashboardScreen`): top bar (logo, zone, notifications), value hero with search → `/search`, two paths (Contratar → services/search, Ofrecer → become-provider or provider tools), how-it-works, categories, popular services (ServiceCard, skeleton/error/empty), trust rows, "Ganá con tu oficio" CTA | delegated | ✅ | see git log (`feat(home): explain`) |
 | T5 | Provider home: summary with new requests count → Orders provider tab, stats from existing endpoints, quick actions (publicar servicio, mis servicios, subir reel), recent requests list; loading/error/empty states | delegated | ⬜ | |
 
 ## Acceptance criteria
@@ -39,3 +39,4 @@ The home tells a first-time user what Bosko is (find someone to do a job, or off
 - 2026-10-16: document created, branch created, mock copied to `odd/assets/`. Next: T1.
 - T1 done (f6242e4): fromAlert non-dismissable by default; tests updated. T2 done: tab index always renders DashboardScreen; dev-only "Component showcase" row (Profile > Preferencias) -> /dev/components.
 - T3 done: ServiceCard (+formatServicePrice), ValueHero, PathCard/StepCard/TrustRow/StatTile in DS barrel + showcase HomeSection + __tests__/homeComponents.test.tsx (454 tests green).
+- T4 done: ClientHome (new) behind DashboardScreen wrapper; CategoryTile added to DS; featured services/categories via TanStack hooks; zone from profile.location; zone/bell/CTA wired. Provider branch still legacy until T5.

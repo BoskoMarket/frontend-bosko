@@ -151,5 +151,33 @@ const styles = StyleSheet.create({
   trust: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, padding: SPACING.md, borderRadius: TOKENS.radius.md, borderWidth: 1 },
   trustText: { flex: 1, gap: 2 },
 
+  category: { flex: 1, borderRadius: TOKENS.radius.md, alignItems: 'center', gap: SPACING.sm - 2, paddingTop: SPACING.md, paddingBottom: SPACING.sm + 2, paddingHorizontal: SPACING.xs },
+  categoryLabel: { fontSize: 11, lineHeight: 14, alignSelf: 'stretch' },
+
   stat: { flex: 1, borderRadius: TOKENS.radius.md, borderWidth: 1, padding: SPACING.md, gap: 2 },
 });
+
+// ---------------------------------------------------------------------------
+
+export interface CategoryTileProps {
+  icon: IconName;
+  label: string;
+  onPress: () => void;
+  style?: StyleProp<ViewStyle>;
+}
+
+/** CategoryTile — compact tinted tile (icon over label) for category grids. */
+export function CategoryTile({ icon, label, onPress, style }: CategoryTileProps) {
+  const tc = useThemeColors();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [styles.category, { backgroundColor: tc.accent }, pressed && styles.pressed, style]}
+    >
+      <Ionicons name={icon} size={22} color={TOKENS.color.signal} />
+      <Text variant="caption" center numberOfLines={1} style={styles.categoryLabel}>{label}</Text>
+    </Pressable>
+  );
+}

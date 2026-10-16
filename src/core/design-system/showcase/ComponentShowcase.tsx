@@ -16,6 +16,7 @@ import {
   Button,
   ButtonSize,
   ButtonVariant,
+  CategoryTile,
   Card,
   Chip,
   Divider,
@@ -520,6 +521,14 @@ function HomeSection() {
       <Section name="TrustRow">
         <TrustRow icon="shield-checkmark-outline" title="Identidad verificada" caption="Los profesionales validan su identidad y antecedentes" />
         <TrustRow icon="star-outline" title="Reseñas reales" caption="Solo califica quien contrató el servicio" />
+      </Section>
+      <Section name="CategoryTile">
+        <Row style={styles.cardRow}>
+          <CategoryTile icon="flash-outline" label="Electricidad" onPress={() => {}} />
+          <CategoryTile icon="water-outline" label="Plomería" onPress={() => {}} />
+          <CategoryTile icon="color-palette-outline" label="Pintura" onPress={() => {}} />
+          <CategoryTile icon="leaf-outline" label="Jardín" onPress={() => {}} />
+        </Row>
       </Section>
       <Section name="StatTile">
         <Row style={styles.cardRow}>

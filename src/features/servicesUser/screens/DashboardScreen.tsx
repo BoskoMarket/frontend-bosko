@@ -53,6 +53,7 @@ import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { RoleSelectionModal, ROLE_MODAL_SEEN_KEY } from '@/features/servicesUser/components/RoleSelectionModal';
 import { FeaturedCard } from '@/features/servicesUser/components/FeaturedCard';
+import ClientHome from '@/features/servicesUser/screens/ClientHome';
 
 const { width: W } = Dimensions.get('window');
 
@@ -235,7 +236,7 @@ function QALabel({ label }: { label: string }) {
   return <Text style={[ds.qaLabel, { color: tc.text }]}>{label}</Text>;
 }
 
-export default function DashboardScreen() {
+function ProviderDashboard() {
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();
   const isDark = useIsDark();
@@ -633,3 +634,9 @@ function makeStyles(C: CPalette) { return StyleSheet.create({
   ctaBubble1: { position: 'absolute', width: 120, height: 120, borderRadius: 60, backgroundColor: TOKENS.onMedia.fillFaint, right: -20, top: -20 },
   ctaBubble2: { position: 'absolute', width: 80, height: 80, borderRadius: 40, backgroundColor: TOKENS.onMedia.fillFaint, right: 50, bottom: -20 },
 }); }
+
+/** Home entry: providers get their work-focused home, everyone else the explainer home. */
+export default function DashboardScreen() {
+  const isProvider = useIsProvider();
+  return isProvider ? <ProviderDashboard /> : <ClientHome />;
+}
