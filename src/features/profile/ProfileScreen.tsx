@@ -23,7 +23,6 @@ import { getUserStats, UserStats } from '@/features/profile/services/profile';
 import {
   TOKENS,
   GRADIENTS,
-  BRAND_RADIAL_FILL,
   Avatar,
   Badge,
   Button,
@@ -45,6 +44,8 @@ import { openNotifications } from '@/stores/notificationsUI.store';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { toneColors } from '@/features/kyc/constants/kycStatus';
 import type { KYCStatus } from '@/features/kyc/types/kyc.types';
+import { getRoleSection } from './utils/profileSections';
+import type { ProfileRowBadge } from './utils/profileSections';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -116,49 +117,6 @@ function StatsSkeleton({ cells }: { cells: number }) {
         </React.Fragment>
       ))}
     </>
-  );
-}
-
-// ── Quick action card ─────────────────────────────────────────────────────────
-function QuickCard({
-  icon, label, color, iconColor, onPress, delay,
-}: {
-  icon: IoniconName;
-  label: string;
-  color: string;
-  iconColor: string;
-  onPress: () => void;
-  delay: number;
-}) {
-  const anim  = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.spring(anim, { toValue: 1, delay, useNativeDriver: true, friction: 7 }).start();
-  }, []);
-
-  return (
-    <Animated.View
-      style={{
-        opacity: anim,
-        transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [0.75, 1] }) }],
-        flex: 1,
-      }}
-    >
-      <Pressable
-        onPressIn={() => Animated.spring(scale, { toValue: 0.93, useNativeDriver: true }).start()}
-        onPressOut={() => Animated.spring(scale, { toValue: 1,    useNativeDriver: true }).start()}
-        onPress={onPress}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        style={ss.quickCard}
-      >
-        <Animated.View style={[ss.quickIconWrap, { backgroundColor: color, transform: [{ scale }] }]}>
-          <Ionicons name={icon} size={22} color={iconColor} />
-        </Animated.View>
-        <Text variant="caption" weight="600">{label}</Text>
-      </Pressable>
-    </Animated.View>
   );
 }
 
@@ -269,8 +227,15 @@ export const ProfileScreen: React.FC = () => {
   // Derived
   const isProvider = roleStatus === 'provider';
   const isPending  = roleStatus === 'pending';
+  const roleSection = getRoleSection(roleStatus);
   const kycCfg     = KYC_CONFIG[kycStatus];
   const kycColors  = kycCfg ? toneColors(kycCfg.tone, tc) : null;
+  const rowBadge = (kind?: ProfileRowBadge): { label: string; tone: BadgeTone } | undefined => {
+    if (kind === 'kyc' && kycCfg) return { label: kycCfg.label, tone: kycCfg.tone };
+    if (kind === 'plans') return { label: 'Ver planes', tone: 'pending' };
+    if (kind === 'favorites' && favCount > 0) return { label: String(favCount), tone: 'neutral' };
+    return undefined;
+  };
   const fullName   = profile
     ? `${profile.firstName}${profile.lastName ? ' ' + profile.lastName : ''}`
     : '';
@@ -453,93 +418,6 @@ export const ProfileScreen: React.FC = () => {
           </Card>
         </Animated.View>
 
-        {/* ── Quick access (distintas según rol) ────────────────────────── */}
-        <Animated.View style={[ss.section, sec(2)]}>
-          <Text variant="title" style={ss.sectionTitle} accessibilityRole="header">Acceso rápido</Text>
-          <View style={ss.quickRow}>
-            {isProvider ? (
-              <>
-                <QuickCard
-                  icon="construct-outline"
-                  label="Servicios"
-                  color={tc.accent}
-                  iconColor={TOKENS.color.signal}
-                  onPress={() => router.push('/(tabs)/profile/Services')}
-                  delay={0}
-                />
-                <QuickCard
-                  icon="receipt-outline"
-                  label="Órdenes"
-                  color={TOKENS.status.accepted.bg}
-                  iconColor={TOKENS.status.accepted.fg}
-                  onPress={() => router.push('/(tabs)/orders')}
-                  delay={60}
-                />
-                <QuickCard
-                  icon="star-outline"
-                  label="Reseñas"
-                  color={TOKENS.status.pending.bg}
-                  iconColor={TOKENS.status.pending.fg}
-                  onPress={() => router.push('/(tabs)/profile/my-reviews')}
-                  delay={120}
-                />
-                <QuickCard
-                  icon="film-outline"
-                  label="Mis reels"
-                  color={tc.accent}
-                  iconColor={TOKENS.color.signal}
-                  onPress={() => router.push('/(tabs)/profile/my-reels')}
-                  delay={180}
-                />
-              </>
-            ) : (
-              <>
-                <QuickCard
-                  icon="receipt-outline"
-                  label="Mis pedidos"
-                  color={TOKENS.status.accepted.bg}
-                  iconColor={TOKENS.status.accepted.fg}
-                  onPress={() => router.push('/(tabs)/orders')}
-                  delay={0}
-                />
-                <QuickCard
-                  icon="chatbubbles-outline"
-                  label="Mensajes"
-                  color={TOKENS.status.pending.bg}
-                  iconColor={TOKENS.status.pending.fg}
-                  onPress={() => router.push('/(tabs)/chat')}
-                  delay={60}
-                />
-              </>
-            )}
-          </View>
-        </Animated.View>
-
-        {/* ── CTA "Quiero ser proveedor" (solo cliente sin KYC arrancado) ── */}
-        {roleStatus === 'client' && (
-          <Animated.View style={[ss.section, sec(2)]}>
-            <View style={[ss.providerCtaShadow, TOKENS.shadow.card]}>
-              <Pressable
-                onPress={() => router.push('/(tabs)/profile/become-provider')}
-                accessibilityRole="button"
-                accessibilityLabel="¿Querés ofrecer servicios? Verificá tu identidad y empezá a publicar"
-                style={ss.providerCta}
-              >
-                <View style={[ss.providerCtaGrad, BRAND_RADIAL_FILL]}>
-                  <View style={[ss.providerCtaIcon, { backgroundColor: TOKENS.onMedia.fill }]}>
-                    <Ionicons name="briefcase-outline" size={22} color={TOKENS.color.onPrimary} />
-                  </View>
-                  <View style={ss.providerCtaText}>
-                    <Text variant="subtitle" color={TOKENS.color.onPrimary}>¿Querés ofrecer servicios?</Text>
-                    <Text variant="caption" color={TOKENS.onMedia.textSub}>Verificá tu identidad y empezá a publicar</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color={TOKENS.onMedia.textSub} />
-                </View>
-              </Pressable>
-            </View>
-          </Animated.View>
-        )}
-
         {/* ── Estado "en camino a ser proveedor" (KYC arrancado, sin aprobar) ── */}
         {isPending && kycCfg && kycColors && (
           <Animated.View style={[ss.section, sec(2)]}>
@@ -566,7 +444,30 @@ export const ProfileScreen: React.FC = () => {
           </Animated.View>
         )}
 
-        {/* ── Settings: Mi cuenta ──────────────────────────────────────── */}
+        {/* ── Role group: Mi negocio (proveedor) / Mi actividad (cliente) ── */}
+        {roleSection ? (
+          <Animated.View style={sec(2)}>
+            <SettingsGroup title={roleSection.title}>
+              {roleSection.rows.map((row, i) => {
+                const badge = rowBadge(row.badge);
+                return (
+                  <React.Fragment key={row.id}>
+                    {i > 0 ? <Divider /> : null}
+                    <SettingsRow
+                      icon={row.icon}
+                      label={row.label}
+                      badge={badge?.label}
+                      badgeTone={badge?.tone}
+                      onPress={() => router.push(row.href as never)}
+                    />
+                  </React.Fragment>
+                );
+              })}
+            </SettingsGroup>
+          </Animated.View>
+        ) : null}
+
+        {/* ── Shared settings ─────────────────────────────────────────── */}
         <Animated.View style={sec(3)}>
           <SettingsGroup title="Mi cuenta">
             <SettingsRow
@@ -575,44 +476,6 @@ export const ProfileScreen: React.FC = () => {
               onPress={openEditProfile}
             />
             <Divider />
-            {isPending && (
-              <>
-                <SettingsRow
-                  icon="shield-checkmark-outline"
-                  label="Estado de verificación"
-                  badge={kycCfg?.label}
-                  badgeTone={kycCfg?.tone}
-                  onPress={() => router.push('/(tabs)/profile/become-provider')}
-                />
-                <Divider />
-              </>
-            )}
-            {isProvider && (
-              <>
-                <SettingsRow
-                  icon="shield-checkmark-outline"
-                  label="Verificación de Identidad"
-                  badge={kycCfg?.label}
-                  badgeTone={kycCfg?.tone}
-                  onPress={() => router.push('/(tabs)/profile/kyc')}
-                />
-                <Divider />
-                <SettingsRow
-                  icon="document-text-outline"
-                  label="Antecedentes penales"
-                  onPress={() => router.push('/(tabs)/profile/background-check')}
-                />
-                <Divider />
-                <SettingsRow
-                  icon="diamond-outline"
-                  label="Planes Premium"
-                  badge="Ver planes"
-                  badgeTone="pending"
-                  onPress={() => router.push('/(tabs)/profile/plans')}
-                />
-                <Divider />
-              </>
-            )}
             <SettingsRow
               icon="card-outline"
               label="Métodos de Pago"
@@ -622,19 +485,20 @@ export const ProfileScreen: React.FC = () => {
           </SettingsGroup>
         </Animated.View>
 
-        {/* ── Settings: Preferencias ───────────────────────────────────── */}
         <Animated.View style={sec(4)}>
+          <SettingsGroup title="Seguridad">
+            <SettingsRow
+              icon="lock-closed-outline"
+              label="Cambiar Contraseña"
+              onPress={() => router.push('/(tabs)/profile/ChangePassword')}
+            />
+          </SettingsGroup>
+
           <SettingsGroup title="Preferencias">
             <SettingsRow
               icon="notifications-outline"
               label="Notificaciones"
               onPress={openNotifications}
-            />
-            <Divider />
-            <SettingsRow
-              icon="lock-closed-outline"
-              label="Cambiar Contraseña"
-              onPress={() => router.push('/(tabs)/profile/ChangePassword')}
             />
             <Divider />
             <SettingsRow
@@ -723,12 +587,7 @@ const ss = StyleSheet.create({
   statCell: { flex: 1, alignItems: 'center', gap: 3 },
   statDivider: { width: 1, height: 36, marginVertical: 6 },
 
-  // Quick access
   section: { marginHorizontal: 16, marginTop: 22 },
-  sectionTitle: { marginBottom: 12 },
-  quickRow: { flexDirection: 'row', gap: 10 },
-  quickCard: { alignItems: 'center', gap: 7 },
-  quickIconWrap: { width: 54, height: 54, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
 
   // Settings
   group: { gap: 8, marginHorizontal: 16, marginTop: 22 },
@@ -740,11 +599,6 @@ const ss = StyleSheet.create({
   deleteBtn: { alignItems: 'center', paddingVertical: 10 },
   deleteText: { textDecorationLine: 'underline' },
 
-  // CTA "Quiero ser proveedor"
-  providerCtaShadow: { borderRadius: 18 },
-  providerCta: { borderRadius: 18, overflow: 'hidden' },
-  providerCtaGrad: { flexDirection: 'row', alignItems: 'center', padding: 18, gap: 14 },
-  providerCtaIcon: { width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   providerCtaText: { flex: 1, gap: 3 },
 
   // Estado "pending" (KYC arrancado, sin aprobar)
