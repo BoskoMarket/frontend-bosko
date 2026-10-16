@@ -1,6 +1,5 @@
 import React, { useCallback } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Image,
   RefreshControl,
@@ -17,7 +16,7 @@ import { useMyServices, useDeleteService } from "@/hooks/queries/useMarketplaceQ
 import type { Service } from "@/features/servicesUser/services/service";
 import { EmptyState } from '@/core/components/EmptyState';
 import { getUserErrorMessage } from '@/lib/errors';
-import { BRAND_RADIAL_FILL, TOKENS, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
+import { BRAND_RADIAL_FILL, SkeletonList, TOKENS, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -158,11 +157,7 @@ export default function MyServiceScreen() {
       </View>
       <Text style={[styles.planMessage, { color: tc.textSub }]}>{planMessage}</Text>
 
-      {loading && services.length === 0 ? (
-        <View style={styles.loader}>
-          <ActivityIndicator />
-        </View>
-      ) : null}
+      {loading && services.length === 0 ? <SkeletonList variant="card" count={4} /> : null}
 
       {services.length === 0 && !loading ? (
         <EmptyState
@@ -239,10 +234,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: FONT_FAMILY.body,
     marginBottom: 16,
-  },
-  loader: {
-    paddingVertical: 40,
-    alignItems: "center",
   },
   listContent: {
     gap: 16,

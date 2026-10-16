@@ -15,7 +15,7 @@ import LottieView from "lottie-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { Button, GRADIENTS, TOKENS, Text, useIsDark, useThemeColors } from "@/core/design-system";
+import { AuthBackdrop, Button, GRADIENTS, TOKENS, Text, useIsDark, useThemeColors } from "@/core/design-system";
 import { BrandMark } from "@/components/BrandMark";
 import { FONT_FAMILY } from '@/core/design-system';
 
@@ -80,7 +80,8 @@ export default function OnBoarding() {
     router.replace("/login");
   };
 
-  if (onboardingComplete === null) return null;
+  // Same backdrop as login/onboarding: no empty frame while the flag is read.
+  if (onboardingComplete === null) return <AuthBackdrop />;
   if (onboardingComplete) return <Redirect href="/login" />;
 
   const slide = SLIDES[currentIndex];

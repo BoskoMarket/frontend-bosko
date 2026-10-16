@@ -36,7 +36,9 @@ import {
   ReportSheet,
   ScreenHeader,
   SectionHeader,
+  ScreenLoader,
   Skeleton,
+  SkeletonList,
   SkeletonRow,
   SPACING,
   StepTimeline,
@@ -244,6 +246,13 @@ function FeedbackSection() {
         <Skeleton width={160} height={20} radius={TOKENS.radius.sm} />
         <SkeletonRow />
         <SkeletonRow />
+      </Section>
+      <Section name="SkeletonList">
+        <SkeletonList variant="row" count={2} />
+        <SkeletonList variant="card" count={2} />
+      </Section>
+      <Section name="ScreenLoader">
+        <View style={styles.fixed}><ScreenLoader label="Cargando" /></View>
       </Section>
       <Section name="ProgressBar">
         {[0, 50, 100].map((v) => (

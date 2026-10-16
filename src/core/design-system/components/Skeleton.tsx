@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated, Easing, DimensionValue } from 'react-native';
+import { View, StyleSheet, Animated, Easing, DimensionValue, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MOTION } from '../motion';
+import { SPACING } from '../spacing';
 import { TOKENS } from '../tokens';
 import { withAlpha } from '../color';
 import { useThemeColors } from '@/stores/theme.store';
@@ -13,9 +14,9 @@ export interface SkeletonProps {
 }
 
 /**
- * Bloque skeleton con shimmer rosa translúcido en loop — solo para la cola
- * "cargando más" de una lista (Favoritos, Mis reseñas, Pagos, panel Admin),
- * nunca para reemplazar la lista entera.
+ * Bloque skeleton con shimmer rosa translúcido en loop. Para la cola "cargando más"
+ * de una lista usar `SkeletonRow`; para la carga inicial de una pantalla de lista
+ * usar `SkeletonList`.
  */
 export function Skeleton({ width = '100%', height = 14, radius = 8 }: SkeletonProps) {
   const tc = useThemeColors();
@@ -58,7 +59,50 @@ export function SkeletonRow() {
   );
 }
 
+export interface SkeletonListProps {
+  /** `row`: avatar + 2 lines (chats, notifications). `card`: bordered surface card (orders, payments, plans, reviews). */
+  variant?: 'row' | 'card';
+  /** Number of placeholder items. */
+  count?: number;
+  style?: ViewStyle;
+}
+
+function SkeletonCard() {
+  const tc = useThemeColors();
+  return (
+    <View style={[styles.card, { backgroundColor: tc.surface, borderColor: tc.border }]}>
+      <View style={styles.cardHead}>
+        <Skeleton width="48%" height={14} radius={7} />
+        <Skeleton width={64} height={20} radius={TOKENS.radius.pill} />
+      </View>
+      <Skeleton width="86%" height={10} radius={5} />
+      <Skeleton width="58%" height={10} radius={5} />
+    </View>
+  );
+}
+
+/**
+ * Initial-load placeholder for a whole list screen: `count` skeleton items shaped like the
+ * real list items, so content replaces them without a layout jump. Replaces full-screen spinners.
+ */
+export function SkeletonList({ variant = 'row', count = 6, style }: SkeletonListProps) {
+  return (
+    <View
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel="Cargando"
+      style={[styles.list, variant === 'card' && styles.listCards, style]}
+    >
+      {Array.from({ length: count }, (_, i) => (variant === 'card' ? <SkeletonCard key={i} /> : <SkeletonRow key={i} />))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  list: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, gap: SPACING.xl },
+  listCards: { gap: SPACING.md },
+  card: { borderWidth: StyleSheet.hairlineWidth, borderRadius: TOKENS.radius.md, padding: SPACING.lg, gap: SPACING.sm },
+  cardHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: SPACING.xs },
   block: { overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   lines: { flex: 1, gap: 6 },

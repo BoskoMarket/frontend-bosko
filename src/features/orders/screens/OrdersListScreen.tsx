@@ -16,7 +16,6 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -24,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOrders } from '../state/OrdersContext';
 import { Order, OrderStatus } from '../types/orders.types';
 import { ORDER_STATUS } from '../constants/orderStatus';
-import { Badge, EmptyState, TOKENS, useThemeColors, FONT_FAMILY } from '@/core/design-system';
+import { Badge, EmptyState, SkeletonList, TOKENS, useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 type TabType = 'client' | 'provider';
@@ -159,11 +158,7 @@ export default function OrdersListScreen() {
       </View>
 
       {loading && !refreshing && orders.length === 0 ? (
-        <ActivityIndicator
-          color={TOKENS.color.signal}
-          size="large"
-          style={styles.loader}
-        />
+        <SkeletonList variant="card" count={5} />
       ) : (
         <FlatList
           data={orders}
@@ -289,5 +284,4 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.body,
     flex: 1,
   },
-  loader: { flex: 1 },
 });

@@ -9,7 +9,6 @@ import {
   StyleSheet,
   FlatList,
   Pressable,
-  ActivityIndicator,
   RefreshControl,
   KeyboardAvoidingView,
   Platform,
@@ -36,6 +35,7 @@ import {
   toast,
   useThemeColors,
   wash,
+  SkeletonList,
 } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
@@ -108,9 +108,7 @@ export default function MyReviewsScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.loadingWrap}>
-          <ActivityIndicator color={TOKENS.color.signal} size="large" />
-        </View>
+        <SkeletonList variant="card" count={4} />
       ) : (
         <FlatList
           data={reviews}
@@ -229,7 +227,6 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.lg,
     borderBottomWidth: 1,
   },
-  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   listContent: { padding: SPACING.xxl, paddingBottom: SPACING.huge, gap: 14 },
   listEmpty: { flexGrow: 1 },
   stars: { flexDirection: 'row', gap: 2 },

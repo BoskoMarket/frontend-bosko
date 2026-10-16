@@ -24,7 +24,7 @@ import {
 import { TOKENS } from '@/core/design-system/tokens';
 import { GRADIENTS, BRAND_RADIAL_FILL } from '@/core/design-system/gradients';
 import { getUserErrorMessage } from '@/lib/errors';
-import { useThemeColors, usePremiumColors, wash, withAlpha, dialog, FONT_FAMILY } from '@/core/design-system';
+import { SkeletonList, useThemeColors, usePremiumColors, wash, withAlpha, dialog, FONT_FAMILY } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -151,9 +151,7 @@ export default function PlansScreen() {
       </View>
 
       {loading ? (
-        <View style={s.loadingWrap}>
-          <ActivityIndicator color={TOKENS.color.signal} size="large" />
-        </View>
+        <SkeletonList variant="card" count={3} />
       ) : (
         <ScrollView
           contentContainerStyle={s.scrollContent}
@@ -292,7 +290,6 @@ const s = StyleSheet.create({
     borderRadius: 12,
   },
   headerTitle: { fontSize: 20, fontFamily: FONT_FAMILY.display },
-  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scrollContent: { padding: 24, paddingBottom: 40, gap: 20 },
   currentPlanBanner: { borderRadius: 20, overflow: 'hidden' },
   currentPlanGrad: {
