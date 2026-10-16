@@ -16,6 +16,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { safeBack } from '@/core/navigation/safeBack';
 
 import { useCategories } from '@/hooks/queries/useMarketplaceQuery';
 import type { Category } from '@/types/services';
@@ -96,6 +97,7 @@ function Header({ titleAnim }: { titleAnim: Animated.Value }) {
         variant="large"
         title="Explorar"
         subtitle="Descubrí profesionales cerca tuyo"
+        onBack={() => safeBack(router, '/(tabs)')}
         right={(
           <Pressable style={[s.searchIcon, { backgroundColor: tc.surface }]} onPress={() => router.push('/search')}>
             <Ionicons name="search" size={20} color={tc.text} />
