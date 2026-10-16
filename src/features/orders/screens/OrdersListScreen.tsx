@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOrders } from '../state/OrdersContext';
 import { Order, OrderStatus } from '../types/orders.types';
 import { ORDER_STATUS } from '../constants/orderStatus';
-import { Badge, EmptyState, SkeletonList, TOKENS, useThemeColors, FONT_FAMILY } from '@/core/design-system';
+import { Badge, EmptyState, ScreenHeader, SkeletonList, TOKENS, useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 type TabType = 'client' | 'provider';
@@ -134,7 +134,7 @@ export default function OrdersListScreen() {
       <AnimatedBackground variant="minimal" />
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-        <Text style={[styles.headerTitle, { color: tc.text }]}>Mis órdenes</Text>
+        <ScreenHeader variant="large" title="Mis órdenes" />
       </View>
 
       {/* Tabs */}
@@ -194,10 +194,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingBottom: 12,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontFamily: FONT_FAMILY.heading,
   },
   tabBar: {
     flexDirection: 'row',

@@ -27,7 +27,7 @@ import { fetchConversations, Conversation } from '../services/chat.service';
 import { chatStatusBadge } from '../constants/chatOrderRules';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { useChatStore, useConversationsList } from '@/stores/chat.store';
-import { Avatar, Badge, EmptyState, FONT_FAMILY, NoticeBanner, SkeletonList, TOKENS, useThemeColors, withAlpha } from '@/core/design-system';
+import { Avatar, Badge, EmptyState, FONT_FAMILY, NoticeBanner, ScreenHeader, SkeletonList, TOKENS, useThemeColors, withAlpha } from '@/core/design-system';
 
 type MessagePreview = { icon?: React.ComponentProps<typeof Ionicons>['name']; label: string };
 
@@ -211,12 +211,15 @@ export default function ConversationsListScreen() {
       <AnimatedBackground variant="minimal" />
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: tc.divider, paddingTop: insets.top + 20 }]}>
-        <Text style={[styles.headerTitle, { color: tc.text }]}>Mensajes</Text>
-        {totalUnread > 0 && (
-          <View style={styles.headerBadge}>
-            <Text style={styles.headerBadgeText}>{totalUnread}</Text>
-          </View>
-        )}
+        <ScreenHeader
+          variant="large"
+          title="Mensajes"
+          right={totalUnread > 0 ? (
+            <View style={styles.headerBadge}>
+              <Text style={styles.headerBadgeText}>{totalUnread}</Text>
+            </View>
+          ) : undefined}
+        />
       </View>
 
       {loading ? (
@@ -273,15 +276,7 @@ const styles = StyleSheet.create({
   header: {
     paddingBottom: 16,
     paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    overflow: 'hidden',
     borderBottomWidth: 1,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontFamily: FONT_FAMILY.display,
   },
   headerBadge: {
     backgroundColor: TOKENS.color.primary,

@@ -21,7 +21,7 @@ import { uploadServiceImages } from "@/features/servicesUser/services/service";
 import { useCategories, useMyServices, useUpdateService } from "@/hooks/queries/useMarketplaceQuery";
 import { useAddServiceWithPlanLimit } from "@/features/servicesUser/hooks/useAddServiceWithPlanLimit";
 import { fetchServiceById } from "../services/services";
-import { Button, Card, Chip, GRADIENTS, Input, SPACING, Text, TOKENS, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
+import { Button, Card, Chip, GRADIENTS, Input, ScreenHeader, SPACING, Text, TOKENS, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
 import { toast } from '@/core/components/Toast';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
@@ -235,13 +235,11 @@ export default function ServiceFormScreen() {
 
       {/* Header */}
       <LinearGradient colors={GRADIENTS.brandDeep} style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Pressable style={styles.backBtn} onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={10}>
-          <Text style={styles.backIcon}>‹</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>
-          {isEditing ? "Editar servicio" : "Publicar servicio"}
-        </Text>
-        <View style={{ width: 36 }} />
+        <ScreenHeader
+          tone="onBrand"
+          title={isEditing ? "Editar servicio" : "Publicar servicio"}
+          onBack={() => safeBack(router, '/(tabs)/profile')}
+        />
       </LinearGradient>
 
       <ScrollView
@@ -413,31 +411,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
     paddingHorizontal: 16,
     paddingBottom: 16,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: TOKENS.onMedia.fill,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  backIcon: {
-    fontSize: 28,
-    color: TOKENS.onMedia.text,
-    lineHeight: 32,
-    marginTop: -2,
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: 18,
-    fontFamily: FONT_FAMILY.heading,
-    color: TOKENS.onMedia.text,
   },
   scroll: {
     flex: 1,

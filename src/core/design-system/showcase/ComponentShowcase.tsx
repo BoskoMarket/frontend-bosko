@@ -296,6 +296,9 @@ function LayoutSection() {
         <ScreenHeader title="Solo titulo" />
         <ScreenHeader title="Con back" onBack={() => {}} />
         <ScreenHeader title="Con right" onBack={() => {}} right={<Ionicons name="ellipsis-horizontal" size={20} />} />
+        <ScreenHeader variant="large" title="Large" subtitle="Subtitulo opcional" />
+        <ScreenHeader variant="large" title="Large + back" onBack={() => {}} right={<Ionicons name="add" size={22} />} />
+        <View style={styles.fixed}><LinearGradient colors={GRADIENTS.brandDeep} style={styles.center}><ScreenHeader tone="onBrand" title="On brand" onBack={() => {}} /></LinearGradient></View>
       </Section>
       <Section name="BackButton">
         <BackButton onPress={() => {}} />

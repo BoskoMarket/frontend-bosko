@@ -19,7 +19,7 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
-import { Button, EmptyState, GRADIENTS, TOKENS, toast, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
+import { Button, EmptyState, GRADIENTS, ScreenHeader, TOKENS, toast, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useMyReels, useUpdateReel, useDeleteReel } from '@/hooks/queries/useReelsQuery';
@@ -223,21 +223,17 @@ export default function MyReelsScreen() {
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
       <AnimatedBackground variant="minimal" />
 
-      <View style={styles.headerRow}>
-        <Pressable
-          style={[styles.backBtn, { backgroundColor: tc.surface }]}
-          onPress={() => safeBack(router, '/(tabs)/profile')}
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel="Volver"
-        >
-          <Ionicons name="chevron-back" size={22} color={tc.text} />
-        </Pressable>
-        <Text style={[styles.header, { color: tc.text }]}>Mis reels</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="Publicar reel" onPress={() => router.push('/(tabs)/profile/upload-reel')} hitSlop={12}>
+      <ScreenHeader
+        variant="large"
+        title="Mis reels"
+        onBack={() => safeBack(router, '/(tabs)/profile')}
+        style={styles.headerRow}
+        right={(
+          <Pressable accessibilityRole="button" accessibilityLabel="Publicar reel" onPress={() => router.push('/(tabs)/profile/upload-reel')} hitSlop={12}>
           <Ionicons name="add" size={26} color={tc.text} />
         </Pressable>
-      </View>
+        )}
+      />
 
       {reels.length > 0 && (
         <View style={styles.summaryRow}>
@@ -289,19 +285,8 @@ export default function MyReelsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, paddingHorizontal: 20 },
   headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingVertical: 14,
   },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  header: { fontSize: 18, fontFamily: FONT_FAMILY.heading },
   summaryRow: { paddingBottom: 12 },
   summaryText: { fontSize: 13, fontFamily: FONT_FAMILY.bodyMedium },
   loader: { flex: 1, alignItems: 'center', justifyContent: 'center' },
