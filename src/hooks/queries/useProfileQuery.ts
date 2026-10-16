@@ -52,6 +52,7 @@ export function useUpdateProfile() {
     mutationFn: (payload: UpdateProfilePayload) => updateUserProfile(payload),
     onSuccess: (updated) => {
       qc.setQueryData(QUERY_KEYS.profile, updated);
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.profile });
     },
   });
 }

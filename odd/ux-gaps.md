@@ -1,0 +1,116 @@
+# Huecos de UX
+
+Registro de **lo que falta en los flujos de la app**: estados no contemplados, feedback ausente, validaciones, accesibilidad, consecuencias no explicadas y pasos que el usuario espera y no existen. No hay diseñador UX/UI en el equipo, así que este documento hace de checklist de producto.
+
+**Diferencia con `odd/backlog-fixes.md`:** ese archivo lista lo que está **roto, sin uso, sin navegación o es un stub** (defectos del código). Este lista lo que **falta desde la perspectiva del usuario**, aunque el código funcione. Cuando un hueco depende de un defecto ya registrado, se referencia.
+
+Se completa en cada tarea de migración del design system (columna `Origen`), recorriendo cada pantalla con esta lista:
+
+> carga / skeleton · estado vacío · error + reintento · sin conexión · pull-to-refresh · confirmación en acciones destructivas · feedback de éxito (toast) · validación inline + submit deshabilitado · teclado · protección de doble envío · guarda de cambios sin guardar al volver · `accessibilityLabel` en botones solo-ícono · fallback de imagen/avatar · consecuencias de logout / borrar cuenta · re-autenticación en cambios sensibles · a dónde navega el usuario después de cada acción.
+
+Tipos: `estado-faltante` (loading/empty/error/offline) · `feedback` (éxito/confirmación) · `validacion` · `accesibilidad` · `navegacion` · `seguridad` · `flujo-faltante` · `copy`.
+Estados: ⬜ pendiente · ✅ resuelto (con commit) · ❔ requiere decisión de producto.
+
+Regla: lo que es claramente correcto y no inventa reglas de negocio se implementa (✅). Lo que implica una regla de negocio (plazos, límites, qué datos se muestran, qué se bloquea) queda en ❔ con la pregunta concreta en la columna "Propuesta".
+
+Commits de referencia (rama `feat/ds-t9-profile`): `79ad4e0` editor único · `8bbbb06` motivo de rechazo · `a5d10d7` DS (dangerOutline / pending) · `34e36a7` ScreenHeader · `3bc12a0` perfil · `6e6599f` usuarios · `4d4b69a` fixes.
+
+## Perfil (`features/profile`)
+
+| ID | Flujo | Pantalla (archivo · símbolo) | Qué falta | Por qué importa | Propuesta de arreglo | Tipo | Estado | Origen |
+|---|---|---|---|---|---|---|---|---|
+| G01 | Perfil | `profile/ProfileScreen.tsx` · `ProfileScreen` | Si `GET /users/me` falla, la pantalla queda con nombre vacío y sin forma de reintentar. | El usuario ve un perfil "en blanco" y no sabe si es un error o si perdió datos. | `EmptyState` con mensaje y botón "Reintentar" (`refreshProfile`). | estado-faltante | ✅ `3bc12a0` | T9 |
+| G02 | Perfil | `ProfileScreen` · tarjeta de stats | Si `GET /users/me/stats` falla, el skeleton queda girando para siempre (el error se tragaba en silencio). | Parece que la app está colgada; no hay forma de reintentar sin salir. | Mensaje "No se pudieron cargar tus estadísticas" tocable para reintentar. | estado-faltante | ✅ `3bc12a0` | T9 |
+| G03 | Perfil → Logout | `ProfileScreen` · `handleLogout` | "Cerrar Sesión" cerraba la sesión al primer toque, sin confirmación. | Un toque accidental (el botón está pegado a "Eliminar cuenta") saca al usuario de la app. | `Alert` de confirmación antes de `logout()`. | feedback | ✅ `3bc12a0` | T9 |
+| G04 | Perfil → Logout | `ProfileScreen` · `handleLogout` | El diálogo no explica qué pasa al cerrar sesión (notificaciones push en este dispositivo, borradores, conversaciones). | El usuario no sabe si dejará de recibir avisos de órdenes y mensajes. | Texto del diálogo según lo que realmente ocurre (¿se desregistra el token push al cerrar sesión?). | copy | ❔ | T9 |
+| G05 | Perfil | `ProfileScreen` · `StatusBar` | La barra de estado era siempre `light-content`: en tema claro los íconos del sistema quedaban blancos sobre fondo claro. | Hora y batería ilegibles en modo claro. | `barStyle` según `useIsDark()`. | accesibilidad | ✅ `3bc12a0` | T9 |
+| G06 | Perfil | `ProfileScreen` · `QuickCard`, badge KYC, CTA "ofrecer servicios", tarjeta pendiente, stat Favoritos | Los `Pressable` no tenían rol ni `accessibilityLabel`. | Un lector de pantalla no anuncia qué hace cada tarjeta. | `accessibilityRole="button"` + label. | accesibilidad | ✅ `3bc12a0` | T9 |
+| G07 | Perfil → Editar | `ProfileScreen` ("Editar Perfil") vs `users/screens/EditProfileScreen.tsx` | Existen dos editores: el modal `EditProfileModal` (nombre, apellido, bio, avatar) y la pantalla `EditProfile` (suma teléfono y ubicación). Nada navega a `/(tabs)/profile/EditProfile`: solo se usa el modal. | Teléfono y ubicación no se pueden editar desde ningún lado, y `verify-phone` solo se enlaza desde esa pantalla (ver G21). | Decisión de producto: se mantiene la pantalla `EditProfile`, se elimina el modal y el perfil navega a ella (botón del hero, fila "Editar Perfil" y avatar). | navegacion | ✅ `79ad4e0` | T9 |
+| G08 | Perfil | `ProfileScreen` · fila "Métodos de Pago" | La fila dice "Próximamente" y no hace nada; la ruta `profile/Payments` y `edit/[type]` (pagos, email, notificaciones, foto, descripción) no tienen ningún enlace de entrada. | El usuario no encuentra su historial de pagos ni dónde cambiar notificaciones. | Definir qué fila entra a qué pantalla (relacionado con `backlog-fixes.md`). | flujo-faltante | ❔ | T9 |
+| G09 | Perfil (proveedor) | `ProfileScreen` | `toggleAvailability` existe en `ProfileContext` pero ningún componente lo expone; estilos de un switch de disponibilidad estaban sin uso. | El proveedor no puede ponerse "no disponible" desde la app. | Switch "Disponible" en el bloque de info del proveedor. | flujo-faltante | ❔ | T9 |
+| G10 | Perfil | `ProfileScreen` · banner | Se muestra `bannerUrl` pero no hay forma de subir ni cambiar el banner. | Siempre se ve el degradé por defecto. | Acción "Cambiar portada" o quitar el campo. Nota: el modal eliminado tampoco la tenía y el esquema de la API no expone endpoint de portada, por lo que no se pudo portar; ¿se agrega en backend o se quita `bannerUrl`? | flujo-faltante | ❔ | T9 |
+| G11 | Perfil | `ProfileScreen` · badge "Verificado" | Solo aparece con `isVerified` + antecedentes aprobados; no se explica qué significa ni qué falta. | El proveedor no sabe por qué no lo ve. | Tocar el badge abre una explicación / la pantalla de verificación. | copy | ❔ | T9 |
+| G12 | Perfil | `ProfileScreen` · pull-to-refresh | Refresca perfil y stats pero no informa si falló. | Parece que se actualizó aunque no haya conexión. | Toast de error si `refetch` falla. | feedback | ⬜ | T9 |
+
+## Eliminar cuenta (`features/profile/screens/DeleteAccountScreen.tsx`)
+
+| ID | Flujo | Pantalla | Qué falta | Por qué importa | Propuesta de arreglo | Tipo | Estado | Origen |
+|---|---|---|---|---|---|---|---|---|
+| G13 | Eliminar cuenta | `DeleteAccountScreen` · `handleDelete` | Sin conexión se mostraba "Error al eliminar la cuenta. Intentá más tarde." | El usuario no sabe si el problema es suyo (internet) o del servidor. | Mensaje específico "Sin conexión" cuando no hay `response`. | estado-faltante | ✅ `3bc12a0` | T9 |
+| G14 | Eliminar cuenta | `DeleteAccountScreen` | Durante la eliminación se podía tocar atrás y "Cancelar". | Se puede abandonar a mitad de un `DELETE` ya enviado. | Bloquear volver/cancelar mientras `loading`. | feedback | ✅ `3bc12a0` | T9 |
+| G15 | Eliminar cuenta | `DeleteAccountScreen` · paso 2 | El teclado no tenía acción "Listo" ni deshabilitaba el campo en carga. | Más pasos para confirmar; el campo seguía editable durante el envío. | `onSubmitEditing`, `editable={!loading}`. | accesibilidad | ✅ `3bc12a0` | T9 |
+| G16 | Eliminar cuenta | `DeleteAccountScreen` · fin del flujo | Tras eliminar, el usuario caía en `/login` sin ningún mensaje. | No tiene confirmación de que la cuenta se borró. | Toast "Cuenta eliminada". | feedback | ✅ `4d4b69a` | T9 |
+| G17 | Eliminar cuenta | `DeleteAccountScreen` · `WARNINGS` | No menciona órdenes en curso, pagos retenidos ni plan Premium activo. | Se puede perder dinero o dejar a un cliente con un servicio a medias. | Advertencia o bloqueo si hay órdenes activas, pagos pendientes o suscripción. ¿Qué debe pasar en cada caso? | seguridad | ❔ | T9 |
+| G18 | Eliminar cuenta | `DeleteAccountScreen` | No hay período de gracia ni exportación de datos antes de borrar. | Acción irreversible desde un solo flujo. | ¿Se ofrece plazo de arrepentimiento o descarga de datos? | flujo-faltante | ❔ | T9 |
+| G19 | Eliminar cuenta | `DeleteAccountScreen` · paso 2 | Exige contraseña de ≥ 6 caracteres; si hubiese login social no hay contraseña que ingresar. | El usuario quedaría sin forma de eliminar su cuenta. | ¿Existe login social / sin contraseña? Si sí, otra re-autenticación. | seguridad | ❔ | T9 |
+| G20 | Eliminar cuenta | `DeleteAccountScreen` | Sin límite visible de intentos de contraseña. | Fuerza bruta sobre una acción destructiva. | ¿Bloqueo temporal tras N fallos (backend)? | seguridad | ❔ | T9 |
+
+## Verificar teléfono (`features/profile/screens/VerifyPhoneScreen.tsx`)
+
+| ID | Flujo | Pantalla | Qué falta | Por qué importa | Propuesta de arreglo | Tipo | Estado | Origen |
+|---|---|---|---|---|---|---|---|---|
+| G21 | Verificar teléfono | `VerifyPhoneScreen` · entrada al flujo | Solo se llega desde `EditProfileScreen` ("Verificar →"), que a su vez no tiene entrada (G07). La verificación de teléfono no es alcanzable hoy. | El usuario no puede verificar su número. | Ahora se llega desde Perfil → Editar perfil → "Verificar" (ver G07). | navegacion | ✅ `79ad4e0` | T9 |
+| G22 | Verificar teléfono | `VerifyPhoneScreen` · errores | Los errores eran `Alert` modales ("Error"). | Interrumpen y se pierde el contexto del campo. | Errores inline con `NoticeBanner`. | feedback | ✅ `3bc12a0` | T9 |
+| G23 | Verificar teléfono | `VerifyPhoneScreen` · `handleSendCode` | Cualquier texto se enviaba a Firebase. | Round-trip y mensaje técnico para un número claramente inválido. | Validación E.164 inline (`+` y 8-15 dígitos), normalizando espacios y guiones. | validacion | ✅ `4d4b69a` | T9 |
+| G24 | Verificar teléfono | `VerifyPhoneScreen` · módulo nativo | En Expo Go aparecía el mensaje crudo "Cannot find module…". | Mensaje incomprensible. | Mensaje "no está disponible en esta versión de la app". | copy | ✅ `4d4b69a` | T9 |
+| G25 | Verificar teléfono | `VerifyPhoneScreen` · "Reenviar" | "Reenviar" vuelve al paso del número y no hay espera visible entre envíos; tampoco "Cambiar número" separado. | Se pueden disparar muchos SMS; Firebase limita y devuelve error. | Contador de espera y botón aparte para cambiar el número. ¿Cuántos segundos? | flujo-faltante | ❔ | T9 |
+| G26 | Verificar teléfono | `VerifyPhoneScreen` | Placeholder y expectativa de Argentina (+54); sin selector de país. | Usuarios de otros países no saben cómo ingresar el número. | ¿La app opera solo en Argentina? | copy | ❔ | T9 |
+| G27 | Verificar teléfono | `VerifyPhoneScreen` · OTP | El código de 6 dígitos no se auto-completa desde el SMS ni se envía solo al completarse. | Un paso extra en cada verificación. | `textContentType="oneTimeCode"` ya está; falta auto-submit al completar (decisión de UX). | flujo-faltante | ⬜ | T9 |
+
+## Editar perfil y datos de usuario (`features/users`)
+
+| ID | Flujo | Pantalla | Qué falta | Por qué importa | Propuesta de arreglo | Tipo | Estado | Origen |
+|---|---|---|---|---|---|---|---|---|
+| G28 | Editar perfil | `EditProfileScreen` · back | Volver con cambios sin guardar descartaba todo sin avisar. | Se pierde lo escrito por un toque accidental. | Diálogo "Descartar cambios" si hay cambios. | feedback | ✅ `6e6599f` | T9 |
+| G29 | Editar perfil | `EditProfileScreen` · `hasChanges` | Con `lastName`/`bio` vacíos en el servidor (`undefined`) el botón Guardar quedaba habilitado sin cambios. | Permite guardar "sin cambios" y confunde el estado del formulario. | Comparar contra `?? ''`. | validacion | ✅ `6e6599f` | T9 |
+| G30 | Editar perfil | `EditProfileScreen` · nombre | Se podía guardar el nombre vacío o solo espacios. | Perfil sin nombre visible. | Error inline y Guardar deshabilitado. | validacion | ✅ `6e6599f` | T9 |
+| G31 | Editar perfil | `EditProfileScreen` · estado inicial | Si el perfil llegaba después de montar la pantalla, el formulario quedaba vacío; sin perfil no había error ni reintento. | El usuario guarda datos vacíos encima de los reales. | Sembrar el formulario al llegar el perfil; `EmptyState` con reintento. | estado-faltante | ✅ `6e6599f` | T9 |
+| G32 | Editar perfil | `EditProfileScreen` · guardar / avatar | Éxito y error usaban `Alert` bloqueantes. | Frenan el flujo; al guardar había que tocar "OK" para volver. | Toast + navegación automática; toast en subida de avatar. | feedback | ✅ `6e6599f` | T9 |
+| G33 | Editar perfil | `EditProfileScreen` · permiso de galería | Al denegar el permiso solo había "OK". | El usuario no sabe cómo habilitarlo. | Acción "Abrir ajustes". | feedback | ✅ `4d4b69a` | T9 |
+| G34 | Editar perfil | `EditProfileScreen` · teclado | Sin `KeyboardAvoidingView`: el teclado tapaba bio y botón Guardar. | No se ve lo que se escribe. | `KeyboardAvoidingView behavior="padding"` (criterio de CLAUDE.md). | accesibilidad | ✅ `4d4b69a` | T9 |
+| G35 | Editar perfil | `EditProfileScreen` · avatar | El `Pressable` del avatar no tenía label. | Lector de pantalla no anuncia "cambiar foto". | `accessibilityLabel`. | accesibilidad | ✅ `6e6599f` | T9 |
+| G36 | Editar perfil | `EditProfileScreen` · avatar | La foto se sube al elegirla, mientras el resto de los campos requiere "Guardar". | Modelos mentales distintos en la misma pantalla. | Ahora hay toast de confirmación; ¿unificar con un único "Guardar"? | copy | ❔ | T9 |
+| G37 | Editar perfil | `EditProfileScreen` · teléfono | Se puede cambiar un número ya verificado sin re-verificar ni advertir. Formato de teléfono sin validar. | Un número "verificado" podría dejar de serlo sin que el usuario lo note. ¿El backend resetea `isPhoneVerified`? ¿Qué formato acepta? | Re-verificar al cambiar; validar formato igual que `verify-phone`. | seguridad | ❔ (ya alcanzable) | T9 |
+| G38 | Editar perfil | `EditProfileScreen` · ubicación | Solo GPS; sin búsqueda manual de dirección ni alternativa si se deniega el permiso. | Quien no da ubicación no puede completar su zona. | Entrada manual / selector de zona. ¿Cómo se usa `location` en la búsqueda? | flujo-faltante | ❔ (ya alcanzable) | T9 |
+| G39 | Email | `EditMail.tsx` | Explica que el email no se puede cambiar pero no dice cómo hacerlo. | Callejón sin salida. | Texto "Contactá a soporte" o flujo de cambio con re-autenticación. | flujo-faltante | ❔ | T9 |
+| G40 | Pagos | `EditPayments.tsx` | Sin error ni reintento al fallar la carga (quedaba el mensaje de vacío). | Parece que no hay pagos. | `EmptyState` de error con "Reintentar". | estado-faltante | ✅ `6e6599f` | T9 |
+| G41 | Pagos | `EditPayments.tsx` | Título "Historial de pagos simulados" visible al usuario final; sin pull-to-refresh. | Copy de desarrollo en producción. | ¿Se mantiene "simulados"? Pull-to-refresh si la lista pasa a una pantalla con scroll. | copy | ❔ | T9 |
+| G42 | Notificaciones | `EditNotifications.tsx` | Activar push no tenía confirmación; si el permiso del sistema está denegado, el error es genérico. | El usuario no sabe si quedó activo ni cómo habilitarlo. | Toast en éxito/error (hecho); acción "Abrir ajustes" si el permiso está denegado. | feedback | ✅ `6e6599f` (toast) · ⬜ ajustes | T9 |
+| G43 | Descripción / foto | `EditDescription.tsx`, `EditPhoto.tsx` | "Guardar" y "Cambiar foto" no llaman a ningún endpoint (stubs). | El usuario cree que guardó y no pasó nada. | Conectar o eliminar (ver `backlog-fixes.md`). | flujo-faltante | ⬜ | T9 |
+
+## Verificación y antecedentes (hallazgos de T8: `features/kyc`, `features/admin`)
+
+| ID | Flujo | Pantalla | Qué falta | Por qué importa | Propuesta de arreglo | Tipo | Estado | Origen |
+|---|---|---|---|---|---|---|---|---|
+| G44 | KYC | `KYCStatusScreen`, `KYCRejectedScreen` | El máximo de intentos estaba fijo en 3 en el texto y en una constante; el backend ya manda `maxAttempts`. | Si el backend cambia el límite, la app miente. | Usar `verification.maxAttempts` (con 3 como respaldo). | copy | ✅ `4d4b69a` | T8 |
+| G45 | KYC | `KYCRejectedScreen` | Con intentos agotados solo dice "Contactá a soporte" sin canal (email, chat, enlace). | Callejón sin salida para quien fue rechazado 3 veces. | ¿Cuál es el canal de soporte? Botón para abrirlo. | flujo-faltante | ❔ | T8 |
+| G46 | KYC | `KYCStatusScreen` | "Revisión en 24 horas" y otros plazos son promesas fijas en copy. | Expectativa que el equipo debe poder cumplir. | Confirmar el plazo real. | copy | ❔ | T8 |
+| G47 | KYC | Flujo post-resultado | El usuario solo se entera del resultado al abrir la app; no se confirma una notificación push/email de aprobado o rechazado. | Espera sin información. | ¿El backend notifica el resultado? | flujo-faltante | ❔ | T8 |
+| G48 | Antecedentes | `BackgroundCheckScreen` | Texto "1-3 días hábiles" fijo; tras un rechazo no se cuenta cuántas veces se puede volver a subir. | Expectativa y reintentos sin límite aparente. | Confirmar plazo y si hay máximo de reenvíos. | copy | ❔ | T8 |
+| G49 | Antecedentes (admin) | `AdminBackgroundCheckScreen` · `load` | El endpoint de pendientes no existe en el backend: la lista siempre está vacía y muestra "Todo al día". | Un admin cree que no hay nada pendiente cuando en realidad la función no está conectada. | Mostrar estado "no disponible" hasta que exista el endpoint (ver `backlog-fixes.md`). | estado-faltante | ⬜ | T8 |
+| G50 | Antecedentes (admin) | `AdminBackgroundCheckScreen` · "Rechazar" | Usa `Alert.prompt` (solo iOS); en Android no hay forma de ingresar el motivo y la llamada falla. | El flujo de rechazo no funciona en Android. | Nuevo `ReasonDialog` del DS (motivo obligatorio, bloqueado mientras envía). | flujo-faltante | ✅ `8bbbb06` | T8 |
+| G51 | Antecedentes (admin) | `AdminBackgroundCheckScreen` | Aprobar/rechazar no da feedback de éxito (la tarjeta desaparece) y los errores son "No se pudo aprobar/rechazar". | No hay certeza de qué se resolvió ni por qué falló. | Toast de éxito y mensaje de error del backend. | feedback | ⬜ | T8 |
+| G52 | Rol proveedor | `ProfileScreen` · rol | Tras una aprobación, el rol parece actualizarse solo al refrescar o reabrir (no verificado en dispositivo). | El usuario aprobado sigue viendo "Estás camino a ser prestador". | Refrescar rol al enfocar la pantalla o por push. | estado-faltante | ⬜ | T9 |
+
+## Transversales
+
+| ID | Flujo | Pantalla | Qué falta | Por qué importa | Propuesta de arreglo | Tipo | Estado | Origen |
+|---|---|---|---|---|---|---|---|---|
+| G53 | Toda la app | Global | No hay indicador de "sin conexión": cada pantalla resuelve (o no) los errores de red por su cuenta. | El usuario no distingue falta de internet de un fallo del servidor. | Banner global de conectividad (`NetInfo`) + reintento automático al volver. | estado-faltante | ❔ | T9 |
+| G54 | Toda la app | `ScreenHeader` | El botón volver no tenía `accessibilityLabel`. | Lector de pantalla lo anuncia sin nombre en ~24 pantallas. | `accessibilityRole="button"` + "Volver". | accesibilidad | ✅ `34e36a7` | T9 |
+| G55 | Cambios sensibles | Teléfono, email, contraseña, eliminar cuenta | No hay una política de re-autenticación: solo eliminar cuenta pide contraseña. | Una sesión robada puede cambiar teléfono o contraseña. | Definir qué acciones piden contraseña / verificación reciente. | seguridad | ❔ | T9 |
+
+## Preguntas abiertas para producto (priorizadas)
+
+1. **Portada (G10):** el editor único (`EditProfile`) no permite cambiar la portada y la API no tiene endpoint para subirla. ¿Se agrega al backend o se deja el degradé fijo? (Editor de perfil G07/G21: resuelto, se mantiene la pantalla.)
+2. **Eliminar cuenta (G17):** ¿qué pasa si hay órdenes activas, pagos pendientes o un plan Premium? ¿Se bloquea, se advierte o se cancela todo?
+3. **Eliminar cuenta (G18):** ¿hay período de gracia para recuperar la cuenta o descarga de datos antes de borrar?
+4. **Login sin contraseña (G19):** ¿existe login social? Si sí, ¿cómo confirma la identidad quien no tiene contraseña?
+5. **Cambio de teléfono (G37):** ahora alcanzable desde Editar perfil. ¿Cambiar un número verificado debe forzar nueva verificación? ¿El backend resetea `isPhoneVerified`?
+6. **Soporte (G45):** ¿cuál es el canal de soporte (email, WhatsApp, chat) para quien agotó los intentos de verificación?
+7. **Plazos de revisión (G46, G48):** ¿cuánto tarda de verdad la revisión de identidad y de antecedentes, y hay máximo de reenvíos de antecedentes?
+8. **Notificaciones de resultado (G47):** ¿el backend avisa (push/email) cuando se aprueba o rechaza una verificación?
+9. **Disponibilidad del proveedor (G09):** ¿el switch de "disponible" debe existir en el perfil?
+10. **Logout (G04):** ¿cerrar sesión desregistra las notificaciones push del dispositivo?
+11. **Re-autenticación (G55):** ¿qué cambios sensibles deben pedir contraseña o verificación reciente?
+12. **País (G26):** ¿la app opera solo en Argentina o necesita selector de país para teléfonos?

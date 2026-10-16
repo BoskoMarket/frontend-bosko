@@ -23,7 +23,7 @@ export function ScreenHeader({ title, onBack, right }: ScreenHeaderProps) {
   const tc = useThemeColors();
   return (
     <View style={styles.row}>
-      <Pressable onPress={onBack ?? (() => safeBack(router, '/(tabs)'))} hitSlop={12} style={styles.side}>
+      <Pressable onPress={onBack ?? (() => safeBack(router, '/(tabs)'))} hitSlop={12} style={styles.side} accessibilityRole="button" accessibilityLabel="Volver">
         <Ionicons name="chevron-back" size={22} color={tc.text} />
       </Pressable>
       <Text variant="title" color={tc.text} style={styles.title} numberOfLines={1}>

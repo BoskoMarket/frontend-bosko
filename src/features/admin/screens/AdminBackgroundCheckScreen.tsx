@@ -21,6 +21,7 @@ import {
   Button,
   Card,
   EmptyState,
+  ReasonDialog,
   ScreenHeader,
   Text,
   useThemeColors,
@@ -42,6 +43,21 @@ interface PendingUser {
 
 function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: string) => void }) {
   const tc = useThemeColors();
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
+
+  const handleReject = async (reason: string) => {
+    setRejecting(true);
+    try {
+      await adminReview(item.id, false, reason);
+      setRejectOpen(false);
+      onReview(item.id);
+    } catch {
+      Alert.alert('Error', 'No se pudo rechazar.');
+    } finally {
+      setRejecting(false);
+    }
+  };
 
   return (
     <Card padding="lg" radius="lg" contentStyle={s.cardContent}>
@@ -69,34 +85,14 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
 
       {/* Acciones */}
       <View style={s.actionsRow}>
-        <Pressable
+        <Button
+          label="Rechazar"
+          variant="dangerOutline"
+          size="sm"
           style={s.rejectBtn}
-          onPress={() => {
-            Alert.prompt(
-              'Rechazar',
-              'Indicá el motivo del rechazo (opcional):',
-              [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                  text: 'Rechazar',
-                  style: 'destructive',
-                  onPress: async (notes?: string) => {
-                    try {
-                      await adminReview(item.id, false, notes);
-                      onReview(item.id);
-                    } catch {
-                      Alert.alert('Error', 'No se pudo rechazar.');
-                    }
-                  },
-                },
-              ],
-              'plain-text',
-            );
-          }}
-        >
-          <Ionicons name="close-circle-outline" size={16} color={TOKENS.color.error} />
-          <Text variant="button" color={TOKENS.color.error}>Rechazar</Text>
-        </Pressable>
+          icon={<Ionicons name="close-circle-outline" size={16} color={TOKENS.color.error} />}
+          onPress={() => setRejectOpen(true)}
+        />
 
         <View style={s.approveWrap}>
           <Button
@@ -123,6 +119,17 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
           />
         </View>
       </View>
+
+      <ReasonDialog
+        visible={rejectOpen}
+        title="Rechazar antecedentes"
+        message={`Indicá el motivo del rechazo para ${item.firstName}.`}
+        placeholder="Ej.: el certificado está vencido"
+        confirmLabel="Rechazar"
+        submitting={rejecting}
+        onCancel={() => setRejectOpen(false)}
+        onConfirm={handleReject}
+      />
     </Card>
   );
 }
@@ -209,6 +216,6 @@ const s = StyleSheet.create({
   docText:     { flex: 1 },
 
   actionsRow:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  rejectBtn:   { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 12, borderWidth: 1.5, borderColor: TOKENS.color.error, height: 38 },
+  rejectBtn:   { flex: 1 },
   approveWrap: { flex: 2 },
 });

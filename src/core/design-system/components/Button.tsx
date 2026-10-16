@@ -8,7 +8,7 @@ import { withAlpha } from '../color';
 import { Text } from './Text';
 import { useThemeColors } from '@/stores/theme.store';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'dangerOutline';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export interface ButtonProps extends Omit<PressableProps, 'style'> {
@@ -62,7 +62,10 @@ export function Button({
     ...(fullWidth ? { width: '100%' } : null),
   };
 
-  const textColor = variant === 'outline' || variant === 'ghost' ? TOKENS.color.signal : TOKENS.color.onPrimary;
+  const textColor =
+    variant === 'outline' || variant === 'ghost' ? TOKENS.color.signal
+    : variant === 'dangerOutline' ? TOKENS.color.error
+    : TOKENS.color.onPrimary;
 
   const content = loading ? (
     <ActivityIndicator color={textColor} />
@@ -113,6 +116,24 @@ export function Button({
   if (variant === 'danger') {
     return (
       <Pressable disabled={isDisabled} {...press} {...rest} style={[shell, { backgroundColor: TOKENS.color.error, transform: [{ scale: pressed ? 0.97 : 1 }] }, style]}>
+        {content}
+      </Pressable>
+    );
+  }
+
+  if (variant === 'dangerOutline') {
+    // Destructive but secondary action (reject, remove): transparent bg + error border/label.
+    return (
+      <Pressable
+        disabled={isDisabled}
+        {...press}
+        {...rest}
+        style={[shell, {
+          backgroundColor: pressed ? TOKENS.status.cancelled.bg : 'transparent',
+          borderWidth: 1.5,
+          borderColor: TOKENS.color.error,
+        }, style]}
+      >
         {content}
       </Pressable>
     );

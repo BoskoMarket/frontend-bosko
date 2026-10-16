@@ -22,6 +22,7 @@ import {
   Badge,
   Button,
   Card,
+  NoticeBanner,
   ScreenHeader,
   Text,
   useThemeColors,
@@ -217,12 +218,9 @@ export default function BackgroundCheckScreen() {
               )}
 
               {status === 'UNDER_REVIEW' && (
-                <View style={s.reviewNote}>
-                  <Ionicons name="information-circle-outline" size={16} color={TOKENS.status.pending.fg} />
-                  <Text variant="bodySmall" color={TOKENS.status.pending.fg} style={s.reviewNoteText}>
-                    El equipo de Bosko revisará tu documento en un plazo de 1-3 días hábiles.
-                  </Text>
-                </View>
+                <NoticeBanner variant="pending" style={s.reviewNote}>
+                  El equipo de Bosko revisará tu documento en un plazo de 1-3 días hábiles.
+                </NoticeBanner>
               )}
             </>
           )}
@@ -252,6 +250,5 @@ const s = StyleSheet.create({
 
   formatsRow:   { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20, flexWrap: 'wrap' },
 
-  reviewNote:   { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: TOKENS.status.pending.bg, borderRadius: 12, padding: 14, marginTop: 16 },
-  reviewNoteText: { flex: 1 },
+  reviewNote:   { marginTop: 16 },
 });

@@ -104,7 +104,7 @@ export default function KYCStatusScreen() {
           <View style={[s.attemptsCard, { backgroundColor: tc.surface, borderColor: tc.border }]}>
             <MaterialIcons name="info-outline" size={16} color={tc.textSub} />
             <Text variant="bodySmall" color={tc.textSub}>
-              Intentos utilizados: {verification.attemptCount} de 3
+              Intentos utilizados: {verification.attemptCount} de {verification.maxAttempts ?? 3}
             </Text>
           </View>
         )}
