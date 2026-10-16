@@ -13,7 +13,8 @@ import { queryClient } from "@/core/query/queryClient";
 import { setupQueryNetworkFocus } from "@/core/query/networkFocus";
 import { AuthProvider, useAuth } from "@/features/auth/state/AuthContext";
 import { ToastRoot } from "@/core/components/Toast";
-import { DialogRoot } from "@/core/design-system";
+import { DialogRoot, useNavigationTheme, useThemeColors } from "@/core/design-system";
+import { ThemeProvider } from "@react-navigation/native";
 import { AppBackground } from "@/core/components/AppBackground";
 import { usePushNotificationSetup } from "@/hooks/usePushNotificationSetup";
 import { NotificationsModalRoot } from "@/features/notifications/screens/NotificationsScreen";
@@ -64,6 +65,7 @@ function handleNotificationResponse(response: Notifications.NotificationResponse
 
 function RootLayoutNav() {
   const { isAuthenticated } = useAuth();
+  const tc = useThemeColors();
   const segments = useSegments();
   const navigation = useRootNavigationState();
   useEffect(() => {
@@ -75,7 +77,7 @@ function RootLayoutNav() {
   usePushNotificationSetup();
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: tc.bg } }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="login" />
@@ -90,6 +92,7 @@ function RootLayoutNav() {
 
 function ThemedRoot() {
   const gate = useAppGate();
+  const navTheme = useNavigationTheme();
 
   if (gate.blocked) {
     return (
@@ -100,16 +103,18 @@ function ThemedRoot() {
   }
 
   return (
-    <AppBackground>
-      <OfflineBanner />
-      <BiometricLockGate>
-        <RootLayoutNav />
-      </BiometricLockGate>
-      <UpdateBanner />
-      <ToastRoot />
-      <DialogRoot />
-      <NotificationsModalRoot />
-    </AppBackground>
+    <ThemeProvider value={navTheme}>
+      <AppBackground>
+        <OfflineBanner />
+        <BiometricLockGate>
+          <RootLayoutNav />
+        </BiometricLockGate>
+        <UpdateBanner />
+        <ToastRoot />
+        <DialogRoot />
+        <NotificationsModalRoot />
+      </AppBackground>
+    </ThemeProvider>
   );
 }
 

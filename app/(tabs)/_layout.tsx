@@ -33,6 +33,7 @@ export default function TabsLayout() {
         <Tabs
           screenOptions={{
             headerShown: false,
+            sceneStyle: { backgroundColor: tc.bg },
             tabBarHideOnKeyboard: true,
             // CustomTabBar ya flota con position:'absolute' propio — sin esto,
             // Navigation reserva su altura medida en cada escena y les resta

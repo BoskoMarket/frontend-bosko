@@ -7,7 +7,7 @@
     "orientation": "portrait",
     "icon": "./assets/images/bosko-logo.png",
     "scheme": "bosko",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "androidStatusBar": {
       "barStyle": "dark-content",
       "backgroundColor": "#00000000",
