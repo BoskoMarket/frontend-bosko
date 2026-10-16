@@ -18,7 +18,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOrders } from '../state/OrdersContext';
 import { Order, OrderStatus } from '../types/orders.types';
@@ -94,7 +94,12 @@ export default function OrdersListScreen() {
   const tc = useThemeColors();
   const insets = useSafeAreaInsets();
   const { clientOrders, providerOrders, loading, loadClientOrders, loadProviderOrders } = useOrders();
-  const [activeTab, setActiveTab] = useState<TabType>('client');
+  // `?tab=provider` (e.g. from the provider home) opens the provider list.
+  const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
+  const [activeTab, setActiveTab] = useState<TabType>(tabParam === 'provider' ? 'provider' : 'client');
+  useEffect(() => {
+    if (tabParam === 'provider' || tabParam === 'client') setActiveTab(tabParam);
+  }, [tabParam]);
   const [refreshing, setRefreshing] = useState(false);
 
   // Carga inicial de ambas listas

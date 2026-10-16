@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { TOKENS } from '../tokens';
 import { SPACING } from '../spacing';
 import { FONT_FAMILY } from '../typography';
+import { Avatar } from './Avatar';
+import { Badge } from './Badge';
 import { Text } from './Text';
 import { useThemeColors } from '@/stores/theme.store';
 
@@ -151,5 +153,68 @@ const styles = StyleSheet.create({
   trust: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, padding: SPACING.md, borderRadius: TOKENS.radius.md, borderWidth: 1 },
   trustText: { flex: 1, gap: 2 },
 
+  category: { flex: 1, borderRadius: TOKENS.radius.md, alignItems: 'center', gap: SPACING.sm - 2, paddingTop: SPACING.md, paddingBottom: SPACING.sm + 2, paddingHorizontal: SPACING.xs },
+  categoryLabel: { fontSize: 11, lineHeight: 14, alignSelf: 'stretch' },
+
+  request: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, padding: SPACING.md, borderRadius: TOKENS.radius.md, borderWidth: 1 },
   stat: { flex: 1, borderRadius: TOKENS.radius.md, borderWidth: 1, padding: SPACING.md, gap: 2 },
 });
+
+// ---------------------------------------------------------------------------
+
+export interface CategoryTileProps {
+  icon: IconName;
+  label: string;
+  onPress: () => void;
+  style?: StyleProp<ViewStyle>;
+}
+
+/** CategoryTile — compact tinted tile (icon over label) for category grids. */
+export function CategoryTile({ icon, label, onPress, style }: CategoryTileProps) {
+  const tc = useThemeColors();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [styles.category, { backgroundColor: tc.accent }, pressed && styles.pressed, style]}
+    >
+      <Ionicons name={icon} size={22} color={TOKENS.color.signal} />
+      <Text variant="caption" center numberOfLines={1} style={styles.categoryLabel}>{label}</Text>
+    </Pressable>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+export interface RequestRowProps {
+  /** Person who made the request (avatar initial / photo). */
+  name?: string;
+  avatarUri?: string | null;
+  title: string;
+  subtitle?: string;
+  /** Short status chip, e.g. "Nueva". */
+  badge?: string;
+  onPress: () => void;
+  style?: StyleProp<ViewStyle>;
+}
+
+/** RequestRow — compact incoming-request row: avatar, title/subtitle and a status chip. */
+export function RequestRow({ name, avatarUri, title, subtitle, badge, onPress, style }: RequestRowProps) {
+  const tc = useThemeColors();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={[title, subtitle, badge].filter(Boolean).join('. ')}
+      style={({ pressed }) => [styles.request, { backgroundColor: tc.card, borderColor: tc.cardBorder }, pressed && styles.pressed, style]}
+    >
+      <Avatar uri={avatarUri} name={name ?? title} size={40} />
+      <View style={styles.trustText}>
+        <Text variant="label" numberOfLines={1}>{title}</Text>
+        {subtitle ? <Text variant="caption" color={tc.textSub} numberOfLines={1}>{subtitle}</Text> : null}
+      </View>
+      {badge ? <Badge label={badge} tone="brand" size="sm" /> : null}
+    </Pressable>
+  );
+}

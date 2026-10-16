@@ -16,6 +16,7 @@ import {
   Button,
   ButtonSize,
   ButtonVariant,
+  CategoryTile,
   Card,
   Chip,
   Divider,
@@ -34,6 +35,7 @@ import {
   PathCard,
   ProgressBar,
   ReasonDialog,
+  RequestRow,
   ReportSheet,
   ScreenHeader,
   SectionHeader,
@@ -45,6 +47,7 @@ import {
   SPACING,
   StatTile,
   StepCard,
+  SummaryCard,
   StepTimeline,
   Text,
   TOKENS,
@@ -520,6 +523,20 @@ function HomeSection() {
       <Section name="TrustRow">
         <TrustRow icon="shield-checkmark-outline" title="Identidad verificada" caption="Los profesionales validan su identidad y antecedentes" />
         <TrustRow icon="star-outline" title="Reseñas reales" caption="Solo califica quien contrató el servicio" />
+      </Section>
+      <Section name="CategoryTile">
+        <Row style={styles.cardRow}>
+          <CategoryTile icon="flash-outline" label="Electricidad" onPress={() => {}} />
+          <CategoryTile icon="water-outline" label="Plomería" onPress={() => {}} />
+          <CategoryTile icon="color-palette-outline" label="Pintura" onPress={() => {}} />
+          <CategoryTile icon="leaf-outline" label="Jardín" onPress={() => {}} />
+        </Row>
+      </Section>
+      <Section name="SummaryCard">
+        <SummaryCard eyebrow="Hola, Martín" title="Tenés 2 solicitudes nuevas" actionLabel="Ver solicitudes" onAction={() => {}} />
+      </Section>
+      <Section name="RequestRow">
+        <RequestRow name="Laura P." title="Laura P. · Instalación de tomas" subtitle="Palermo · Sábado por la mañana" badge="Nueva" onPress={() => {}} />
       </Section>
       <Section name="StatTile">
         <Row style={styles.cardRow}>

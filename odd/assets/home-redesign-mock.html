@@ -1,0 +1,288 @@
+<title>Bosko Home</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: controls + one phone-width home mock (client or provider) with an annotated section rail beside it on wide screens. */
+:root {
+  --page: #F3F1F2; --page-text: #19141A; --page-sub: #6B6268; --page-line: #DDD6DA;
+  --display: "Archivo", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  --wine: #850021; --signal: #FF2D6F; --deep: #3C0014; --mint: #19C39A; --gold: #F5B83D;
+  --radial: radial-gradient(120% 120% at 100% 0%, var(--signal) 0%, var(--wine) 45%, var(--deep) 100%);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: #0F0B0E; --page-text: #F2ECEF; --page-sub: #A0939A; --page-line: #2A2027; color-scheme: dark; } }
+:root[data-theme="dark"] { --page: #0F0B0E; --page-text: #F2ECEF; --page-sub: #A0939A; --page-line: #2A2027; color-scheme: dark; }
+body { background: var(--page); color: var(--page-text); font-family: var(--display); }
+
+.app { --bg: #0E0A0D; --surface: #1A1418; --surface2: rgba(255,255,255,.06); --card: rgba(255,255,255,.045); --border: rgba(255,255,255,.09); --text: #F5EEF1; --sub: #A3949B; --scrim: rgba(10,4,8,.78); --tint: rgba(255,45,111,.12); --shadow: 0 18px 40px -22px rgba(255,45,111,.45); }
+.app.light { --bg: #FAF7F8; --surface: #FFFFFF; --surface2: #F1ECEF; --card: #FFFFFF; --border: rgba(40,10,20,.08); --text: #1C1218; --sub: #75666D; --scrim: rgba(20,6,12,.70); --tint: rgba(133,0,33,.07); --shadow: 0 14px 32px -18px rgba(133,0,33,.30); }
+
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 36px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 22px; }
+header h1 { font-stretch: 112%; font-weight: 800; font-size: clamp(26px, 4.5vw, 40px); letter-spacing: -0.02em; line-height: 1.03; margin: 0; text-wrap: balance; }
+header p { color: var(--page-sub); max-width: 66ch; line-height: 1.55; margin: 8px 0 0; font-size: 15px; }
+.controls { display: flex; flex-wrap: wrap; gap: 14px 22px; }
+.ctl { display: flex; flex-direction: column; gap: 6px; }
+.ctl span { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--page-sub); }
+.seg { display: inline-flex; border: 1px solid var(--page-line); border-radius: 999px; padding: 3px; flex-wrap: wrap; }
+.seg button { font: inherit; font-size: 13px; font-weight: 600; border: 0; background: transparent; color: var(--page-text); padding: 7px 13px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--page-text); color: var(--page); }
+.seg button:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
+
+.stage { display: grid; grid-template-columns: minmax(0, 390px) minmax(0, 1fr); gap: 32px; align-items: start; }
+@media (max-width: 860px) { .stage { grid-template-columns: minmax(0, 1fr); justify-items: center; } }
+.rail { display: flex; flex-direction: column; gap: 14px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); min-width: 0; }
+.rail h2 { margin: 0; font-size: 18px; font-weight: 800; }
+.rail ol { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 10px; color: var(--page-sub); font-size: 14px; line-height: 1.5; }
+.rail ol b { color: var(--page-text); }
+
+.app { width: 100%; max-width: 390px; background: var(--bg); color: var(--text); border-radius: 32px; border: 1px solid var(--page-line); padding: 16px 16px 22px; display: flex; flex-direction: column; gap: 22px; overflow: hidden; }
+.top { display: flex; justify-content: space-between; align-items: center; }
+.logo { font-size: 22px; font-weight: 800; font-stretch: 115%; letter-spacing: -0.02em; display: flex; align-items: center; gap: 8px; }
+.logo i { width: 26px; height: 26px; border-radius: 8px; background: var(--radial); display: inline-block; box-shadow: 0 0 16px rgba(255,45,111,.45); }
+.top .r { display: flex; gap: 8px; align-items: center; }
+.loc { font-size: 12px; font-weight: 600; padding: 6px 10px; border-radius: 999px; background: var(--surface2); border: 1px solid var(--border); }
+.bell { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--surface2); border: 1px solid var(--border); position: relative; }
+.bell svg { width: 16px; }
+.bell em { position: absolute; top: 6px; right: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--signal); }
+
+.vp { position: relative; border-radius: 26px; padding: 22px 18px 18px; background: var(--radial); color: #fff; overflow: hidden; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow); }
+.vp::after { content: ""; position: absolute; width: 220px; height: 220px; right: -70px; top: -90px; border-radius: 50%; border: 2px solid rgba(255,255,255,.18); box-shadow: 0 0 0 26px rgba(255,255,255,.06); }
+.vp small { position: relative; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; opacity: .85; }
+.vp h3 { position: relative; margin: 0; font-size: 25px; line-height: 1.02; font-weight: 800; font-stretch: 112%; text-transform: uppercase; letter-spacing: -0.01em; text-wrap: balance; }
+.vp p { position: relative; margin: 0; font-size: 14px; line-height: 1.45; opacity: .9; }
+.search { position: relative; display: flex; align-items: center; gap: 10px; background: #fff; color: #5d4b53; border-radius: 16px; padding: 13px 14px; font-size: 14px; }
+.search svg { width: 18px; color: var(--wine); flex: none; }
+
+.paths { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.path { border-radius: 20px; padding: 14px; background: var(--card); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px; }
+.path .ic { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: var(--tint); color: var(--signal); }
+.path .ic svg { width: 18px; }
+.path strong { font-size: 15px; font-weight: 800; }
+.path span { font-size: 12px; color: var(--sub); line-height: 1.4; }
+.path a { font-size: 12px; font-weight: 700; color: var(--signal); text-decoration: none; margin-top: 2px; }
+
+.sec { display: flex; justify-content: space-between; align-items: baseline; }
+.sec h4 { margin: 0; font-size: 17px; font-weight: 700; }
+.sec a { font-size: 13px; font-weight: 600; color: var(--signal); text-decoration: none; }
+
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.step { border-radius: 18px; padding: 12px 10px; background: var(--surface2); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
+.step b { font-family: var(--mono); font-size: 11px; color: var(--signal); }
+.step strong { font-size: 13px; font-weight: 700; line-height: 1.2; }
+.step span { font-size: 11px; color: var(--sub); line-height: 1.35; }
+
+.cats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.cat { border-radius: 16px; padding: 12px 4px 10px; background: var(--tint); display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; text-align: center; }
+.cat svg { width: 22px; color: var(--signal); }
+
+.trust { display: flex; flex-direction: column; gap: 8px; }
+.trow { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 16px; background: var(--card); border: 1px solid var(--border); }
+.trow .ic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: rgba(25,195,154,.14); color: var(--mint); flex: none; }
+.trow .ic svg { width: 17px; }
+.trow strong { display: block; font-size: 13px; font-weight: 700; }
+.trow span { font-size: 12px; color: var(--sub); }
+
+.cta { border-radius: 22px; padding: 16px; background: var(--card); border: 1px solid var(--border); display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; }
+.cta small { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--signal); }
+.cta strong { display: block; font-size: 17px; font-weight: 800; line-height: 1.12; margin-top: 4px; }
+.cta span { display: block; font-size: 12px; color: var(--sub); margin-top: 4px; }
+.btn { font: inherit; font-size: 13px; font-weight: 700; color: #fff; border: 0; border-radius: 12px; padding: 11px 14px; background: var(--radial); cursor: pointer; }
+
+.ph { position: relative; overflow: hidden; display: grid; place-items: center; color: rgba(255,255,255,.85); }
+.ph svg { width: 34%; }
+.ph.p1 { background: linear-gradient(150deg, #3A4A5C, #1D2733); }
+.ph.p2 { background: linear-gradient(150deg, #5C4632, #2E2218); }
+.ph.p3 { background: linear-gradient(150deg, #355C4A, #18302A); }
+.ph.p4 { background: linear-gradient(150deg, #5A3550, #2A1626); }
+.stars { color: var(--gold); }
+
+/* card A */
+.gA { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.gA .card { position: relative; border-radius: 22px; overflow: hidden; aspect-ratio: 3/4; box-shadow: var(--shadow); }
+.gA .card .ph { position: absolute; inset: 0; }
+.gA .card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 35%, var(--scrim) 100%); }
+.gA .chip { position: absolute; top: 10px; left: 10px; z-index: 2; font-size: 11px; font-weight: 700; color: #fff; padding: 5px 8px; border-radius: 999px; background: rgba(0,0,0,.4); }
+.gA .info { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 2; color: #fff; display: flex; flex-direction: column; gap: 4px; }
+.gA .info strong { font-size: 15px; line-height: 1.15; }
+.gA .info span { font-size: 11px; opacity: .8; }
+.gA .price { align-self: flex-start; margin-top: 4px; font-family: var(--mono); font-size: 11px; font-weight: 700; padding: 5px 9px; border-radius: 999px; background: var(--radial); }
+/* card B */
+.gB { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.gB .card { border-radius: 20px; background: var(--card); border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column; box-shadow: var(--shadow); }
+.gB .card .ph { aspect-ratio: 4/3; }
+.gB .avail { position: absolute; left: 8px; bottom: 8px; font-size: 10px; font-weight: 700; color: #fff; padding: 4px 7px; border-radius: 999px; background: rgba(0,0,0,.45); display: flex; gap: 5px; align-items: center; }
+.gB .avail i { width: 6px; height: 6px; border-radius: 50%; background: var(--mint); }
+.gB .body { padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
+.gB .meta { font-family: var(--mono); font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--sub); }
+.gB .body strong { font-size: 14px; line-height: 1.2; }
+.gB .row { display: flex; justify-content: space-between; margin-top: 4px; font-size: 11px; color: var(--sub); }
+.gB .row b { font-family: var(--mono); font-size: 12px; color: var(--text); }
+/* card C */
+.gC { display: flex; flex-direction: column; gap: 10px; }
+.gC .card { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 12px; padding: 10px; border-radius: 20px; background: var(--card); border: 1px solid var(--border); align-items: center; }
+.gC .card:first-child { border-color: rgba(255,45,111,.45); box-shadow: var(--shadow); }
+.gC .card .ph { width: 80px; height: 80px; border-radius: 14px; }
+.gC .card .ph svg { width: 40%; }
+.gC .b { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.gC .b strong { font-size: 14px; line-height: 1.2; }
+.gC .b .s { font-size: 11px; color: var(--sub); }
+.gC .b .row { display: flex; justify-content: space-between; align-items: center; }
+.gC .b .row b { font-family: var(--mono); font-size: 12px; }
+.gC .b .btn { padding: 7px 10px; font-size: 12px; border-radius: 10px; }
+
+/* provider */
+.sum { border-radius: 26px; padding: 18px; background: var(--radial); color: #fff; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow); }
+.sum small { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; opacity: .85; }
+.sum h3 { margin: 0; font-size: 24px; font-weight: 800; font-stretch: 112%; text-transform: uppercase; line-height: 1.02; }
+.sum .btn { background: #fff; color: var(--wine); align-self: flex-start; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat { border-radius: 16px; padding: 12px; background: var(--card); border: 1px solid var(--border); }
+.stat b { display: block; font-family: var(--mono); font-size: 20px; font-weight: 700; }
+.stat span { font-size: 11px; color: var(--sub); }
+.qa { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.qa div { border-radius: 16px; padding: 12px 8px; background: var(--surface2); border: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; text-align: center; }
+.qa svg { width: 20px; color: var(--signal); }
+.req { display: flex; flex-direction: column; gap: 8px; }
+.req .item { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 16px; background: var(--card); border: 1px solid var(--border); }
+.req .av { width: 40px; height: 40px; border-radius: 50%; background: var(--radial); color: #fff; display: grid; place-items: center; font-weight: 800; flex: none; }
+.req .tx { flex: 1; min-width: 0; }
+.req strong { display: block; font-size: 13px; }
+.req span { font-size: 12px; color: var(--sub); }
+.req em { font-style: normal; font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--signal); background: var(--tint); padding: 3px 6px; border-radius: 6px; }
+.progress { border-radius: 18px; padding: 14px; background: var(--card); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
+.progress strong { font-size: 14px; }
+.bar2 { height: 8px; border-radius: 999px; background: var(--surface2); overflow: hidden; }
+.bar2 i { display: block; height: 100%; width: 70%; background: var(--radial); }
+.progress span { font-size: 12px; color: var(--sub); }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Un home que explica Bosko</h1>
+    <p>El primer scroll responde qué es Bosko, cómo funciona y por qué confiar. Debajo, categorías y servicios populares. El proveedor ve un home propio, centrado en sus solicitudes. Todo usa funciones que la app ya tiene.</p>
+  </header>
+
+  <div class="controls">
+    <div class="ctl"><span>Rol</span><div class="seg" role="group" aria-label="Rol"><button type="button" data-role="client" aria-pressed="true">Cliente</button><button type="button" data-role="provider" aria-pressed="false">Proveedor</button></div></div>
+    <div class="ctl"><span>Tema</span><div class="seg" role="group" aria-label="Tema"><button type="button" data-theme-app="dark" aria-pressed="true">Oscuro</button><button type="button" data-theme-app="light" aria-pressed="false">Claro</button></div></div>
+    <div class="ctl"><span>Tarjetas</span><div class="seg" role="group" aria-label="Estilo de tarjetas"><button type="button" data-cards="A" aria-pressed="false">A · Vitrina</button><button type="button" data-cards="B" aria-pressed="true">B · Ficha</button><button type="button" data-cards="C" aria-pressed="false">C · Señal</button></div></div>
+  </div>
+
+  <div class="stage">
+    <div class="app" id="app"></div>
+    <aside class="rail" id="rail"></aside>
+  </div>
+</div>
+
+<script>
+const I = {
+  bolt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>',
+  drop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.7s6 6.6 6 11.3a6 6 0 0 1-12 0C6 9.3 12 2.7 12 2.7z"/></svg>',
+  brush: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 3l3 3-9 9-3-3z"/><path d="M9 12c-3 0-4 2-4 4s-2 3-2 3 5 1 7-1 1-3 1-3"/></svg>',
+  leaf: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 4 13C4 7 9 4 20 4c0 11-3 16-9 16z"/><path d="M4 20c4-4 7-6 11-8"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>',
+  user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/><path d="M8.5 11h5M11 8.5v5"/></svg>',
+  tool: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-.5-.5-2.5z"/></svg>',
+  shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>',
+  star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>',
+  chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+  video: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="m16 10 6-3v10l-6-3z"/></svg>',
+};
+const CATS = [['Electricidad', I.bolt], ['Plomería', I.drop], ['Pintura', I.brush], ['Jardín', I.leaf]];
+const S = [
+  { t: 'Instalación de tomas y tableros', cat: 'Electricidad', loc: 'Palermo', rate: '$18.500', unit: 'visita', r: 4.8, n: 32, av: true, ph: 'p1', ic: I.bolt },
+  { t: 'Destapaciones y pérdidas', cat: 'Plomería', loc: 'Belgrano', rate: '$15.000', unit: 'visita', r: 4.6, n: 21, av: true, ph: 'p2', ic: I.drop },
+  { t: 'Pintura de interiores', cat: 'Pintura', loc: 'Caballito', rate: '$9.800', unit: 'm²', r: 4.9, n: 57, av: false, ph: 'p4', ic: I.brush },
+  { t: 'Mantenimiento de jardín', cat: 'Jardín', loc: 'Núñez', rate: '$22.000', unit: 'jornada', r: 4.7, n: 14, av: true, ph: 'p3', ic: I.leaf },
+];
+const state = { role: 'client', light: false, cards: 'B' };
+try { const s = JSON.parse(localStorage.getItem('bosko-home') || '{}'); Object.assign(state, s); } catch (e) {}
+
+const cards = (k) => {
+  if (k === 'A') return `<div class="gA">${S.map((s) => `<div class="card"><div class="ph ${s.ph}">${s.ic}</div><span class="chip">★ ${s.r.toFixed(1)} · ${s.n}</span><div class="info"><strong>${s.t}</strong><span>${s.loc}</span><span class="price">${s.rate} / ${s.unit}</span></div></div>`).join('')}</div>`;
+  if (k === 'C') return `<div class="gC">${S.map((s) => `<div class="card"><div class="ph ${s.ph}">${s.ic}</div><div class="b"><strong>${s.t}</strong><span class="s"><span class="stars">★</span> ${s.r.toFixed(1)} (${s.n}) · ${s.loc}</span><div class="row"><b>${s.rate} / ${s.unit}</b><button class="btn" type="button">Cotizar</button></div></div></div>`).join('')}</div>`;
+  return `<div class="gB">${S.map((s) => `<div class="card"><div class="ph ${s.ph}">${s.ic}${s.av ? '<span class="avail"><i></i>Disponible hoy</span>' : ''}</div><div class="body"><span class="meta">${s.cat} · ${s.loc}</span><strong>${s.t}</strong><div class="row"><span><span class="stars">★</span> ${s.r.toFixed(1)} (${s.n})</span><b>${s.rate}</b></div></div></div>`).join('')}</div>`;
+};
+const top = `<div class="top"><div class="logo"><i></i>bosko</div><div class="r"><span class="loc">📍 Palermo</span><span class="bell">${I.bell}<em></em></span></div></div>`;
+
+const client = () => `
+  ${top}
+  <section class="vp">
+    <small>Servicios en red · ARG</small>
+    <h3>Encontrá quien lo haga. O hacelo vos.</h3>
+    <p>Bosko conecta a quienes necesitan un trabajo con quienes saben hacerlo, cerca tuyo.</p>
+    <div class="search">${I.search}¿Qué necesitás? Electricista, pintor…</div>
+  </section>
+  <section class="paths">
+    <div class="path"><span class="ic">${I.user}</span><strong>Contratar</strong><span>Profesionales verificados con reseñas reales.</span><a href="#app">Buscar servicios →</a></div>
+    <div class="path"><span class="ic">${I.tool}</span><strong>Ofrecer</strong><span>Publicá tus servicios y conseguí clientes.</span><a href="#app">Empezar a ofrecer →</a></div>
+  </section>
+  <section><div class="sec"><h4>Cómo funciona</h4></div>
+    <div class="steps" style="margin-top:10px">
+      <div class="step"><b>01</b><strong>Buscá</strong><span>Por rubro o zona</span></div>
+      <div class="step"><b>02</b><strong>Pedí presupuesto</strong><span>Por chat, sin cargo</span></div>
+      <div class="step"><b>03</b><strong>Coordiná y calificá</strong><span>Todo en la orden</span></div>
+    </div>
+  </section>
+  <section><div class="sec"><h4>Categorías</h4><a href="#app">Ver todas</a></div>
+    <div class="cats" style="margin-top:10px">${CATS.map(([n, i]) => `<div class="cat">${i}${n}</div>`).join('')}</div>
+  </section>
+  <section><div class="sec"><h4>Servicios populares</h4><a href="#app">Ver todos</a></div>
+    <div style="margin-top:10px">${cards(state.cards)}</div>
+  </section>
+  <section class="trust">
+    <div class="trow"><span class="ic">${I.shield}</span><div><strong>Identidad verificada</strong><span>Los profesionales validan su identidad y antecedentes</span></div></div>
+    <div class="trow"><span class="ic">${I.star}</span><div><strong>Reseñas reales</strong><span>Solo califica quien contrató el servicio</span></div></div>
+    <div class="trow"><span class="ic">${I.chat}</span><div><strong>Chat por orden</strong><span>Toda la conversación queda en un lugar</span></div></div>
+  </section>
+  <section class="cta"><div><small>¿Sabés hacer algo?</small><strong>Ganá con tu oficio</strong><span>Publicá tu servicio en minutos</span></div><button class="btn" type="button">Ofrecer</button></section>`;
+
+const provider = () => `
+  ${top}
+  <section class="sum">
+    <small>Hola, Martín</small>
+    <h3>Tenés 2 solicitudes nuevas</h3>
+    <button class="btn" type="button">Ver solicitudes</button>
+  </section>
+  <section class="stats">
+    <div class="stat"><b>4.8</b><span>Rating</span></div>
+    <div class="stat"><b>128</b><span>Trabajos</span></div>
+    <div class="stat"><b>45m</b><span>Respuesta</span></div>
+  </section>
+  <section class="qa">
+    <div>${I.plus}Publicar servicio</div>
+    <div>${I.list}Mis servicios</div>
+    <div>${I.video}Subir reel</div>
+  </section>
+  <section><div class="sec"><h4>Solicitudes</h4><a href="#app">Ver todas</a></div>
+    <div class="req" style="margin-top:10px">
+      <div class="item"><span class="av">L</span><div class="tx"><strong>Laura P. · Instalación de tomas</strong><span>Palermo · Sábado por la mañana</span></div><em>Nueva</em></div>
+      <div class="item"><span class="av">D</span><div class="tx"><strong>Diego R. · Revisión de tablero</strong><span>Colegiales · Esta semana</span></div><em>Nueva</em></div>
+    </div>
+  </section>
+  <section class="progress"><strong>Tu perfil está al 70%</strong><div class="bar2"><i></i></div><span>Sumá fotos de trabajos y verificá tu identidad para aparecer primero.</span></section>`;
+
+const RAIL = {
+  client: ['<b>Marca y contexto:</b> logo, zona y notificaciones.', '<b>Propuesta de valor:</b> qué es Bosko en una frase, con el buscador como acción principal.', '<b>Dos caminos:</b> Contratar u Ofrecer. Le dice a cada persona qué puede hacer.', '<b>Cómo funciona:</b> tres pasos reales del flujo (buscar → presupuesto por chat → coordinar y calificar).', '<b>Categorías</b> para explorar.', '<b>Servicios populares</b> con las tarjetas nuevas (elegí A, B o C arriba).', '<b>Confianza:</b> verificación, reseñas y chat por orden. Ya existen en la app.', '<b>Llamado a ofrecer:</b> lleva a "Convertirme en proveedor".'],
+  provider: ['<b>Resumen accionable:</b> cuántas solicitudes nuevas hay y un botón directo.', '<b>Métricas:</b> rating, trabajos y tiempo de respuesta.', '<b>Acciones rápidas:</b> publicar servicio, mis servicios, subir reel.', '<b>Solicitudes recientes</b> para responder sin entrar a Órdenes.', '<b>Perfil completo:</b> empuja a sumar fotos y verificarse para aparecer primero.'],
+};
+
+function render() {
+  const app = document.getElementById('app');
+  app.className = 'app' + (state.light ? ' light' : '');
+  app.innerHTML = state.role === 'client' ? client() : provider();
+  document.getElementById('rail').innerHTML = `<h2>${state.role === 'client' ? 'Home del cliente' : 'Home del proveedor'}</h2><ol>${RAIL[state.role].map((x) => `<li>${x}</li>`).join('')}</ol>`;
+  document.querySelectorAll('[data-role]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.role === state.role)));
+  document.querySelectorAll('[data-theme-app]').forEach((b) => b.setAttribute('aria-pressed', String((b.dataset.themeApp === 'light') === state.light)));
+  document.querySelectorAll('[data-cards]').forEach((b) => { b.setAttribute('aria-pressed', String(b.dataset.cards === state.cards)); b.disabled = state.role !== 'client'; });
+  try { localStorage.setItem('bosko-home', JSON.stringify(state)); } catch (e) {}
+}
+document.querySelectorAll('[data-role]').forEach((b) => b.addEventListener('click', () => { state.role = b.dataset.role; render(); }));
+document.querySelectorAll('[data-theme-app]').forEach((b) => b.addEventListener('click', () => { state.light = b.dataset.themeApp === 'light'; render(); }));
+document.querySelectorAll('[data-cards]').forEach((b) => b.addEventListener('click', () => { state.cards = b.dataset.cards; render(); }));
+render();
+</script>

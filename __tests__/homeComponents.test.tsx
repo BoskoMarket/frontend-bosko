@@ -1,10 +1,13 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import {
+  CategoryTile,
   PathCard,
+  RequestRow,
   ServiceCard,
   StatTile,
   StepCard,
+  SummaryCard,
   TrustRow,
   ValueHero,
   formatServicePrice,
@@ -97,5 +100,38 @@ describe.each(['dark', 'light'] as const)('home components (%s theme)', (mode) =
       </>,
     );
     ['01', 'Buscá', 'Por rubro', 'Verificada', 'Identidad', '4.8', 'Rating'].forEach((t) => expect(getByText(t)).toBeTruthy());
+  });
+});
+
+describe('CategoryTile', () => {
+  it('renders the label and is pressable', () => {
+    const onPress = jest.fn();
+    const { getByText } = render(<CategoryTile icon="flash-outline" label="Electricidad" onPress={onPress} />);
+    fireEvent.press(getByText('Electricidad'));
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('SummaryCard and RequestRow', () => {
+  it('SummaryCard fires its action; hides it without a handler', () => {
+    const onAction = jest.fn();
+    const { getByText, rerender, queryByText } = render(
+      <SummaryCard eyebrow="Hola" title="Tenés 2 solicitudes nuevas" actionLabel="Ver solicitudes" onAction={onAction} />,
+    );
+    fireEvent.press(getByText('Ver solicitudes'));
+    expect(onAction).toHaveBeenCalledTimes(1);
+    rerender(<SummaryCard title="Todo al día" actionLabel="Ver solicitudes" />);
+    expect(queryByText('Ver solicitudes')).toBeNull();
+  });
+
+  it('RequestRow renders its copy and is pressable', () => {
+    const onPress = jest.fn();
+    const { getByText } = render(
+      <RequestRow name="Laura" title="Laura · Tomas" subtitle="Palermo" badge="Nueva" onPress={onPress} />,
+    );
+    expect(getByText('Palermo')).toBeTruthy();
+    expect(getByText('Nueva')).toBeTruthy();
+    fireEvent.press(getByText('Laura · Tomas'));
+    expect(onPress).toHaveBeenCalledTimes(1);
   });
 });
