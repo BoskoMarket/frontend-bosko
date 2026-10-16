@@ -16,6 +16,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import { View } from 'react-native';
@@ -55,6 +56,9 @@ const EMPTY_STATE: AuthState = {
   user: null,
 };
 
+/** Delay before the previous account's cached data is dropped (covers the logout transition). */
+const PURGE_DELAY_MS = 700;
+
 // ── Contexto ─────────────────────────────────────────────────────────────────
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -79,14 +83,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const tc = useThemeColors();
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const clearLocalState = useCallback(() => {
-    socketService.disconnect();
+  // Account data is purged AFTER the logout navigation: clearing the query cache while the
+  // screens are still on display would flash them empty before the transition to /login.
+  const purgeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const purgeAccountData = useCallback(() => {
+    if (purgeTimer.current) { clearTimeout(purgeTimer.current); purgeTimer.current = null; }
     useChatStore.getState().reset();
     void useFavoritesStore.getState().setAccount(null);
     void qc.cancelQueries();
     qc.clear();
-    setAuthState(EMPTY_STATE);
   }, [qc]);
+  const clearLocalState = useCallback(() => {
+    socketService.disconnect();
+    void qc.cancelQueries();
+    setAuthState(EMPTY_STATE);
+    if (purgeTimer.current) clearTimeout(purgeTimer.current);
+    purgeTimer.current = setTimeout(purgeAccountData, PURGE_DELAY_MS);
+  }, [qc, purgeAccountData]);
+  useEffect(() => () => { if (purgeTimer.current) clearTimeout(purgeTimer.current); }, []);
 
   useEffect(() => {
     tokenStorage.setForceLogoutCallback(clearLocalState);
@@ -137,6 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── Login ──────────────────────────────────────────────────────────────
   const login = useCallback(async (credentials: Credentials): Promise<AuthResponse> => {
+    if (purgeTimer.current) purgeAccountData();
     setIsLoading(true);
     setError(null);
 
@@ -167,7 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [purgeAccountData]);
 
   // ── Registro ───────────────────────────────────────────────────────────
   // POST /auth/register solo crea la cuenta y envía el OTP de verificación.
@@ -192,6 +207,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ── Verificación de email ─────────────────────────────────────────────
   // Completa el registro: valida el OTP y devuelve los tokens de sesión.
   const verifyEmail = useCallback(async (email: string, code: string): Promise<void> => {
+    if (purgeTimer.current) purgeAccountData();
     setIsLoading(true);
     setError(null);
 
@@ -212,12 +228,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [purgeAccountData]);
 
   // ── Login con Google ──────────────────────────────────────────────────
   // Recibe el idToken de Firebase (ya autenticado con Google en el cliente,
   // ver handleGoogleSignIn en LogInView) y lo intercambia por la sesión propia.
   const loginWithGoogle = useCallback(async (firebaseIdToken: string): Promise<AuthResponse> => {
+    if (purgeTimer.current) purgeAccountData();
     setIsLoading(true);
     setError(null);
 
@@ -240,7 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [purgeAccountData]);
 
   // ── Logout ─────────────────────────────────────────────────────────────
   const logout = useCallback(async (): Promise<void> => {

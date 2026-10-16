@@ -1,18 +1,21 @@
 /**
  * Layout de las tabs autenticadas.
  *
- * Actúa como guarda secundaria: si alguien llega a esta ruta sin sesión
- * (deep link, recarga en dev, etc.) es redirigido al login.
+ * Guarda secundaria: sin sesión no se renderizan las tabs. Esta capa NO navega:
+ * el único dueño del redirect a /login es RootLayoutNav (app/_layout.tsx), que
+ * cubre logout manual, logout forzado y deep links. Acá solo se muestra una
+ * superficie con el mismo fondo que el login, para que la transición no parpadee.
  * La guarda primaria está en app/index.tsx.
  */
 
-import { Redirect, Tabs } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CustomTabBar } from '@/components/CustomTabBar';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useIsProvider } from '@/hooks/queries/useProfileQuery';
 import { useThemeColors } from '@/stores/theme.store';
+import { AuthBackdrop } from '@/core/design-system';
 import { ErrorBoundary } from '@/core/components/ErrorBoundary';
 
 export default function TabsLayout() {
@@ -22,7 +25,7 @@ export default function TabsLayout() {
 
   if (!authLoaded) return null;
 
-  if (!isAuthenticated) return <Redirect href="/login" />;
+  if (!isAuthenticated) return <AuthBackdrop />;
 
   return (
     <SafeAreaView

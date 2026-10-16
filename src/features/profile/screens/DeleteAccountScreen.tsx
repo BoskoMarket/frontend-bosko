@@ -145,8 +145,8 @@ export default function DeleteAccountScreen() {
                 credentials = { password };
               }
               const result = await deleteAccountService(credentials);
+              // RootLayoutNav owns the redirect to /login once the session is gone.
               await logout();
-              router.replace('/login');
               toast.success('Cuenta desactivada', deactivationMessage(result?.deletionScheduledAt));
             } catch (err: any) {
               const code = err?.response?.data?.code;

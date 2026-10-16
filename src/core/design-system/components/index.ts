@@ -58,3 +58,5 @@ export type {
 } from './ConfirmDialog';
 export { BootSplash } from './BootSplash';
 export type { BootSplashProps } from './BootSplash';
+export { ScreenLoader } from './ScreenLoader';
+export type { ScreenLoaderProps } from './ScreenLoader';

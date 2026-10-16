@@ -259,8 +259,8 @@ export const ProfileScreen: React.FC = () => {
         text: 'Cerrar sesión',
         style: 'destructive',
         onPress: async () => {
+          // RootLayoutNav owns the redirect to /login once the session is gone.
           await logout();
-          router.replace('/login');
         },
       },
     ]);
