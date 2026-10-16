@@ -33,18 +33,36 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 initSentry();
 setupQueryNetworkFocus();
 
-function useNotificationNavigation() {
+// Navigating before the root Stack mounts throws inside expo-router (and would be swallowed
+// below), so a tap that arrives early — e.g. the notification that cold-started the app while
+// the session is still restoring — is held until `ready` and then replayed.
+function useNotificationNavigation(ready: boolean) {
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
+  const pending = useRef<Notifications.NotificationResponse | null>(null);
+  const readyRef = useRef(ready);
+  readyRef.current = ready;
 
   useEffect(() => {
+    const handle = (response: Notifications.NotificationResponse) => {
+      if (readyRef.current) handleNotificationResponse(response);
+      else pending.current = response;
+    };
+
     Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (response) handleNotificationResponse(response);
+      if (response) handle(response);
     });
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(handleNotificationResponse);
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(handle);
 
     return () => responseListener.current?.remove();
   }, []);
+
+  useEffect(() => {
+    if (!ready || !pending.current) return;
+    const response = pending.current;
+    pending.current = null;
+    handleNotificationResponse(response);
+  }, [ready]);
 }
 
 function handleNotificationResponse(response: Notifications.NotificationResponse) {
@@ -74,7 +92,7 @@ function RootLayoutNav() {
     if (['(tabs)', 'orders', 'chat', 'admin', 'service-form', 'search'].includes(segments[0] ?? '')) router.replace('/login');
   }, [authLoaded, isAuthenticated, segments, navigation?.key]);
   useChatSync();
-  useNotificationNavigation();
+  useNotificationNavigation(authLoaded && !!navigation?.key);
   usePushNotificationSetup();
 
   // No route renders until the session is restored (the BootSplash covers this window).
