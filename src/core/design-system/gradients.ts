@@ -40,7 +40,11 @@ export const GRADIENTS = {
 } as const;
 
 // Radial brand fill for a sized View (radial replacement for the linear brand gradient).
-export const BRAND_RADIAL_FILL = { experimental_backgroundImage: GRADIENTS.brandRadial } as const;
+// backgroundColor is the solid fallback if the native gradient does not render.
+export const BRAND_RADIAL_FILL = {
+  backgroundColor: TOKENS.color.primary,
+  experimental_backgroundImage: GRADIENTS.brandRadial,
+} as const;
 
 export function wash(tc: { bg: string; surface2: string }): readonly [string, string, string] {
   return [tc.bg, tc.surface2, tc.bg] as const;
