@@ -1,9 +1,11 @@
 import React from 'react';
 import { Stack } from 'expo-router';
+import { useThemeColors } from '@/core/design-system';
 
 export default function ProfileLayout() {
+  const tc = useThemeColors();
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: tc.bg } }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="Services" />
       <Stack.Screen name="AddServices" />

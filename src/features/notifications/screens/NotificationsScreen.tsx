@@ -9,7 +9,6 @@ import {
   StyleSheet,
   FlatList,
   Pressable,
-  ActivityIndicator,
   RefreshControl,
   Animated,
   Linking,
@@ -33,6 +32,7 @@ import {
   useThemeColors,
   withAlpha,
   dialog,
+  SkeletonList,
 } from '@/core/design-system';
 import { useNotificationsOpen, closeNotifications } from '@/stores/notificationsUI.store';
 
@@ -237,9 +237,7 @@ export default function NotificationsScreen() {
         }
         ListEmptyComponent={
           loading ? (
-            <View style={s.loadingWrap}>
-              <ActivityIndicator color={TOKENS.color.signal} size="large" />
-            </View>
+            <SkeletonList variant="row" count={7} />
           ) : showError ? (
             <EmptyState
               icon="cloud-offline-outline"
@@ -278,7 +276,6 @@ const s = StyleSheet.create({
     paddingBottom: SPACING.lg,
   },
   notice: { marginHorizontal: SPACING.xxl, marginBottom: SPACING.md },
-  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   listContent: { paddingHorizontal: SPACING.xxl, paddingBottom: SPACING.huge, gap: SPACING.sm },
   listEmpty: { flexGrow: 1 },
   itemWrap: {

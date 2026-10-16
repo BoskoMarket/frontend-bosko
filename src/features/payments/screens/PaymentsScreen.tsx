@@ -5,7 +5,6 @@ import {
   StyleSheet,
   FlatList,
   Pressable,
-  ActivityIndicator,
   RefreshControl,
   Animated,
 } from 'react-native';
@@ -22,7 +21,7 @@ import {
   SPACING,
   TOKENS,
   useThemeColors,
-  wash, FONT_FAMILY } from '@/core/design-system';
+  wash, FONT_FAMILY, SkeletonList } from '@/core/design-system';
 import type { BadgeTone } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -165,11 +164,7 @@ export default function PaymentsScreen() {
         ))}
       </View>
 
-      {loading && (
-        <View style={s.loadingWrap}>
-          <ActivityIndicator color={TOKENS.color.signal} size="large" />
-        </View>
-      )}
+      {loading && <SkeletonList variant="card" count={5} />}
 
       {!loading && isEmpty && (
         <EmptyState
@@ -236,7 +231,6 @@ const s = StyleSheet.create({
     borderRadius: SPACING.md,
   },
   tabText: { fontSize: 14, fontFamily: FONT_FAMILY.headingMedium },
-  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   listContent: { paddingHorizontal: SPACING.xxl, paddingBottom: SPACING.huge, gap: SPACING.md },
   card: {
     borderRadius: TOKENS.radius.md,

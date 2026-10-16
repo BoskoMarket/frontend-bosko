@@ -190,7 +190,8 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
     goToStep2(utils);
     fireEvent.changeText(utils.getByPlaceholderText('••••••••'), 'secret1');
     fireEvent.press(utils.getByText('Eliminar mi cuenta'));
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'));
+    await waitFor(() => expect(mockLogout).toHaveBeenCalledTimes(1));
+    expect(mockReplace).not.toHaveBeenCalled(); // redirect is owned by RootLayoutNav
     expect(mockLogout).toHaveBeenCalledTimes(1);
     expect(successSpy).toHaveBeenCalledWith('Cuenta desactivada', expect.stringMatching(/definitivamente el .*2026/));
   });
@@ -217,7 +218,8 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
       goToStep2(utils);
       expect(utils.queryByPlaceholderText('••••••••')).toBeNull();
       fireEvent.press(utils.getByText('Confirmar con Google'));
-      await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'));
+      await waitFor(() => expect(mockLogout).toHaveBeenCalledTimes(1));
+    expect(mockReplace).not.toHaveBeenCalled(); // redirect is owned by RootLayoutNav
       expect(mockDeleteAccount).toHaveBeenCalledWith({ googleIdToken: 'google-token' });
       expect(mockLogout).toHaveBeenCalledTimes(1);
     });

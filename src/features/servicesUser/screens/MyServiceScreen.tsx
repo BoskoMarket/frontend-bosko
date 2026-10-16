@@ -1,6 +1,5 @@
 import React, { useCallback } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   Image,
   RefreshControl,
@@ -17,7 +16,7 @@ import { useMyServices, useDeleteService } from "@/hooks/queries/useMarketplaceQ
 import type { Service } from "@/features/servicesUser/services/service";
 import { EmptyState } from '@/core/components/EmptyState';
 import { getUserErrorMessage } from '@/lib/errors';
-import { BRAND_RADIAL_FILL, TOKENS, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
+import { BRAND_RADIAL_FILL, ScreenHeader, SkeletonList, TOKENS, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -141,28 +140,26 @@ export default function MyServiceScreen() {
       <AnimatedBackground variant="minimal" />
 
       {/* Header con back */}
-      <View style={styles.headerRow}>
-        <Pressable style={[styles.backBtn, { backgroundColor: tc.surface }]} onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={10}>
-          <Text style={[styles.backIcon, { color: tc.text }]}>‹</Text>
-        </Pressable>
-        <Text style={[styles.header, { color: tc.text }]}>Mis servicios</Text>
-        <Pressable
-          onPress={() => router.push('/service-form')}
-          hitSlop={8}
-        >
-          <View style={[styles.addBtn, BRAND_RADIAL_FILL]}>
-            <Ionicons name="add" size={15} color={TOKENS.color.onPrimary} />
-            <Text style={styles.addBtnText}>Publicar</Text>
-          </View>
-        </Pressable>
-      </View>
+      <ScreenHeader
+        variant="large"
+        title="Mis servicios"
+        onBack={() => safeBack(router, '/(tabs)/profile')}
+        style={styles.headerRow}
+        right={(
+            <Pressable
+              onPress={() => router.push('/service-form')}
+              hitSlop={8}
+            >
+              <View style={[styles.addBtn, BRAND_RADIAL_FILL]}>
+                <Ionicons name="add" size={15} color={TOKENS.color.onPrimary} />
+                <Text style={styles.addBtnText}>Publicar</Text>
+              </View>
+            </Pressable>
+        )}
+      />
       <Text style={[styles.planMessage, { color: tc.textSub }]}>{planMessage}</Text>
 
-      {loading && services.length === 0 ? (
-        <View style={styles.loader}>
-          <ActivityIndicator />
-        </View>
-      ) : null}
+      {loading && services.length === 0 ? <SkeletonList variant="card" count={4} /> : null}
 
       {services.length === 0 && !loading ? (
         <EmptyState
@@ -198,28 +195,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingVertical: 14,
-  },
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 8,
-  },
-  backIcon: {
-    fontSize: 28,
-    fontFamily: FONT_FAMILY.body,
-    lineHeight: 32,
-    marginTop: -2,
-  },
-  header: {
-    flex: 1,
-    fontSize: 22,
-    fontFamily: FONT_FAMILY.heading,
   },
   addBtn: {
     flexDirection: 'row',
@@ -239,10 +215,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: FONT_FAMILY.body,
     marginBottom: 16,
-  },
-  loader: {
-    paddingVertical: 40,
-    alignItems: "center",
   },
   listContent: {
     gap: 16,

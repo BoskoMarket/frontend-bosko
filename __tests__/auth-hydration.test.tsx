@@ -53,6 +53,6 @@ test('revocación limpia conversaciones y desconecta socket', async () => {
   useChatStore.getState().setUnreadTotal(8);
   await act(async () => { tokenStorage.triggerForceLogout(); await tokenStorage.clear(); });
   expect(await ui.findByText('Sin sesión')).toBeTruthy();
-  expect(useChatStore.getState().unreadTotal).toBe(0);
   expect(socketService.disconnect).toHaveBeenCalled();
+  await waitFor(() => expect(useChatStore.getState().unreadTotal).toBe(0)); // purge runs after the logout transition
 });

@@ -27,6 +27,7 @@ import {
   Badge,
   Button,
   Card,
+  ScreenHeader,
   Text,
   useThemeColors,
   withAlpha,
@@ -304,15 +305,7 @@ export function BecomeProviderScreen() {
 
       {/* ── Header con gradiente de marca ──────────────────────────────────── */}
       <LinearGradient colors={GRADIENTS.brandDeep} style={s.header}>
-        <Pressable
-          onPress={() => safeBack(router, '/(tabs)/profile')}
-          hitSlop={12}
-          style={s.backBtn}
-        >
-          <Ionicons name="arrow-back" size={22} color={TOKENS.color.onPrimary} />
-        </Pressable>
-        <Text variant="title" color={TOKENS.color.onPrimary}>Convertirte en prestador</Text>
-        <View style={s.headerSpacer} />
+        <ScreenHeader tone="onBrand" title="Convertirte en prestador" onBack={() => safeBack(router, '/(tabs)/profile')} />
       </LinearGradient>
 
       <ScrollView
@@ -384,14 +377,9 @@ const s = StyleSheet.create({
   root:    { flex: 1 },
 
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  backBtn:      { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  headerSpacer: { width: 40 },
 
   scroll: { paddingHorizontal: 16, paddingTop: 20, gap: 20 },
   content: { gap: 20 },

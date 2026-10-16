@@ -2,7 +2,7 @@
  * Pantalla raíz — Gate de enrutamiento inicial.
  *
  * Decide a dónde enviar al usuario según el estado de la sesión:
- *  1. Mientras se carga la sesión → muestra indicador (evita flash de contenido)
+ *  1. Mientras se restaura la sesión → no renderiza nada (el BootSplash de la raíz tapa la pantalla)
  *  2. Con sesión activa → va directo a las tabs (sin pasar por onboarding/login)
  *  3. Sin sesión → muestra OnBoarding (que internamente detecta si ya fue visto
  *     y redirige a /login si corresponde)
@@ -12,15 +12,11 @@ import React from 'react';
 import { Redirect, Stack } from 'expo-router';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import OnBoarding from '@/features/auth/screens/OnBoarding';
-import { AnimatedSplashScreen } from '@/features/auth/screens/AnimatedSplashScreen';
 
 export default function IndexScreen() {
   const { authLoaded, isAuthenticated } = useAuth();
 
-  // Mientras AuthProvider verifica la sesión guardada, mostrar el splash animado
-  if (!authLoaded) {
-    return <AnimatedSplashScreen onDone={() => {}} />;
-  }
+  if (!authLoaded) return null;
 
   // Sesión activa → ir al dashboard sin pasar por onboarding
   if (isAuthenticated) {

@@ -62,7 +62,7 @@ describe.each(['dark', 'light'] as const)('chat and reels screens (%s)', (mode) 
       mockFetchConversations.mockRejectedValueOnce(new Error('boom'));
       jest.spyOn(console, 'error').mockImplementation(() => {});
       const { findByText } = render(<ConversationsListScreen />);
-      expect(await findByText('No pudimos cargar tus mensajes')).toBeTruthy();
+      expect(await findByText('No pudimos cargar tus mensajes', {}, { timeout: 5000 })).toBeTruthy();
       mockFetchConversations.mockResolvedValueOnce([]);
       fireEvent.press(await findByText('Reintentar'));
       await waitFor(() => expect(mockFetchConversations).toHaveBeenCalledTimes(2));

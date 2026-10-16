@@ -24,7 +24,7 @@ import {
 import { TOKENS } from '@/core/design-system/tokens';
 import { GRADIENTS, BRAND_RADIAL_FILL } from '@/core/design-system/gradients';
 import { getUserErrorMessage } from '@/lib/errors';
-import { useThemeColors, usePremiumColors, wash, withAlpha, dialog, FONT_FAMILY } from '@/core/design-system';
+import { ScreenHeader, SkeletonList, useThemeColors, usePremiumColors, wash, withAlpha, dialog, FONT_FAMILY } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -143,17 +143,11 @@ export default function PlansScreen() {
 
       {/* Header */}
       <View style={[s.header, { backgroundColor: tc.surface, borderBottomColor: tc.cardBorder }]}>
-        <Pressable onPress={() => safeBack(router, '/(tabs)/profile')} hitSlop={12} style={[s.backBtn, { backgroundColor: tc.card }]}>
-          <MaterialIcons name="arrow-back" size={24} color={tc.text} />
-        </Pressable>
-        <Text style={[s.headerTitle, { color: tc.text }]}>Planes · simulación</Text>
-        <View style={{ width: 40 }} />
+        <ScreenHeader title="Planes · simulación" onBack={() => safeBack(router, '/(tabs)/profile')} />
       </View>
 
       {loading ? (
-        <View style={s.loadingWrap}>
-          <ActivityIndicator color={TOKENS.color.signal} size="large" />
-        </View>
+        <SkeletonList variant="card" count={3} />
       ) : (
         <ScrollView
           contentContainerStyle={s.scrollContent}
@@ -279,20 +273,11 @@ export default function PlansScreen() {
 const s = StyleSheet.create({
   bg: { flex: 1 },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingTop: 60,
     paddingHorizontal: 24,
     paddingBottom: 16,
     borderBottomWidth: 1,
   },
-  backBtn: {
-    padding: 8,
-    borderRadius: 12,
-  },
-  headerTitle: { fontSize: 20, fontFamily: FONT_FAMILY.display },
-  loadingWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scrollContent: { padding: 24, paddingBottom: 40, gap: 20 },
   currentPlanBanner: { borderRadius: 20, overflow: 'hidden' },
   currentPlanGrad: {

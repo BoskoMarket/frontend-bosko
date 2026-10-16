@@ -15,6 +15,13 @@ function isBelowMinVersion(current: string, min: string): boolean {
   return false;
 }
 
+const APP_CONFIG_QUERY = {
+  queryKey: QUERY_KEYS.appConfig,
+  queryFn: fetchAppConfig,
+  staleTime: 5 * 60 * 1000,
+  retry: 0,
+} as const;
+
 export type AppGateState =
   | { blocked: false }
   | { blocked: true; reason: 'maintenance'; message?: string }
@@ -26,12 +33,7 @@ export type AppGateState =
  * `enabled` corre en background sin afectar el arranque normal de la app.
  */
 export function useAppGate(): AppGateState {
-  const { data } = useQuery({
-    queryKey: QUERY_KEYS.appConfig,
-    queryFn: fetchAppConfig,
-    staleTime: 5 * 60 * 1000,
-    retry: 0,
-  });
+  const { data } = useQuery(APP_CONFIG_QUERY);
 
   if (!data) return { blocked: false };
 
@@ -45,4 +47,9 @@ export function useAppGate(): AppGateState {
   }
 
   return { blocked: false };
+}
+
+/** True once the first app-config fetch settled (success or error). Shares the cache with `useAppGate`. */
+export function useAppConfigSettled(): boolean {
+  return useQuery(APP_CONFIG_QUERY).isFetched;
 }

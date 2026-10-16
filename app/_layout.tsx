@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from "react";
-import { Platform, StyleSheet } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { Platform, StyleSheet, View } from "react-native";
 import * as NavigationBar from "expo-navigation-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
@@ -13,7 +13,8 @@ import { queryClient } from "@/core/query/queryClient";
 import { setupQueryNetworkFocus } from "@/core/query/networkFocus";
 import { AuthProvider, useAuth } from "@/features/auth/state/AuthContext";
 import { ToastRoot } from "@/core/components/Toast";
-import { DialogRoot } from "@/core/design-system";
+import { BootSplash, DialogRoot, useNavigationTheme, useThemeColors } from "@/core/design-system";
+import { ThemeProvider } from "@react-navigation/native";
 import { AppBackground } from "@/core/components/AppBackground";
 import { usePushNotificationSetup } from "@/hooks/usePushNotificationSetup";
 import { NotificationsModalRoot } from "@/features/notifications/screens/NotificationsScreen";
@@ -22,7 +23,8 @@ import { ErrorBoundary } from "@/core/components/ErrorBoundary";
 import { BiometricLockGate } from "@/core/components/BiometricLockGate";
 import { OfflineBanner } from "@/core/components/OfflineBanner";
 import { UpdateBanner } from "@/core/components/UpdateBanner";
-import { useAppGate } from "@/features/appConfig/hooks/useAppGate";
+import { useAppConfigSettled, useAppGate } from "@/features/appConfig/hooks/useAppGate";
+import { useBootReady } from "@/hooks/useBootReady";
 import { AppGateScreen } from "@/features/appConfig/screens/AppGateScreen";
 import { initSentry } from "@/core/monitoring/sentry";
 import { useChatSync } from "@/features/chat/useChatSync";
@@ -31,18 +33,36 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 initSentry();
 setupQueryNetworkFocus();
 
-function useNotificationNavigation() {
+// Navigating before the root Stack mounts throws inside expo-router (and would be swallowed
+// below), so a tap that arrives early — e.g. the notification that cold-started the app while
+// the session is still restoring — is held until `ready` and then replayed.
+function useNotificationNavigation(ready: boolean) {
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
+  const pending = useRef<Notifications.NotificationResponse | null>(null);
+  const readyRef = useRef(ready);
+  readyRef.current = ready;
 
   useEffect(() => {
+    const handle = (response: Notifications.NotificationResponse) => {
+      if (readyRef.current) handleNotificationResponse(response);
+      else pending.current = response;
+    };
+
     Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (response) handleNotificationResponse(response);
+      if (response) handle(response);
     });
 
-    responseListener.current = Notifications.addNotificationResponseReceivedListener(handleNotificationResponse);
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(handle);
 
     return () => responseListener.current?.remove();
   }, []);
+
+  useEffect(() => {
+    if (!ready || !pending.current) return;
+    const response = pending.current;
+    pending.current = null;
+    handleNotificationResponse(response);
+  }, [ready]);
 }
 
 function handleNotificationResponse(response: Notifications.NotificationResponse) {
@@ -63,19 +83,23 @@ function handleNotificationResponse(response: Notifications.NotificationResponse
 }
 
 function RootLayoutNav() {
-  const { isAuthenticated } = useAuth();
+  const { authLoaded, isAuthenticated } = useAuth();
+  const tc = useThemeColors();
   const segments = useSegments();
   const navigation = useRootNavigationState();
   useEffect(() => {
-    if (!navigation?.key || isAuthenticated) return;
+    if (!navigation?.key || !authLoaded || isAuthenticated) return;
     if (['(tabs)', 'orders', 'chat', 'admin', 'service-form', 'search'].includes(segments[0] ?? '')) router.replace('/login');
-  }, [isAuthenticated, segments, navigation?.key]);
+  }, [authLoaded, isAuthenticated, segments, navigation?.key]);
   useChatSync();
-  useNotificationNavigation();
+  useNotificationNavigation(authLoaded && !!navigation?.key);
   usePushNotificationSetup();
 
+  // No route renders until the session is restored (the BootSplash covers this window).
+  if (!authLoaded) return null;
+
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: tc.bg } }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="login" />
@@ -90,16 +114,17 @@ function RootLayoutNav() {
 
 function ThemedRoot() {
   const gate = useAppGate();
+  const navTheme = useNavigationTheme();
+  const { authLoaded } = useAuth();
+  const configSettled = useAppConfigSettled();
+  const bootReady = useBootReady({ authLoaded, configSettled });
+  const [splashDone, setSplashDone] = useState(false);
 
-  if (gate.blocked) {
-    return (
-      <AppBackground>
-        <AppGateScreen state={gate} />
-      </AppBackground>
-    );
-  }
-
-  return (
+  const content = gate.blocked ? (
+    <AppBackground>
+      <AppGateScreen state={gate} />
+    </AppBackground>
+  ) : (
     <AppBackground>
       <OfflineBanner />
       <BiometricLockGate>
@@ -111,16 +136,32 @@ function ThemedRoot() {
       <NotificationsModalRoot />
     </AppBackground>
   );
+
+  return (
+    <ThemeProvider value={navTheme}>
+      <View style={styles.flex}>
+        {content}
+        {!splashDone && (
+          <BootSplash
+            ready={bootReady}
+            onFirstLayout={() => SplashScreen.hideAsync().catch(() => {})}
+            onHidden={() => setSplashDone(true)}
+          />
+        )}
+      </View>
+    </ThemeProvider>
+  );
 }
 
 export default function _layout() {
   const [fontsLoaded, fontError] = useFonts(FONT_ASSETS);
 
+  // The native splash is released by BootSplash once it has laid out (seamless hand-off).
+  // Safety net so a failure before that can never leave the native splash up forever.
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync().catch(() => {});
-    }
-  }, [fontsLoaded, fontError]);
+    const timer = setTimeout(() => SplashScreen.hideAsync().catch(() => {}), 6000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (Platform.OS !== "android") return;

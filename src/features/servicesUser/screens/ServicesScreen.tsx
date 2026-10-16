@@ -20,7 +20,7 @@ import { router } from 'expo-router';
 import { useCategories } from '@/hooks/queries/useMarketplaceQuery';
 import type { Category } from '@/types/services';
 import { EmptyState } from '@/core/components/EmptyState';
-import { Skeleton, TOKENS, useIsDark, useThemeColors, FONT_FAMILY } from '@/core/design-system';
+import { ScreenHeader, Skeleton, TOKENS, useIsDark, useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { FeaturedCard } from '../components/FeaturedCard';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -92,13 +92,16 @@ function Header({ titleAnim }: { titleAnim: Animated.Value }) {
   const tc = useThemeColors();
   return (
     <Animated.View style={[s.header, { opacity: titleAnim, transform: [{ translateY: titleAnim.interpolate({ inputRange: [0, 1], outputRange: [-12, 0] }) }] }]}>
-      <View>
-        <Text style={[s.headerTitle, { color: tc.text }]}>Explorar</Text>
-        <Text style={[s.headerSub, { color: tc.textSub }]}>Descubrí profesionales cerca tuyo</Text>
-      </View>
-      <Pressable style={[s.searchIcon, { backgroundColor: tc.surface }]} onPress={() => router.push('/search')}>
-        <Ionicons name="search" size={20} color={tc.text} />
-      </Pressable>
+      <ScreenHeader
+        variant="large"
+        title="Explorar"
+        subtitle="Descubrí profesionales cerca tuyo"
+        right={(
+          <Pressable style={[s.searchIcon, { backgroundColor: tc.surface }]} onPress={() => router.push('/search')}>
+            <Ionicons name="search" size={20} color={tc.text} />
+          </Pressable>
+        )}
+      />
     </Animated.View>
   );
 }
@@ -211,22 +214,9 @@ const s = StyleSheet.create({
 
   // Header
   header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
     paddingHorizontal: H_PAD,
     paddingTop: 10,
     paddingBottom: 4,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontFamily: FONT_FAMILY.display,
-    letterSpacing: -0.5,
-  },
-  headerSub: {
-    fontSize: 13,
-    fontFamily: FONT_FAMILY.body,
-    marginTop: 2,
   },
   searchIcon: {
     width: 42,

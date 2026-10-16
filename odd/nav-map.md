@@ -69,7 +69,7 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 
 | Pantalla (ruta) | Archivo | Disparador (UI) | Acción | Destino | Params | Estado |
 |---|---|---|---|---|---|---|
-| Gate (`/`) | `app/index.tsx` | Auth aún cargando | Render (sin navegar) | `AnimatedSplashScreen` (`onDone` es no-op) | - | ✅ |
+| Gate (`/`) | `app/index.tsx` | Auth aún cargando | Render (sin navegar) | nada (el `BootSplash` de la raíz tapa la pantalla) | - | ✅ |
 | Gate (`/`) | `app/index.tsx` | Sesión activa | `<Redirect>` | `/(tabs)` | - | ✅ |
 | Gate (`/`) | `app/index.tsx` | Sin sesión | Render inline | `OnBoarding` | - | ✅ |
 | Onboarding (`/`) | `screens/OnBoarding.tsx:79` | "Saltar" / "Comenzar" (último slide) | `router.replace` | `/login` | - | ✅ |
@@ -117,7 +117,6 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Promo (sin uso) | `src/features/servicesUser/components/PromoBanner.tsx` | "Suscribirme" | `onPress={() => {}}` (no-op) | debería ir a `/(tabs)/profile/plans` | - | ⚠️ no navega (componente sin importadores) |
 | Tarjeta profesional (sin uso) | `src/features/servicesUser/components/ProfesionalCard.tsx` | "Reservar" | `TouchableOpacity` sin `onPress` | - | - | ⚠️ no navega (solo lo importa `ProfesionalCarousel`, que no tiene importadores) |
 | Carrusel de categorías (sin uso) | `src/components/CategoryVideoCarousel.tsx` | Tap en una categoría | callback `onSelectCategory(id)` | decide el padre (nadie lo monta) | `id` | ⚠️ sin importadores |
-| Splash (`/`, vista del gate) | `src/features/auth/screens/AnimatedSplashScreen.tsx` | Fin de la animación (~2.2 s) | callback `onDone` (el gate pasa un no-op) | - | - | ✅ (ya mapeado en Gate) |
 | Auth gate de carga | `src/features/auth/state/AuthContext.tsx:263` | Error de sesión: "Reintentar conexión" / "Cerrar sesión" | `setAttempt` (re-valida) / `logout()` | - / `/login` (por el guard de `app/_layout.tsx`) | - | ✅ |
 | Infra (`app/_layout.tsx`) | `src/core/components/BiometricLockGate.tsx`, `ErrorBoundary.tsx`, `OfflineBanner.tsx`, `UpdateBanner.tsx` | Bloqueo biométrico, error de render, sin conexión, update disponible | Overlays / `applyUpdate` | - (sin navegación) | - | ✅ |
 | Home (`/(tabs)`) | `src/features/servicesUser/screens/DashboardScreen.tsx:364` | Barra "Buscar servicios, profesionales…" | `router.push` | `/search` | - | ✅ |

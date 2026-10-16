@@ -11,7 +11,6 @@ import {
   StyleSheet,
   Text,
   View,
-  ActivityIndicator,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -23,7 +22,7 @@ import api from '@/core/api/axiosinstance';
 import { safeBack } from '@/core/navigation/safeBack';
 import { ServiceDetailModal } from '../components/ServiceDetailModal';
 import type { ServiceSummary } from '@/types/services';
-import { Button, GRADIENTS, BRAND_RADIAL_FILL, TOKENS, useIsDark, useThemeColors, withAlpha, type ReportSheetSubmit, dialog, FONT_FAMILY } from '@/core/design-system';
+import { Button, ScreenLoader, GRADIENTS, BRAND_RADIAL_FILL, TOKENS, useIsDark, useThemeColors, withAlpha, type ReportSheetSubmit, dialog, FONT_FAMILY } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { ReportFlow } from '@/features/reports/components/ReportFlow';
@@ -222,10 +221,10 @@ export default function ProviderProfileScreen() {
 
   if (loading) {
     return (
-      <View style={[s.root, s.center, { backgroundColor: c.bg, paddingTop: insets.top }]}>
+      <>
         <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator size="large" color={TOKENS.color.signal} />
-      </View>
+        <ScreenLoader variant="plain" />
+      </>
     );
   }
 

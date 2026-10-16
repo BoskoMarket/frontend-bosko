@@ -31,12 +31,20 @@ export const GRADIENTS = {
   glow: [withAlpha(TOKENS.color.signal, 0.24), withAlpha(TOKENS.color.signal, 0.1), withAlpha(TOKENS.color.signal, 0)] as const,
   glowFaint: [withAlpha(TOKENS.color.signal, 0.16), withAlpha(TOKENS.color.signal, 0.07), withAlpha(TOKENS.color.signal, 0)] as const,
 
+  // Radial signal halo (CSS string for `experimental_backgroundImage`): bright core fading to nothing
+  // by 70% of the farthest-corner radius, so a square view never shows a hard edge. Boot splash glow.
+  haloRadial: `radial-gradient(circle at 50% 50%, ${withAlpha(TOKENS.color.signal, 0.5)} 0%, ${withAlpha(TOKENS.color.signal, 0.16)} 38%, ${withAlpha(TOKENS.color.signal, 0)} 70%)`,
+
   // Fondo de auth/onboarding: bg → tinte vino → bg. Theme-aware (pasar `tc` o `PALETTE.dark`).
   backdrop: (tc: { bg: string; bgWine: string }) => [tc.bg, tc.bgWine, tc.bg] as const,
 } as const;
 
 // Radial brand fill for a sized View (radial replacement for the linear brand gradient).
-export const BRAND_RADIAL_FILL = { experimental_backgroundImage: GRADIENTS.brandRadial } as const;
+// backgroundColor is the solid fallback if the native gradient does not render.
+export const BRAND_RADIAL_FILL = {
+  backgroundColor: TOKENS.color.primary,
+  experimental_backgroundImage: GRADIENTS.brandRadial,
+} as const;
 
 export function wash(tc: { bg: string; surface2: string }): readonly [string, string, string] {
   return [tc.bg, tc.surface2, tc.bg] as const;
