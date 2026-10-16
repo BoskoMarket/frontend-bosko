@@ -27,6 +27,19 @@ export function useProfile() {
  * Usar para mostrar/ocultar UI exclusiva de prestadores en vez de destructurar
  * `profile?.isProvider` a mano en cada pantalla.
  */
+/** Provider role plus whether it is still unknown (profile loading for a signed-in user). */
+export function useProviderRole(): { isProvider: boolean; isResolving: boolean } {
+  const { isAuthenticated } = useAuth();
+  const { data, isPending } = useQuery({
+    queryKey: QUERY_KEYS.profile,
+    queryFn: getCurrentUserProfile,
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+    select: (profile) => profile.isProvider === true,
+  });
+  return { isProvider: data ?? false, isResolving: isAuthenticated && isPending };
+}
+
 export function useIsProvider(): boolean {
   const { isAuthenticated } = useAuth();
   const { data } = useQuery({
