@@ -13,6 +13,10 @@ jest.mock('react-native-svg', () => {
 
 const mockUnread = jest.fn();
 const mockIsProvider = jest.fn();
+const mockPending = jest.fn();
+jest.mock('@/hooks/queries/useOrdersQuery', () => ({
+  usePendingProviderRequestsCount: (enabled: boolean) => (enabled ? mockPending() : 0),
+}));
 jest.mock('@/stores/chat.store', () => ({ useUnreadTotal: () => mockUnread() }));
 jest.mock('@/hooks/queries/useProfileQuery', () => ({ useIsProvider: () => mockIsProvider() }));
 
@@ -43,6 +47,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockUnread.mockReturnValue(0);
   mockIsProvider.mockReturnValue(false);
+  mockPending.mockReturnValue(0);
 });
 
 describe('CustomTabBar', () => {
@@ -75,6 +80,21 @@ describe('CustomTabBar', () => {
     const { props } = makeProps('index');
     const { getByLabelText } = render(<CustomTabBar {...props} />);
     expect(getByLabelText('Mensajes, 3 sin leer')).toBeTruthy();
+  });
+
+  it('announces pending requests on Órdenes for providers only', () => {
+    mockPending.mockReturnValue(2);
+    mockIsProvider.mockReturnValue(true);
+    const { props } = makeProps('index');
+    const { getByLabelText, getByText, unmount } = render(<CustomTabBar {...props} />);
+    expect(getByLabelText('Órdenes, 2 pendientes')).toBeTruthy();
+    expect(getByText('2')).toBeTruthy();
+    unmount();
+
+    mockIsProvider.mockReturnValue(false);
+    const second = render(<CustomTabBar {...props} />);
+    expect(second.queryByLabelText(/pendientes/)).toBeNull();
+    expect(second.getByLabelText('Pedidos')).toBeTruthy();
   });
 
   it('navigates to the route behind the pressed visible tab', () => {

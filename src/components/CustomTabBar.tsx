@@ -7,6 +7,7 @@ import { StackActions } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUnreadTotal } from '@/stores/chat.store';
 import { useIsProvider } from '@/hooks/queries/useProfileQuery';
+import { usePendingProviderRequestsCount } from '@/hooks/queries/useOrdersQuery';
 import { TOKENS, useThemeColors, withAlpha, FONT_FAMILY, Text as DSText } from '@/core/design-system';
 import type { ThemeColors } from '@/core/design-system';
 
@@ -78,6 +79,7 @@ export function getTabLabel(routeName: string, isProvider: boolean): string {
 export function CustomTabBar({ state, navigation, descriptors }: BottomTabBarProps) {
   const unread = useUnreadTotal();
   const isProvider = useIsProvider();
+  const pendingRequests = usePendingProviderRequestsCount(isProvider);
   const insets   = useSafeAreaInsets();
   const tc = useThemeColors();
   const styles = useMemo(() => createStyles(tc), [tc]);
@@ -174,13 +176,14 @@ export function CustomTabBar({ state, navigation, descriptors }: BottomTabBarPro
               const cfg     = TABS[route.name];
               const focused = idx === state.index;
               const label   = getTabLabel(route.name, isProvider);
-              const badge   = route.name === 'chat' ? unread : 0;
+              const badge   = route.name === 'chat' ? unread : route.name === 'orders' ? pendingRequests : 0;
+              const badgeNoun = route.name === 'orders' ? 'pendientes' : 'sin leer';
               return (
                 <TabSlot
                   key={route.key}
                   icon={cfg.icon}
                   label={label}
-                  a11yLabel={badge > 0 ? `${label}, ${badge} sin leer` : label}
+                  a11yLabel={badge > 0 ? `${label}, ${badge} ${badgeNoun}` : label}
                   focused={focused}
                   badge={badge}
                   onPress={() => onPress(idx)}

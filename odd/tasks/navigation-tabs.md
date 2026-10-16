@@ -33,7 +33,7 @@ Notifications stay in the header bell.
 |---|---|---|---|---|
 | T1 | Remove Servicios from the tab bar: keep `app/(tabs)/services/*` stack screens reachable (catalog, category, provider profile) but hidden from the bar (`href: null` or move the stack outside `(tabs)` — choose the option that keeps back navigation and deep links working); update all 17 `/(tabs)/services` references (home "Contratar" path, "Ver todas", search, favorites, notifications…) | delegated | ✅ | see commit log (T1) |
 | T2 | Tab bar: 5 tabs in order Inicio · Reels · Pedidos · Mensajes · Perfil with visible labels (at least the active label; keep the animated pill), Pedidos label "Órdenes" for providers, accessibility labels | delegated | ✅ | see commit log (T2) |
-| T3 | Role-aware Orders: default segment = provider for providers (respect explicit `?tab=`), badge on Pedidos tab with pending provider requests (reuse provider orders query; Mensajes badge pattern) | delegated | ⬜ | |
+| T3 | Role-aware Orders: default segment = provider for providers (respect explicit `?tab=`), badge on Pedidos tab with pending provider requests (reuse provider orders query; Mensajes badge pattern) | delegated | ✅ | see commit log (T3) |
 | T4 | Perfil organization: provider block with Mis servicios, Publicar servicio, verificación, plan; client block with favoritos, convertirme en proveedor; settings; fixed entry points for publishing a service (Perfil › Mis servicios + provider home quick action) | delegated | ⬜ | |
 | T5 | Update `odd/nav-map.md`, tests (navigation, tab bar, orders), and CLAUDE.md routing section | delegated | ⬜ | |
 
@@ -48,3 +48,4 @@ Notifications stay in the header bell.
 - 2026-10-16: document created, branch created. Next: T1.
 - 2026-10-16: T1 done — services tab hidden with `href: null` + `backBehavior="history"`; CustomTabBar filters hidden routes; Contratar -> /search; empty-state CTAs -> /(tabs). Next: T2.
 - 2026-10-16: T2 done — 5 labeled tabs (Inicio · Reels · Pedidos/Órdenes · Mensajes · Perfil), role-aware label, a11y role=tab + selected + unread, tab bar test. Next: T3.
+- 2026-10-16: T3 done — Orders opens on provider segment for providers (explicit ?tab wins, manual pick sticks); Órdenes badge = pending provider orders via shared providerOrders cache (select, enabled only for providers). Next: T4.
