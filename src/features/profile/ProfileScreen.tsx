@@ -644,6 +644,18 @@ export const ProfileScreen: React.FC = () => {
             />
             <Divider />
             <ReelsAutoplayRow />
+            {__DEV__ ? (
+              <>
+                <Divider />
+                <SettingsRow
+                  icon="color-palette-outline"
+                  label="Component showcase"
+                  badge="Dev"
+                  badgeTone="neutral"
+                  onPress={() => router.push('/dev/components')}
+                />
+              </>
+            ) : null}
           </SettingsGroup>
 
           <View style={ss.dangerGroup}>
