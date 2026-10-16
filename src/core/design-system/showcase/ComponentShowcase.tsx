@@ -1,6 +1,6 @@
 // Dev-only catalog of every design-system component. NOT exported from the DS barrel.
-import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Modal, ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +12,7 @@ import {
   BackButton,
   Badge,
   BadgeTone,
+  BootSplash,
   Button,
   ButtonSize,
   ButtonVariant,
@@ -326,9 +327,41 @@ function LayoutSection() {
   );
 }
 
+const SPLASH_DEMO_MS = 3000;
+
+function BootSplashDemo() {
+  const [playing, setPlaying] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!playing) return;
+    const timer = setTimeout(() => setReady(true), SPLASH_DEMO_MS);
+    return () => clearTimeout(timer);
+  }, [playing]);
+
+  return (
+    <Section name="BootSplash">
+      <Button
+        label="Reproducir splash (3 s)"
+        variant="secondary"
+        onPress={() => {
+          setReady(false);
+          setPlaying(true);
+        }}
+      />
+      {playing && (
+        <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={() => setReady(true)}>
+          <BootSplash ready={ready} onHidden={() => setPlaying(false)} />
+        </Modal>
+      )}
+    </Section>
+  );
+}
+
 function AuthSection() {
   return (
     <>
+      <BootSplashDemo />
       <Section name="AuthBackdrop">
         <View style={styles.fixed}><AuthBackdrop><View /></AuthBackdrop></View>
       </Section>

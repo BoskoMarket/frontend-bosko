@@ -101,5 +101,11 @@ export const TOKENS = {
     },
   },
   glass: { bg: withAlpha(C.white, 0.55) },
+  /**
+   * Boot splash. `bg` and `logoSize` mirror the native splash in app.json
+   * (backgroundColor + expo-splash-screen imageWidth) so the JS splash is pixel-identical
+   * on its first frame. Change both together.
+   */
+  splash: { bg: C.primary, logoSize: 200 },
   text: { color: C.white, fontFamily: BRAND.fonts.heading },
 };

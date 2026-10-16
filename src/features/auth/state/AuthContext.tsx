@@ -18,7 +18,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { View } from 'react-native';
 import { Button, SPACING, Text, toast } from '@/core/design-system';
 import axios from 'axios';
 import { API_URL } from '@/core/config/env';
@@ -262,13 +262,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // `isAuthenticated` es un booleano derivado, más cómodo para las guardas.
   const isAuthenticated = !!authState.token;
 
-  if (!authLoaded) return (
+  // While the session is being restored the children render (the root shows the BootSplash over
+  // them); only a failed restore replaces the tree with the retry screen.
+  if (!authLoaded && sessionError) return (
     <View style={{ flex: 1, backgroundColor: tc.bg, justifyContent: 'center', padding: SPACING.xxl, gap: SPACING.lg }}>
-      {sessionError ? <>
-        <Text center>{sessionError}</Text>
-        <Button label="Reintentar conexión" onPress={() => setAttempt(value => value + 1)} />
-        <Button label="Cerrar sesión" variant="secondary" onPress={() => { void logout(); }} />
-      </> : <ActivityIndicator accessibilityLabel="Validando sesión" color={tc.text} />}
+      <Text center>{sessionError}</Text>
+      <Button label="Reintentar conexión" onPress={() => setAttempt(value => value + 1)} />
+      <Button label="Cerrar sesión" variant="secondary" onPress={() => { void logout(); }} />
     </View>
   );
 

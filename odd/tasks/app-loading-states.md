@@ -30,8 +30,8 @@ Every wait in the app looks intentional and on-brand: an attractive Bosko splash
 
 | ID | Task | Route | Status | Evidence |
 |---|---|---|---|---|
-| T1 | Navigation theme from `tc` (ThemeProvider with background = `tc.bg`, card/text/border from tc), root Stack `contentStyle`, Tabs `sceneStyle`, nested Stacks; `userInterfaceStyle: "automatic"` | delegated | ✅ | T1_HASH |
-| T2 | Branded `BootSplash` (DS): Bosko logo + brand motion (glow/pulse, wordmark/tagline reveal, subtle progress), hand-off from native splash, holds until fonts + auth restore (+ first app-config fetch with short timeout), fade-out into the app; replaces the AuthContext spinner; remove dead `AnimatedSplashScreen`; showcase entry | delegated | ⬜ | |
+| T1 | Navigation theme from `tc` (ThemeProvider with background = `tc.bg`, card/text/border from tc), root Stack `contentStyle`, Tabs `sceneStyle`, nested Stacks; `userInterfaceStyle: "automatic"` | delegated | ✅ | `75902b5` |
+| T2 | Branded `BootSplash` (DS): Bosko logo + brand motion (glow/pulse, wordmark/tagline reveal, subtle progress), hand-off from native splash, holds until fonts + auth restore (+ first app-config fetch with short timeout), fade-out into the app; replaces the AuthContext spinner; remove dead `AnimatedSplashScreen`; showcase entry | delegated | ✅ | T2_HASH |
 | T3 | Login/logout transitions: `LoginLayout` shows `AuthBackdrop` + loader instead of null `Redirect`; single navigation owner after login (no race with welcome video); logout single redirect owner + themed transition | delegated | ⬜ | |
 | T4 | Skeletons for list screens (Conversations, Orders, Payments, Plans, MyReviews, Notifications), themed loaders for ProviderProfile/MyService, OnBoarding no null frame | delegated | ⬜ | |
 | T5 | Headers: unify on DS `ScreenHeader` (title support if missing), migrate hand-rolled headers where equivalent, remove dead native header options | delegated | ⬜ | |
@@ -49,3 +49,4 @@ Out of scope (separate task, security): `BiometricLockGate.tsx:33` starts unlock
 
 - 2026-10-15: document created, branch created. User authorized implementation ("Hazlo") with an attractive branded splash. Next: T1.
 - 2026-10-15: T1 done. NavigationTheme hook in DS (useNavigationTheme), ThemeProvider at ThemedRoot, contentStyle on root + nested Stacks, sceneStyle on Tabs. app.json userInterfaceStyle -> automatic (NEEDS NATIVE REBUILD). tsc clean, 431 tests green, lint:ds 0.
+- 2026-10-15: T2 done. DS BootSplash (+TOKENS.splash, GRADIENTS.haloRadial, showcase replay) overlays the root until fonts + auth restore + app-config settled (or 1.5s) + 600ms min; native splash released from BootSplash onFirstLayout (6s safety net). AuthProvider renders children while restoring (retry screen only on session error); RootLayoutNav renders no routes until authLoaded. app.json: splash image bosko-logo.png + expo-splash-screen plugin imageWidth 200 (the old splash-icon.png was the Expo placeholder grid) -> NEEDS NATIVE REBUILD. AnimatedSplashScreen removed. tsc clean, 436 tests green, lint:ds 0.

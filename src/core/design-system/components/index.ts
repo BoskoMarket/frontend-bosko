@@ -56,3 +56,5 @@ export type {
   AlertButton,
   AlertOptions,
 } from './ConfirmDialog';
+export { BootSplash } from './BootSplash';
+export type { BootSplashProps } from './BootSplash';
