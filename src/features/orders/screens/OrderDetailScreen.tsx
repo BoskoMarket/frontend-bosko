@@ -4,7 +4,7 @@
  * Acciones: aceptar, rechazar, iniciar, completar, cancelar, disputar.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   View,
@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useOrders } from '../state/OrdersContext';
 import { useOrder } from '@/hooks/queries/useOrdersQuery';
@@ -93,6 +93,9 @@ export default function OrderDetailScreen() {
   const { profile } = useProfile();
 
   const { data: order, isLoading: loading, refetch: refetchOrder } = useOrder(params.id);
+  useFocusEffect(useCallback(() => {
+    if (params.id) void refetchOrder();
+  }, [params.id, refetchOrder]));
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   // Modal de motivo (reemplaza Alert.prompt que no funciona en Android)
@@ -268,7 +271,7 @@ export default function OrderDetailScreen() {
               <Text variant="bodySmall" color={tc.textSub}>
                 {isProvider
                   ? 'El trabajo fue marcado como finalizado.'
-                  : 'El servicio fue completado. Podés calificarlo.'}
+                   : order.review ? 'Ya calificaste este servicio.' : 'El servicio fue completado. Podés calificarlo.'}
               </Text>
             </View>
           </View>
@@ -369,12 +372,12 @@ export default function OrderDetailScreen() {
             />
           )}
 
-          {/* CLIENTE: ya calificó esta orden */}
-          {isClient && order.status === 'completed' && order.review && (
+          {/* Ambos participantes pueden ver la calificación existente. */}
+          {(isClient || isProvider) && order.review && (
             <View style={[styles.reviewedBanner, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
               <MaterialIcons name="star" size={18} color={TOKENS.color.rating} />
               <Text variant="label" color={tc.textSub}>
-                Ya calificaste este servicio ({order.review.rating}/5)
+                 {isClient ? 'Ya calificaste este servicio' : 'Este servicio fue calificado'} ({order.review.rating}/5)
               </Text>
             </View>
           )}
