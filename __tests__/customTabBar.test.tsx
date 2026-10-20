@@ -136,3 +136,21 @@ describe('tabs layout', () => {
     expect(layout).toMatch(/name="services"[^>]*href: null/);
   });
 });
+
+describe('CustomTabBar bubble icon', () => {
+  const opacityOf = (node: any) => {
+    const { StyleSheet } = require('react-native');
+    return StyleSheet.flatten(node.props.style).opacity;
+  };
+
+  it('hides the bar icon under the bubble, also on a hidden route', () => {
+    const { props } = makeProps('reels');
+    const { getByTestId, rerender } = render(<CustomTabBar {...props} />);
+    expect(opacityOf(getByTestId('tab-icon-Reels'))).toBe(0);
+    expect(opacityOf(getByTestId('tab-icon-Inicio'))).toBe(0.55);
+
+    // Navigate to the hidden services route: the bubble stays on Reels, so its icon stays hidden.
+    rerender(<CustomTabBar {...makeProps('services').props} />);
+    expect(opacityOf(getByTestId('tab-icon-Reels'))).toBe(0);
+  });
+});
