@@ -6,15 +6,21 @@ import {
   type ReviewPayload,
 } from '@/features/reviews/services/review.service';
 import { maybePromptReview } from '@/lib/reviewPrompt';
+import { extractApiError } from '@/lib/errors';
 
 export function useCreateReview() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (payload: ReviewPayload) => createReview(payload),
-    onSuccess: (review) => {
+    onSuccess: (review, payload) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.serviceReviews(review.providerId) });
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.orderById(review.orderId) });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.orderById(payload.orderId) });
       maybePromptReview();
+    },
+    onError: (error, payload) => {
+      if (extractApiError(error).code === 'ALREADY_REVIEWED') {
+        qc.invalidateQueries({ queryKey: QUERY_KEYS.orderById(payload.orderId) });
+      }
     },
   });
 }

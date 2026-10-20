@@ -25,6 +25,11 @@ export async function verifyEmailService(email: string, code: string): Promise<A
   return data;
 }
 
+/** The response deliberately reveals neither account existence nor delivery status. */
+export async function resendVerificationService(email: string): Promise<void> {
+  await api.post('/auth/resend-verification', { email });
+}
+
 /**
  * Login/registro con Google. El backend todavía NO tiene este endpoint (no
  * aparece en /api/docs-json al momento de escribir esto) — se asume el mismo
