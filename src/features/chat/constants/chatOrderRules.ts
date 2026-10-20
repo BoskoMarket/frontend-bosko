@@ -20,6 +20,14 @@ export function isChatReadOnly(status: OrderStatus | undefined | null): boolean 
   return !!status && READ_ONLY_STATUSES.has(status);
 }
 
+/** A closed conversation snapshot must not be overridden by a stale open order query. */
+export function resolveChatOrderStatus(
+  conversationStatus: OrderStatus | undefined | null,
+  orderStatus: OrderStatus | undefined | null,
+): OrderStatus | undefined | null {
+  return isChatReadOnly(conversationStatus) ? conversationStatus : orderStatus ?? conversationStatus;
+}
+
 export function chatNoticeFor(status: OrderStatus | undefined | null): ChatOrderNotice | null {
   switch (status) {
     case 'completed':
@@ -36,14 +44,25 @@ export function chatNoticeFor(status: OrderStatus | undefined | null): ChatOrder
 export const CHAT_ORDER_CLOSED_TOAST = 'No podés enviar mensajes en una orden finalizada.';
 
 /**
- * True when the backend rejected a send because the order is closed (BR02: 409 `ORDER_CLOSED`).
- * 403/422 are excluded on purpose: they also mean "not a participant" or validation errors.
+ * Only the backend's explicit error code denotes a closed order. Other 409s
+ * are not evidence that the composer must switch to read-only.
  */
 export function isOrderClosedError(err: unknown): boolean {
   const response = (err as { response?: { status?: number; data?: { code?: string } } } | null)?.response;
   if (response?.status !== 409) return false;
   const code = response.data?.code;
-  return code === undefined || code === 'ORDER_CLOSED';
+  return code === 'ORDER_CLOSED';
+}
+
+/** An unscoped socket error cannot safely be attributed to the active chat. */
+export function isClosedSocketErrorForConversation(
+  error: { code: string; conversationId?: string },
+  conversationId: string,
+): boolean {
+  // The backend emits `error` as `{code, message}` without a conversation id; when an id
+  // is present it must match the open chat.
+  if (error.code !== 'ORDER_CLOSED' || !conversationId) return false;
+  return error.conversationId === undefined || error.conversationId === conversationId;
 }
 
 /** Small badge for the conversations list; null when the status needs no marker. */

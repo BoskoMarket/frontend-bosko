@@ -6,6 +6,7 @@ const SOCKET_URL = API_URL.replace(/\/api\/v\d+.*$/, '');
 export type MessageNotification = { conversationId: string; senderId: string; preview?: string };
 type Typing = { conversationId?: string; userId: string; isTyping: boolean };
 type ReadReceipt = { conversationId: string; readBy?: string };
+export type ChatSocketError = { code: string; message?: string; conversationId?: string };
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object';
 export function isChatMessage(value: unknown): value is Message {
   return object(value) && ['id', 'conversationId', 'senderId', 'createdAt', 'messageType'].every(key => typeof value[key] === 'string')
@@ -20,6 +21,7 @@ class SocketService {
   private typing = new Set<(value: Typing) => void>();
   private connections = new Set<(value: boolean) => void>();
   private reads = new Set<(value: ReadReceipt) => void>();
+  private errors = new Set<(value: ChatSocketError) => void>();
   get isConnected() { return this.socket?.connected ?? false; }
   connect(token: string) {
     if (this.socket && this.token === token) { this.reconnect(); return; }
@@ -57,12 +59,21 @@ class SocketService {
         conversationId: data.conversationId as string, readBy: typeof data.readBy === 'string' ? data.readBy : undefined,
       }));
     });
+    socket.on('error', (data: unknown) => {
+      if (!object(data) || typeof data.code !== 'string') return;
+      const error: ChatSocketError = {
+        code: data.code,
+        message: typeof data.message === 'string' ? data.message : undefined,
+        conversationId: typeof data.conversationId === 'string' ? data.conversationId : undefined,
+      };
+      this.errors.forEach(cb => cb(error));
+    });
   }
   reconnect() { if (this.socket && !this.socket.connected && !this.socket.active) this.socket.connect(); }
   disconnect() {
     this.socket?.removeAllListeners(); this.socket?.disconnect(); this.socket = null; this.token = null;
     this.rooms.clear(); this.connections.forEach(cb => cb(false));
-    this.messages.clear(); this.notifications.clear(); this.typing.clear(); this.connections.clear(); this.reads.clear();
+    this.messages.clear(); this.notifications.clear(); this.typing.clear(); this.connections.clear(); this.reads.clear(); this.errors.clear();
   }
   joinConversation(id: string) { this.rooms.add(id); this.socket?.emit('join_conversation', { conversationId: id }); }
   leaveConversation(id: string) { this.rooms.delete(id); this.socket?.emit('leave_conversation', { conversationId: id }); }
@@ -73,5 +84,6 @@ class SocketService {
   onTypingIndicator(cb: (value: Typing) => void) { this.typing.add(cb); return () => { this.typing.delete(cb); }; }
   onConnectionChange(cb: (value: boolean) => void) { this.connections.add(cb); return () => { this.connections.delete(cb); }; }
   onMessagesRead(cb: (value: ReadReceipt) => void) { this.reads.add(cb); return () => { this.reads.delete(cb); }; }
+  onError(cb: (value: ChatSocketError) => void) { this.errors.add(cb); return () => { this.errors.delete(cb); }; }
 }
 export const socketService = new SocketService();

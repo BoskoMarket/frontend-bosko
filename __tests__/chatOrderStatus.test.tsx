@@ -6,6 +6,8 @@ import {
   chatStatusBadge,
   isChatReadOnly,
   isOrderClosedError,
+  isClosedSocketErrorForConversation,
+  resolveChatOrderStatus,
 } from '@/features/chat/constants/chatOrderRules';
 import { ChatOrderNotice } from '@/features/chat/components/ChatOrderNotice';
 import type { OrderStatus } from '@/features/orders/types/orders.types';
@@ -30,6 +32,12 @@ describe('chat order rules (G68)', () => {
     expect(chatNoticeFor(undefined)).toBeNull();
   });
 
+  it('keeps a closed conversation read-only even while the order query is stale', () => {
+    expect(resolveChatOrderStatus('cancelled', 'pending')).toBe('cancelled');
+    expect(resolveChatOrderStatus(null, 'completed')).toBe('completed');
+    expect(resolveChatOrderStatus('disputed', 'in_progress')).toBe('in_progress');
+  });
+
   it('badges only closed or disputed orders', () => {
     expect(chatStatusBadge('completed')?.label).toBe('Finalizada');
     expect(chatStatusBadge('cancelled')?.label).toBe('Cancelada');
@@ -39,13 +47,22 @@ describe('chat order rules (G68)', () => {
   });
 
   it('detects closed-order rejections', () => {
-    expect(isOrderClosedError({ response: { status: 409 } })).toBe(true);
+    expect(isOrderClosedError({ response: { status: 409 } })).toBe(false);
     expect(isOrderClosedError({ response: { status: 409, data: { code: 'ORDER_CLOSED' } } })).toBe(true);
     expect(isOrderClosedError({ response: { status: 409, data: { code: 'DUPLICATE' } } })).toBe(false);
     expect(isOrderClosedError({ response: { status: 403 } })).toBe(false);
     expect(isOrderClosedError({ response: { status: 422 } })).toBe(false);
     expect(isOrderClosedError({ response: { status: 500 } })).toBe(false);
     expect(isOrderClosedError(new Error('network'))).toBe(false);
+  });
+
+  it('ignores unscoped and other-chat socket errors', () => {
+    // Real contract payload: `{code, message}` without conversationId.
+    expect(isClosedSocketErrorForConversation({ code: 'ORDER_CLOSED' }, 'active')).toBe(true);
+    expect(isClosedSocketErrorForConversation({ code: 'ORDER_CLOSED' }, '')).toBe(false);
+    expect(isClosedSocketErrorForConversation({ code: 'RATE_LIMITED' }, 'active')).toBe(false);
+    expect(isClosedSocketErrorForConversation({ code: 'ORDER_CLOSED', conversationId: 'old' }, 'active')).toBe(false);
+    expect(isClosedSocketErrorForConversation({ code: 'ORDER_CLOSED', conversationId: 'active' }, 'active')).toBe(true);
   });
 });
 

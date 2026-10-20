@@ -33,3 +33,16 @@ test('logout descarta las salas de la cuenta anterior', () => {
   socketService.connect('b'); socket.emit.mockClear(); handlers.connect();
   expect(socket.emit).not.toHaveBeenCalled();
 });
+test('emite errores tipados del socket y descarta payloads desconocidos', () => {
+  const onError = jest.fn();
+  socketService.onError(onError);
+  socketService.connect('token');
+  // Payload copied from the backend contract: `error` with `{code,message}`.
+  handlers.error({ code: 'ORDER_CLOSED', message: 'La orden está cerrada y el chat es de solo lectura.' });
+  handlers.error({ code: 409 });
+  handlers.error('ORDER_CLOSED');
+  expect(onError).toHaveBeenCalledTimes(1);
+  expect(onError).toHaveBeenCalledWith(
+    expect.objectContaining({ code: 'ORDER_CLOSED', message: 'La orden está cerrada y el chat es de solo lectura.' }),
+  );
+});

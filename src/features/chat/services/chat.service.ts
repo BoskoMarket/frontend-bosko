@@ -46,8 +46,8 @@ export interface Conversation {
   otherParty: OtherParty;
   lastMessage?: { content: string; senderId: string; createdAt: string | Date } | null;
   unreadCount: number;
-  /** Order status. Not returned by the backend yet (BR02); the list badge renders only when present. */
-  orderStatus?: OrderStatus;
+  /** Snapshot from the conversation endpoint; null means status unavailable. */
+  orderStatus?: OrderStatus | null;
   createdAt: string | Date;
 }
 
