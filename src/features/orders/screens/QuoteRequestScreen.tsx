@@ -4,7 +4,7 @@
  * Se accede desde ProviderProfileScreen al tocar "Cotizar servicio".
  */
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import { useOrders } from '../state/OrdersContext';
 import {
   Button,
   Card,
+  Chip,
   Input,
   NoticeBanner,
   ScreenHeader,
@@ -30,6 +31,7 @@ import {
   dialog, FONT_FAMILY } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { availableSlots, buildDayOptions, toScheduledIso, DEFAULT_SLOT_HOUR } from '../utils/scheduledDate';
 
 export default function QuoteRequestScreen() {
   const tc = useThemeColors();
@@ -38,7 +40,28 @@ export default function QuoteRequestScreen() {
 
   const [message, setMessage] = useState('');
   const [address, setAddress] = useState('');
-  const [scheduledDate, setScheduledDate] = useState('');
+  // Optional desired date: no day selected => scheduledDate undefined. Slot defaults to 9 h.
+  // Past slots are hidden for today; today is dropped once no slot is left.
+  const now = useMemo(() => new Date(), []);
+  const dayOptions = useMemo(
+    () => buildDayOptions(now, 14).filter((d) => availableSlots(d.date, now).length > 0),
+    [now],
+  );
+  const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
+  const [slotHour, setSlotHour] = useState(DEFAULT_SLOT_HOUR);
+  const selectedDay = dayOptions.find((d) => d.key === selectedDayKey);
+  const slots = selectedDay ? availableSlots(selectedDay.date, now) : [];
+
+  const selectDay = (key: string) => {
+    if (selectedDayKey === key) {
+      setSelectedDayKey(null);
+      return;
+    }
+    const day = dayOptions.find((d) => d.key === key);
+    const daySlots = day ? availableSlots(day.date, now) : [];
+    setSelectedDayKey(key);
+    if (!daySlots.some((s) => s.hour === slotHour)) setSlotHour(daySlots[0]?.hour ?? DEFAULT_SLOT_HOUR);
+  };
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async () => {
@@ -58,7 +81,7 @@ export default function QuoteRequestScreen() {
         serviceId: params.serviceId,
         message: message.trim(),
         address: address.trim() || undefined,
-        scheduledDate: scheduledDate.trim() || undefined,
+        scheduledDate: selectedDay ? toScheduledIso(selectedDay.date, slotHour) : undefined,
       });
 
       dialog.fromAlert(
@@ -150,13 +173,29 @@ export default function QuoteRequestScreen() {
               <View style={styles.fieldContainer}>
                 <Text style={[styles.fieldLabel, { color: tc.text }]}>Fecha deseada</Text>
                 <Text style={[styles.fieldHint, { color: tc.textSub }]}>Opcional — cuándo preferís que se realice.</Text>
-                <Input
-                  leftIcon="calendar-outline"
-                  placeholder="Ej: Sábado por la mañana"
-                  value={scheduledDate}
-                  onChangeText={setScheduledDate}
-                  returnKeyType="done"
-                />
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+                  {dayOptions.map((d) => (
+                    <Chip
+                      key={d.key}
+                      label={d.label}
+                      selected={selectedDayKey === d.key}
+                      onPress={() => selectDay(d.key)}
+                    />
+                  ))}
+                </ScrollView>
+                {selectedDay && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.chipRow, styles.slotRow]}>
+                    {slots.map((s) => (
+                      <Chip
+                        key={s.key}
+                        label={s.label}
+                        icon="time-outline"
+                        selected={slotHour === s.hour}
+                        onPress={() => setSlotHour(s.hour)}
+                      />
+                    ))}
+                  </ScrollView>
+                )}
               </View>
 
               {/* Aviso */}
@@ -224,5 +263,7 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginTop: SPACING.xs,
   },
+  chipRow: { gap: SPACING.sm },
+  slotRow: { marginTop: SPACING.sm },
   notice: { marginBottom: SPACING.sm },
 });
