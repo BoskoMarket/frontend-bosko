@@ -20,7 +20,27 @@ export function isChatReadOnly(status: OrderStatus | undefined | null): boolean 
   return !!status && READ_ONLY_STATUSES.has(status);
 }
 
-export function chatNoticeFor(status: OrderStatus | undefined | null): ChatOrderNotice | null {
+/** A closed conversation snapshot must not be overridden by a stale open order query. */
+export function resolveChatOrderStatus(
+  conversationStatus: OrderStatus | undefined | null,
+  orderStatus: OrderStatus | undefined | null,
+): OrderStatus | undefined | null {
+  return isChatReadOnly(conversationStatus) ? conversationStatus : orderStatus ?? conversationStatus;
+}
+
+export const CHAT_CLOSED_FALLBACK_NOTICE = 'La orden está cerrada. El chat queda en modo lectura.';
+
+/**
+ * `closedByServer` means the backend rejected our send as ORDER_CLOSED. When the resolved status
+ * is not (yet) terminal we show a generic read-only notice instead of relabeling the order.
+ */
+export function chatNoticeFor(
+  status: OrderStatus | undefined | null,
+  closedByServer = false,
+): ChatOrderNotice | null {
+  if (closedByServer && !isChatReadOnly(status)) {
+    return { kind: 'readOnly', message: CHAT_CLOSED_FALLBACK_NOTICE };
+  }
   switch (status) {
     case 'completed':
       return { kind: 'readOnly', message: 'Orden finalizada. El chat queda en modo lectura.' };
@@ -36,14 +56,22 @@ export function chatNoticeFor(status: OrderStatus | undefined | null): ChatOrder
 export const CHAT_ORDER_CLOSED_TOAST = 'No podés enviar mensajes en una orden finalizada.';
 
 /**
- * True when the backend rejected a send because the order is closed (BR02: 409 `ORDER_CLOSED`).
- * 403/422 are excluded on purpose: they also mean "not a participant" or validation errors.
+ * Only the backend's explicit error code denotes a closed order. Other 409s
+ * are not evidence that the composer must switch to read-only.
  */
 export function isOrderClosedError(err: unknown): boolean {
   const response = (err as { response?: { status?: number; data?: { code?: string } } } | null)?.response;
   if (response?.status !== 409) return false;
   const code = response.data?.code;
-  return code === undefined || code === 'ORDER_CLOSED';
+  return code === 'ORDER_CLOSED';
+}
+
+/**
+ * The backend emits socket `error` as `{code, message}` with no conversation id, so it cannot be
+ * attributed to the open chat. It is only a hint to resync the order/conversation, never a lock.
+ */
+export function isOrderClosedSocketError(error: { code: string }): boolean {
+  return error.code === 'ORDER_CLOSED';
 }
 
 /** Small badge for the conversations list; null when the status needs no marker. */

@@ -220,16 +220,20 @@ export default function PlansScreen() {
                         <Text style={[s.planPriceAmount, { color: tc.text }, isPopular && { color: TOKENS.color.signal }]}>
                           {formatPrice(plan.price, plan.currency)}
                         </Text>
-                        <Text style={[s.planPriceInterval, { color: tc.textSub }]}>
-                          /{plan.interval === 'month' ? 'mes' : 'año'}
-                        </Text>
+                        {plan.interval ? (
+                          <Text style={[s.planPriceInterval, { color: tc.textSub }]}>
+                            /{plan.interval === 'month' ? 'mes' : 'año'}
+                          </Text>
+                        ) : null}
                       </View>
                     </View>
 
-                    <Text style={[s.planDescription, { color: tc.textSub }]}>{plan.description}</Text>
+                    {plan.description ? (
+                      <Text style={[s.planDescription, { color: tc.textSub }]}>{plan.description}</Text>
+                    ) : null}
 
                     <View style={s.featuresList}>
-                      {plan.features.map((feature, i) => (
+                      {(plan.features ?? []).map((feature, i) => (
                         <View key={i} style={s.featureRow}>
                           <MaterialIcons
                             name="check-circle"

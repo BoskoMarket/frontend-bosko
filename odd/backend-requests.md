@@ -10,7 +10,7 @@ Relacionado: `odd/ux-gaps.md` (huecos de UX que originan estos pedidos).
 
 ## BR01 — Subir/quitar portada de perfil
 
-**Estado:** ⬜ pendiente de backend · **Origen:** G10 (`odd/ux-gaps.md`) · **Frontend:** implementado
+**Estado:** 🟡 desplegado en backend (`frontend-media-reports.md` / `backend-contract-fixes.md`, 2026-10-20); frontend integrado en PRs #47–#52, falta verificar desde la app · **Origen:** G10 (`odd/ux-gaps.md`) · **Frontend:** implementado
 
 ### Contexto
 
@@ -73,6 +73,8 @@ Relacionado: `odd/ux-gaps.md` (huecos de UX que originan estos pedidos).
 
 ## BR02 — Rechazar mensajes en órdenes finalizadas
 
+**Estado:** 🟡 desplegado en backend (`frontend-media-reports.md` / `backend-contract-fixes.md`, 2026-10-20); frontend integrado en PRs #47–#52, falta verificar desde la app
+
 ### Contexto
 
 Decisión de producto (G68): cuando una orden pasa a `completed` o `cancelled`, el chat queda en solo lectura. Con la orden en `disputed` el chat sigue abierto. El cliente oculta el campo de escritura según el estado de la orden, pero una regla solo en el frontend se puede saltear (versiones viejas de la app, llamadas directas a la API, socket). El servidor debe ser quien la haga cumplir.
@@ -115,7 +117,7 @@ El cliente trata `403`, `409` y `422` como "orden cerrada": muestra "No podés e
 
 ## BR03 — Reportes de usuarios y contenido
 
-**Estado:** ⬜ pendiente de backend · **Origen:** G69, G86 (`odd/ux-gaps.md`) · **Frontend:** implementado
+**Estado:** 🟡 desplegado en backend (`frontend-media-reports.md` / `backend-contract-fixes.md`, 2026-10-20); frontend integrado en PRs #47–#52, falta verificar desde la app · **Origen:** G69, G86 (`odd/ux-gaps.md`) · **Frontend:** implementado
 
 ### Contexto
 
@@ -181,7 +183,7 @@ Códigos estables, en inglés y en minúscula: `spam`, `inappropriate`, `harassm
 
 ## BR04 — Subida de videos para reels
 
-**Estado:** ⬜ pendiente de backend · **Origen:** G87, G64 (`odd/ux-gaps.md`) · **Frontend:** implementado
+**Estado:** 🟡 desplegado en backend (`frontend-media-reports.md` / `backend-contract-fixes.md`, 2026-10-20); frontend integrado en PRs #47–#52, falta verificar desde la app · **Origen:** G87, G64 (`odd/ux-gaps.md`) · **Frontend:** implementado
 
 ### Contexto
 
@@ -227,7 +229,7 @@ Para archivos de hasta 100 MB conviene una **URL prefirmada** (`POST /reels/uplo
 
 ## BR05 — Eliminar cuenta con período de gracia de 30 días
 
-**Estado:** ⬜ pendiente de backend · **Origen:** G17, G18, G19 (`odd/ux-gaps.md`) · **Frontend:** implementado
+**Estado:** ⬜ pendiente de backend — **riesgo hoy:** `DELETE /users/me` ignora la contraseña y no bloquea por órdenes activas (auditoría C04) · **Origen:** G17, G18, G19 (`odd/ux-gaps.md`) · **Frontend:** implementado
 
 ### Contexto
 
@@ -280,7 +282,7 @@ Un job elimina definitivamente las cuentas con `deletionScheduledAt` vencido. **
 
 ## BR06 — Configuración remota de la app (versión mínima, mantenimiento y tiendas)
 
-**Estado:** ⬜ pendiente de backend · **Origen:** G111 (`odd/ux-gaps.md`) · **Frontend:** implementado (falla en silencio si el endpoint no existe)
+**Estado:** ⬜ pendiente de backend (desde 2026-10-20 la app pide el endpoint una sola vez por sesión si responde 404) · **Origen:** G111 (`odd/ux-gaps.md`) · **Frontend:** implementado (falla en silencio si el endpoint no existe)
 
 ### Contexto
 
@@ -314,3 +316,48 @@ La app consulta `GET /app/config` al arrancar para bloquear versiones viejas o m
 - Archivos: `src/features/appConfig/services/appConfig.service.ts`, `src/features/appConfig/hooks/useAppGate.ts`, `src/features/appConfig/screens/AppGateScreen.tsx`.
 - **Pendiente en frontend:** leer `storeUrls` y agregar "Reintentar" en mantenimiento; se hace cuando el endpoint exista.
 - **Al desplegar:** probar con `minVersion` mayor a la instalada, con `maintenanceMode: true` y sin el endpoint (404); luego pasar este pedido a ✅.
+
+---
+
+## BR07 — Conteo de órdenes pendientes del proveedor
+
+**Estado:** ⬜ pendiente de backend · **Origen:** auditoría C12, revisión PR #50 · **Frontend:** recorre todas las páginas
+
+- **Pedido:** `GET /orders/provider?status=pending` (filtro) o `GET /orders/provider/pending-count` → `{ "count": number }`.
+- **Por qué:** el badge de Órdenes y ProviderHome hoy piden todas las páginas de `/orders/provider` en serie para contar las pendientes (N requests por cada aceptar/rechazar).
+- **Al desplegar:** reemplazar el recorrido en `usePendingProviderRequestsQuery` (`src/hooks/queries/useOrdersQuery.ts`).
+
+## BR08 — Forma de `PlanDto` y de `GET /plans/my-plan`
+
+**Estado:** ⬜ pendiente de backend · **Origen:** auditoría C05, C25 · **Frontend:** muestra solo "Hasta N servicios"
+
+- **Pedido:** documentar en OpenAPI los campos de beneficio de `PlanDto` (nombres y tipos) y la respuesta de `GET /plans/my-plan` (plan, límites, `maxServices`, servicios usados).
+- **Por qué:** sin esos nombres la pantalla de planes oculta los beneficios (`BENEFIT_LABELS` vacío en `plan.service.ts`) y el cupo de servicios se calcula con una regla local (FREE = 1).
+
+## BR09 — `orderId` en la notificación de mensaje nuevo
+
+**Estado:** ⬜ pendiente de backend · **Origen:** auditoría C21 · **Frontend:** resuelve conversación → orden desde la lista de conversaciones
+
+- **Pedido:** incluir `orderId` en `data` del push/notificación `NEW_MESSAGE` (hoy solo `conversationId`).
+- **Por qué:** la ruta del chat usa el id de la orden; sin él la app tiene que buscar la conversación antes de abrir el hilo.
+
+## BR10 — Reemplazar o reordenar la foto principal de un servicio
+
+**Estado:** ⬜ pendiente de backend · **Origen:** auditoría C17 · **Frontend:** "Cambiar foto" agrega otra imagen al final
+
+- **Pedido:** `PATCH /services/:id/images` con el orden de claves (o `PUT /services/:id/images/main`), y `DELETE /services/:id/images/:key`.
+- **Por qué:** el catálogo usa `images[0]` como miniatura; hoy la foto nueva queda al final y la anterior sigue como principal.
+
+## BR11 — Listado de antecedentes pendientes para ADMIN
+
+**Estado:** ⬜ pendiente de backend · **Origen:** auditoría C26 · **Frontend:** panel vacío
+
+- **Pedido:** `GET /admin/background-check?status=pending&page=&limit=` (solo ADMIN) con usuario, archivo y fecha.
+- **Por qué:** `AdminBackgroundCheckScreen` no tiene de dónde leer la cola; el `PATCH` de revisión ya existe.
+
+## BR12 — Exportar el OpenAPI de la revisión desplegada
+
+**Estado:** ⬜ pendiente de backend · **Origen:** auditoría C24 · **Frontend:** snapshot desactualizado en `docs/backend-openapi.json`
+
+- **Pedido:** publicar `openapi.json` por versión desplegada (artefacto de CD o `GET /api/v1/docs-json`) con los DTO de respuesta tipados (hoy muchos son `Record<string, never>`).
+- **Por qué:** `contracts:check` compara contra un snapshot local y puede quedar verde con un contrato viejo.

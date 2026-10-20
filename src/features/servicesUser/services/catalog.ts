@@ -5,6 +5,7 @@
   ServiceSummary,
 } from "@/types/services";
 import api from "@/core/api/axiosinstance";
+import { readPaginatedCollection, type PaginatedCollection } from '@/core/api/collections';
 import { TOKENS } from '@/core/design-system/tokens';
 
 /**
@@ -107,7 +108,7 @@ export async function fetchProviderProfileService(
     summary: data.summary ?? data.bio ?? '',
     bio: data.bio ?? '',
     avatar: data.avatar ?? '',
-    heroImage: data.heroImage ?? data.coverImage ?? '',
+    heroImage: data.bannerUrl ?? data.heroImage ?? data.coverImage ?? '',
     location: data.location ?? '',
     tags: data.tags ?? [],
     recentWorks: data.recentWorks ?? [],
@@ -117,11 +118,7 @@ export async function fetchProviderProfileService(
   };
 }
 
-export async function fetchServiceReviewsService(providerId: string): Promise<Review[]> {
-  try {
-    const { data } = await api.get<any>(`/reviews/providers/${providerId}/reviews`);
-    return (data as any)?.data ?? (Array.isArray(data) ? data : []);
-  } catch {
-    return [];
-  }
+export async function fetchServiceReviewsService(providerId: string, page = 1, limit = 20): Promise<PaginatedCollection<Review>> {
+  const { data } = await api.get<PaginatedCollection<Review>>(`/reviews/providers/${providerId}/reviews`, { params: { page, limit } });
+  return readPaginatedCollection<Review>(data);
 }

@@ -40,6 +40,8 @@ import {
   dialog,
 } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
+import { IMAGE_UPLOAD_MAX_BYTES, resolveImageMime } from '@/core/media/imageMime';
+import { resolveFileSize } from '@/features/reels/constants/reelUploadRules';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const AVATAR_SIZE = 104;
@@ -98,13 +100,26 @@ export default function EditProfileScreen() {
         allowsEditing: true,
         aspect: [3, 1],
         quality: 0.8,
+        // iOS: ask for a JPEG-compatible representation instead of HEIC.
+        preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode?.Compatible,
       });
       if (result.canceled || !result.assets[0]) return;
-      const uri = result.assets[0].uri;
+      const asset = result.assets[0];
+      const mimeType = resolveImageMime(asset);
+      if (mimeType !== 'image/jpeg' && mimeType !== 'image/png' && mimeType !== 'image/webp') {
+        toast.error('Formato no válido', 'Elegí una foto JPG, PNG o WebP.');
+        return;
+      }
+      const bannerSize = resolveFileSize({ uri: asset.uri, fileSize: asset.fileSize });
+      if (bannerSize != null && bannerSize > IMAGE_UPLOAD_MAX_BYTES) {
+        toast.error('Imagen demasiado grande', 'El máximo es 5 MB.');
+        return;
+      }
+      const uri = asset.uri;
       setBannerUri(uri);
       setUpdatingBanner(true);
       try {
-        await uploadBanner(uri);
+        await uploadBanner({ uri, mimeType });
         toast.success('Portada actualizada');
       } catch (err) {
         toast.error('No se pudo actualizar la portada', getBannerErrorMessage(err));

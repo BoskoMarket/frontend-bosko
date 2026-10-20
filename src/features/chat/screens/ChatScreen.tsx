@@ -63,7 +63,7 @@ import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { useOrder } from '@/hooks/queries/useOrdersQuery';
 import type { OrderStatus } from '@/features/orders/types/orders.types';
 import { ChatOrderNotice } from '../components/ChatOrderNotice';
-import { CHAT_ORDER_CLOSED_TOAST, isChatReadOnly, isOrderClosedError } from '../constants/chatOrderRules';
+import { CHAT_ORDER_CLOSED_TOAST, isChatReadOnly, isOrderClosedError, isOrderClosedSocketError, resolveChatOrderStatus } from '../constants/chatOrderRules';
 import { isVideoUrl } from '../utils/mediaUrl';
 import {
   Avatar,
@@ -415,8 +415,13 @@ export default function ChatScreen() {
       { text: 'Cancelar', style: 'cancel' },
     ]);
   }, []);
-  // G68: completed/cancelled => read-only. While the status is unknown the composer stays enabled.
-  const readOnly = isChatReadOnly(order?.status);
+  // The conversation supplies a snapshot immediately; the order query may arrive later.
+  // A rejected send takes precedence until this chat is reopened from another order.
+  const [closedByServer, setClosedByServer] = useState(false);
+  const status = resolveChatOrderStatus(conversation?.orderStatus, order?.status);
+  const readOnly = closedByServer || isChatReadOnly(status);
+  const readOnlyRef = useRef(readOnly);
+  readOnlyRef.current = readOnly;
   const refetchOrderRef = useRef(refetchOrder);
   refetchOrderRef.current = refetchOrder;
   const orderLoadedRef = useRef(false);
@@ -425,13 +430,36 @@ export default function ChatScreen() {
   useFocusEffect(useCallback(() => {
     if (orderLoadedRef.current) void refetchOrderRef.current();
   }, []));
-  // If the backend rejects a send because the order is closed, tell the user and resync the status.
+  const currentOrderIdRef = useRef(params.id);
+  currentOrderIdRef.current = params.id;
+  const mountedRef = useRef(true);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+  // Resync the order query and the conversation snapshot (so the real `orderStatus` decides read-only).
+  // Shared by the HTTP 409 and socket paths; guarded against the screen moving to another order.
+  const refreshClosedOrderState = useCallback(() => {
+    void refetchOrderRef.current();
+    const orderId = params.id;
+    if (!orderId) return;
+    void fetchConversationByOrder(orderId)
+      .then(conv => {
+        if (!mountedRef.current || currentOrderIdRef.current !== orderId) return;
+        setConversation(conv);
+      })
+      .catch(() => {});
+  }, [params.id]);
+  const refreshClosedOrderStateRef = useRef(refreshClosedOrderState);
+  refreshClosedOrderStateRef.current = refreshClosedOrderState;
+  // The backend rejected our own send with ORDER_CLOSED: hard lock, tell the user and resync.
   const handleClosedOrderError = useCallback((err: unknown): boolean => {
     if (!isOrderClosedError(err)) return false;
+    readOnlyRef.current = true;
+    setClosedByServer(true);
     toast.error(CHAT_ORDER_CLOSED_TOAST);
-    void refetchOrderRef.current();
+    refreshClosedOrderStateRef.current();
     return true;
   }, []);
+  const closedHandlerRef = useRef(handleClosedOrderError);
+  closedHandlerRef.current = handleClosedOrderError;
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
@@ -482,6 +510,14 @@ export default function ChatScreen() {
       return params.id;
     }
   }, [params.id]);
+
+  useEffect(() => { setClosedByServer(false); }, [params.id]);
+
+  // Socket `error` carries no conversation id: only resync, let the real orderStatus decide.
+  useEffect(() => socketService.onError(error => {
+    if (!isOrderClosedSocketError(error)) return;
+    refreshClosedOrderStateRef.current();
+  }), []);
 
   const busyRef = useRef(false);
   const pollBackoffRef = useRef(0);
@@ -570,6 +606,9 @@ export default function ChatScreen() {
     const init = async () => {
       setLoading(true);
       setLoadFailed(false);
+      convIdRef.current = '';
+      setConvId('');
+      setConversation(null);
       hasMoreRef.current = false;
       nextPageRef.current = 2;
       const id = await loadConversation();
@@ -600,6 +639,7 @@ export default function ChatScreen() {
 
   // ── Audio recording ──────────────────────────────────────────────────────
   const startRecording = useCallback(async () => {
+    if (readOnlyRef.current) return;
     setShowAttachMenu(false);
     setRecordingLocked(false);
     recordingLockedRef.current = false;
@@ -610,6 +650,7 @@ export default function ChatScreen() {
         alertPermissionDenied('Necesitamos acceso al micrófono para grabar mensajes de voz.');
         return;
       }
+      if (readOnlyRef.current) return;
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
       await recorder.prepareToRecordAsync();
       recorder.record();
@@ -647,13 +688,14 @@ export default function ChatScreen() {
       if (!uri) return;
       const convId = conversationRef.current?.id ?? convIdRef.current;
       if (!convId) return;
+      if (readOnlyRef.current) return;
       setSendingAudio(true);
       const newMsg = await sendAudio(convId, uri);
       setMessages(prev => [newMsg, ...prev]);
       updateLastMessage(convId, `🎤 Mensaje de voz (${formatDuration(duration * 1000)})`, profile?.id ?? '');
     } catch (err) {
       console.error('Error sending audio:', err);
-      if (handleClosedOrderError(err)) return;
+      if (closedHandlerRef.current(err)) return;
       toast.error('No se pudo enviar el audio', 'Intentá de nuevo');
     } finally {
       setSendingAudio(false);
@@ -687,7 +729,7 @@ export default function ChatScreen() {
   // ── Media (galería) ──────────────────────────────────────────────────────
   const handlePickMedia = useCallback(async () => {
     setShowAttachMenu(false);
-    if (!conversation) return;
+    if (!conversation || readOnlyRef.current) return;
     if (busyRef.current) return;
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -701,6 +743,7 @@ export default function ChatScreen() {
       videoMaxDuration: MAX_VIDEO_SECONDS,
     });
     if (result.canceled || !result.assets[0]) return;
+    if (readOnlyRef.current) return;
     const asset = result.assets[0];
     const isVideo = asset.type === 'video';
     if (isVideo && typeof asset.duration === 'number' && asset.duration > MAX_VIDEO_SECONDS * 1000) {
@@ -712,7 +755,8 @@ export default function ChatScreen() {
     setSending(true);
     try {
       const { uri, mimeType } = await compressImage(asset.uri, rawMime);
-      const newMsg = await sendMedia(conversation.id, uri, mimeType);
+       if (readOnlyRef.current) return;
+       const newMsg = await sendMedia(conversation.id, uri, mimeType);
       setMessages(prev => [newMsg, ...prev]);
       updateLastMessage(conversation.id, isVideo ? '🎥 Video' : '📷 Imagen', profile?.id ?? '');
     } catch (err) {
@@ -728,7 +772,7 @@ export default function ChatScreen() {
   // ── Cámara (helper compartido) ───────────────────────────────────────────
   const launchCamera = useCallback(async (mediaTypes: ('images' | 'videos')[], isVideo: boolean) => {
     setShowAttachMenu(false);
-    if (!conversation) return;
+    if (!conversation || readOnlyRef.current) return;
     if (busyRef.current) return;
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
@@ -741,13 +785,15 @@ export default function ChatScreen() {
       videoMaxDuration: MAX_VIDEO_SECONDS,
     });
     if (result.canceled || !result.assets[0]) return;
+    if (readOnlyRef.current) return;
     const asset = result.assets[0];
     const rawMime = isVideo ? 'video/mp4' : (asset.mimeType ?? 'image/jpeg');
     busyRef.current = true;
     setSending(true);
     try {
       const { uri, mimeType } = await compressImage(asset.uri, rawMime);
-      const newMsg = await sendMedia(conversation.id, uri, mimeType);
+       if (readOnlyRef.current) return;
+       const newMsg = await sendMedia(conversation.id, uri, mimeType);
       setMessages(prev => [newMsg, ...prev]);
       updateLastMessage(conversation.id, isVideo ? '🎥 Video' : '📷 Foto', profile?.id ?? '');
     } catch (err) {
@@ -766,7 +812,7 @@ export default function ChatScreen() {
   // ── Documento ────────────────────────────────────────────────────────────
   const handlePickDocument = useCallback(async () => {
     setShowAttachMenu(false);
-    if (!conversation || busyRef.current) return;
+    if (!conversation || busyRef.current || readOnlyRef.current) return;
     const result = await DocumentPicker.getDocumentAsync({
       type: [
         'application/pdf',
@@ -778,6 +824,7 @@ export default function ChatScreen() {
       copyToCacheDirectory: true,
     });
     if (result.canceled || !result.assets[0]) return;
+    if (readOnlyRef.current) return;
     const asset = result.assets[0];
     busyRef.current = true;
     setSending(true);
@@ -798,7 +845,7 @@ export default function ChatScreen() {
   // ── Texto ────────────────────────────────────────────────────────────────
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || busyRef.current) return;
+    if (!text || busyRef.current || readOnlyRef.current) return;
     if (!conversation) {
       toast.error('El chat todavía no está disponible', 'Esperá un momento o reintentá cargarlo');
       return;
@@ -821,14 +868,29 @@ export default function ChatScreen() {
     }
   };
 
-  const cancelTyping = useCallback(() => {
-    socketService.emitTyping(convIdRef.current, false);
+  const clearTypingState = useCallback(() => {
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
     typingTimerRef.current = null;
     lastTypingEmitRef.current = 0;
   }, []);
 
+  const cancelTyping = useCallback(() => {
+    if (convIdRef.current) socketService.emitTyping(convIdRef.current, false);
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = null;
+    lastTypingEmitRef.current = 0;
+  }, []);
+
+  useEffect(() => {
+    if (!readOnly) return;
+    setShowAttachMenu(false);
+    // Local cleanup only: never emit to a closed conversation.
+    clearTypingState();
+    if (isRecordingRef.current) void cancelRecording();
+  }, [readOnly, cancelRecording, clearTypingState]);
+
   const handleInputChange = useCallback((text: string) => {
+    if (readOnlyRef.current) return;
     setInput(text);
     if (!socketService.isConnected || !convIdRef.current) return;
     const now = Date.now();
@@ -952,7 +1014,7 @@ export default function ChatScreen() {
               {order.service?.title ?? order.title}
             </Text>
             <Text style={styles.orderBarMeta}>
-              ORDEN #{order.id.slice(-5).toUpperCase()} · {ORDER_STATUS_LABEL[order.status].toUpperCase()}
+               ORDEN #{order.id.slice(-5).toUpperCase()} · {(ORDER_STATUS_LABEL[status as OrderStatus] ?? 'Estado no disponible').toUpperCase()}
             </Text>
           </View>
           <MaterialIcons name="chevron-right" size={18} color={TOKENS.color.signal} />
@@ -1059,9 +1121,9 @@ export default function ChatScreen() {
       )}
 
       {/* Input bar */}
-      {order?.status === 'disputed' && <ChatOrderNotice status={order.status} style={styles.orderNotice} />}
-      {readOnly ? (
-        <ChatOrderNotice status={order?.status} style={{ ...styles.orderNotice, marginBottom: Math.max(insets.bottom, 12) }} />
+       {!readOnly && status === 'disputed' && <ChatOrderNotice status={status} style={styles.orderNotice} />}
+       {readOnly ? (
+         <ChatOrderNotice status={status} closedByServer={closedByServer} style={{ ...styles.orderNotice, marginBottom: Math.max(insets.bottom, 12) }} />
       ) : (
       <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12), borderTopColor: tc.divider }]}>
         <View style={[

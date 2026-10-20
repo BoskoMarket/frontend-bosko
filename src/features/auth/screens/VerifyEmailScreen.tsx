@@ -32,6 +32,7 @@ import {
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { WELCOME_VIDEO_PENDING_KEY } from '@/features/auth/constants';
 import { extractApiError, getUserErrorMessage } from '@/lib/errors';
+import { resendVerificationService } from '../services/auth';
 
 const CODE_LENGTH = 6;
 
@@ -46,6 +47,9 @@ export default function VerifyEmailScreen() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const resendDeadline = useRef(0);
+  const resendPending = useRef(false);
+  const [resendMessage, setResendMessage] = useState('');
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(20)).current;
@@ -60,12 +64,13 @@ export default function VerifyEmailScreen() {
     ]).start();
   }, []);
 
-  // Cuenta regresiva para reenviar
+  const cooldownActive = cooldown > 0;
+  // Keep elapsed time correct when the app returns from the background.
   useEffect(() => {
-    if (cooldown <= 0) return;
-    const t = setTimeout(() => setCooldown(c => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [cooldown]);
+    if (!cooldownActive) return;
+    const t = setInterval(() => setCooldown(Math.max(0, Math.ceil((resendDeadline.current - Date.now()) / 1000))), 1000);
+    return () => clearInterval(t);
+  }, [cooldownActive]);
 
   const handleVerify = async () => {
     // Evita doble submit (doble tap) mandando el mismo código dos veces:
@@ -77,6 +82,7 @@ export default function VerifyEmailScreen() {
       return;
     }
     setError('');
+    setResendMessage('');
     setLoading(true);
     try {
       await verifyEmail(email, code);
@@ -98,8 +104,25 @@ export default function VerifyEmailScreen() {
   };
 
   const handleResend = async () => {
-    // TODO: el backend necesita POST /auth/resend-verification para reenviar el OTP de registro
-    setError('Por ahora si el código expiró, registrate de nuevo con el mismo email.');
+    if (!email || resendPending.current || Date.now() < resendDeadline.current) return;
+    resendPending.current = true;
+    resendDeadline.current = Date.now() + 60_000;
+    setCooldown(60);
+    setResending(true);
+    setError('');
+    setResendMessage('');
+    try {
+      await resendVerificationService(email);
+      setResendMessage('Si la cuenta necesita verificación, te enviamos un código nuevo. Revisá también el correo no deseado.');
+    } catch (err) {
+      const { statusCode } = extractApiError(err);
+      setError(statusCode === 429
+        ? 'Hiciste demasiados intentos. Esperá antes de volver a solicitar el código.'
+        : 'No pudimos solicitar el código. Revisá tu conexión e intentá de nuevo al terminar la espera.');
+    } finally {
+      resendPending.current = false;
+      setResending(false);
+    }
   };
 
   if (success) {
@@ -154,6 +177,9 @@ export default function VerifyEmailScreen() {
             {!!error && (
               <Text variant="bodySmall" center color={TOKENS.color.error} style={styles.errorText}>{error}</Text>
             )}
+            {!!resendMessage && (
+              <Text variant="bodySmall" center color={tc.textSub} style={styles.errorText}>{resendMessage}</Text>
+            )}
 
             <View style={styles.btnGap}>
               <Button
@@ -165,7 +191,7 @@ export default function VerifyEmailScreen() {
               />
             </View>
 
-            <Pressable onPress={handleResend} disabled={resending || cooldown > 0} style={styles.resendRow}>
+            <Pressable onPress={handleResend} disabled={resending || cooldown > 0 || !email} accessibilityRole="button" accessibilityLabel="Reenviar código de verificación" style={styles.resendRow}>
               {resending ? (
                 <ActivityIndicator size="small" color={TOKENS.color.signal} />
               ) : (

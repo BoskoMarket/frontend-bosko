@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 
 import { useProfile } from '@/features/profile/state/ProfileContext';
-import { useProviderOrders } from '@/hooks/queries/useOrdersQuery';
+import { useProviderOrders, usePendingProviderRequestsQuery } from '@/hooks/queries/useOrdersQuery';
 import { useProfileStats } from '@/hooks/queries/useProfileQuery';
 import { HomeTopBar } from '@/features/servicesUser/components/HomeTopBar';
 import type { Order } from '@/features/orders/types/orders.types';
@@ -71,6 +71,7 @@ export default function ProviderHome() {
   const isDark = useIsDark();
   const { profile } = useProfile();
   const ordersQuery = useProviderOrders();
+  const pendingCountQuery = usePendingProviderRequestsQuery(true);
   const statsQuery = useProfileStats();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -84,9 +85,9 @@ export default function ProviderHome() {
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.allSettled([ordersQuery.refetch(), statsQuery.refetch()]);
+    await Promise.allSettled([ordersQuery.refetch(), pendingCountQuery.refetch(), statsQuery.refetch()]);
     setRefreshing(false);
-  }, [ordersQuery, statsQuery]);
+  }, [ordersQuery, pendingCountQuery, statsQuery]);
 
   const stats = statsQuery.data;
   const statTiles = [
@@ -95,8 +96,8 @@ export default function ProviderHome() {
     stats ? { label: 'Servicios', value: String(stats.servicesCount) } : null,
   ].filter((t): t is { label: string; value: string } => t !== null);
 
-  const ordersLoading = ordersQuery.isLoading;
-  const ordersFailed = ordersQuery.isError && !ordersQuery.data;
+  const ordersLoading = ordersQuery.isLoading || pendingCountQuery.isLoading;
+  const ordersFailed = (ordersQuery.isError && !ordersQuery.data) || (pendingCountQuery.isError && pendingCountQuery.data === undefined);
 
   return (
     <View style={[styles.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
@@ -114,8 +115,8 @@ export default function ProviderHome() {
         ) : ordersFailed ? null : (
           <SummaryCard
             eyebrow={profile?.firstName ? `Hola, ${profile.firstName}` : 'Hola'}
-            title={requestsTitle(pending.length)}
-            actionLabel={pending.length > 0 ? 'Ver solicitudes' : 'Ver mis órdenes'}
+             title={requestsTitle(pendingCountQuery.data ?? 0)}
+             actionLabel={(pendingCountQuery.data ?? 0) > 0 ? 'Ver solicitudes' : 'Ver mis órdenes'}
             onAction={goOrders}
           />
         )}
@@ -146,9 +147,14 @@ export default function ProviderHome() {
             <View style={styles.error}>
               <Ionicons name="cloud-offline-outline" size={32} color={tc.textSub} />
               <Text variant="bodySmall" color={tc.textSub}>No se pudieron cargar las solicitudes</Text>
-              <Button label="Reintentar" size="sm" onPress={() => ordersQuery.refetch()} />
+               <Button label="Reintentar" size="sm" onPress={() => {
+                 void ordersQuery.refetch();
+                 void pendingCountQuery.refetch();
+               }} />
             </View>
-          ) : pending.length === 0 ? (
+           ) : pending.length === 0 && (pendingCountQuery.data ?? 0) > 0 ? (
+             <Button label="Ver todas las solicitudes" size="sm" onPress={goOrders} />
+           ) : pending.length === 0 ? (
             <EmptyState
               icon="briefcase-outline"
               title="Sin solicitudes nuevas"

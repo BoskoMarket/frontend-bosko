@@ -8,7 +8,7 @@ import { useChatStore } from '@/stores/chat.store';
 const mockPush = jest.fn();
 const mockFetchConversations = jest.fn();
 const mockRefetchMyReels = jest.fn();
-let mockMyReels: any = { data: [], isLoading: false, isError: false, isFetching: false, refetch: mockRefetchMyReels };
+let mockMyReels: any = { data: { pages: [{ data: [], total: 0, page: 1, limit: 20 }] }, isLoading: false, isError: false, isFetching: false, refetch: mockRefetchMyReels };
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
@@ -53,7 +53,7 @@ describe.each(['dark', 'light'] as const)('chat and reels screens (%s)', (mode) 
     jest.clearAllMocks();
     setMode(mode);
     act(() => { useChatStore.setState({ conversations: [], unreadTotal: 0 } as any); });
-    mockMyReels = { data: [], isLoading: false, isError: false, isFetching: false, refetch: mockRefetchMyReels };
+    mockMyReels = { data: { pages: [{ data: [], total: 0, page: 1, limit: 20 }] }, isLoading: false, isError: false, isFetching: false, refetch: mockRefetchMyReels };
   });
   afterAll(() => setMode('dark'));
 
@@ -114,7 +114,7 @@ describe.each(['dark', 'light'] as const)('chat and reels screens (%s)', (mode) 
     it('describes each reel tile for screen readers', () => {
       mockMyReels = {
         ...mockMyReels,
-        data: [{ id: 'r1', type: 'video', videoUrl: 'https://x/v.mp4', likes: 3, comments: 1, tags: [], description: 'd', user: { id: 'u' } }],
+        data: { pages: [{ data: [{ id: 'r1', type: 'video', videoUrl: 'https://x/v.mp4', likes: 3, comments: 1, tags: [], description: 'd', user: { id: 'u' } }], total: 1, page: 1, limit: 20 }] },
       };
       const { getByLabelText } = render(<MyReelsScreen />);
       expect(getByLabelText('Editar reel, 3 me gusta, 1 comentarios')).toBeTruthy();

@@ -6,12 +6,14 @@ import { chatNoticeFor } from '../constants/chatOrderRules';
 
 interface Props {
   status: OrderStatus | undefined | null;
+  /** The server rejected a send with ORDER_CLOSED but the resolved status is not terminal yet. */
+  closedByServer?: boolean;
   style?: ViewStyle;
 }
 
 /** Banner explaining how the order status affects the chat (read-only / dispute). */
-export function ChatOrderNotice({ status, style }: Props) {
-  const notice = chatNoticeFor(status);
+export function ChatOrderNotice({ status, closedByServer = false, style }: Props) {
+  const notice = chatNoticeFor(status, closedByServer);
   if (!notice) return null;
   return (
     <NoticeBanner

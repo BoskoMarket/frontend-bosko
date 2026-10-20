@@ -1,4 +1,5 @@
 import api from "@/core/api/axiosinstance";
+import { readPaginatedCollection, type PaginatedCollection } from '@/core/api/collections';
 
 export type PlanType = "FREE" | "PLUS";
 
@@ -37,10 +38,10 @@ function normalizeService(s: any): Service {
   };
 }
 
-export async function getMyServices(): Promise<Service[]> {
-  const { data } = await api.get<any>("/services/me");
-  const raw: any[] = data?.data ?? (Array.isArray(data) ? data : []);
-  return raw.map(normalizeService);
+export async function getMyServices(page = 1, limit = 20): Promise<PaginatedCollection<Service>> {
+  const { data } = await api.get<PaginatedCollection<any>>("/services/me", { params: { page, limit } });
+  const result = readPaginatedCollection<any>(data);
+  return { ...result, data: result.data.map(normalizeService) };
 }
 
 export async function createService(payload: ServicePayload): Promise<Service> {
@@ -64,7 +65,7 @@ export async function deleteService(id: string): Promise<void> {
 export async function uploadServiceImages(
   serviceId: string,
   imageUris: string[],
-): Promise<{ images: string[] }> {
+): Promise<{ imageUrls: string[] }> {
   const formData = new FormData();
   imageUris.forEach((uri, i) => {
     formData.append('images', {
@@ -74,7 +75,7 @@ export async function uploadServiceImages(
     } as any);
   });
 
-  const { data } = await api.post<{ images: string[] }>(
+  const { data } = await api.post<{ imageUrls: string[] }>(
     `/services/${serviceId}/images`,
     formData,
     { headers: { 'Content-Type': 'multipart/form-data' } },

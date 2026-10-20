@@ -29,6 +29,8 @@ import { ReportFlow } from '@/features/reports/components/ReportFlow';
 import { canReport } from '@/features/reports/canReport';
 import { reportUser } from '@/features/reports/services/report.service';
 import { reportReview } from '@/features/reviews/services/review.service';
+import { fetchServiceReviewsService } from '../services/catalog';
+import { nextCollectionPage } from '@/core/api/collections';
 
 interface ReviewItem {
   id: string;
@@ -37,6 +39,18 @@ interface ReviewItem {
   reply: string | null;
   createdAt: string;
   reviewer: { id: string | null; firstName: string; lastName: string; avatarUrl: string | null };
+}
+
+function mapReview(r: any): ReviewItem {
+  return {
+    id: r.id, rating: Number(r.rating ?? 0), comment: r.comment ?? null,
+    reply: r.reply ?? null, createdAt: r.createdAt ?? '',
+    reviewer: {
+      id: r.reviewer?.id ?? r.reviewerId ?? null,
+      firstName: r.reviewer?.firstName ?? '', lastName: r.reviewer?.lastName ?? '',
+      avatarUrl: r.reviewer?.avatarUrl ?? null,
+    },
+  };
 }
 
 function useC() {
@@ -49,6 +63,7 @@ interface PublicProvider {
   firstName: string;
   lastName: string;
   avatarUrl: string | null;
+  bannerUrl: string | null;
   isVerified: boolean;
   kycApproved?: boolean;
   rating: number | null;
@@ -110,6 +125,11 @@ export default function ProviderProfileScreen() {
   const [provider, setProvider] = useState<PublicProvider | null>(null);
   const [services, setServices] = useState<ServiceSummary[]>([]);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
+  const [nextReviewPage, setNextReviewPage] = useState<number | undefined>();
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [reviewLoadError, setReviewLoadError] = useState(false);
+  const loadingReviewsRef = useRef(false);
+  const reviewGenerationRef = useRef(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [loadKey, setLoadKey] = useState(0);
@@ -140,6 +160,11 @@ export default function ProviderProfileScreen() {
 
   useEffect(() => {
     if (!id) return;
+    const generation = ++reviewGenerationRef.current;
+    loadingReviewsRef.current = false;
+    setLoadingReviews(false);
+    setNextReviewPage(undefined);
+    setReviews([]);
     let mounted = true;
 
     const load = async () => {
@@ -149,10 +174,10 @@ export default function ProviderProfileScreen() {
         const [profileRes, servicesRes, reviewsRes] = await Promise.all([
           api.get<PublicProvider>(`/users/${id}/public`),
           api.get<any>(`/services`, { params: { providerId: id, limit: 20 } }),
-          api.get<any>(`/reviews/providers/${id}/reviews`, { params: { limit: 10 } }).catch(() => ({ data: { data: [] } })),
+          fetchServiceReviewsService(id, 1, 10).catch(() => null),
         ]);
 
-        if (!mounted) return;
+        if (!mounted || reviewGenerationRef.current !== generation) return;
 
         const providerData = profileRes.data as any;
         setProvider({
@@ -160,6 +185,7 @@ export default function ProviderProfileScreen() {
           firstName: providerData.firstName ?? '',
           lastName: providerData.lastName ?? '',
           avatarUrl: providerData.avatarUrl ?? null,
+          bannerUrl: providerData.bannerUrl ?? null,
           isVerified: providerData.isVerified ?? false,
           kycApproved: providerData.kycApproved ?? providerData.isVerified ?? false,
           rating: providerData.rating != null ? Number(providerData.rating) : null,
@@ -188,20 +214,9 @@ export default function ProviderProfileScreen() {
           reviewsCount: providerData.reviewsCount ?? 0,
         })));
 
-        const rawReviews: any[] = reviewsRes.data?.data ?? reviewsRes.data ?? [];
-        setReviews(rawReviews.map(r => ({
-          id: r.id,
-          rating: Number(r.rating ?? 0),
-          comment: r.comment ?? null,
-          reply: r.reply ?? null,
-          createdAt: r.createdAt ?? '',
-          reviewer: {
-            id: r.reviewer?.id ?? r.reviewerId ?? null,
-            firstName: r.reviewer?.firstName ?? '',
-            lastName: r.reviewer?.lastName ?? '',
-            avatarUrl: r.reviewer?.avatarUrl ?? null,
-          },
-        })));
+        setReviews((reviewsRes?.data ?? []).map(mapReview));
+        setNextReviewPage(reviewsRes ? nextCollectionPage(reviewsRes) : undefined);
+        setReviewLoadError(!reviewsRes);
 
         Animated.timing(fadeAnim, { toValue: 1, duration: 350, useNativeDriver: true }).start();
       } catch (err) {
@@ -213,8 +228,32 @@ export default function ProviderProfileScreen() {
     };
 
     load();
-    return () => { mounted = false; };
+    return () => { mounted = false; reviewGenerationRef.current += 1; };
   }, [id, loadKey]);
+
+  const loadMoreReviews = async () => {
+    if (!id || !nextReviewPage || loadingReviewsRef.current) return;
+    const generation = reviewGenerationRef.current;
+    loadingReviewsRef.current = true;
+    setLoadingReviews(true);
+    setReviewLoadError(false);
+    try {
+      const page = await fetchServiceReviewsService(id, nextReviewPage, 10);
+      if (generation !== reviewGenerationRef.current) return;
+      setReviews(current => {
+        const seen = new Set(current.map(review => review.id));
+        return [...current, ...page.data.map(mapReview).filter(review => !seen.has(review.id))];
+      });
+      setNextReviewPage(nextCollectionPage(page));
+    } catch {
+      if (generation === reviewGenerationRef.current) setReviewLoadError(true);
+    } finally {
+      if (generation === reviewGenerationRef.current) {
+        loadingReviewsRef.current = false;
+        setLoadingReviews(false);
+      }
+    }
+  };
 
   const fullName = provider ? [provider.firstName, provider.lastName].filter(Boolean).join(' ') : '';
   const initials = provider ? (provider.firstName[0] ?? '') + (provider.lastName?.[0] ?? '') : '';
@@ -294,6 +333,12 @@ export default function ProviderProfileScreen() {
           end={{ x: 1, y: 1 }}
           style={s.hero}
         >
+          {provider.bannerUrl ? (
+            <Image source={{ uri: provider.bannerUrl }} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityLabel="Portada del profesional" />
+          ) : null}
+          {provider.bannerUrl ? (
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: TOKENS.scrim.medium }]} />
+          ) : null}
           <View style={s.heroBubble1} />
           <View style={s.heroBubble2} />
 
@@ -403,7 +448,7 @@ export default function ProviderProfileScreen() {
         )}
 
         {/* ── Reseñas ── */}
-        {reviews.length > 0 && (
+        {(reviews.length > 0 || reviewLoadError) && (
           <View style={[s.section, { backgroundColor: c.card, borderColor: c.border }]}>
             <Text style={[s.sectionTitle, { color: c.text }]}>
               Reseñas
@@ -454,6 +499,11 @@ export default function ProviderProfileScreen() {
                 </View>
               );
             })}
+            {nextReviewPage ? (
+              <Button label={reviewLoadError ? 'Reintentar cargar reseñas' : 'Ver más reseñas'} loading={loadingReviews} onPress={loadMoreReviews} />
+            ) : reviewLoadError ? (
+              <Button label="Reintentar reseñas" onPress={() => setLoadKey(k => k + 1)} />
+            ) : null}
           </View>
         )}
       </Animated.ScrollView>

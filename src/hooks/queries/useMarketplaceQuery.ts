@@ -1,5 +1,6 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/core/query/queryKeys';
+import { nextCollectionPage } from '@/core/api/collections';
 import {
   fetchCategoriesService,
   fetchServicesByCategoryService,
@@ -46,9 +47,11 @@ export function useProviderProfile(providerId: string | undefined) {
 }
 
 export function useServiceReviews(serviceId: string | undefined) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: QUERY_KEYS.serviceReviews(serviceId!),
-    queryFn: () => fetchServiceReviewsService(serviceId!),
+    queryFn: ({ pageParam }) => fetchServiceReviewsService(serviceId!, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: nextCollectionPage,
     enabled: !!serviceId,
   });
 }
@@ -62,9 +65,11 @@ export function useFeaturedServices() {
 }
 
 export function useMyServices() {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: QUERY_KEYS.myServices,
-    queryFn: getMyServices,
+    queryFn: ({ pageParam }) => getMyServices(pageParam),
+    initialPageParam: 1,
+    getNextPageParam: nextCollectionPage,
   });
 }
 
@@ -93,10 +98,8 @@ export function useDeleteService() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteService(id),
-    onSuccess: (_, id) => {
-      qc.setQueryData(QUERY_KEYS.myServices, (old: any) =>
-        old ? old.filter((s: any) => s.id !== id) : [],
-      );
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.myServices });
     },
   });
 }

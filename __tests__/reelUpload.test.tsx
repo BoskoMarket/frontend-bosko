@@ -77,6 +77,24 @@ describe('reels upload service', () => {
     appendSpy.mockRestore();
     expect(onProgress).toHaveBeenCalledWith(0.5);
   });
+  it('rejects a known unsupported MIME and a known duration over 60 s', () => {
+    expect(validateReelVideo({ uri: 'f', mimeType: 'video/avi' })).toMatch(/MP4 o MOV/);
+    expect(validateReelVideo({ uri: 'f', duration: 60_001 })).toMatch(/60 segundos/);
+  });
+  it('accepts a picker-reported duration of 0 (unknown; the server measures it)', () => {
+    expect(validateReelVideo({ uri: 'f', duration: 0 })).toBeNull();
+  });
+
+  it('sends an optional PNG thumbnail in the correct multipart field', async () => {
+    mockPost.mockResolvedValueOnce({ data: { videoUrl: 'https://cdn/x.mp4', thumbnailUrl: 'https://cdn/t.jpg', duration: 12 } });
+    const appendSpy = jest.spyOn(FormData.prototype, 'append');
+    await service.uploadReelVideo({ uri: 'file:///v.mp4', mimeType: 'video/mp4' }, {
+      thumbnail: { uri: 'file:///t.png', mimeType: 'image/png' },
+    });
+    expect(appendSpy).toHaveBeenCalledWith('video', expect.objectContaining({ uri: 'file:///v.mp4' }));
+    expect(appendSpy).toHaveBeenCalledWith('thumbnail', expect.objectContaining({ uri: 'file:///t.png', type: 'image/png', name: 'thumbnail.png' }));
+    appendSpy.mockRestore();
+  });
 
   it('classifies errors', () => {
     const http = (status: number) => ({ response: { status } });
@@ -88,7 +106,12 @@ describe('reels upload service', () => {
     expect(service.classifyReelUploadError(http(400))).toBe('format');
     expect(service.classifyReelUploadError({ code: 'ERR_NETWORK' })).toBe('network');
     expect(service.classifyReelUploadError({ code: 'ERR_CANCELED' })).toBe('cancelled');
-    expect(service.REEL_UPLOAD_ERROR_MESSAGES.unavailable).toBe('La subida de videos todavía no está disponible.');
+    expect(service.classifyReelUploadError({ response: { status: 429, data: { code: 'UPLOAD_BUSY' } } })).toBe('busy');
+    expect(service.classifyReelUploadError({ response: { status: 400, data: { code: 'INVALID_UPLOAD' } } })).toBe('invalidUpload');
+    expect(service.classifyReelUploadError({ response: { status: 403, data: { code: 'PROVIDER_REQUIRED' } } })).toBe('providerRequired');
+    expect(service.classifyReelUploadError({ response: { status: 400, data: { code: 'INVALID_MEDIA' } } })).toBe('format');
+    expect(service.classifyReelUploadError({ response: { status: 413, data: { code: 'PAYLOAD_TOO_LARGE' } } })).toBe('tooLarge');
+    expect(service.REEL_UPLOAD_ERROR_MESSAGES.unavailable).toBe('No pudimos subir el video. Intentá de nuevo más tarde.');
   });
 });
 
@@ -141,12 +164,61 @@ describe('ReelUploadScreen', () => {
     await waitFor(() => expect(getByText('Publicar reel')).toBeTruthy());
   });
 
-  it('shows the "not available yet" message on 404', async () => {
+  it('uploads with a chosen thumbnail and creates the reel with the returned video URL', async () => {
+    setMode('dark');
+    mockPost.mockResolvedValueOnce({ data: { videoUrl: 'https://cdn.test/video.mp4', thumbnailUrl: 'https://cdn.test/thumb.jpg', duration: 12 } })
+      .mockResolvedValueOnce({ data: { id: 'r1' } });
+    const { getByText } = render(<ReelUploadScreen />);
+    await act(async () => { fireEvent.press(getByText('Elegir de la galería')); });
+    mockPicker.library.mockResolvedValueOnce({ canceled: false, assets: [{ uri: 'file:///thumb.png', mimeType: 'image/png', fileSize: MB }] });
+    await act(async () => { fireEvent.press(getByText('Elegir miniatura (opcional)')); });
+    await act(async () => { fireEvent.press(getByText('Publicar reel')); });
+    expect(mockPost.mock.calls[0][0]).toBe('/reels/upload');
+    expect(mockPost.mock.calls[1]).toEqual(['/reels', {
+      videoUrl: 'https://cdn.test/video.mp4', description: '', tags: [],
+    }]);
+  });
+
+  it('lifts the uncertain-publication lock when a new video is picked', async () => {
+    setMode('dark');
+    mockPost.mockResolvedValueOnce({ data: { videoUrl: 'https://cdn.test/video.mp4', duration: 12 } })
+      .mockRejectedValueOnce({ message: 'Network Error' });
+    const { getByText, queryByText, findByText } = render(<ReelUploadScreen />);
+    await act(async () => { fireEvent.press(getByText('Elegir de la galería')); });
+    await act(async () => { fireEvent.press(getByText('Publicar reel')); });
+    expect(await findByText('Ver mis reels')).toBeTruthy();
+    expect(getByText('Reintentar')).toBeTruthy();
+    expect(getByText('Publicar reel').props.accessibilityState?.disabled ?? true).toBeTruthy();
+    await act(async () => { fireEvent.press(getByText('Elegir de la galería')); });
+    expect(queryByText('Ver mis reels')).toBeNull();
+  });
+
+  it('shows a retry message on 404', async () => {
     setMode('light');
     mockPost.mockRejectedValue({ response: { status: 404 } });
     const { getByText, findByText } = render(<ReelUploadScreen />);
     await act(async () => { fireEvent.press(getByText('Elegir de la galería')); });
     await act(async () => { fireEvent.press(getByText('Publicar reel')); });
-    expect(await findByText('La subida de videos todavía no está disponible.')).toBeTruthy();
+    expect(await findByText('No pudimos subir el video. Intentá de nuevo más tarde.')).toBeTruthy();
+  });
+
+  it('caches an upload that finishes after cancel and does not re-upload on the next publish', async () => {
+    setMode('dark');
+    let finishUpload: (v: unknown) => void = () => {};
+    mockPost.mockImplementationOnce(() => new Promise((res) => { finishUpload = res; }))
+      .mockResolvedValueOnce({ data: { id: 'r1' } });
+    const { getByText } = render(<ReelUploadScreen />);
+    await act(async () => { fireEvent.press(getByText('Elegir de la galería')); });
+    await act(async () => { fireEvent.press(getByText('Publicar reel')); });
+    await act(async () => { fireEvent.press(getByText('Cancelar subida')); });
+    // the server finished the upload anyway, after the user cancelled
+    await act(async () => { finishUpload({ data: { videoUrl: 'https://cdn.test/late.mp4', duration: 12 } }); });
+    await waitFor(() => expect(getByText('Publicar reel')).toBeTruthy());
+    // nothing published by the cancel itself
+    expect(mockPost).toHaveBeenCalledTimes(1);
+    expect(mockPost.mock.calls[0][0]).toBe('/reels/upload');
+    await act(async () => { fireEvent.press(getByText('Publicar reel')); });
+    expect(mockPost).toHaveBeenCalledTimes(2);
+    expect(mockPost.mock.calls[1]).toEqual(['/reels', { videoUrl: 'https://cdn.test/late.mp4', description: '', tags: [] }]);
   });
 });

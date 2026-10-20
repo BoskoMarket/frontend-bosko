@@ -28,7 +28,7 @@ export function useAddServiceWithPlanLimit() {
   return {
     ...createServiceM,
     mutateAsync: (payload: ServicePayload) => {
-      const myServicesCount = myServicesQuery.data?.length ?? 0;
+      const myServicesCount = myServicesQuery.data?.pages[0]?.total ?? 0;
       if (plan === 'FREE' && myServicesCount >= 1) {
         const limitError = new Error(
           'Llegaste al límite de servicios de tu plan. Mejorá tu plan para crear más.',
