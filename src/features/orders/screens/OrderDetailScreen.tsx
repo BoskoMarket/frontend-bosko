@@ -93,7 +93,13 @@ export default function OrderDetailScreen() {
   const { profile } = useProfile();
 
   const { data: order, isLoading: loading, refetch: refetchOrder } = useOrder(params.id);
+  // useOrder already fetches on mount: only refetch when the screen regains focus afterwards.
+  const firstFocusRef = useRef(true);
   useFocusEffect(useCallback(() => {
+    if (firstFocusRef.current) {
+      firstFocusRef.current = false;
+      return;
+    }
     if (params.id) void refetchOrder();
   }, [params.id, refetchOrder]));
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -271,7 +277,7 @@ export default function OrderDetailScreen() {
               <Text variant="bodySmall" color={tc.textSub}>
                 {isProvider
                   ? 'El trabajo fue marcado como finalizado.'
-                   : order.review ? 'Ya calificaste este servicio.' : 'El servicio fue completado. Podés calificarlo.'}
+                   : order.review ? 'El servicio fue completado.' : 'El servicio fue completado. Podés calificarlo.'}
               </Text>
             </View>
           </View>

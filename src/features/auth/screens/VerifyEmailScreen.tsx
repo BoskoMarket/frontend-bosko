@@ -64,12 +64,13 @@ export default function VerifyEmailScreen() {
     ]).start();
   }, []);
 
+  const cooldownActive = cooldown > 0;
   // Keep elapsed time correct when the app returns from the background.
   useEffect(() => {
-    if (cooldown <= 0) return;
+    if (!cooldownActive) return;
     const t = setInterval(() => setCooldown(Math.max(0, Math.ceil((resendDeadline.current - Date.now()) / 1000))), 1000);
     return () => clearInterval(t);
-  }, [cooldown]);
+  }, [cooldownActive]);
 
   const handleVerify = async () => {
     // Evita doble submit (doble tap) mandando el mismo código dos veces:
@@ -81,6 +82,7 @@ export default function VerifyEmailScreen() {
       return;
     }
     setError('');
+    setResendMessage('');
     setLoading(true);
     try {
       await verifyEmail(email, code);
@@ -111,7 +113,6 @@ export default function VerifyEmailScreen() {
     setResendMessage('');
     try {
       await resendVerificationService(email);
-      setCode('');
       setResendMessage('Si la cuenta necesita verificación, te enviamos un código nuevo. Revisá también el correo no deseado.');
     } catch (err) {
       const { statusCode } = extractApiError(err);

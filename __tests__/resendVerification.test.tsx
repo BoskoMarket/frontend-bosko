@@ -38,3 +38,14 @@ it('does not reveal account existence on a server error and keeps the cooldown',
   expect(await findByText(/No pudimos solicitar el código/)).toBeTruthy();
   expect(getByText('Reenviar en 60s')).toBeTruthy();
 });
+
+it('keeps the digits typed while the resend request was in flight', async () => {
+  let resolveResend: () => void = () => {};
+  mockResend.mockReturnValue(new Promise<void>(resolve => { resolveResend = resolve; }));
+  const { getByLabelText, findByText } = render(<VerifyEmailScreen />);
+  fireEvent.press(getByLabelText('Reenviar código de verificación'));
+  fireEvent.changeText(getByLabelText('Dígito 1 de 6'), '4');
+  await act(async () => { resolveResend(); });
+  await findByText(/Si la cuenta necesita verificación/);
+  expect(getByLabelText('Dígito 1 de 6').props.value).toBe('4');
+});

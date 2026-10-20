@@ -1,8 +1,9 @@
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { act, render } from '@testing-library/react-native';
 import OrderDetailScreen from '@/features/orders/screens/OrderDetailScreen';
 
 const mockRefetch = jest.fn();
+let mockFocus: (() => void) | null = null;
 let mockProfileId = 'client';
 let mockReview: { id: string; rating: number; comment: string } | null = null;
 
@@ -12,7 +13,7 @@ jest.mock('react-native-safe-area-context', () => ({
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn() },
   useLocalSearchParams: () => ({ id: 'o1' }),
-  useFocusEffect: (effect: () => void) => { require('react').useEffect(effect, []); },
+  useFocusEffect: (effect: () => void) => { mockFocus = effect; require('react').useEffect(effect, []); },
 }));
 jest.mock('@/components/AnimatedBackground', () => ({ AnimatedBackground: () => null }));
 jest.mock('@/features/orders/state/OrdersContext', () => ({ useOrders: () => ({}) }));
@@ -38,13 +39,20 @@ it('offers a review to the client only while the completed order has no review',
   rerender(<OrderDetailScreen />);
   expect(queryByText('Calificar servicio')).toBeNull();
   expect(getByText('Ya calificaste este servicio (4/5)')).toBeTruthy();
+  expect(queryByText('Ya calificaste este servicio.')).toBeNull();
 });
 
-it('shows the existing rating to the provider and refetches on focus', () => {
+it('shows the existing rating to the provider', () => {
   mockProfileId = 'provider';
   mockReview = { id: 'r1', rating: 5, comment: 'Excelente' };
   const { getByText, queryByText } = render(<OrderDetailScreen />);
   expect(getByText('Este servicio fue calificado (5/5)')).toBeTruthy();
   expect(queryByText('Calificar servicio')).toBeNull();
-  expect(mockRefetch).toHaveBeenCalled();
+});
+
+it('skips the first focus and refetches on later focuses', () => {
+  render(<OrderDetailScreen />);
+  expect(mockRefetch).not.toHaveBeenCalled();
+  act(() => { mockFocus?.(); });
+  expect(mockRefetch).toHaveBeenCalledTimes(1);
 });

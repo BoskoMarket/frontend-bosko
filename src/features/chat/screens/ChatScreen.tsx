@@ -63,7 +63,7 @@ import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { useOrder } from '@/hooks/queries/useOrdersQuery';
 import type { OrderStatus } from '@/features/orders/types/orders.types';
 import { ChatOrderNotice } from '../components/ChatOrderNotice';
-import { CHAT_ORDER_CLOSED_TOAST, isChatReadOnly, isOrderClosedError, isClosedSocketErrorForConversation, resolveChatOrderStatus } from '../constants/chatOrderRules';
+import { CHAT_ORDER_CLOSED_TOAST, isChatReadOnly, isOrderClosedError, isOrderClosedSocketError, resolveChatOrderStatus } from '../constants/chatOrderRules';
 import { isVideoUrl } from '../utils/mediaUrl';
 import {
   Avatar,
@@ -420,7 +420,6 @@ export default function ChatScreen() {
   const [closedByServer, setClosedByServer] = useState(false);
   const status = resolveChatOrderStatus(conversation?.orderStatus, order?.status);
   const readOnly = closedByServer || isChatReadOnly(status);
-  const noticeStatus = closedByServer && !isChatReadOnly(status) ? 'completed' : status;
   const readOnlyRef = useRef(readOnly);
   readOnlyRef.current = readOnly;
   const refetchOrderRef = useRef(refetchOrder);
@@ -431,16 +430,36 @@ export default function ChatScreen() {
   useFocusEffect(useCallback(() => {
     if (orderLoadedRef.current) void refetchOrderRef.current();
   }, []));
-  // If the backend rejects a send because the order is closed, tell the user and resync the status.
+  const currentOrderIdRef = useRef(params.id);
+  currentOrderIdRef.current = params.id;
+  const mountedRef = useRef(true);
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false; }; }, []);
+  // Resync the order query and the conversation snapshot (so the real `orderStatus` decides read-only).
+  // Shared by the HTTP 409 and socket paths; guarded against the screen moving to another order.
+  const refreshClosedOrderState = useCallback(() => {
+    void refetchOrderRef.current();
+    const orderId = params.id;
+    if (!orderId) return;
+    void fetchConversationByOrder(orderId)
+      .then(conv => {
+        if (!mountedRef.current || currentOrderIdRef.current !== orderId) return;
+        setConversation(conv);
+      })
+      .catch(() => {});
+  }, [params.id]);
+  const refreshClosedOrderStateRef = useRef(refreshClosedOrderState);
+  refreshClosedOrderStateRef.current = refreshClosedOrderState;
+  // The backend rejected our own send with ORDER_CLOSED: hard lock, tell the user and resync.
   const handleClosedOrderError = useCallback((err: unknown): boolean => {
     if (!isOrderClosedError(err)) return false;
     readOnlyRef.current = true;
     setClosedByServer(true);
     toast.error(CHAT_ORDER_CLOSED_TOAST);
-    void refetchOrderRef.current();
-    if (params.id) void fetchConversationByOrder(params.id).then(setConversation).catch(() => {});
+    refreshClosedOrderStateRef.current();
     return true;
-  }, [params.id]);
+  }, []);
+  const closedHandlerRef = useRef(handleClosedOrderError);
+  closedHandlerRef.current = handleClosedOrderError;
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [inputFocused, setInputFocused] = useState(false);
@@ -494,14 +513,11 @@ export default function ChatScreen() {
 
   useEffect(() => { setClosedByServer(false); }, [params.id]);
 
+  // Socket `error` carries no conversation id: only resync, let the real orderStatus decide.
   useEffect(() => socketService.onError(error => {
-    if (!isClosedSocketErrorForConversation(error, convIdRef.current)) return;
-    readOnlyRef.current = true;
-    setClosedByServer(true);
-    toast.error(CHAT_ORDER_CLOSED_TOAST);
-    void refetchOrderRef.current();
-    if (params.id) void fetchConversationByOrder(params.id).then(setConversation).catch(() => {});
-  }), [params.id]);
+    if (!isOrderClosedSocketError(error)) return;
+    refreshClosedOrderStateRef.current();
+  }), []);
 
   const busyRef = useRef(false);
   const pollBackoffRef = useRef(0);
@@ -679,7 +695,7 @@ export default function ChatScreen() {
       updateLastMessage(convId, `🎤 Mensaje de voz (${formatDuration(duration * 1000)})`, profile?.id ?? '');
     } catch (err) {
       console.error('Error sending audio:', err);
-      if (handleClosedOrderError(err)) return;
+      if (closedHandlerRef.current(err)) return;
       toast.error('No se pudo enviar el audio', 'Intentá de nuevo');
     } finally {
       setSendingAudio(false);
@@ -852,8 +868,14 @@ export default function ChatScreen() {
     }
   };
 
+  const clearTypingState = useCallback(() => {
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = null;
+    lastTypingEmitRef.current = 0;
+  }, []);
+
   const cancelTyping = useCallback(() => {
-    socketService.emitTyping(convIdRef.current, false);
+    if (convIdRef.current) socketService.emitTyping(convIdRef.current, false);
     if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
     typingTimerRef.current = null;
     lastTypingEmitRef.current = 0;
@@ -862,9 +884,10 @@ export default function ChatScreen() {
   useEffect(() => {
     if (!readOnly) return;
     setShowAttachMenu(false);
-    cancelTyping();
+    // Local cleanup only: never emit to a closed conversation.
+    clearTypingState();
     if (isRecordingRef.current) void cancelRecording();
-  }, [readOnly, cancelRecording, cancelTyping]);
+  }, [readOnly, cancelRecording, clearTypingState]);
 
   const handleInputChange = useCallback((text: string) => {
     if (readOnlyRef.current) return;
@@ -991,7 +1014,7 @@ export default function ChatScreen() {
               {order.service?.title ?? order.title}
             </Text>
             <Text style={styles.orderBarMeta}>
-               ORDEN #{order.id.slice(-5).toUpperCase()} · {(ORDER_STATUS_LABEL[noticeStatus as OrderStatus] ?? 'Estado no disponible').toUpperCase()}
+               ORDEN #{order.id.slice(-5).toUpperCase()} · {(ORDER_STATUS_LABEL[status as OrderStatus] ?? 'Estado no disponible').toUpperCase()}
             </Text>
           </View>
           <MaterialIcons name="chevron-right" size={18} color={TOKENS.color.signal} />
@@ -1100,7 +1123,7 @@ export default function ChatScreen() {
       {/* Input bar */}
        {!readOnly && status === 'disputed' && <ChatOrderNotice status={status} style={styles.orderNotice} />}
        {readOnly ? (
-         <ChatOrderNotice status={noticeStatus} style={{ ...styles.orderNotice, marginBottom: Math.max(insets.bottom, 12) }} />
+         <ChatOrderNotice status={status} closedByServer={closedByServer} style={{ ...styles.orderNotice, marginBottom: Math.max(insets.bottom, 12) }} />
       ) : (
       <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12), borderTopColor: tc.divider }]}>
         <View style={[

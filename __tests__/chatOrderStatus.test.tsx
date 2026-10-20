@@ -6,7 +6,8 @@ import {
   chatStatusBadge,
   isChatReadOnly,
   isOrderClosedError,
-  isClosedSocketErrorForConversation,
+  isOrderClosedSocketError,
+  CHAT_CLOSED_FALLBACK_NOTICE,
   resolveChatOrderStatus,
 } from '@/features/chat/constants/chatOrderRules';
 import { ChatOrderNotice } from '@/features/chat/components/ChatOrderNotice';
@@ -56,13 +57,20 @@ describe('chat order rules (G68)', () => {
     expect(isOrderClosedError(new Error('network'))).toBe(false);
   });
 
-  it('ignores unscoped and other-chat socket errors', () => {
+  it('treats the socket ORDER_CLOSED error as a resync hint only', () => {
     // Real contract payload: `{code, message}` without conversationId.
-    expect(isClosedSocketErrorForConversation({ code: 'ORDER_CLOSED' }, 'active')).toBe(true);
-    expect(isClosedSocketErrorForConversation({ code: 'ORDER_CLOSED' }, '')).toBe(false);
-    expect(isClosedSocketErrorForConversation({ code: 'RATE_LIMITED' }, 'active')).toBe(false);
-    expect(isClosedSocketErrorForConversation({ code: 'ORDER_CLOSED', conversationId: 'old' }, 'active')).toBe(false);
-    expect(isClosedSocketErrorForConversation({ code: 'ORDER_CLOSED', conversationId: 'active' }, 'active')).toBe(true);
+    expect(isOrderClosedSocketError({ code: 'ORDER_CLOSED' })).toBe(true);
+    expect(isOrderClosedSocketError({ code: 'RATE_LIMITED' })).toBe(false);
+  });
+
+  it('shows a generic read-only notice when the server closed the chat but the status is not terminal', () => {
+    const generic = { kind: 'readOnly', message: CHAT_CLOSED_FALLBACK_NOTICE };
+    expect(chatNoticeFor('in_progress', true)).toEqual(generic);
+    expect(chatNoticeFor(undefined, true)).toEqual(generic);
+    expect(chatNoticeFor('disputed', true)).toEqual(generic);
+    // A real terminal status keeps its own copy and open statuses stay untouched.
+    expect(chatNoticeFor('cancelled', true)?.message).toBe('Orden cancelada. El chat queda en modo lectura.');
+    expect(chatNoticeFor('in_progress', false)).toBeNull();
   });
 });
 
@@ -73,6 +81,10 @@ describe.each(['dark', 'light'] as const)('ChatOrderNotice (%s)', (mode) => {
   it('renders the read-only notice for completed and cancelled', () => {
     expect(render(<ChatOrderNotice status="completed" />).getByText('Orden finalizada. El chat queda en modo lectura.')).toBeTruthy();
     expect(render(<ChatOrderNotice status="cancelled" />).getByText('Orden cancelada. El chat queda en modo lectura.')).toBeTruthy();
+  });
+
+  it('renders the generic notice without relabeling the order', () => {
+    expect(render(<ChatOrderNotice status="in_progress" closedByServer />).getByText(CHAT_CLOSED_FALLBACK_NOTICE)).toBeTruthy();
   });
 
   it('renders the dispute notice', () => {

@@ -28,7 +28,19 @@ export function resolveChatOrderStatus(
   return isChatReadOnly(conversationStatus) ? conversationStatus : orderStatus ?? conversationStatus;
 }
 
-export function chatNoticeFor(status: OrderStatus | undefined | null): ChatOrderNotice | null {
+export const CHAT_CLOSED_FALLBACK_NOTICE = 'La orden está cerrada. El chat queda en modo lectura.';
+
+/**
+ * `closedByServer` means the backend rejected our send as ORDER_CLOSED. When the resolved status
+ * is not (yet) terminal we show a generic read-only notice instead of relabeling the order.
+ */
+export function chatNoticeFor(
+  status: OrderStatus | undefined | null,
+  closedByServer = false,
+): ChatOrderNotice | null {
+  if (closedByServer && !isChatReadOnly(status)) {
+    return { kind: 'readOnly', message: CHAT_CLOSED_FALLBACK_NOTICE };
+  }
   switch (status) {
     case 'completed':
       return { kind: 'readOnly', message: 'Orden finalizada. El chat queda en modo lectura.' };
@@ -54,15 +66,12 @@ export function isOrderClosedError(err: unknown): boolean {
   return code === 'ORDER_CLOSED';
 }
 
-/** An unscoped socket error cannot safely be attributed to the active chat. */
-export function isClosedSocketErrorForConversation(
-  error: { code: string; conversationId?: string },
-  conversationId: string,
-): boolean {
-  // The backend emits `error` as `{code, message}` without a conversation id; when an id
-  // is present it must match the open chat.
-  if (error.code !== 'ORDER_CLOSED' || !conversationId) return false;
-  return error.conversationId === undefined || error.conversationId === conversationId;
+/**
+ * The backend emits socket `error` as `{code, message}` with no conversation id, so it cannot be
+ * attributed to the open chat. It is only a hint to resync the order/conversation, never a lock.
+ */
+export function isOrderClosedSocketError(error: { code: string }): boolean {
+  return error.code === 'ORDER_CLOSED';
 }
 
 /** Small badge for the conversations list; null when the status needs no marker. */
