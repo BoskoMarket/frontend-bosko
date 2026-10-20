@@ -23,6 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCategories, useServicesByCategory } from '@/hooks/queries/useMarketplaceQuery';
 import type { ServiceSummary } from '@/types/services';
+import { getProviderRouteId } from '@/features/servicesUser/services/catalog';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { GRADIENTS, Skeleton, TOKENS, useIsDark, useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { RadialBlob } from '@/core/components/RadialBlob';
@@ -242,9 +243,11 @@ export default function CategoryServicesScreen() {
   const hasMore       = Boolean(servicesQuery.hasNextPage);
 
   const handleProviderPress = useCallback((item: ServiceSummary) => {
+    const providerId = getProviderRouteId(item);
+    if (!providerId) return;
     router.push({
       pathname: '/(tabs)/services/provider/[id]',
-      params: { id: item.providerId ?? item.id },
+      params: { id: providerId },
     });
   }, [router]);
 
