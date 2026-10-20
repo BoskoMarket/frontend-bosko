@@ -201,4 +201,24 @@ describe('ReelUploadScreen', () => {
     await act(async () => { fireEvent.press(getByText('Publicar reel')); });
     expect(await findByText('No pudimos subir el video. Intentá de nuevo más tarde.')).toBeTruthy();
   });
+
+  it('caches an upload that finishes after cancel and does not re-upload on the next publish', async () => {
+    setMode('dark');
+    let finishUpload: (v: unknown) => void = () => {};
+    mockPost.mockImplementationOnce(() => new Promise((res) => { finishUpload = res; }))
+      .mockResolvedValueOnce({ data: { id: 'r1' } });
+    const { getByText } = render(<ReelUploadScreen />);
+    await act(async () => { fireEvent.press(getByText('Elegir de la galería')); });
+    await act(async () => { fireEvent.press(getByText('Publicar reel')); });
+    await act(async () => { fireEvent.press(getByText('Cancelar subida')); });
+    // the server finished the upload anyway, after the user cancelled
+    await act(async () => { finishUpload({ data: { videoUrl: 'https://cdn.test/late.mp4', duration: 12 } }); });
+    await waitFor(() => expect(getByText('Publicar reel')).toBeTruthy());
+    // nothing published by the cancel itself
+    expect(mockPost).toHaveBeenCalledTimes(1);
+    expect(mockPost.mock.calls[0][0]).toBe('/reels/upload');
+    await act(async () => { fireEvent.press(getByText('Publicar reel')); });
+    expect(mockPost).toHaveBeenCalledTimes(2);
+    expect(mockPost.mock.calls[1]).toEqual(['/reels', { videoUrl: 'https://cdn.test/late.mp4', description: '', tags: [] }]);
+  });
 });
