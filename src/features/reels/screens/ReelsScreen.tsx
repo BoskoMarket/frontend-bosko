@@ -895,7 +895,7 @@ export default function ReelsScreen() {
               color={TOKENS.onMedia.textMuted}
             />
             <Text style={s.emptyTitle}>
-              {isFollowingFeed ? 'Todavía no seguís a nadie' : 'Sin reels todavía'}
+              {isFollowingFeed ? 'Nada nuevo de quienes seguís' : 'Sin reels todavía'}
             </Text>
             <Text style={s.emptySubtitle}>
               {isFollowingFeed

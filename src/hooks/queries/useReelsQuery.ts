@@ -1,4 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/core/query/queryKeys';
 import {
   getReelsFeed,
   toggleLikeReel,
@@ -15,8 +16,8 @@ import {
 } from '@/features/reels/services/reels.service';
 
 const REELS_KEY = ['reels'] as const;
-export const REELS_FEED_KEY = ['reels', 'feed'] as const;
-const reelsFeedKey = (feed?: ReelsFeedType) => [...REELS_FEED_KEY, feed ?? 'foryou'] as const;
+export const REELS_FEED_KEY = QUERY_KEYS.reelsFeedAll;
+const reelsFeedKey = (feed?: ReelsFeedType) => QUERY_KEYS.reelsFeed(feed ?? 'foryou');
 const MY_REELS_KEY = ['reels', 'me'] as const;
 const reelCommentsKey = (reelId: string) => ['reels', reelId, 'comments'] as const;
 

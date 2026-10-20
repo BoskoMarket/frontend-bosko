@@ -1,23 +1,24 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { followUser, unfollowUser } from '@/features/users/services/users';
-import { REELS_FEED_KEY } from '@/hooks/queries/useReelsQuery';
+import { QUERY_KEYS } from '@/core/query/queryKeys';
 import { applyFollowToFeed } from '@/features/reels/utils/reelFollow';
 
-/** Optimistically mirrors the follow state onto every cached reels feed ("for you" + "following"). */
+/**
+ * Optimistically mirrors the follow state onto every cached reels feed ("for you" + "following").
+ * No cancelQueries: it would abort an in-flight fetchNextPage. Rollback applies the inverse flag
+ * instead of restoring snapshots, so concurrent optimistic updates (likes) survive.
+ */
 function useReelFollowSync() {
   const qc = useQueryClient();
+  const apply = (userId: string, isFollowing: boolean) =>
+    qc.setQueriesData({ queryKey: QUERY_KEYS.reelsFeedAll }, (old: any) =>
+      applyFollowToFeed(old, userId, isFollowing),
+    );
   return {
-    onMutate: async (userId: string, isFollowing: boolean) => {
-      await qc.cancelQueries({ queryKey: REELS_FEED_KEY });
-      const previous = qc.getQueriesData({ queryKey: REELS_FEED_KEY });
-      qc.setQueriesData({ queryKey: REELS_FEED_KEY }, (old: any) =>
-        applyFollowToFeed(old, userId, isFollowing),
-      );
-      return { previous };
-    },
-    rollback: (previous?: ReturnType<typeof qc.getQueriesData>) => {
-      previous?.forEach(([key, data]) => qc.setQueryData(key, data));
-    },
+    onMutate: (userId: string, isFollowing: boolean) => apply(userId, isFollowing),
+    rollback: (userId: string, isFollowing: boolean) => apply(userId, !isFollowing),
+    // Membership of the "following" feed changed: refetch it.
+    onSettled: () => qc.invalidateQueries({ queryKey: QUERY_KEYS.reelsFeed('following') }),
   };
 }
 
@@ -26,7 +27,8 @@ export function useFollowUser() {
   return useMutation({
     mutationFn: (userId: string) => followUser(userId),
     onMutate: (userId) => sync.onMutate(userId, true),
-    onError: (_e, _id, ctx) => sync.rollback(ctx?.previous),
+    onError: (_e, userId) => sync.rollback(userId, true),
+    onSettled: sync.onSettled,
   });
 }
 
@@ -35,6 +37,7 @@ export function useUnfollowUser() {
   return useMutation({
     mutationFn: (userId: string) => unfollowUser(userId),
     onMutate: (userId) => sync.onMutate(userId, false),
-    onError: (_e, _id, ctx) => sync.rollback(ctx?.previous),
+    onError: (_e, userId) => sync.rollback(userId, false),
+    onSettled: sync.onSettled,
   });
 }

@@ -52,3 +52,16 @@ describe('adaptPlan', () => {
     expect(plans[0].price).toBe(10);
   });
 });
+
+describe('adaptPlan features payload', () => {
+  it('drops non-string features and keeps the derived maxServices benefit', () => {
+    const plan = adaptPlan({
+      id: 'p2',
+      name: 'Pro',
+      price: { amount: 10, currency: 'ARS' },
+      maxServices: 10,
+      features: [{ key: 'x' }, '', 'Soporte prioritario'] as unknown as string[],
+    } as any);
+    expect(plan.features).toEqual(['Hasta 10 servicios', 'Soporte prioritario']);
+  });
+});

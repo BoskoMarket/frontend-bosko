@@ -92,6 +92,12 @@ function deriveFeatures(dto: PlanDto): string[] {
 }
 
 /** Adapts a backend PlanDto (or an already client-shaped Plan) into the client Plan. */
+/** Keeps only string features from the payload, plus the derived ones (no duplicates). */
+function mergeFeatures(raw: unknown, derived: string[]): string[] {
+  const given = Array.isArray(raw) ? raw.filter((f): f is string => typeof f === 'string' && f.trim() !== '') : [];
+  return [...new Set([...derived, ...given])];
+}
+
 export function adaptPlan(raw: PlanDto | Plan): Plan {
   const dto = raw as PlanDto;
   const priceObj = dto.price && typeof dto.price === 'object' ? dto.price : null;
@@ -105,7 +111,7 @@ export function adaptPlan(raw: PlanDto | Plan): Plan {
     price: toAmount(priceObj ? priceObj.amount : dto.price),
     currency: priceObj?.currency ?? dto.currency ?? DEFAULT_CURRENCY,
     interval: interval === 'month' || interval === 'year' ? interval : undefined,
-    features: Array.isArray(rawFeatures) ? rawFeatures : deriveFeatures(dto),
+    features: mergeFeatures(rawFeatures, deriveFeatures(dto)),
     highlighted: (raw as Plan).highlighted,
   };
 }
