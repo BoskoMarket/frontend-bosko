@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Animated,
   Dimensions,
+  type LayoutChangeEvent,
   FlatList,
   KeyboardAvoidingView,
   Modal,
@@ -309,7 +310,7 @@ function BeforeAfterSlider({ before, after }: { before: string; after: string })
 
       {/* ANTES — clippeado por la posición del divider */}
       <Animated.View style={[StyleSheet.absoluteFill, { width: dividerX, overflow: 'hidden' }]}>
-        <Image source={{ uri: before }} style={{ width: W, height: H }} contentFit="cover" />
+        <Image source={{ uri: before }} style={{ width: W, height: '100%' }} contentFit="cover" />
         <View style={[s.baLabel, s.baLabelLeft]}>
           <Text style={s.baLabelText}>ANTES</Text>
         </View>
@@ -332,11 +333,14 @@ const ReelItem = React.memo(function ReelItem({
   isActive,
   currentUserId,
   onNotInterested,
+  pageHeight,
 }: {
   reel: Reel;
   isActive: boolean;
   currentUserId?: string;
   onNotInterested: (id: string) => void;
+  /** Measured height of the list viewport: one reel fills it exactly. */
+  pageHeight: number;
 }) {
   const insets = useSafeAreaInsets();
   const { mutate: deleteReelMutate } = useDeleteReel();
@@ -557,7 +561,7 @@ const ReelItem = React.memo(function ReelItem({
   };
 
   return (
-    <View style={s.reel}>
+    <View style={[s.reel, { height: pageHeight }]}>
       {/* ── Media ──────────────────────────────────────────────────────── */}
       {isBeforeAfter ? (
         <BeforeAfterSlider
@@ -807,6 +811,14 @@ export default function ReelsScreen() {
     },
   ]);
 
+  // Page height = the list's real viewport, measured on layout. `Dimensions.get('window')` does not
+  // match it on Android edge-to-edge (system bars), which cut the reel or showed the next one.
+  const [pageH, setPageH] = useState(H);
+  const handleListLayout = useCallback((e: LayoutChangeEvent) => {
+    const h = Math.round(e.nativeEvent.layout.height);
+    if (h > 0) setPageH((prev) => (prev === h ? prev : h));
+  }, []);
+
   // renderItem depends on activeIndex — React.memo on ReelItem ensures only
   // the two items whose isActive prop actually flipped get re-rendered.
   const renderItem = useCallback(
@@ -816,16 +828,17 @@ export default function ReelsScreen() {
         isActive={index === activeIndex}
         currentUserId={currentUserId}
         onNotInterested={handleNotInterested}
+        pageHeight={pageH}
       />
     ),
-    [activeIndex, currentUserId, handleNotInterested],
+    [activeIndex, currentUserId, handleNotInterested, pageH],
   );
 
   const keyExtractor = useCallback((item: Reel) => item.id, []);
 
   const getItemLayout = useCallback(
-    (_: any, index: number) => ({ length: H, offset: H * index, index }),
-    [],
+    (_: any, index: number) => ({ length: pageH, offset: pageH * index, index }),
+    [pageH],
   );
 
   if (isLoading) {
@@ -861,7 +874,8 @@ export default function ReelsScreen() {
         renderItem={renderItem}
         pagingEnabled
         showsVerticalScrollIndicator={false}
-        snapToInterval={H}
+        snapToInterval={pageH}
+        onLayout={handleListLayout}
         snapToAlignment="start"
         decelerationRate="fast"
         getItemLayout={getItemLayout}
@@ -882,13 +896,13 @@ export default function ReelsScreen() {
         }
         ListFooterComponent={
           isFetchingNextPage ? (
-            <View style={s.footerLoader}>
+            <View style={[s.footerLoader, { height: pageH }]}>
               <ActivityIndicator color={TOKENS.onMedia.icon} />
             </View>
           ) : null
         }
         ListEmptyComponent={
-          <View style={s.emptyContainer}>
+          <View style={[s.emptyContainer, { height: pageH }]}>
             <Ionicons
               name={isFollowingFeed ? 'people-outline' : 'videocam-off-outline'}
               size={56}
