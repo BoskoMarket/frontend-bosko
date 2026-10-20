@@ -21,10 +21,12 @@ async function readSubscriptions(): Promise<Subscription[]> {
 export interface Plan {
   id: string;
   name: string;
-  description: string;
+  /** Commercial copy; the backend does not send it, so it may be absent. */
+  description?: string;
   price: number;
   currency: string;
-  interval: 'month' | 'year';
+  /** Billing period; the backend does not send it, so it may be absent. */
+  interval?: 'month' | 'year';
   features: string[];
   highlighted?: boolean;
 }
@@ -52,10 +54,66 @@ export interface PaginatedSubscriptions {
   limit: number;
 }
 
+/** Backend PlanDto (GET /plans). Benefit fields beyond maxServices are read generically. */
+export interface PlanDto {
+  id: string;
+  name?: string;
+  type?: string;
+  price?: { amount?: number | string; currency?: string } | number | string | null;
+  currency?: string;
+  maxServices?: number | null;
+  [benefit: string]: unknown;
+}
+
+const DEFAULT_CURRENCY = 'ARS';
+
+/**
+ * UI labels for boolean benefit fields of PlanDto. Only listed keys are shown:
+ * unknown backend fields are skipped instead of rendering raw key names.
+ * TODO: fill in once the backend PlanDto benefit field names are confirmed.
+ */
+const BENEFIT_LABELS: Record<string, string> = {};
+
+function toAmount(value: unknown): number {
+  const n = typeof value === 'string' ? parseFloat(value) : typeof value === 'number' ? value : NaN;
+  return Number.isFinite(n) ? n : 0;
+}
+
+function deriveFeatures(dto: PlanDto): string[] {
+  const features: string[] = [];
+  const max = dto.maxServices;
+  if (typeof max === 'number' && Number.isFinite(max)) {
+    features.push(max === 1 ? 'Hasta 1 servicio' : `Hasta ${max} servicios`);
+  }
+  for (const [key, label] of Object.entries(BENEFIT_LABELS)) {
+    if (dto[key] === true) features.push(label);
+  }
+  return features;
+}
+
+/** Adapts a backend PlanDto (or an already client-shaped Plan) into the client Plan. */
+export function adaptPlan(raw: PlanDto | Plan): Plan {
+  const dto = raw as PlanDto;
+  const priceObj = dto.price && typeof dto.price === 'object' ? dto.price : null;
+  const rawFeatures = (raw as Plan).features;
+  const interval = (raw as Plan).interval;
+  const description = (raw as Plan).description;
+  return {
+    id: String(dto.id),
+    name: dto.name ?? dto.type ?? '',
+    description: typeof description === 'string' && description ? description : undefined,
+    price: toAmount(priceObj ? priceObj.amount : dto.price),
+    currency: priceObj?.currency ?? dto.currency ?? DEFAULT_CURRENCY,
+    interval: interval === 'month' || interval === 'year' ? interval : undefined,
+    features: Array.isArray(rawFeatures) ? rawFeatures : deriveFeatures(dto),
+    highlighted: (raw as Plan).highlighted,
+  };
+}
+
 /** Listar planes disponibles — GET /plans */
 export async function fetchPlans(): Promise<Plan[]> {
-  const { data } = await api.get<Plan[]>('/plans');
-  return readCollection<Plan>(data);
+  const { data } = await api.get<PlanDto[]>('/plans');
+  return readCollection<PlanDto>(data).map(adaptPlan);
 }
 
 /** Plan actual del usuario — GET /plans/my-plan */
