@@ -9,18 +9,21 @@ import {
   reportReel,
   getMyReels,
   updateReel,
+  type ReelsFeedType,
   type CreateReelPayload,
   type UpdateReelPayload,
 } from '@/features/reels/services/reels.service';
 
 const REELS_KEY = ['reels'] as const;
+export const REELS_FEED_KEY = ['reels', 'feed'] as const;
+const reelsFeedKey = (feed?: ReelsFeedType) => [...REELS_FEED_KEY, feed ?? 'foryou'] as const;
 const MY_REELS_KEY = ['reels', 'me'] as const;
 const reelCommentsKey = (reelId: string) => ['reels', reelId, 'comments'] as const;
 
-export function useReelsFeed() {
+export function useReelsFeed(feed?: ReelsFeedType) {
   return useInfiniteQuery({
-    queryKey: REELS_KEY,
-    queryFn: ({ pageParam = 1 }) => getReelsFeed(pageParam as number, 10),
+    queryKey: reelsFeedKey(feed),
+    queryFn: ({ pageParam = 1 }) => getReelsFeed(pageParam as number, 10, feed),
     initialPageParam: 1,
     getNextPageParam: (lastPage: any[], allPages) =>
       lastPage.length === 10 ? allPages.length + 1 : undefined,
@@ -32,9 +35,9 @@ export function useToggleLikeReel() {
   return useMutation({
     mutationFn: (reelId: string) => toggleLikeReel(reelId),
     onMutate: async (reelId) => {
-      await qc.cancelQueries({ queryKey: REELS_KEY });
-      const previous = qc.getQueryData(REELS_KEY);
-      qc.setQueryData(REELS_KEY, (old: any) => {
+      await qc.cancelQueries({ queryKey: REELS_FEED_KEY });
+      const previous = qc.getQueriesData({ queryKey: REELS_FEED_KEY });
+      qc.setQueriesData({ queryKey: REELS_FEED_KEY }, (old: any) => {
         if (!old) return old;
         return {
           ...old,
@@ -50,7 +53,7 @@ export function useToggleLikeReel() {
       return { previous };
     },
     onError: (_err, _vars, ctx) => {
-      qc.setQueryData(REELS_KEY, ctx?.previous);
+      ctx?.previous.forEach(([key, data]) => qc.setQueryData(key, data));
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: REELS_KEY });

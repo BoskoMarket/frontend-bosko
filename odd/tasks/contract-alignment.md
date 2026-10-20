@@ -29,7 +29,7 @@ Out (backend or product decision still pending): C04 delete account, C10 `/app/c
 | T2 | C02 | Adapt `GET /search` results (services `provider.id`, providers firstName/lastName/avatarUrl, price object) | delegated | ✅ | see commit log (T2); tsc ok, 36/36 suites, lint:ds 0 |
 | T3 | C05 | Plan model adapter for `PlanDto` (price `{amount,currency}`, benefits), no crash on `features` | delegated | ✅ | see commit log (T3); tsc ok, 38/38 suites, lint:ds 0 |
 | T4 | C20 | Chat: detect video from URL pathname (ignore signed query string) | inline | ✅ | see commit log (T4); `isVideoUrl` test 4/4, tsc ok |
-| T5 | C19 | Reels "Siguiendo" tab sends `feed=following` (queryKey), read root `isFollowing` | delegated | ⏳ | |
+| T5 | C19 | Reels "Siguiendo" tab sends `feed=following` (queryKey), read root `isFollowing` | delegated | ✅ | see commit log (T5); tsc ok, 39/39 suites, lint:ds 0; not device-tested |
 | T6 | C15 C16 | Service form: title 10–255 / DTO lengths validated before submit; category locked in edit mode | delegated | ⏳ | |
 | T7 | C18 | Quote request: scheduledDate as a real date (ISO) instead of free text | delegated | ⏳ | |
 | T8 | C22 C23 | Response types: `imageUrls` on service image upload; normalize order mutation responses | delegated | ⏳ | |
@@ -54,3 +54,4 @@ Out (backend or product decision still pending): C04 delete account, C10 `/app/c
 - 2026-10-20: T2 done — `adaptSearchResponse` (services via `mapService`, providers name/avatar), SearchPage typed, no empty-id navigation. Note: tsc may need `NODE_OPTIONS=--max-old-space-size=6144`. Next: T3.
 - 2026-10-20: T4 done (inline, in parallel with T3 on separate files) — `chat/utils/mediaUrl.isVideoUrl` checks pathname only.
 - 2026-10-20: T3 done — `adaptPlan` (price object, `maxServices` → "Hasta N servicios"), interval/description optional and hidden when absent. Review fix: unknown benefit keys are skipped (no raw English labels); `BENEFIT_LABELS` empty until backend PlanDto benefit names are confirmed (backend repo not accessible, `/plans` needs JWT). Next: T5.
+- 2026-10-20: T5 done — feed key `['reels','feed','foryou'|'following']`, `feed=following` param, tab resets index/scroll, `getReelIsFollowing` (root first), optimistic follow across both feeds with rollback. Known: unfollowed author stays in "Siguiendo" until refetch. Next: T6.

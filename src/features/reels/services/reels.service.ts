@@ -22,8 +22,12 @@ export interface Reel {
   likes: number;
   comments: number;
   isLiked: boolean;
+  /** Whether the current user follows the reel author (root of ReelDto). */
+  isFollowing?: boolean;
   createdAt: string;
 }
+
+export type ReelsFeedType = 'following';
 
 export interface ReelComment {
   id: string;
@@ -50,9 +54,11 @@ export interface UpdateReelPayload {
   tags?: string[];
 }
 
-/** GET /reels?page=1&limit=10 */
-export async function getReelsFeed(page = 1, limit = 10): Promise<Reel[]> {
-  const res = await api.get<Reel[]>('/reels', { params: { page, limit } });
+/** GET /reels?page=1&limit=10[&feed=following] — omit `feed` for the default "for you" feed */
+export async function getReelsFeed(page = 1, limit = 10, feed?: ReelsFeedType): Promise<Reel[]> {
+  const params: Record<string, unknown> = { page, limit };
+  if (feed === 'following') params.feed = 'following';
+  const res = await api.get<Reel[]>('/reels', { params });
   return res.data;
 }
 
