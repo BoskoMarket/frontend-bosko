@@ -22,7 +22,7 @@ Blocked (needs backend or a product decision): C04 delete account (BR05), C11 pa
 | F1 | C10 | `/app/config`: remember a 404 as "not supported" for the session (no repeated requests), keep fail-open on transient errors | inline | ✅ | see commit log (F1); tsc ok, 49/49 suites (590), lint:ds 0 |
 | F2 | C21 | Chat notifications without `orderId`: resolve `conversationId → orderId` from the cached conversations (or fetch) before routing; same in the push tap handler | delegated | ⏳ | |
 | F3 | test gap | Reel upload: test that a finished upload after cancel is cached and not re-uploaded | delegated | ⏳ | |
-| F4 | — | `odd/backend-requests.md`: mark BR01–BR04 shipped, add new requests (pending-orders count, PlanDto benefits + my-plan shape, push `orderId`, main photo replace, admin KYC list, OpenAPI export) | inline | ⏳ | |
+| F4 | — | `odd/backend-requests.md`: mark BR01–BR04 shipped, add new requests (pending-orders count, PlanDto benefits + my-plan shape, push `orderId`, main photo replace, admin KYC list, OpenAPI export) | inline | ✅ | see commit log (F4); BR01–BR04 🟡, BR05/BR06 risk notes, BR07–BR12 added |
 
 ## Acceptance criteria
 
