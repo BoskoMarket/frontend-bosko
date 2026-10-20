@@ -147,8 +147,12 @@ export default function ServiceFormScreen() {
     }
   };
 
+  // A title already published (possibly shorter than today's minimum) is kept and not re-sent.
+  const titleUnchanged = isEditing && form.title.trim() === (selectedService?.title ?? '').trim();
   const fieldErrors = validateServiceFields({ title: form.title, description: form.description });
+  if (titleUnchanged) delete fieldErrors.title;
   const titleError = (submitAttempted || form.title.length > 0) ? fieldErrors.title : undefined;
+  const descriptionError = (submitAttempted || form.description.length > 0) ? fieldErrors.description : undefined;
 
   const validateForm = () => {
     setSubmitAttempted(true);
@@ -164,7 +168,8 @@ export default function ServiceFormScreen() {
         return false;
       }
     }
-    if (!form.categoryId) {
+    // Category cannot change after publishing, so it is only required when creating.
+    if (!isEditing && !form.categoryId) {
       setError("Seleccioná una categoría.");
       return false;
     }
@@ -188,7 +193,8 @@ export default function ServiceFormScreen() {
     try {
       const payload = await buildPayload();
       if (isEditing && selectedService?.id) {
-        const { categoryId: _cat, ...editPayload } = payload;
+        const { categoryId: _cat, title, ...rest } = payload;
+        const editPayload = titleUnchanged ? rest : { ...rest, title };
         await updateServiceM.mutateAsync({ id: selectedService.id, payload: editPayload });
         if (imageUri?.startsWith("file")) {
           try {
@@ -261,7 +267,7 @@ export default function ServiceFormScreen() {
             onChangeText={(t) => setForm((p) => ({ ...p, title: t }))}
           />
           <Text variant="caption" color={tc.textMuted}>
-            {form.title.trim().length}/{TITLE_MAX} caracteres (mínimo {TITLE_MIN})
+            {form.title.length}/{TITLE_MAX} caracteres (mínimo {TITLE_MIN})
           </Text>
 
           <Input
@@ -271,6 +277,7 @@ export default function ServiceFormScreen() {
             multiline
             numberOfLines={5}
             textAlignVertical="top"
+            error={descriptionError}
             onChangeText={(t) => setForm((p) => ({ ...p, description: t }))}
           />
           <Text variant="caption" color={tc.textMuted}>

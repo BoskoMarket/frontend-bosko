@@ -1,10 +1,25 @@
 import {
   availableSlots,
+  isSlotStillAvailable,
   buildDayOptions,
   toScheduledIso,
   TIME_SLOTS,
   DEFAULT_SLOT_HOUR,
 } from '@/features/orders/utils/scheduledDate';
+
+describe('slot lead time', () => {
+  it('hides a slot starting within the minimum notice', () => {
+    const today = new Date(2026, 9, 20);
+    expect(availableSlots(today, new Date(2026, 9, 20, 8, 59)).map((s) => s.hour)).toEqual([14, 19]);
+    expect(availableSlots(today, new Date(2026, 9, 20, 8, 20)).map((s) => s.hour)).toEqual([9, 14, 19]);
+  });
+
+  it('re-checks a stale selection at submit time', () => {
+    const today = new Date(2026, 9, 20);
+    expect(isSlotStillAvailable(today, 9, new Date(2026, 9, 20, 8, 0))).toBe(true);
+    expect(isSlotStillAvailable(today, 9, new Date(2026, 9, 20, 9, 20))).toBe(false);
+  });
+});
 
 describe('availableSlots', () => {
   it('drops past slots only for today', () => {

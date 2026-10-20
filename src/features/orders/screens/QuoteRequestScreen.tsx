@@ -31,7 +31,7 @@ import {
   dialog, FONT_FAMILY } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
-import { availableSlots, buildDayOptions, toScheduledIso, DEFAULT_SLOT_HOUR } from '../utils/scheduledDate';
+import { availableSlots, buildDayOptions, isSlotStillAvailable, toScheduledIso, DEFAULT_SLOT_HOUR } from '../utils/scheduledDate';
 
 export default function QuoteRequestScreen() {
   const tc = useThemeColors();
@@ -41,8 +41,9 @@ export default function QuoteRequestScreen() {
   const [message, setMessage] = useState('');
   const [address, setAddress] = useState('');
   // Optional desired date: no day selected => scheduledDate undefined. Slot defaults to 9 h.
-  // Past slots are hidden for today; today is dropped once no slot is left.
-  const now = useMemo(() => new Date(), []);
+  // Slots closer than MIN_LEAD_MINUTES are hidden; today is dropped once no slot is left.
+  // `now` is refreshed on every day tap and re-checked on submit, so a long-open screen can't send a past time.
+  const [now, setNow] = useState(() => new Date());
   const dayOptions = useMemo(
     () => buildDayOptions(now, 14).filter((d) => availableSlots(d.date, now).length > 0),
     [now],
@@ -57,8 +58,10 @@ export default function QuoteRequestScreen() {
       setSelectedDayKey(null);
       return;
     }
+    const fresh = new Date();
+    setNow(fresh);
     const day = dayOptions.find((d) => d.key === key);
-    const daySlots = day ? availableSlots(day.date, now) : [];
+    const daySlots = day ? availableSlots(day.date, fresh) : [];
     setSelectedDayKey(key);
     if (!daySlots.some((s) => s.hour === slotHour)) setSlotHour(daySlots[0]?.hour ?? DEFAULT_SLOT_HOUR);
   };
@@ -72,6 +75,13 @@ export default function QuoteRequestScreen() {
 
     if (!params.serviceId) {
       dialog.fromAlert('Error', 'No se encontró el servicio. Volvé e intentá nuevamente.');
+      return;
+    }
+
+    if (selectedDay && !isSlotStillAvailable(selectedDay.date, slotHour, new Date())) {
+      setNow(new Date());
+      setSelectedDayKey(null);
+      dialog.fromAlert('Horario no disponible', 'El horario elegido ya pasó o está muy cerca. Elegí otro día u horario.');
       return;
     }
 

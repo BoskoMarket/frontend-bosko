@@ -47,10 +47,19 @@ export function toScheduledIso(day: Date, slotHour: number): string {
 }
 
 /** Slots still ahead of `now` for the given day (only today drops past hours). */
-export function availableSlots(day: Date, now: Date): readonly TimeSlot[] {
-  const isToday =
-    day.getFullYear() === now.getFullYear() &&
-    day.getMonth() === now.getMonth() &&
-    day.getDate() === now.getDate();
-  return isToday ? TIME_SLOTS.filter((s) => s.hour > now.getHours()) : TIME_SLOTS;
+export function availableSlots(day: Date, now: Date, leadMinutes = MIN_LEAD_MINUTES): readonly TimeSlot[] {
+  const earliest = now.getTime() + leadMinutes * 60_000;
+  return TIME_SLOTS.filter((s) => slotStart(day, s.hour).getTime() >= earliest);
+}
+
+/** Minimum notice before a slot starts; closer slots are not offered nor sent. */
+export const MIN_LEAD_MINUTES = 30;
+
+function slotStart(day: Date, hour: number): Date {
+  return new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour, 0, 0, 0);
+}
+
+/** True while the chosen day + slot is still at least `leadMinutes` ahead of `now`. */
+export function isSlotStillAvailable(day: Date, hour: number, now: Date, leadMinutes = MIN_LEAD_MINUTES): boolean {
+  return slotStart(day, hour).getTime() >= now.getTime() + leadMinutes * 60_000;
 }

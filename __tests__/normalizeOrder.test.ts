@@ -29,3 +29,12 @@ describe('normalizeOrder', () => {
     expect(normalizeOrder(detail)).toEqual(detail);
   });
 });
+
+describe('normalizeOrder unknown statuses', () => {
+  it('maps REJECTED to cancelled and unknown values to a closed state', () => {
+    expect(normalizeOrder({ id: 'o1', status: 'REJECTED' }).status).toBe('cancelled');
+    expect(normalizeOrder({ id: 'o2', status: 'ARCHIVED' }).status).toBe('cancelled');
+    expect(normalizeOrder({ id: 'o3', status: 'IN_PROGRESS' }).status).toBe('in_progress');
+    expect(normalizeOrder({ id: 'o4' }).status).toBeUndefined();
+  });
+});
