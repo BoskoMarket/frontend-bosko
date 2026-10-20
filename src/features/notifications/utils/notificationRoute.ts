@@ -2,6 +2,11 @@ import type { Notification } from '../services/notifications.service';
 
 const CHAT_TYPES = new Set(['new_message', 'chat', 'message']);
 
+/** Chat notification types, case-insensitive (the backend sends NEW_MESSAGE). */
+export function isChatNotificationType(type: unknown): boolean {
+  return typeof type === 'string' && CHAT_TYPES.has(type.toLowerCase());
+}
+
 /**
  * Destination for a tapped notification, or null when it has none.
  *
@@ -21,4 +26,27 @@ export function getNotificationRoute(item: Notification): string | null {
   if (type.startsWith('identity') || type === 'background_check') return '/(tabs)/profile/become-provider';
   if (type === 'payment_released') return '/(tabs)/orders';
   return null;
+}
+
+export const CHAT_LIST_ROUTE = '/(tabs)/chat';
+
+/** Resolves a conversation id to the id of its order, or null when unknown. */
+export type OrderIdLookup = (conversationId: string) => Promise<string | null | undefined>;
+
+/**
+ * Same as `getNotificationRoute`, but a chat notification that carries only
+ * `data.conversationId` (the backend's NEW_MESSAGE payload) is resolved to its order first.
+ * Never throws: an unknown conversation or a failing lookup falls back to the chat list.
+ */
+export async function resolveNotificationRoute(item: Notification, lookup: OrderIdLookup): Promise<string | null> {
+  const route = getNotificationRoute(item);
+  if (route !== CHAT_LIST_ROUTE || !CHAT_TYPES.has(item.type.toLowerCase())) return route;
+  const conversationId = item.data?.conversationId;
+  if (!conversationId || item.data?.orderId) return route;
+  try {
+    const orderId = await lookup(String(conversationId));
+    return orderId ? `/chat/${orderId}` : CHAT_LIST_ROUTE;
+  } catch {
+    return CHAT_LIST_ROUTE;
+  }
 }
