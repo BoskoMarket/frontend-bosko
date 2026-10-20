@@ -40,30 +40,42 @@ beforeEach(() => {
 });
 
 describe('ClientHome', () => {
-  it('explains Bosko and routes the main actions', () => {
+  it('shows the headline and routes the main actions', () => {
     const { getByText, getAllByText, getByLabelText } = render(<ClientHome />);
-    expect(getByText('Encontrá quien lo haga. O hacelo vos.')).toBeTruthy();
+    expect(getByText('Encontrá quien lo haga.')).toBeTruthy();
+    expect(getByText('O hacelo vos.')).toBeTruthy();
     expect(getByText('Cómo funciona')).toBeTruthy();
     expect(getByText('Identidad verificada')).toBeTruthy();
 
     fireEvent.press(getByLabelText('¿Qué necesitás? Electricista, pintor…'));
     expect(router.push).toHaveBeenCalledWith('/search');
 
-    fireEvent.press(getByText('Buscar servicios →'));
+    fireEvent.press(getByText('Buscar ahora'));
     expect(router.push).toHaveBeenLastCalledWith('/search');
 
-    fireEvent.press(getByText('Empezar a ofrecer →'));
-    expect(router.push).toHaveBeenCalledWith('/(tabs)/profile/become-provider');
+    fireEvent.press(getByText('Todas'));
+    expect(router.push).toHaveBeenLastCalledWith('/(tabs)/services');
 
     fireEvent.press(getAllByText('Ofrecer').at(-1)!);
     expect(router.push).toHaveBeenLastCalledWith('/(tabs)/profile/become-provider');
   });
 
-  it('shows categories and popular services, keeping the provider route params', () => {
-    const { getByText } = render(<ClientHome />);
-    fireEvent.press(getByText('Electricidad'));
-    expect(router.push).toHaveBeenCalledWith({ pathname: '/(tabs)/services/category/[id]', params: { id: 'c1', from: 'home' } });
+  it('routes category chips and category cards to the category screen', () => {
+    const { getByLabelText, getByText } = render(<ClientHome />);
+    const expected = { pathname: '/(tabs)/services/category/[id]', params: { id: 'c1', from: 'home' } };
 
+    expect(getByText('Rubros')).toBeTruthy();
+    expect(getByText('Instalaciones, tableros y arreglos con matriculados.')).toBeTruthy();
+
+    fireEvent.press(getByLabelText('Electricidad')); // chip
+    expect(router.push).toHaveBeenLastCalledWith(expected);
+
+    fireEvent.press(getByText('Ver profesionales')); // card CTA
+    expect(router.push).toHaveBeenLastCalledWith(expected);
+  });
+
+  it('shows popular services, keeping the provider route params', () => {
+    const { getByText } = render(<ClientHome />);
     expect(getByText('Disponible hoy')).toBeTruthy();
     expect(getByText('$18.500')).toBeTruthy();
     fireEvent.press(getByText('Instalación de tomas'));

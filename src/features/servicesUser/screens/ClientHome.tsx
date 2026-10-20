@@ -1,7 +1,7 @@
 /**
- * ClientHome — home for users who are not providers. Explains Bosko (value
- * proposition + search, hire/offer paths, how it works, trust signals) and then
- * lets the user explore categories and popular services.
+ * ClientHome — home for users who are not providers. Headline + standalone
+ * search, category chips, featured card, one tinted card per trade, then how it
+ * works, popular services and trust signals.
  *
  * Data: categories → useCategories, popular services → useFeaturedServices,
  * profile (name/zone) → ProfileContext, unread dot → NotificationsContext.
@@ -18,13 +18,16 @@ import { useCategories, useFeaturedServices } from '@/hooks/queries/useMarketpla
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { HomeTopBar } from '@/features/servicesUser/components/HomeTopBar';
 import { RoleSelectionModal, ROLE_MODAL_SEEN_KEY } from '@/features/servicesUser/components/RoleSelectionModal';
+import { categoryVisual, HERO_IMAGE } from '@/features/servicesUser/utils/categoryVisuals';
 import type { ServiceSummary } from '@/types/services';
 import {
   Button,
-  CategoryTile,
+  CategoryPromoCard,
+  Chip,
   EmptyState,
+  FeaturedPromoCard,
   formatServicePrice,
-  PathCard,
+  SearchTrigger,
   SectionHeader,
   ServiceCard,
   Skeleton,
@@ -35,13 +38,10 @@ import {
   TrustRow,
   useIsDark,
   useThemeColors,
-  ValueHero,
 } from '@/core/design-system';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
-const CATEGORY_LIMIT = 8;
-const CATEGORY_COLUMNS = 4;
 const SERVICES_LIMIT = 6;
 const SERVICE_COLUMNS = 2;
 
@@ -105,14 +105,19 @@ function ServiceSkeletons() {
   );
 }
 
-function CategorySkeletons() {
+function ChipSkeletons() {
   return (
-    <Grid
-      items={Array.from({ length: CATEGORY_COLUMNS }, (_, i) => i)}
-      columns={CATEGORY_COLUMNS}
-      keyOf={String}
-      render={() => <Skeleton height={72} radius={TOKENS.radius.md} />}
-    />
+    <View style={styles.chipsRow}>
+      {Array.from({ length: 4 }, (_, i) => <Skeleton key={i} width={84} height={34} radius={TOKENS.radius.pill} />)}
+    </View>
+  );
+}
+
+function CategoryCardSkeletons() {
+  return (
+    <View style={styles.cards}>
+      {Array.from({ length: 3 }, (_, i) => <Skeleton key={i} height={168} radius={TOKENS.radius.xl} />)}
+    </View>
   );
 }
 
@@ -189,29 +194,62 @@ export default function ClientHome() {
       >
         <HomeTopBar />
 
-        <ValueHero
-          eyebrow="Servicios en red · ARG"
-          title="Encontrá quien lo haga. O hacelo vos."
-          body="Bosko conecta a quienes necesitan un trabajo con quienes saben hacerlo, cerca tuyo."
-          searchPlaceholder="¿Qué necesitás? Electricista, pintor…"
-          onSearchPress={goSearch}
+        <View style={styles.headline}>
+          <Text variant="h1" color={tc.text}>Encontrá quien lo haga.</Text>
+          <Text variant="h1" color={tc.signal}>O hacelo vos.</Text>
+        </View>
+
+        <SearchTrigger placeholder="¿Qué necesitás? Electricista, pintor…" onPress={goSearch} />
+
+        {categoriesQuery.isLoading && !categories.length ? (
+          <ChipSkeletons />
+        ) : categories.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipsRow}
+            style={styles.chipsScroll}
+          >
+            <Chip label="Todas" selected onPress={goServices} />
+            {categories.map((c) => <Chip key={c.id} label={c.name} onPress={() => goCategory(c.id)} />)}
+          </ScrollView>
+        ) : null}
+
+        <FeaturedPromoCard
+          eyebrow="Rápido y seguro"
+          title="Contratá profesionales verificados"
+          badge="Verificados"
+          ctaLabel="Buscar ahora"
+          tintIndex={1}
+          image={HERO_IMAGE}
+          onPress={goSearch}
         />
 
-        <View style={styles.paths}>
-          <PathCard
-            icon="search-outline"
-            title="Contratar"
-            description="Profesionales verificados con reseñas reales."
-            linkLabel="Buscar servicios →"
-            onPress={goSearch}
-          />
-          <PathCard
-            icon="construct-outline"
-            title="Ofrecer"
-            description="Publicá tus servicios y conseguí clientes."
-            linkLabel="Empezar a ofrecer →"
-            onPress={goBecomeProvider}
-          />
+        <View style={styles.section}>
+          <SectionHeader title="Rubros" onActionPress={goServices} actionLabel="Ver todos" />
+          {categoriesQuery.isLoading && !categories.length ? (
+            <CategoryCardSkeletons />
+          ) : categoriesQuery.isError && !categories.length ? (
+            <InlineError message="No se pudieron cargar las categorías" onRetry={() => categoriesQuery.refetch()} />
+          ) : (
+            <View style={styles.cards}>
+              {categories.map((c, i) => {
+                const visual = categoryVisual(c.name);
+                return (
+                  <CategoryPromoCard
+                    key={c.id}
+                    title={c.name}
+                    subtitle={visual.subtitle}
+                    image={visual.image}
+                    icon={c.icon || undefined}
+                    tintIndex={i}
+                    ctaLabel="Ver profesionales"
+                    onPress={() => goCategory(c.id)}
+                  />
+                );
+              })}
+            </View>
+          )}
         </View>
 
         <View style={styles.section}>
@@ -219,22 +257,6 @@ export default function ClientHome() {
           <View style={styles.steps}>
             {STEPS.map((s) => <StepCard key={s.number} {...s} />)}
           </View>
-        </View>
-
-        <View style={styles.section}>
-          <SectionHeader title="Categorías" onActionPress={goServices} actionLabel="Ver todas" />
-          {categoriesQuery.isLoading && !categories.length ? (
-            <CategorySkeletons />
-          ) : categoriesQuery.isError && !categories.length ? (
-            <InlineError message="No se pudieron cargar las categorías" onRetry={() => categoriesQuery.refetch()} />
-          ) : (
-            <Grid
-              items={categories.slice(0, CATEGORY_LIMIT)}
-              columns={CATEGORY_COLUMNS}
-              keyOf={(c) => c.id}
-              render={(c) => <CategoryTile icon={categoryIcon(c.icon)} label={c.name} onPress={() => goCategory(c.id)} />}
-            />
-          )}
         </View>
 
         <View style={styles.section}>
@@ -301,7 +323,10 @@ export default function ClientHome() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   content: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.sm, gap: SPACING.xl + 2 },
-  paths: { flexDirection: 'row', gap: SPACING.sm + 2 },
+  headline: { gap: SPACING.xs },
+  chipsScroll: { marginHorizontal: -SPACING.lg },
+  chipsRow: { flexDirection: 'row', gap: SPACING.sm, paddingHorizontal: SPACING.lg },
+  cards: { gap: SPACING.md },
   section: { gap: SPACING.md },
   steps: { flexDirection: 'row', gap: SPACING.sm },
   grid: { gap: SPACING.md },
