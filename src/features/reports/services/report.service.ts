@@ -3,7 +3,7 @@ import type { ReportReasonCode } from '../constants/reportReasons';
 
 export interface ReportPayload {
   reason: ReportReasonCode | string;
-  /** Free text, only sent with the "other" reason. */
+  /** Optional free text, required when reason is "other". */
   details?: string;
 }
 
@@ -17,7 +17,7 @@ export interface UserReportPayload extends ReportPayload {
 
 /**
  * Report a user — POST /users/:id/report
- * proposed — BR03 (not in the backend yet; a 404/405/501 is shown as "reports not available").
+ * Requires a context for profile or chat reports.
  */
 export async function reportUser(userId: string, payload: UserReportPayload): Promise<void> {
   await api.post(`/users/${userId}/report`, payload);

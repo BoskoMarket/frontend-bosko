@@ -37,7 +37,7 @@ export async function replyToReview(reviewId: string, reply: string): Promise<Re
 
 /**
  * Reportar reseña — POST /reviews/:id/report
- * The endpoint exists; the `{ reason, details? }` body is proposed — BR03 (today it takes no body).
+ * Sends `{ reason, details? }` and receives a confirmation.
  */
 export async function reportReview(reviewId: string, payload: ReportPayload): Promise<void> {
   await api.post(`/reviews/${reviewId}/report`, payload);

@@ -17,7 +17,7 @@ export interface ReportSheetReason {
 
 export interface ReportSheetSubmit {
   reason: string;
-  /** Trimmed free text; only present when the "other" reason is chosen (or the user typed one). */
+  /** Trimmed optional free text; required for "other". */
   details?: string;
 }
 
@@ -80,7 +80,7 @@ export function ReportSheet({
 
   const submit = () => {
     if (!canSubmit || !selected) return;
-    onSubmit({ reason: selected, ...(needsDetails ? { details: trimmed } : null) });
+    onSubmit({ reason: selected, ...(trimmed ? { details: trimmed } : {}) });
   };
 
   return (
@@ -127,9 +127,9 @@ export function ReportSheet({
                 </Pressable>
               );
             })}
-            {needsDetails ? (
+            {selected ? (
               <Input
-                label={detailsLabel}
+                label={needsDetails ? detailsLabel : `${detailsLabel} (opcional)`}
                 value={details}
                 onChangeText={setDetails}
                 placeholder={detailsPlaceholder}

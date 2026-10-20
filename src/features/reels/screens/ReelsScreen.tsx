@@ -510,7 +510,7 @@ const ReelItem = React.memo(function ReelItem({
     const options: any[] = [
       { text: 'No me interesa', onPress: () => onNotInterested(reel.id) },
     ];
-    if (!isOwner) {
+    if (currentUserId && !isOwner) {
       options.push({
         text: 'Reportar contenido',
         style: 'destructive',
