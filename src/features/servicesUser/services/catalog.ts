@@ -7,11 +7,16 @@
 import api from "@/core/api/axiosinstance";
 import { TOKENS } from '@/core/design-system/tokens';
 
-function mapService(s: any): ServiceSummary {
+/**
+ * Adapts a backend ServiceDto (provider nested at `provider.id`) to ServiceSummary.
+ * `id` stays the SERVICE id; the provider id lives only in `providerId`.
+ */
+export function mapService(s: any): ServiceSummary {
   return {
     id: s.id,
     categoryId: s.category?.id ?? s.categoryId ?? '',
-    providerId: s.provider?.id ?? s.providerId ?? '',
+    // `userId` is the owner (provider) on legacy service payloads.
+    providerId: s.provider?.id ?? s.providerId ?? s.userId ?? '',
     name: [s.provider?.firstName, s.provider?.lastName].filter(Boolean).join(' ') || s.provider?.username || '',
     title: s.title ?? '',
     summary: s.description ?? '',
@@ -27,6 +32,11 @@ function mapService(s: any): ServiceSummary {
     reviewsCount: parseInt(s.provider?.reviewsCount ?? s.reviewsCount ?? 0, 10) || 0,
     isAvailable: s.provider?.isAvailable ?? s.isAvailable,
   };
+}
+
+/** Provider id to open a provider profile, or null. Never falls back to the service id. */
+export function getProviderRouteId(item: Pick<ServiceSummary, 'providerId'>): string | null {
+  return item.providerId ? item.providerId : null;
 }
 
 const CATEGORY_ICON_MAP: Record<string, string> = {

@@ -12,6 +12,7 @@ import { readCollection } from '@/core/api/collections';
 import api from "@/core/api/axiosinstance";
 import { Service } from "./service";
 import type { ServiceSummary } from "@/types/services";
+import { mapService } from "./catalog";
 
 /**
  * fetchAllServices
@@ -49,5 +50,5 @@ export async function fetchServiceById(id: string): Promise<Service> {
 
 export async function fetchFeaturedServices(): Promise<ServiceSummary[]> {
   const { data } = await api.get<any>('/services/featured');
-  return readCollection(data);
+  return readCollection<any>(data).map(mapService);
 }

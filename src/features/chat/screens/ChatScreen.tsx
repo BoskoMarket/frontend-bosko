@@ -64,6 +64,7 @@ import { useOrder } from '@/hooks/queries/useOrdersQuery';
 import type { OrderStatus } from '@/features/orders/types/orders.types';
 import { ChatOrderNotice } from '../components/ChatOrderNotice';
 import { CHAT_ORDER_CLOSED_TOAST, isChatReadOnly, isOrderClosedError } from '../constants/chatOrderRules';
+import { isVideoUrl } from '../utils/mediaUrl';
 import {
   Avatar,
   FONT_FAMILY,
@@ -232,7 +233,7 @@ const MessageBubble = React.memo(function MessageBubble({ msg, myUserId }: { msg
     hour: '2-digit', minute: '2-digit',
   });
 
-  const isVideo = (msg.messageType === 'file' || msg.messageType === 'image') && !!msg.mediaUrl && /\.(mp4|mov|avi|webm)$/i.test(msg.mediaUrl);
+  const isVideo = (msg.messageType === 'file' || msg.messageType === 'image') && isVideoUrl(msg.mediaUrl);
   const isImage = msg.messageType === 'image' && !!msg.mediaUrl && !isVideo;
   const isMediaBubble = isVideo || isImage;
   const statusText = msg.isRead || msg.isDelivered ? ' ✓✓' : ' ✓';

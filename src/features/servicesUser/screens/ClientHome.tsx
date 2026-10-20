@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { getProviderRouteId } from '@/features/servicesUser/services/catalog';
 import { useCategories, useFeaturedServices } from '@/hooks/queries/useMarketplaceQuery';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { HomeTopBar } from '@/features/servicesUser/components/HomeTopBar';
@@ -168,8 +169,11 @@ export default function ClientHome() {
   const goBecomeProvider = () => router.push('/(tabs)/profile/become-provider');
   const goCategory = (id: string) =>
     router.push({ pathname: '/(tabs)/services/category/[id]', params: { id, from: 'home' } });
-  const goService = (item: ServiceSummary) =>
-    router.push({ pathname: '/(tabs)/services/provider/[id]', params: { id: item.providerId ?? item.id, from: 'home' } });
+  const goService = (item: ServiceSummary) => {
+    const providerId = getProviderRouteId(item);
+    if (!providerId) return; // never send a service id to the provider route
+    router.push({ pathname: '/(tabs)/services/provider/[id]', params: { id: providerId, from: 'home' } });
+  };
 
   const categoryName = (item: ServiceSummary) =>
     item.categoryName ?? categories.find((c) => c.id === item.categoryId)?.name;

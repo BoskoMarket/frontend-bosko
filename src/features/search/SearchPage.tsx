@@ -31,20 +31,18 @@ import {
   useIsDark,
   useThemeColors,
   withAlpha,
+  formatServicePrice,
 } from "@/core/design-system";
 import type { Category } from "@/interfaces/category";
-import type { Provider } from "@/interfaces/provider";
-import type { Service } from "@/interfaces/service";
+import type { SearchProvider } from "@/interfaces/search";
+import type { ServiceSummary } from "@/types/services";
+import { getProviderRouteId } from "@/features/servicesUser/services/catalog";
 import { FONT_FAMILY } from '@/core/design-system';
 
 type ResultItem =
   | { key: string; type: "category"; data: Category }
-  | { key: string; type: "provider"; data: Provider }
-  | { key: string; type: "service"; data: Service };
-
-const isServiceArray = (value: unknown): value is Service[] =>
-  Array.isArray(value) &&
-  value.every((item) => typeof item === "object" && item !== null && "id" in item);
+  | { key: string; type: "provider"; data: SearchProvider }
+  | { key: string; type: "service"; data: ServiceSummary };
 
 export const SearchPage = () => {
   const tc = useThemeColors();
@@ -70,13 +68,9 @@ export const SearchPage = () => {
   const items = useMemo<ResultItem[]>(() => {
     if (!results || !debouncedValue.trim()) return [];
     const list: ResultItem[] = [];
-    if (isServiceArray(results)) {
-      results.forEach((s) => list.push({ key: `svc-${s.id}`, type: "service", data: s }));
-      return list;
-    }
-    results.categories?.forEach((c) => list.push({ key: `cat-${c.id}`, type: "category", data: c }));
-    results.providers?.forEach((p) => list.push({ key: `prov-${p.id}`, type: "provider", data: p }));
-    results.services?.forEach((s) => list.push({ key: `svc-${s.id}`, type: "service", data: s }));
+    results.categories.forEach((c) => list.push({ key: `cat-${c.id}`, type: "category", data: c }));
+    results.providers.forEach((p) => list.push({ key: `prov-${p.id}`, type: "provider", data: p }));
+    results.services.forEach((s) => list.push({ key: `svc-${s.id}`, type: "service", data: s }));
     return list;
   }, [results, debouncedValue]);
 
@@ -110,7 +104,7 @@ export const SearchPage = () => {
     if (item.type === "provider") {
       return (
         <Pressable
-          onPress={() => router.push({ pathname: "/(tabs)/services/provider/[id]", params: { id: item.data.id as string, from: "search" } })}
+          onPress={() => router.push({ pathname: "/(tabs)/services/provider/[id]", params: { id: item.data.id, from: "search" } })}
           accessibilityRole="button"
           accessibilityLabel={`Profesional ${item.data.name}`}
           style={[s.card, { backgroundColor: tc.card, borderColor: tc.border }]}
@@ -140,10 +134,15 @@ export const SearchPage = () => {
     }
 
     if (item.type === "service") {
+      const providerId = getProviderRouteId(item.data);
       return (
         <Pressable
-          onPress={() => router.push({ pathname: "/(tabs)/services/provider/[id]", params: { id: item.data.providerId ?? item.data.userId ?? "", from: "search" } })}
+          disabled={!providerId}
+          onPress={() => {
+            if (providerId) router.push({ pathname: "/(tabs)/services/provider/[id]", params: { id: providerId, from: "search" } });
+          }}
           accessibilityRole="button"
+          accessibilityState={{ disabled: !providerId }}
           accessibilityLabel={`Servicio ${item.data.title}`}
           style={[s.card, { backgroundColor: tc.card, borderColor: tc.border }]}
         >
@@ -152,23 +151,23 @@ export const SearchPage = () => {
           </View>
           <View style={{ flex: 1, gap: 3 }}>
             <Text variant="subtitle" color={tc.text}>{item.data.title}</Text>
-            {item.data.description ? (
-              <Text variant="bodySmall" color={tc.textSub} numberOfLines={2}>{item.data.description}</Text>
+            {item.data.summary ? (
+              <Text variant="bodySmall" color={tc.textSub} numberOfLines={2}>{item.data.summary}</Text>
             ) : null}
             <View style={s.ratingRow}>
               {item.data.categoryName ? (
                 <Badge label={item.data.categoryName} tone="brand" size="sm" />
               ) : null}
-              {item.data.price ? (
+              {item.data.rate.amount > 0 ? (
                 <Text variant="bodySmall" weight="700" color={SIGNAL}>
-                  Desde ${item.data.price}
+                  Desde {formatServicePrice(item.data.rate)}
                 </Text>
               ) : (
                 <Text variant="bodySmall" color={tc.textSub}>Consultar precio</Text>
               )}
             </View>
           </View>
-          <Ionicons name="chevron-forward" size={16} color={tc.border} />
+          {providerId ? <Ionicons name="chevron-forward" size={16} color={tc.border} /> : null}
         </Pressable>
       );
     }
