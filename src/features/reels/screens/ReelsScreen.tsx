@@ -44,6 +44,7 @@ import { Avatar, Button, GRADIENTS, TOKENS, toast, useThemeColors, type ReportSh
 import { useReelsAutoplay } from '@/stores/preferences.store';
 import { useConnectionType } from '@/hooks/useConnectionType';
 import { shouldAutoplay } from '@/features/reels/utils/shouldAutoplay';
+import { getReelIsFollowing } from '@/features/reels/utils/reelFollow';
 import { ReportFlow } from '@/features/reports/components/ReportFlow';
 
 const { width: W, height: H } = Dimensions.get('window');
@@ -366,8 +367,12 @@ const ReelItem = React.memo(function ReelItem({
   const [liked,         setLiked]         = useState(reel.isLiked ?? false);
   const [likeCount,     setLikeCount]     = useState(reel.likes ?? 0);
   const [commentCount,  setCommentCount]  = useState(reel.comments ?? 0);
-  const [isFollowing,   setIsFollowing]   = useState(reel.user.isFollowing ?? false);
+  const [isFollowing,   setIsFollowing]   = useState(getReelIsFollowing(reel));
   const [showComments,  setShowComments]  = useState(false);
+
+  // Keep in sync when another card of the same author (or a refetch) updates the cached flag.
+  const followFlag = getReelIsFollowing(reel);
+  useEffect(() => { setIsFollowing(followFlag); }, [followFlag]);
 
   // Heart animation state
   const [heartVisible, setHeartVisible] = useState(false);
@@ -730,9 +735,9 @@ const ReelItem = React.memo(function ReelItem({
 });
 
 // ── Top bar ───────────────────────────────────────────────────────────────────
-function TopBar({ insetTop }: { insetTop: number }) {
-  const [tab, setTab] = useState<'siguiendo' | 'parati'>('parati');
+type FeedTab = 'siguiendo' | 'parati';
 
+function TopBar({ insetTop, tab, setTab }: { insetTop: number; tab: FeedTab; setTab: (t: FeedTab) => void }) {
   return (
     <View style={[s.topBar, { paddingTop: insetTop + 8 }]} pointerEvents="box-none">
       <View style={s.topTabs} pointerEvents="auto">
@@ -763,10 +768,21 @@ export default function ReelsScreen() {
   const insets = useSafeAreaInsets();
   const { authState } = useAuth();
   const currentUserId = authState.user?.id;
-  const { data, isLoading, isError, isRefetching, refetch, isFetchingNextPage, fetchNextPage, hasNextPage } = useReelsFeed();
+  const [feedTab, setFeedTab] = useState<FeedTab>('parati');
+  const isFollowingFeed = feedTab === 'siguiendo';
+  const { data, isLoading, isError, isRefetching, refetch, isFetchingNextPage, fetchNextPage, hasNextPage } =
+    useReelsFeed(isFollowingFeed ? 'following' : undefined);
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
   const reels = (data?.pages.flat() ?? []).filter(r => !ignoredIds.has(r.id));
   const [activeIndex, setActiveIndex] = useState(0);
+  const listRef = useRef<FlatList<Reel>>(null);
+
+  const handleTabChange = useCallback((next: FeedTab) => {
+    if (next === feedTab) return;
+    setFeedTab(next);
+    setActiveIndex(0);
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, [feedTab]);
 
   const handleNotInterested = useCallback((id: string) => {
     setIgnoredIds(prev => new Set(prev).add(id));
@@ -816,6 +832,7 @@ export default function ReelsScreen() {
     return (
       <View style={[s.root, s.center]}>
         <ActivityIndicator size="large" color={TOKENS.onMedia.icon} />
+        <TopBar insetTop={insets.top} tab={feedTab} setTab={handleTabChange} />
       </View>
     );
   }
@@ -828,7 +845,7 @@ export default function ReelsScreen() {
         <Text style={s.emptyTitle}>No pudimos cargar los reels</Text>
         <Text style={s.emptySubtitle}>Revisá tu conexión e intentá de nuevo.</Text>
         <Button label="Reintentar" onPress={() => refetch()} style={s.retryBtn} />
-        <TopBar insetTop={insets.top} />
+        <TopBar insetTop={insets.top} tab={feedTab} setTab={handleTabChange} />
       </View>
     );
   }
@@ -838,6 +855,7 @@ export default function ReelsScreen() {
       <StatusBar hidden />
 
       <FlatList
+        ref={listRef}
         data={reels}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
@@ -871,15 +889,25 @@ export default function ReelsScreen() {
         }
         ListEmptyComponent={
           <View style={s.emptyContainer}>
-            <Ionicons name="videocam-off-outline" size={56} color={TOKENS.onMedia.textMuted} />
-            <Text style={s.emptyTitle}>Sin reels todavía</Text>
-            <Text style={s.emptySubtitle}>Los proveedores aún no han publicado videos. Volvé pronto.</Text>
+            <Ionicons
+              name={isFollowingFeed ? 'people-outline' : 'videocam-off-outline'}
+              size={56}
+              color={TOKENS.onMedia.textMuted}
+            />
+            <Text style={s.emptyTitle}>
+              {isFollowingFeed ? 'Nada nuevo de quienes seguís' : 'Sin reels todavía'}
+            </Text>
+            <Text style={s.emptySubtitle}>
+              {isFollowingFeed
+                ? 'Seguí a proveedores para ver sus reels acá.'
+                : 'Los proveedores aún no han publicado videos. Volvé pronto.'}
+            </Text>
           </View>
         }
       />
 
       {/* Floating top bar */}
-      <TopBar insetTop={insets.top} />
+      <TopBar insetTop={insets.top} tab={feedTab} setTab={handleTabChange} />
     </View>
   );
 }
