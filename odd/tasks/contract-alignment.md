@@ -25,8 +25,8 @@ Out (backend or product decision still pending): C04 delete account, C10 `/app/c
 
 | ID | Finding | Task | Route | Status | Evidence |
 |---|---|---|---|---|---|
-| T1 | C01 | Adapt `GET /services/featured` (ServiceDto → ServiceSummary) and navigate to provider with `provider.id` only | delegated | ⏳ | |
-| T2 | C02 | Adapt `GET /search` results (services `provider.id`, providers firstName/lastName/avatarUrl, price object) | delegated | ⏳ | |
+| T1 | C01 | Adapt `GET /services/featured` (ServiceDto → ServiceSummary) and navigate to provider with `provider.id` only | delegated | ✅ | `b1f7fe3`; tsc ok, 35/35 suites, lint:ds 0 |
+| T2 | C02 | Adapt `GET /search` results (services `provider.id`, providers firstName/lastName/avatarUrl, price object) | delegated | ✅ | see commit log (T2); tsc ok, 36/36 suites, lint:ds 0 |
 | T3 | C05 | Plan model adapter for `PlanDto` (price `{amount,currency}`, benefits), no crash on `features` | delegated | ⏳ | |
 | T4 | C20 | Chat: detect video from URL pathname (ignore signed query string) | inline | ⏳ | |
 | T5 | C19 | Reels "Siguiendo" tab sends `feed=following` (queryKey), read root `isFollowing` | delegated | ⏳ | |
@@ -50,3 +50,5 @@ Out (backend or product decision still pending): C04 delete account, C10 `/app/c
 ## Progress
 
 - 2026-10-20: document created, branch created. Next: T1.
+- 2026-10-20: T1 done — featured reuse exported `mapService`; `getProviderRouteId` (no service-id fallback) used in ClientHome and CategoryServicesScreen. Next: T2.
+- 2026-10-20: T2 done — `adaptSearchResponse` (services via `mapService`, providers name/avatar), SearchPage typed, no empty-id navigation. Note: tsc may need `NODE_OPTIONS=--max-old-space-size=6144`. Next: T3.
