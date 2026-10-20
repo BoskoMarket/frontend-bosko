@@ -13,6 +13,12 @@ export interface ReelVideoAsset {
 
 /** Returns a Spanish error message, or null when the video is acceptable. Unknown values are not rejected. */
 export function validateReelVideo(asset: ReelVideoAsset): string | null {
+  if (asset.mimeType && asset.mimeType !== 'video/mp4' && asset.mimeType !== 'video/quicktime') {
+    return 'Formato no válido. Usá un video MP4 o MOV.';
+  }
+  if (typeof asset.duration === 'number' && asset.duration <= 0) {
+    return 'El video debe durar más de cero segundos.';
+  }
   if (typeof asset.duration === 'number' && asset.duration > REEL_MAX_SECONDS * 1000) {
     return `El video dura más de ${REEL_MAX_SECONDS} segundos. Elegí uno más corto.`;
   }

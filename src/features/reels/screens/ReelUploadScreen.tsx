@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 're
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, Input, NoticeBanner, ProgressBar, SPACING, Text, toast, useThemeColors, dialog } from '@/core/design-system';
@@ -12,6 +13,7 @@ import {
   createReel,
   REEL_UPLOAD_ERROR_MESSAGES,
   uploadReelVideo,
+  type ReelThumbnailFile,
 } from '../services/reels.service';
 import { REEL_MAX_SECONDS, resolveFileSize, validateReelVideo, type ReelVideoAsset } from '../constants/reelUploadRules';
 import { ReelVideoPreview } from '../components/ReelVideoPreview';
@@ -25,15 +27,19 @@ export default function ReelUploadScreen() {
   const insets = useSafeAreaInsets();
   const qc = useQueryClient();
   const [video, setVideo] = useState<ReelVideoAsset | null>(null);
+  const [thumbnail, setThumbnail] = useState<ReelThumbnailFile | null>(null);
   const [useLink, setUseLink] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
   const [description, setDescription] = useState('');
   const [tagsText, setTagsText] = useState('');
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [publicationUncertain, setPublicationUncertain] = useState(false);
   const busyRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
+  const uploadedRef = useRef<{ videoUri: string; thumbnailUri?: string; videoUrl: string } | null>(null);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -50,7 +56,31 @@ export default function ReelUploadScreen() {
     if (problem) { toast.warning('Video no válido', problem); return; }
     setError(null);
     setVideo(candidate);
+    setThumbnail(null);
+    uploadedRef.current = null;
   }, []);
+
+  const pickThumbnail = async () => {
+    if (saving || !video) return;
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') { alertPermissionDenied('Necesitamos acceso a tu galería para elegir una miniatura.'); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    if (result.canceled || !result.assets[0]) return;
+    const asset = result.assets[0];
+    const ext = (asset.fileName ?? asset.uri).split('?')[0].split('.').pop()?.toLowerCase();
+    const mimeType = asset.mimeType ?? (ext === 'png' ? 'image/png' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : undefined);
+    if (mimeType !== 'image/jpeg' && mimeType !== 'image/png') {
+      toast.warning('Miniatura no válida', 'Usá una imagen JPG o PNG.');
+      return;
+    }
+    const fileSize = resolveFileSize({ uri: asset.uri, fileSize: asset.fileSize });
+    if (fileSize != null && fileSize > 5 * 1024 * 1024) {
+      toast.warning('Miniatura demasiado grande', 'El máximo es 5 MB.');
+      return;
+    }
+    setThumbnail({ uri: asset.uri, mimeType });
+    uploadedRef.current = null;
+  };
 
   const pickFromGallery = async () => {
     if (saving) return;
@@ -69,7 +99,7 @@ export default function ReelUploadScreen() {
   const cancelUpload = () => abortRef.current?.abort();
 
   const publish = async () => {
-    if (busyRef.current) return;
+    if (busyRef.current || publicationUncertain) return;
     const link = videoUrl.trim();
     if (useLink && !/^https:\/\/[^\s]+$/.test(link)) { dialog.fromAlert('Video', 'Ingresá un enlace HTTPS público al archivo de video.'); return; }
     if (!useLink && !video) { dialog.fromAlert('Video', 'Elegí o grabá un video para publicar.'); return; }
@@ -81,17 +111,45 @@ export default function ReelUploadScreen() {
     setError(null);
     const controller = new AbortController();
     abortRef.current = controller;
+    let publishing = false;
     try {
       let finalUrl = link;
       if (!useLink && video) {
-        const uploaded = await uploadReelVideo(video, { onProgress: setProgress, signal: controller.signal });
-        finalUrl = uploaded.videoUrl;
+        const cached = uploadedRef.current;
+        if (cached?.videoUri === video.uri && cached.thumbnailUri === thumbnail?.uri) {
+          finalUrl = cached.videoUrl;
+          setProgress(1);
+        } else {
+          setUploading(true);
+          const uploaded = await uploadReelVideo(video, { thumbnail: thumbnail ?? undefined, onProgress: setProgress, signal: controller.signal });
+          setUploading(false);
+          finalUrl = uploaded.videoUrl;
+          if (controller.signal.aborted) { toast.warning('Subida cancelada'); return; }
+          uploadedRef.current = { videoUri: video.uri, thumbnailUri: thumbnail?.uri, videoUrl: finalUrl };
+        }
       }
+      publishing = true;
       await createReel({ videoUrl: finalUrl, description: description.trim(), tags });
-      await qc.invalidateQueries({ queryKey: ['reels'] });
+      uploadedRef.current = null;
+      publishing = false;
+      void qc.invalidateQueries({ queryKey: ['reels'] });
       toast.success('Reel publicado');
       safeBack(router, '/(tabs)/reels');
     } catch (err) {
+      if (publishing) {
+        const kind = classifyReelUploadError(err);
+        if (kind === 'invalidUpload') uploadedRef.current = null;
+        const status = (err as { response?: { status?: number } } | null)?.response?.status;
+        if (kind === 'network' || !status || status === 408 || status >= 500) {
+          setPublicationUncertain(true);
+          setError('No pudimos confirmar si el reel se publicó. Revisá Mis reels antes de intentar de nuevo.');
+          return;
+        }
+        setError(kind === 'invalidUpload' || kind === 'providerRequired' || kind === 'busy'
+          ? REEL_UPLOAD_ERROR_MESSAGES[kind]
+          : getUserErrorMessage(err));
+        return;
+      }
       const kind = classifyReelUploadError(err);
       if (kind === 'cancelled') { toast.warning('Subida cancelada'); return; }
       if (kind === 'network') {
@@ -105,13 +163,14 @@ export default function ReelUploadScreen() {
       setError(kind === 'other' ? getUserErrorMessage(err) : REEL_UPLOAD_ERROR_MESSAGES[kind]);
     } finally {
       abortRef.current = null;
+      setUploading(false);
       busyRef.current = false;
       setSaving(false);
     }
   };
 
   const percent = Math.round(progress * 100);
-  const canPublish = !saving && (useLink ? !!videoUrl.trim() : !!video);
+  const canPublish = !saving && !publicationUncertain && (useLink ? !!videoUrl.trim() : !!video);
 
   return (
     <KeyboardAvoidingView style={[styles.root, { backgroundColor: tc.bg, paddingTop: insets.top }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -122,6 +181,13 @@ export default function ReelUploadScreen() {
           <>
             <Text color={tc.textSub}>Elegí un video de tu galería o grabá uno nuevo. Máximo {REEL_MAX_SECONDS} segundos y 100 MB.</Text>
             {video && <ReelVideoPreview uri={video.uri} />}
+            {video && (
+              <View style={styles.thumbnailRow}>
+                {thumbnail ? <Image source={{ uri: thumbnail.uri }} style={styles.thumbnailPreview} contentFit="cover" accessibilityLabel="Vista previa de la miniatura" /> : null}
+                <Button variant="outline" size="sm" label={thumbnail ? 'Cambiar miniatura' : 'Elegir miniatura (opcional)'} disabled={saving} onPress={pickThumbnail} />
+                {thumbnail ? <Button variant="ghost" size="sm" label="Quitar miniatura" disabled={saving} onPress={() => setThumbnail(null)} /> : null}
+              </View>
+            )}
             <View style={styles.row}>
               <Button style={styles.flex} variant={video ? 'outline' : 'primary'} label="Elegir de la galería" icon={<Ionicons name="images-outline" size={18} color={tc.text} />} disabled={saving} onPress={pickFromGallery} />
               <Button style={styles.flex} variant="outline" label="Grabar video" icon={<Ionicons name="videocam-outline" size={18} color={tc.text} />} disabled={saving} onPress={recordVideo} />
@@ -137,12 +203,13 @@ export default function ReelUploadScreen() {
         <Input label="Etiquetas separadas por comas" accessibilityLabel="Etiquetas" value={tagsText} onChangeText={setTagsText} editable={!saving} />
 
         {error && <NoticeBanner variant="error">{error}</NoticeBanner>}
+        {publicationUncertain && <Button label="Ver mis reels" variant="secondary" onPress={() => router.replace('/(tabs)/profile/my-reels')} />}
 
         {saving && !useLink && (
           <View style={styles.progress}>
             <ProgressBar value={progress} accessibilityLabel="Progreso de la subida" />
-            <Text variant="caption" color={tc.textSub}>{percent >= 100 ? 'Procesando…' : `Subiendo video… ${percent}%`}</Text>
-            <Button label="Cancelar subida" variant="outline" size="sm" onPress={cancelUpload} />
+            <Text variant="caption" color={tc.textSub}>{!uploading ? 'Publicando…' : percent >= 100 ? 'Procesando…' : `Subiendo video… ${percent}%`}</Text>
+            {uploading && <Button label="Cancelar subida" variant="outline" size="sm" onPress={cancelUpload} />}
           </View>
         )}
 
@@ -160,4 +227,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: SPACING.md },
   flex: { flex: 1 },
   progress: { gap: SPACING.sm },
+  thumbnailRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, flexWrap: 'wrap' },
+  thumbnailPreview: { width: 56, height: 56, borderRadius: SPACING.sm },
 });
