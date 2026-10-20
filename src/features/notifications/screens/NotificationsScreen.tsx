@@ -19,7 +19,8 @@ import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useNotifications } from '../state/NotificationsContext';
 import { useNotificationsDenied } from '../hooks/useNotificationPermission';
 import { Notification } from '../services/notifications.service';
-import { getNotificationRoute } from '../utils/notificationRoute';
+import { resolveNotificationRoute } from '../utils/notificationRoute';
+import { lookupOrderIdByConversation } from '../utils/conversationOrderLookup';
 import {
   TOKENS,
   SPACING,
@@ -155,7 +156,7 @@ export default function NotificationsScreen() {
     if (!item.read) await markRead(item.id);
 
     closeNotifications();
-    const route = getNotificationRoute(item);
+    const route = await resolveNotificationRoute(item, lookupOrderIdByConversation);
     if (route) router.push(route as any);
   };
 

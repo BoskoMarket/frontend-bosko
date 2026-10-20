@@ -18,6 +18,9 @@ import { ThemeProvider } from "@react-navigation/native";
 import { AppBackground } from "@/core/components/AppBackground";
 import { usePushNotificationSetup } from "@/hooks/usePushNotificationSetup";
 import { NotificationsModalRoot } from "@/features/notifications/screens/NotificationsScreen";
+import { isChatNotificationType, resolveNotificationRoute } from "@/features/notifications/utils/notificationRoute";
+import { lookupOrderIdByConversation } from "@/features/notifications/utils/conversationOrderLookup";
+import type { Notification } from "@/features/notifications/services/notifications.service";
 import { openNotifications } from "@/stores/notificationsUI.store";
 import { ErrorBoundary } from "@/core/components/ErrorBoundary";
 import { BiometricLockGate } from "@/core/components/BiometricLockGate";
@@ -72,8 +75,14 @@ function handleNotificationResponse(response: Notifications.NotificationResponse
   try {
     if (data.type === 'order' && data.orderId) {
       router.push({ pathname: '/orders/[id]', params: { id: data.orderId } });
-    } else if (data.type === 'chat' && data.orderId) {
+    } else if (isChatNotificationType(data.type) && data.orderId) {
       router.push({ pathname: '/chat/[id]', params: { id: data.orderId } });
+    } else if (isChatNotificationType(data.type) && data.conversationId) {
+      // Only the conversation id is known: resolve it to the ORDER id (never use it as the route param).
+      void resolveNotificationRoute(
+        { id: '', userId: '', title: '', body: '', read: false, createdAt: '', type: 'chat', data: { conversationId: data.conversationId } } as Notification,
+        lookupOrderIdByConversation,
+      ).then((route) => { try { if (route) router.push(route as any); } catch {} });
     } else if (data.type === 'review' && data.orderId) {
       router.push({ pathname: '/orders/[id]', params: { id: data.orderId } });
     } else {
