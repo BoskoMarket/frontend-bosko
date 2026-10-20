@@ -8,6 +8,7 @@ import {
   REPORT_INVALID_MESSAGE,
   REPORT_NOT_ALLOWED_MESSAGE,
   REPORT_CONTEXT_MESSAGE,
+  REPORT_FORBIDDEN_MESSAGE,
   REPORT_RATE_LIMIT_MESSAGE,
 } from './constants/reportReasons';
 
@@ -27,8 +28,11 @@ export function reportErrorFeedback(err: unknown): ReportErrorFeedback {
   if (code === 'CANNOT_REPORT_SELF' || code === 'CANNOT_REPORT_OWN_REVIEW') {
     return { title: REPORT_NOT_ALLOWED_MESSAGE, close: true };
   }
-  if (code === 'NOT_ORDER_PARTICIPANT' || code === 'FORBIDDEN') {
+  if (code === 'NOT_ORDER_PARTICIPANT') {
     return { title: REPORT_CONTEXT_MESSAGE, close: true };
+  }
+  if (code === 'FORBIDDEN') {
+    return { title: REPORT_FORBIDDEN_MESSAGE, close: true };
   }
   if (code === 'INVALID_REPORT' || code === 'VALIDATION_ERROR') {
     return { title: REPORT_FAILED_TITLE, message: REPORT_INVALID_MESSAGE, close: false };

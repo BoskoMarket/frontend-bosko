@@ -1,4 +1,5 @@
 import api from '@/core/api/axiosinstance';
+import { extensionForMime } from '@/core/media/imageMime';
 import { readPaginatedCollection, type PaginatedCollection } from '@/core/api/collections';
 
 export interface ReelUser {
@@ -166,8 +167,8 @@ export async function uploadReelVideo(
   const formData = new FormData();
   formData.append('video', { uri: file.uri, type: mimeType, name: `reel.${ext}` } as any);
   if (opts.thumbnail) {
-    const ext = opts.thumbnail.mimeType === 'image/png' ? 'png' : 'jpg';
-    formData.append('thumbnail', { uri: opts.thumbnail.uri, type: opts.thumbnail.mimeType, name: `thumbnail.${ext}` } as any);
+    const thumbExt = extensionForMime(opts.thumbnail.mimeType);
+    formData.append('thumbnail', { uri: opts.thumbnail.uri, type: opts.thumbnail.mimeType, name: `thumbnail.${thumbExt}` } as any);
   }
 
   const res = await api.post<ReelUploadResult>('/reels/upload', formData, {

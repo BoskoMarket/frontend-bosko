@@ -139,11 +139,16 @@ describe('reportErrorFeedback', () => {
     expect(reportErrorFeedback(httpError(409, 'ALREADY_REPORTED')).title).toBe('Ya reportaste esto.');
     expect(reportErrorFeedback(httpError(409))).not.toHaveProperty('title', 'Ya reportaste esto.');
   });
+  it('maps generic FORBIDDEN to a permission message, not the order-participation one', () => {
+    expect(reportErrorFeedback(httpError(403, 'FORBIDDEN')).title).toBe('No tenés permiso para hacer esto.');
+    expect(reportErrorFeedback(httpError(403, 'NOT_ORDER_PARTICIPANT')).title).toBe('No pudimos verificar tu participación en la orden.');
+  });
   it.each([
     [400, 'INVALID_REPORT', false],
     [422, 'CANNOT_REPORT_SELF', true],
     [400, 'CANNOT_REPORT_OWN_REVIEW', true],
     [403, 'NOT_ORDER_PARTICIPANT', true],
+    [403, 'FORBIDDEN', true],
     [429, 'RATE_LIMITED', false],
   ] as const)('maps %s %s with close=%s', (status, code, close) => {
     expect(reportErrorFeedback(httpError(status, code)).close).toBe(close);

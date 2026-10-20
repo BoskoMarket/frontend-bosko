@@ -1,4 +1,5 @@
 import api from "@/core/api/axiosinstance";
+import { extensionForMime } from "@/core/media/imageMime";
 
 
 export interface UserProfile {
@@ -62,8 +63,7 @@ export interface BannerFile { uri: string; mimeType: 'image/jpeg' | 'image/png' 
 
 export async function uploadBanner(file: BannerFile): Promise<{ bannerUrl: string }> {
     const formData = new FormData();
-    const extension = file.mimeType === 'image/png' ? 'png' : file.mimeType === 'image/webp' ? 'webp' : 'jpg';
-    formData.append('banner', { uri: file.uri, type: file.mimeType, name: `banner.${extension}` } as any);
+    formData.append('banner', { uri: file.uri, type: file.mimeType, name: `banner.${extensionForMime(file.mimeType)}` } as any);
 
     const { data } = await api.post<{ bannerUrl: string }>("/users/me/banner", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -73,8 +73,9 @@ export async function uploadBanner(file: BannerFile): Promise<{ bannerUrl: strin
 
 /** Quitar portada — la respuesta del backend contiene `bannerUrl: null`. */
 export async function removeBanner(): Promise<{ bannerUrl: null }> {
-    const { data } = await api.delete<{ bannerUrl: null }>("/users/me/banner");
-    return data;
+    await api.delete("/users/me/banner");
+    // The server answers 200 { bannerUrl: null } (or an empty 204): the result is always null.
+    return { bannerUrl: null };
 }
 
 /** Obtener estadísticas del perfil — GET /users/me/stats */

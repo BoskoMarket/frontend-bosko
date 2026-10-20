@@ -43,10 +43,14 @@ Out (backend or product decision still pending): C04 delete account, C10 `/app/c
 
 ## Delivery slices
 
-| Slice | Tasks | Commits | PR |
+| PR | Tasks | Scope | Status |
 |---|---|---|---|
-| S1 — frontend-only contract bugs | T1–T8 | `b1f7fe3`..`53904b0` (~965 changed lines incl. tests/doc) | pending (user decision) |
-| S2 — pagination + backend-shipped integrations | T9–T15 | see commit log (T9–T15) | pending (user decision) |
+| PR #47 | T1 T2 T4 | featured, search, chat video | open → dev |
+| PR #48 | T3 T5 | plans, reels following | open → #47 |
+| PR #49 | T6 T7 T8 | service form, desired date, order responses | open → #48 |
+| PR #50 | T9 | pagination (size:exception ~534 lines) | open → #49 |
+| PR #51 | T10 T11 T12 | resend OTP, order review, closed chat | open → #50 |
+| PR #52 | T13 T14 T15 | banner, reel upload, reports | open → #51 |
 
 ## Acceptance criteria
 
@@ -73,3 +77,4 @@ Out (backend or product decision still pending): C04 delete account, C10 `/app/c
 - 2026-10-20: T14 implemented — optional JPEG/PNG thumbnail picker (5 MiB) sends multipart `thumbnail` beside `video`; uploader still publishes only after the server returns `videoUrl`. Video preflight rejects known unsupported MIME and zero duration; backend codes `UPLOAD_BUSY`, `INVALID_UPLOAD`, `PROVIDER_REQUIRED`, media errors and oversized payloads get distinct feedback. Cancellation before POST /reels stops publication; cancel button is available only while upload is active. tsc clean, 47/47 suites (549 tests), lint:ds 0. Work-unit commit and device checks pending. Next: T15.
 - 2026-10-20: T15 implemented — report sheets accept optional details for any reason and require trimmed text for `other`; reel report sends separate `{reason,details?}` and treats 204 as success. User profile/chat contexts and review report payloads remain explicit. Error handling distinguishes missing content, self/own review, nonparticipant, invalid form, duplicate within 24h and rate limiting; unknown 409 stays retryable. Reel reporting is hidden until user ownership is known. tsc clean, 47/47 suites (556 tests), lint:ds 0. Feature scope implemented; work-unit commits and device checks pending.
 - 2026-10-20: Review of T9–T15 (independent read-only reviewer) found 3 defects, fixed before committing: (1) ServiceFormScreen `myServices` flatMap not memoized → prefill effect looped and reset the form; (2) socket `ORDER_CLOSED` required a `conversationId` the contract never sends → accept `{code,message}`; test fixture now copies the contract; (3) DeleteAccountScreen gated on `isFetching` → background refetch unmounted the confirmation step. Not fixed (minor/latent): `NO_FILE_UPLOADED` maps to the generic format message; pending-count query refetches pages alongside the list. Checks after fixes: tsc ok, 47/47 suites (557 tests), lint:ds 0. Commits: one per task; files touched by several tasks are committed with the task that changed them most (reels.service → T14; useReelsQuery, catalog, ProviderProfileScreen → T9), so intermediate commits may not type-check alone. Device checks pending.
+- 2026-10-20: Opened stacked PRs #47–#52 (branches feat/contract-alignment-1..6). /code-review per PR, fixes committed on each slice and the stack rebased with --update-refs: #47 tolerant search shapes + disabled cards without provider; #48 follow sync without cancelQueries/snapshot rollback, central feed keys, plan features merge; #49 slot lead time + submit re-check, unknown status → closed, legacy short titles editable; #50 slice made self-contained (getMyReels paging moved in), stable selects, dedupe pages, next-page guards; #51 socket ORDER_CLOSED only resyncs (no lock/toast), guarded refresh, no duplicate banner, OTP digits kept; #52 banner empty body, uncertain-publication escape, keep finished upload after cancel, duration 0 allowed, shared imageMime helper, FORBIDDEN message. Each branch verified alone (tsc + jest); tip: 48/48 suites, 587 tests, lint:ds 0. Known gaps: pending-count walks all pages (needs backend count), no ChatScreen render test, device tests pending.

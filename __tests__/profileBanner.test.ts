@@ -41,6 +41,11 @@ describe('banner service', () => {
     await expect(removeBanner()).resolves.toEqual({ bannerUrl: null });
     expect(mockDelete).toHaveBeenCalledWith('/users/me/banner');
   });
+
+  it.each([[undefined], [null], ['']])('returns bannerUrl null when the body is empty (%p)', async (body) => {
+    mockDelete.mockResolvedValueOnce({ data: body, status: 204 });
+    await expect(removeBanner()).resolves.toEqual({ bannerUrl: null });
+  });
 });
 
 describe('getBannerErrorMessage', () => {

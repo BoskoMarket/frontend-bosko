@@ -124,9 +124,9 @@ export function useRemoveBanner() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => removeBanner(),
-    onSuccess: ({ bannerUrl }) => {
+    onSuccess: () => {
       qc.setQueryData(QUERY_KEYS.profile, (old: any) =>
-        old ? { ...old, bannerUrl } : old,
+        old ? { ...old, bannerUrl: null } : old,
       );
       qc.invalidateQueries({ queryKey: QUERY_KEYS.profile });
     },

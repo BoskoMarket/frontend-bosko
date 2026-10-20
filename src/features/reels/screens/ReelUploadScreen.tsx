@@ -6,7 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { Button, Input, NoticeBanner, ProgressBar, SPACING, Text, toast, useThemeColors, dialog } from '@/core/design-system';
+import { Button, Input, NoticeBanner, ProgressBar, SPACING, Text, TOKENS, toast, useThemeColors, dialog } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import {
   classifyReelUploadError,
@@ -16,6 +16,7 @@ import {
   type ReelThumbnailFile,
 } from '../services/reels.service';
 import { REEL_MAX_SECONDS, resolveFileSize, validateReelVideo, type ReelVideoAsset } from '../constants/reelUploadRules';
+import { IMAGE_UPLOAD_MAX_BYTES, resolveImageMime } from '@/core/media/imageMime';
 import { ReelVideoPreview } from '../components/ReelVideoPreview';
 import { getUserErrorMessage } from '@/lib/errors';
 import { alertPermissionDenied } from '@/lib/permissionAlert';
@@ -55,26 +56,43 @@ export default function ReelUploadScreen() {
     const problem = validateReelVideo(candidate);
     if (problem) { toast.warning('Video no válido', problem); return; }
     setError(null);
+    setPublicationUncertain(false);
     setVideo(candidate);
     setThumbnail(null);
     uploadedRef.current = null;
   }, []);
 
+  // Editing the form is a deliberate user change: it lifts the uncertain-publication lock.
+  const clearUncertain = () => {
+    if (publicationUncertain) { setPublicationUncertain(false); setError(null); }
+  };
+
+  const retryAfterUncertain = () => {
+    dialog.fromAlert('Reintentar publicación', 'Si el reel ya se publicó, se va a duplicar. Revisá "Mis reels" antes de continuar.', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Reintentar', onPress: () => { setPublicationUncertain(false); setError(null); } },
+    ]);
+  };
+
   const pickThumbnail = async () => {
     if (saving || !video) return;
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') { alertPermissionDenied('Necesitamos acceso a tu galería para elegir una miniatura.'); return; }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+      // iOS: ask for a JPEG-compatible representation instead of HEIC.
+      preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode?.Compatible,
+    });
     if (result.canceled || !result.assets[0]) return;
     const asset = result.assets[0];
-    const ext = (asset.fileName ?? asset.uri).split('?')[0].split('.').pop()?.toLowerCase();
-    const mimeType = asset.mimeType ?? (ext === 'png' ? 'image/png' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : undefined);
+    const mimeType = resolveImageMime(asset);
     if (mimeType !== 'image/jpeg' && mimeType !== 'image/png') {
-      toast.warning('Miniatura no válida', 'Usá una imagen JPG o PNG.');
+      toast.warning('Miniatura no válida', 'Elegí una foto JPG o PNG.');
       return;
     }
     const fileSize = resolveFileSize({ uri: asset.uri, fileSize: asset.fileSize });
-    if (fileSize != null && fileSize > 5 * 1024 * 1024) {
+    if (fileSize != null && fileSize > IMAGE_UPLOAD_MAX_BYTES) {
       toast.warning('Miniatura demasiado grande', 'El máximo es 5 MB.');
       return;
     }
@@ -124,8 +142,9 @@ export default function ReelUploadScreen() {
           const uploaded = await uploadReelVideo(video, { thumbnail: thumbnail ?? undefined, onProgress: setProgress, signal: controller.signal });
           setUploading(false);
           finalUrl = uploaded.videoUrl;
-          if (controller.signal.aborted) { toast.warning('Subida cancelada'); return; }
+          // Keep a finished upload even if the user cancelled meanwhile (orphans are never purged server-side).
           uploadedRef.current = { videoUri: video.uri, thumbnailUri: thumbnail?.uri, videoUrl: finalUrl };
+          if (controller.signal.aborted) { toast.warning('Subida cancelada'); return; }
         }
       }
       publishing = true;
@@ -196,14 +215,19 @@ export default function ReelUploadScreen() {
         )}
 
         {useLink && (
-          <Input label="Enlace directo al video" accessibilityLabel="Enlace del video" placeholder="https://…/video.mp4" autoCapitalize="none" autoCorrect={false} keyboardType="url" value={videoUrl} onChangeText={setVideoUrl} editable={!saving} />
+          <Input label="Enlace directo al video" accessibilityLabel="Enlace del video" placeholder="https://…/video.mp4" autoCapitalize="none" autoCorrect={false} keyboardType="url" value={videoUrl} onChangeText={(t) => { clearUncertain(); setVideoUrl(t); }} editable={!saving} />
         )}
 
-        <Input label="Descripción" accessibilityLabel="Descripción" value={description} onChangeText={setDescription} multiline maxLength={2000} editable={!saving} />
-        <Input label="Etiquetas separadas por comas" accessibilityLabel="Etiquetas" value={tagsText} onChangeText={setTagsText} editable={!saving} />
+        <Input label="Descripción" accessibilityLabel="Descripción" value={description} onChangeText={(t) => { clearUncertain(); setDescription(t); }} multiline maxLength={2000} editable={!saving} />
+        <Input label="Etiquetas separadas por comas" accessibilityLabel="Etiquetas" value={tagsText} onChangeText={(t) => { clearUncertain(); setTagsText(t); }} editable={!saving} />
 
         {error && <NoticeBanner variant="error">{error}</NoticeBanner>}
-        {publicationUncertain && <Button label="Ver mis reels" variant="secondary" onPress={() => router.replace('/(tabs)/profile/my-reels')} />}
+        {publicationUncertain && (
+          <View style={styles.row}>
+            <Button style={styles.flex} label="Ver mis reels" variant="secondary" onPress={() => router.replace('/(tabs)/profile/my-reels')} />
+            <Button style={styles.flex} label="Reintentar" variant="outline" onPress={retryAfterUncertain} />
+          </View>
+        )}
 
         {saving && !useLink && (
           <View style={styles.progress}>
@@ -228,5 +252,5 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   progress: { gap: SPACING.sm },
   thumbnailRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, flexWrap: 'wrap' },
-  thumbnailPreview: { width: 56, height: 56, borderRadius: SPACING.sm },
+  thumbnailPreview: { width: SPACING.giant, height: SPACING.giant, borderRadius: TOKENS.radius.sm },
 });

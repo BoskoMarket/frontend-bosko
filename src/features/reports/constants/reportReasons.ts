@@ -27,6 +27,7 @@ export const REPORT_UNAVAILABLE_MESSAGE = 'No pudimos enviar el reporte. Intent�
 export const REPORT_TARGET_MISSING_MESSAGE = 'Este contenido ya no está disponible.';
 export const REPORT_INVALID_MESSAGE = 'Revisá el motivo y los detalles antes de enviar.';
 export const REPORT_NOT_ALLOWED_MESSAGE = 'No podés reportar este contenido.';
+export const REPORT_FORBIDDEN_MESSAGE = 'No tenés permiso para hacer esto.';
 export const REPORT_CONTEXT_MESSAGE = 'No pudimos verificar tu participación en la orden.';
 export const REPORT_RATE_LIMIT_MESSAGE = 'Hiciste demasiados intentos. Esperá un momento y probá de nuevo.';
 export const REPORT_ALREADY_REPORTED_MESSAGE = 'Ya reportaste esto.';

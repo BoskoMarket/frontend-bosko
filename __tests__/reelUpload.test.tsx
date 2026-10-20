@@ -77,9 +77,12 @@ describe('reels upload service', () => {
     appendSpy.mockRestore();
     expect(onProgress).toHaveBeenCalledWith(0.5);
   });
-  it('rejects a known unsupported MIME or zero duration', () => {
+  it('rejects a known unsupported MIME and a known duration over 60 s', () => {
     expect(validateReelVideo({ uri: 'f', mimeType: 'video/avi' })).toMatch(/MP4 o MOV/);
-    expect(validateReelVideo({ uri: 'f', duration: 0 })).toMatch(/más de cero/);
+    expect(validateReelVideo({ uri: 'f', duration: 60_001 })).toMatch(/60 segundos/);
+  });
+  it('accepts a picker-reported duration of 0 (unknown; the server measures it)', () => {
+    expect(validateReelVideo({ uri: 'f', duration: 0 })).toBeNull();
   });
 
   it('sends an optional PNG thumbnail in the correct multipart field', async () => {
@@ -174,6 +177,20 @@ describe('ReelUploadScreen', () => {
     expect(mockPost.mock.calls[1]).toEqual(['/reels', {
       videoUrl: 'https://cdn.test/video.mp4', description: '', tags: [],
     }]);
+  });
+
+  it('lifts the uncertain-publication lock when a new video is picked', async () => {
+    setMode('dark');
+    mockPost.mockResolvedValueOnce({ data: { videoUrl: 'https://cdn.test/video.mp4', duration: 12 } })
+      .mockRejectedValueOnce({ message: 'Network Error' });
+    const { getByText, queryByText, findByText } = render(<ReelUploadScreen />);
+    await act(async () => { fireEvent.press(getByText('Elegir de la galería')); });
+    await act(async () => { fireEvent.press(getByText('Publicar reel')); });
+    expect(await findByText('Ver mis reels')).toBeTruthy();
+    expect(getByText('Reintentar')).toBeTruthy();
+    expect(getByText('Publicar reel').props.accessibilityState?.disabled ?? true).toBeTruthy();
+    await act(async () => { fireEvent.press(getByText('Elegir de la galería')); });
+    expect(queryByText('Ver mis reels')).toBeNull();
   });
 
   it('shows a retry message on 404', async () => {

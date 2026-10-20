@@ -40,6 +40,8 @@ import {
   dialog,
 } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
+import { IMAGE_UPLOAD_MAX_BYTES, resolveImageMime } from '@/core/media/imageMime';
+import { resolveFileSize } from '@/features/reels/constants/reelUploadRules';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const AVATAR_SIZE = 104;
@@ -98,16 +100,18 @@ export default function EditProfileScreen() {
         allowsEditing: true,
         aspect: [3, 1],
         quality: 0.8,
+        // iOS: ask for a JPEG-compatible representation instead of HEIC.
+        preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode?.Compatible,
       });
       if (result.canceled || !result.assets[0]) return;
       const asset = result.assets[0];
-      const extension = (asset.fileName ?? asset.uri).split('?')[0].split('.').pop()?.toLowerCase();
-      const mimeType = asset.mimeType ?? (extension === 'png' ? 'image/png' : extension === 'webp' ? 'image/webp' : extension === 'jpg' || extension === 'jpeg' ? 'image/jpeg' : undefined);
+      const mimeType = resolveImageMime(asset);
       if (mimeType !== 'image/jpeg' && mimeType !== 'image/png' && mimeType !== 'image/webp') {
-        toast.error('Formato no válido', 'Usá una imagen JPG, PNG o WebP.');
+        toast.error('Formato no válido', 'Elegí una foto JPG, PNG o WebP.');
         return;
       }
-      if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
+      const bannerSize = resolveFileSize({ uri: asset.uri, fileSize: asset.fileSize });
+      if (bannerSize != null && bannerSize > IMAGE_UPLOAD_MAX_BYTES) {
         toast.error('Imagen demasiado grande', 'El máximo es 5 MB.');
         return;
       }
