@@ -32,7 +32,7 @@ Out (backend or product decision still pending): C04 delete account, C10 `/app/c
 | T5 | C19 | Reels "Siguiendo" tab sends `feed=following` (queryKey), read root `isFollowing` | delegated | ✅ | see commit log (T5); tsc ok, 39/39 suites, lint:ds 0; not device-tested |
 | T6 | C15 C16 | Service form: title 10–255 / DTO lengths validated before submit; category locked in edit mode | delegated | ✅ | see commit log (T6); tsc ok, 40/40 suites, lint:ds 0 |
 | T7 | C18 | Quote request: scheduledDate as a real date (ISO) instead of free text | delegated | ✅ | see commit log (T7); tsc ok, scheduledDate 5/5, lint:ds 0 |
-| T8 | C22 C23 | Response types: `imageUrls` on service image upload; normalize order mutation responses | delegated | ⏳ | |
+| T8 | C22 C23 | Response types: `imageUrls` on service image upload; normalize order mutation responses | delegated | ✅ | see commit log (T8); tsc ok, 42/42 suites, lint:ds 0 |
 | T9 | C12 | Pagination: keep metadata and load more (orders, own services, notifications, my reels, reviews) | delegated | ⏳ | |
 | T10 | C06 | Resend verification OTP (`POST /auth/resend-verification`, 60 s cooldown, generic message) | delegated | ⏳ | |
 | T11 | C13 | Order detail uses `order.review` (hide Calificar, show rating, refresh after review) | delegated | ⏳ | |
@@ -57,3 +57,4 @@ Out (backend or product decision still pending): C04 delete account, C10 `/app/c
 - 2026-10-20: T5 done — feed key `['reels','feed','foryou'|'following']`, `feed=following` param, tab resets index/scroll, `getReelIsFollowing` (root first), optimistic follow across both feeds with rollback. Known: unfollowed author stays in "Siguiendo" until refetch. Next: T6.
 - 2026-10-20: T6 done — `serviceFormRules.validateServiceFields` (title 10–255, description ≥20), inline title error + counter, `maxLength`. Decision: category not editable after publishing (backend UpdateServiceDto has no categoryId) → chips disabled in edit mode with helper text. Next: T7.
 - 2026-10-20: T7 done — day chips (14 days) + slot chips (9/14/19 h) → ISO `scheduledDate`, no new dependency. Review fix: `availableSlots` hides past slots for today and drops today when none left. Next: T8.
+- 2026-10-20: T8 done — `normalizeOrder` (lowercase status, flat ids from nested participants) on every orders service return; `uploadServiceImages` typed `{ imageUrls }`. Next: T9.
