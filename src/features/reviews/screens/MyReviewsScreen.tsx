@@ -112,7 +112,7 @@ export default function MyReviewsScreen() {
       ) : (
         <FlatList
           data={reviews}
-          onEndReached={() => { if (reviewsQuery.hasNextPage && !reviewsQuery.isFetching && !reviewsQuery.isFetchNextPageError) reviewsQuery.fetchNextPage(); }}
+          onEndReached={() => { if (reviewsQuery.hasNextPage && !reviewsQuery.isFetchingNextPage && !reviewsQuery.isFetchNextPageError) reviewsQuery.fetchNextPage(); }}
           onEndReachedThreshold={0.4}
           ListFooterComponent={reviewsQuery.isFetchingNextPage ? <SkeletonList variant="card" count={2} /> : reviewsQuery.isFetchNextPageError ? (
             <Button label="Reintentar cargar más" onPress={() => { reviewsQuery.fetchNextPage(); }} />

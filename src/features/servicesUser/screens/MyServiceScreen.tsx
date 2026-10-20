@@ -16,7 +16,7 @@ import { useMyServices, useDeleteService } from "@/hooks/queries/useMarketplaceQ
 import type { Service } from "@/features/servicesUser/services/service";
 import { EmptyState } from '@/core/components/EmptyState';
 import { getUserErrorMessage } from '@/lib/errors';
-import { BRAND_RADIAL_FILL, ScreenHeader, SkeletonList, TOKENS, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
+import { BRAND_RADIAL_FILL, Button, ScreenHeader, SkeletonList, TOKENS, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -174,12 +174,10 @@ export default function MyServiceScreen() {
       ) : (
         <FlatList
           data={services}
-          onEndReached={() => { if (myServicesQuery.hasNextPage && !myServicesQuery.isFetching && !myServicesQuery.isFetchNextPageError) myServicesQuery.fetchNextPage(); }}
+          onEndReached={() => { if (myServicesQuery.hasNextPage && !myServicesQuery.isFetchingNextPage && !myServicesQuery.isFetchNextPageError) myServicesQuery.fetchNextPage(); }}
           onEndReachedThreshold={0.4}
           ListFooterComponent={myServicesQuery.isFetchingNextPage ? <SkeletonList variant="card" count={2} /> : myServicesQuery.isFetchNextPageError ? (
-            <Pressable onPress={() => myServicesQuery.fetchNextPage()} accessibilityRole="button">
-              <Text style={{ color: tc.text }}>Reintentar cargar más</Text>
-            </Pressable>
+            <Button label="Reintentar cargar más" onPress={() => { myServicesQuery.fetchNextPage(); }} />
           ) : null}
           keyExtractor={(item, index) => item.id ?? `service-${index}`}
           renderItem={renderService}

@@ -223,7 +223,7 @@ export default function DeleteAccountScreen() {
               : 'Estamos verificando tus órdenes antes de continuar.'}
           </NoticeBanner>
         )}
-        {checkingOrders && (clientOrders.isError || providerOrders.isError) && (
+        {checkingOrders && !isBlocked && (clientOrders.isError || providerOrders.isError) && (
           <Button label="Reintentar verificación" onPress={() => {
             if (clientOrders.isFetchNextPageError) void clientOrders.fetchNextPage();
             else if (clientOrders.isError) void clientOrders.refetch();

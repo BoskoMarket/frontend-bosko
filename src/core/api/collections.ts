@@ -26,6 +26,23 @@ export function readPaginatedCollection<T>(value: unknown): PaginatedCollection<
   return page as PaginatedCollection<T>;
 }
 
+/**
+ * Flattens pages of a newest-first list. A new item can push an earlier one onto the next
+ * page, so the same id may show up twice; the first occurrence wins.
+ */
+export function flattenUniqueById<T extends { id: string }>(pages: ReadonlyArray<{ data: readonly T[] }>): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const page of pages) {
+    for (const item of page.data) {
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
+      out.push(item);
+    }
+  }
+  return out;
+}
+
 export function nextCollectionPage<T>(page: PaginatedCollection<T>): number | undefined {
   return page.page * page.limit < page.total ? page.page + 1 : undefined;
 }

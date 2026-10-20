@@ -220,7 +220,7 @@ export default function NotificationsScreen() {
 
       <FlatList
         data={notifications}
-        onEndReached={() => { if (hasMore && !fetching && !moreError) loadMore(); }}
+        onEndReached={() => { if (hasMore && !loadingMore && !moreError) loadMore(); }}
         onEndReachedThreshold={0.4}
         ListFooterComponent={loadingMore ? <SkeletonList variant="row" count={2} /> : moreError ? (
           <Pressable onPress={() => loadMore()} accessibilityRole="button" accessibilityLabel="Reintentar cargar notificaciones">

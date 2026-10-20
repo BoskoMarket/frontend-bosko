@@ -97,7 +97,7 @@ export default function ProviderHome() {
   ].filter((t): t is { label: string; value: string } => t !== null);
 
   const ordersLoading = ordersQuery.isLoading || pendingCountQuery.isLoading;
-  const ordersFailed = (ordersQuery.isError && !ordersQuery.data) || pendingCountQuery.isError;
+  const ordersFailed = (ordersQuery.isError && !ordersQuery.data) || (pendingCountQuery.isError && pendingCountQuery.data === undefined);
 
   return (
     <View style={[styles.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>

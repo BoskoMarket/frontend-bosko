@@ -263,7 +263,7 @@ export default function MyReelsScreen() {
       ) : (
         <FlatList
           data={reels}
-          onEndReached={() => { if (hasNextPage && !isFetching && !isFetchNextPageError) fetchNextPage(); }}
+          onEndReached={() => { if (hasNextPage && !isFetchingNextPage && !isFetchNextPageError) fetchNextPage(); }}
           onEndReachedThreshold={0.4}
           ListFooterComponent={isFetchingNextPage ? <ActivityIndicator color={tc.textSub} /> : isFetchNextPageError ? (
             <Button label="Reintentar cargar más" onPress={() => { fetchNextPage(); }} />

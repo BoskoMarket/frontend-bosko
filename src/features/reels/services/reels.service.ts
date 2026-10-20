@@ -1,4 +1,5 @@
 import api from '@/core/api/axiosinstance';
+import { readPaginatedCollection, type PaginatedCollection } from '@/core/api/collections';
 
 export interface ReelUser {
   id: string;
@@ -13,6 +14,8 @@ export interface Reel {
   id: string;
   type?: 'video' | 'before_after';
   videoUrl: string | null;
+  thumbnailUrl?: string | null;
+  duration?: number | null;
   beforeImageUrl?: string;
   afterImageUrl?: string;
   user: ReelUser;
@@ -62,10 +65,10 @@ export async function getReelsFeed(page = 1, limit = 10, feed?: ReelsFeedType): 
   return res.data;
 }
 
-/** GET /reels/me — reels propios del usuario autenticado */
-export async function getMyReels(): Promise<Reel[]> {
-  const res = await api.get<Reel[]>('/reels/me');
-  return res.data;
+/** GET /reels/me?page=1&limit=20 — reels propios del usuario autenticado (paginado) */
+export async function getMyReels(page = 1, limit = 20): Promise<PaginatedCollection<Reel>> {
+  const res = await api.get<unknown>('/reels/me', { params: { page, limit } });
+  return readPaginatedCollection<Reel>(res.data);
 }
 
 /** PATCH /reels/:id */

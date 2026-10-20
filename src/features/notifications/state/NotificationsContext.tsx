@@ -47,7 +47,7 @@ export function useNotifications() {
   }, [qc]);
 
   return {
-    notifications: notifQ.data?.pages.flatMap(page => page.data) ?? [],
+    notifications: notifQ.data ?? [],
     hasMore: notifQ.hasNextPage,
     loadingMore: notifQ.isFetchingNextPage,
     fetching: notifQ.isFetching,

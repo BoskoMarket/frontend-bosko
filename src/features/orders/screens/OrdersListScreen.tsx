@@ -186,7 +186,7 @@ export default function OrdersListScreen() {
       ) : (
         <FlatList
           data={orders}
-          onEndReached={() => { if (hasMore && !fetching && !moreError) loadMore(); }}
+          onEndReached={() => { if (hasMore && !loadingMore && !moreError) loadMore(); }}
           onEndReachedThreshold={0.4}
           ListFooterComponent={loadingMore ? <SkeletonList variant="card" count={2} /> : moreError ? (
             <Button label="Reintentar cargar más" onPress={() => { loadMore(); }} />

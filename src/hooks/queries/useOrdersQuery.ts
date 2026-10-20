@@ -1,5 +1,5 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
-import { nextCollectionPage } from '@/core/api/collections';
+import { flattenUniqueById, nextCollectionPage } from '@/core/api/collections';
 import { QUERY_KEYS } from '@/core/query/queryKeys';
 import {
   fetchOrdersAsClient,
@@ -24,24 +24,27 @@ import type {
 import { toast } from '@/core/components/Toast';
 import { getUserErrorMessage } from '@/lib/errors';
 
+type OrdersPages = InfiniteData<PaginatedResponse<Order>, number>;
+const selectOrders = (data: OrdersPages): Order[] => flattenUniqueById(data.pages);
+
 export function useClientOrders() {
-  const query = useInfiniteQuery({
+  return useInfiniteQuery({
     queryKey: QUERY_KEYS.clientOrders,
     queryFn: ({ pageParam }) => fetchOrdersAsClient({ page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: nextCollectionPage,
+    select: selectOrders,
   });
-  return { ...query, data: query.data?.pages.flatMap(page => page.data) };
 }
 
 export function useProviderOrders() {
-  const query = useInfiniteQuery({
+  return useInfiniteQuery({
     queryKey: QUERY_KEYS.providerOrders,
     queryFn: ({ pageParam }) => fetchOrdersAsProvider({ page: pageParam }),
     initialPageParam: 1,
     getNextPageParam: nextCollectionPage,
+    select: selectOrders,
   });
-  return { ...query, data: query.data?.pages.flatMap(page => page.data) };
 }
 
 /**
@@ -59,14 +62,12 @@ export function usePendingProviderRequestsQuery(enabled: boolean) {
         Date.now() - listState.dataUpdatedAt < 60_000
         ? listState.data?.pages : undefined;
       let page = cachedPages?.length ? cachedPages[cachedPages.length - 1] : await fetchOrdersAsProvider({ page: 1 });
-      let count = cachedPages?.length
-        ? cachedPages.flatMap(cached => cached.data).filter(order => order.status === 'pending').length
-        : page.data.filter(order => order.status === 'pending').length;
+      const pages: PaginatedResponse<Order>[] = cachedPages?.length ? [...cachedPages] : [page];
       while (nextCollectionPage(page)) {
         page = await fetchOrdersAsProvider({ page: nextCollectionPage(page) });
-        count += page.data.filter(order => order.status === 'pending').length;
+        pages.push(page);
       }
-      return count;
+      return flattenUniqueById(pages).filter(order => order.status === 'pending').length;
     },
     enabled,
     staleTime: 60_000,

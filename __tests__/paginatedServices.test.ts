@@ -39,3 +39,11 @@ it('requests and returns a page of own reels and provider reviews', async () => 
   expect((await fetchServiceReviewsService('p1', 2, 10)).total).toBe(11);
   expect(get).toHaveBeenCalledWith('/reviews/providers/p1/reviews', { params: { page: 2, limit: 10 } });
 });
+
+it('defaults own reels to page 1 / limit 20 and rejects a bare array', async () => {
+  get.mockResolvedValueOnce({ data: { data: [], total: 0, page: 1, limit: 20 } });
+  await getMyReels();
+  expect(get).toHaveBeenLastCalledWith('/reels/me', { params: { page: 1, limit: 20 } });
+  get.mockResolvedValueOnce({ data: [{ id: 'r1' }] });
+  await expect(getMyReels()).rejects.toThrow('formato inesperado');
+});

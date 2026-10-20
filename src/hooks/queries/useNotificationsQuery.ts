@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
-import { nextCollectionPage } from '@/core/api/collections';
+import { flattenUniqueById, nextCollectionPage } from '@/core/api/collections';
 import type { PaginatedNotifications } from '@/features/notifications/services/notifications.service';
 import { QUERY_KEYS } from '@/core/query/queryKeys';
 import {
@@ -10,12 +10,15 @@ import {
   deleteNotification,
 } from '@/features/notifications/services/notifications.service';
 
+const selectNotifications = (data: InfiniteData<PaginatedNotifications, number>) => flattenUniqueById(data.pages);
+
 export function useNotificationsQuery() {
   return useInfiniteQuery({
     queryKey: QUERY_KEYS.notifications(1),
     queryFn: ({ pageParam }) => fetchNotifications(pageParam),
     initialPageParam: 1,
     getNextPageParam: nextCollectionPage,
+    select: selectNotifications,
   });
 }
 
