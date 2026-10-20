@@ -27,7 +27,7 @@ import { toast } from '@/core/components/Toast';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
-const MIN_DESCRIPTION = 20;
+import { DESCRIPTION_MIN as MIN_DESCRIPTION, TITLE_MAX, TITLE_MIN, validateServiceFields } from '@/features/servicesUser/utils/serviceFormRules';
 
 type FormState = {
   title: string;
@@ -83,6 +83,7 @@ export default function ServiceFormScreen() {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const [imageUri, setImageUri] = useState<string | undefined>();
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
@@ -146,13 +147,18 @@ export default function ServiceFormScreen() {
     }
   };
 
+  // A title already published (possibly shorter than today's minimum) is kept and not re-sent.
+  const titleUnchanged = isEditing && form.title.trim() === (selectedService?.title ?? '').trim();
+  const fieldErrors = validateServiceFields({ title: form.title, description: form.description });
+  if (titleUnchanged) delete fieldErrors.title;
+  const titleError = (submitAttempted || form.title.length > 0) ? fieldErrors.title : undefined;
+  const descriptionError = (submitAttempted || form.description.length > 0) ? fieldErrors.description : undefined;
+
   const validateForm = () => {
-    if (!form.title.trim()) {
-      setError("El título es obligatorio.");
-      return false;
-    }
-    if (form.description.trim().length < MIN_DESCRIPTION) {
-      setError(`La descripción debe tener al menos ${MIN_DESCRIPTION} caracteres.`);
+    setSubmitAttempted(true);
+    const firstFieldError = fieldErrors.title ?? fieldErrors.description;
+    if (firstFieldError) {
+      setError(firstFieldError);
       return false;
     }
     if (form.price.trim() !== "") {
@@ -162,7 +168,8 @@ export default function ServiceFormScreen() {
         return false;
       }
     }
-    if (!form.categoryId) {
+    // Category cannot change after publishing, so it is only required when creating.
+    if (!isEditing && !form.categoryId) {
       setError("Seleccioná una categoría.");
       return false;
     }
@@ -186,7 +193,8 @@ export default function ServiceFormScreen() {
     try {
       const payload = await buildPayload();
       if (isEditing && selectedService?.id) {
-        const { categoryId: _cat, ...editPayload } = payload;
+        const { categoryId: _cat, title, ...rest } = payload;
+        const editPayload = titleUnchanged ? rest : { ...rest, title };
         await updateServiceM.mutateAsync({ id: selectedService.id, payload: editPayload });
         if (imageUri?.startsWith("file")) {
           try {
@@ -254,8 +262,13 @@ export default function ServiceFormScreen() {
             label="Título *"
             placeholder="Ej: Plomería de urgencia"
             value={form.title}
+            maxLength={TITLE_MAX}
+            error={titleError}
             onChangeText={(t) => setForm((p) => ({ ...p, title: t }))}
           />
+          <Text variant="caption" color={tc.textMuted}>
+            {form.title.length}/{TITLE_MAX} caracteres (mínimo {TITLE_MIN})
+          </Text>
 
           <Input
             label="Descripción *"
@@ -264,6 +277,7 @@ export default function ServiceFormScreen() {
             multiline
             numberOfLines={5}
             textAlignVertical="top"
+            error={descriptionError}
             onChangeText={(t) => setForm((p) => ({ ...p, description: t }))}
           />
           <Text variant="caption" color={tc.textMuted}>
@@ -285,7 +299,10 @@ export default function ServiceFormScreen() {
         </FormCard>
 
         {/* Categoría */}
-        <FormCard title="Categoría *">
+        <FormCard
+          title="Categoría *"
+          subtitle={isEditing ? "La categoría no se puede cambiar después de publicar." : undefined}
+        >
           {categoriesLoading ? (
             <ActivityIndicator color={TOKENS.color.signal} style={{ marginVertical: SPACING.sm }} />
           ) : (
@@ -295,6 +312,7 @@ export default function ServiceFormScreen() {
                   key={cat.id}
                   label={cat.icon ? `${cat.icon} ${cat.name}` : cat.name}
                   selected={form.categoryId === cat.id}
+                  disabled={isEditing}
                   onPress={() => setForm((p) => ({ ...p, categoryId: cat.id }))}
                 />
               ))}

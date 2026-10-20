@@ -64,7 +64,7 @@ export async function deleteService(id: string): Promise<void> {
 export async function uploadServiceImages(
   serviceId: string,
   imageUris: string[],
-): Promise<{ images: string[] }> {
+): Promise<{ imageUrls: string[] }> {
   const formData = new FormData();
   imageUris.forEach((uri, i) => {
     formData.append('images', {
@@ -74,7 +74,7 @@ export async function uploadServiceImages(
     } as any);
   });
 
-  const { data } = await api.post<{ images: string[] }>(
+  const { data } = await api.post<{ imageUrls: string[] }>(
     `/services/${serviceId}/images`,
     formData,
     { headers: { 'Content-Type': 'multipart/form-data' } },
