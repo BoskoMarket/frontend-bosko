@@ -100,11 +100,22 @@ export default function EditProfileScreen() {
         quality: 0.8,
       });
       if (result.canceled || !result.assets[0]) return;
-      const uri = result.assets[0].uri;
+      const asset = result.assets[0];
+      const extension = (asset.fileName ?? asset.uri).split('?')[0].split('.').pop()?.toLowerCase();
+      const mimeType = asset.mimeType ?? (extension === 'png' ? 'image/png' : extension === 'webp' ? 'image/webp' : extension === 'jpg' || extension === 'jpeg' ? 'image/jpeg' : undefined);
+      if (mimeType !== 'image/jpeg' && mimeType !== 'image/png' && mimeType !== 'image/webp') {
+        toast.error('Formato no válido', 'Usá una imagen JPG, PNG o WebP.');
+        return;
+      }
+      if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
+        toast.error('Imagen demasiado grande', 'El máximo es 5 MB.');
+        return;
+      }
+      const uri = asset.uri;
       setBannerUri(uri);
       setUpdatingBanner(true);
       try {
-        await uploadBanner(uri);
+        await uploadBanner({ uri, mimeType });
         toast.success('Portada actualizada');
       } catch (err) {
         toast.error('No se pudo actualizar la portada', getBannerErrorMessage(err));

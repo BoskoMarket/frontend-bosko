@@ -12,7 +12,7 @@ export interface UserProfile {
     authProvider?: 'password' | 'google';
     bio?: string;
     avatarUrl?: string;
-    bannerUrl?: string;
+    bannerUrl?: string | null;
     location?: string;
     lat?: number;
     lng?: number;
@@ -57,15 +57,13 @@ export async function uploadAvatar(fileUri: string): Promise<{ avatarUrl: string
     return data;
 }
 
-/**
- * Subir portada — POST /users/me/banner (multipart, campo `banner`).
- *
- * ENDPOINT PROPUESTO, pendiente de backend (ver `odd/backend-requests.md`, BR01).
- * Hasta que se despliegue responde 404/405/501 y la UI lo trata como "no disponible".
- */
-export async function uploadBanner(fileUri: string): Promise<{ bannerUrl: string }> {
+/** Subir portada — el backend recorta a 3:1 y genera un JPEG. */
+export interface BannerFile { uri: string; mimeType: 'image/jpeg' | 'image/png' | 'image/webp' }
+
+export async function uploadBanner(file: BannerFile): Promise<{ bannerUrl: string }> {
     const formData = new FormData();
-    formData.append('banner', { uri: fileUri, type: 'image/jpeg', name: 'banner.jpg' } as any);
+    const extension = file.mimeType === 'image/png' ? 'png' : file.mimeType === 'image/webp' ? 'webp' : 'jpg';
+    formData.append('banner', { uri: file.uri, type: file.mimeType, name: `banner.${extension}` } as any);
 
     const { data } = await api.post<{ bannerUrl: string }>("/users/me/banner", formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -73,14 +71,10 @@ export async function uploadBanner(fileUri: string): Promise<{ bannerUrl: string
     return data;
 }
 
-/**
- * Quitar portada — DELETE /users/me/banner (deja `bannerUrl = null`).
- *
- * ENDPOINT PROPUESTO, pendiente de backend (BR01). Acepta `{ bannerUrl: null }` o 204.
- */
+/** Quitar portada — la respuesta del backend contiene `bannerUrl: null`. */
 export async function removeBanner(): Promise<{ bannerUrl: null }> {
-    await api.delete("/users/me/banner");
-    return { bannerUrl: null };
+    const { data } = await api.delete<{ bannerUrl: null }>("/users/me/banner");
+    return data;
 }
 
 /** Obtener estadísticas del perfil — GET /users/me/stats */

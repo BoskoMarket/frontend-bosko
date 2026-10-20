@@ -12,12 +12,12 @@ jest.mock('@/core/api/axiosinstance', () => ({
 import { uploadBanner, removeBanner } from '@/features/profile/services/profile';
 import { getBannerErrorMessage } from '@/features/profile/utils/bannerErrors';
 
-describe('banner service (proposed endpoint BR01)', () => {
+describe('banner service', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('posts the file to /users/me/banner in the "banner" multipart field', async () => {
     mockPost.mockResolvedValueOnce({ data: { bannerUrl: 'https://cdn.test/b.jpg' } });
-    const res = await uploadBanner('file:///b.jpg');
+    const res = await uploadBanner({ uri: 'file:///b.jpg', mimeType: 'image/jpeg' });
     expect(res).toEqual({ bannerUrl: 'https://cdn.test/b.jpg' });
     const [url, body, config] = mockPost.mock.calls[0];
     expect(url).toBe('/users/me/banner');
@@ -26,8 +26,18 @@ describe('banner service (proposed endpoint BR01)', () => {
     if (parts.length) expect(parts[0][0]).toBe('banner');
   });
 
+  it.each([
+    ['image/png', 'banner.png'],
+    ['image/webp', 'banner.webp'],
+  ] as const)('preserves %s when uploading', async (mimeType, name) => {
+    mockPost.mockResolvedValueOnce({ data: { bannerUrl: 'https://cdn.test/banner.jpg' } });
+    await uploadBanner({ uri: 'file:///picture', mimeType });
+    const parts = (mockPost.mock.calls[0][1] as any)._parts ?? [];
+    if (parts.length) expect(parts[0][1]).toMatchObject({ type: mimeType, name });
+  });
+
   it('removes the banner with DELETE /users/me/banner', async () => {
-    mockDelete.mockResolvedValueOnce({ status: 204 });
+    mockDelete.mockResolvedValueOnce({ data: { bannerUrl: null }, status: 200 });
     await expect(removeBanner()).resolves.toEqual({ bannerUrl: null });
     expect(mockDelete).toHaveBeenCalledWith('/users/me/banner');
   });
@@ -36,8 +46,8 @@ describe('banner service (proposed endpoint BR01)', () => {
 describe('getBannerErrorMessage', () => {
   const err = (status: number) => ({ response: { status } });
 
-  it.each([404, 405, 501])('maps %s to "not available yet"', (s) => {
-    expect(getBannerErrorMessage(err(s))).toMatch(/todavía no está disponible/);
+  it.each([404, 405, 501])('maps %s to a retry message', (s) => {
+    expect(getBannerErrorMessage(err(s))).toMatch(/Intentá de nuevo/);
   });
   it('maps 413 to a size message', () => {
     expect(getBannerErrorMessage(err(413))).toMatch(/5 MB/);

@@ -9,6 +9,7 @@ import {
   toggleAvailabilityService,
   getUserStats,
   type UpdateProfilePayload,
+  type BannerFile,
 } from '@/features/profile/services/profile';
 import { useAuth } from '@/features/auth/state/AuthContext';
 
@@ -105,11 +106,11 @@ export function useUploadAvatar() {
   });
 }
 
-/** Portada — endpoint propuesto (BR01), ver `uploadBanner`. */
+/** Portada del perfil propio. */
 export function useUploadBanner() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (fileUri: string) => uploadBanner(fileUri),
+    mutationFn: (file: BannerFile) => uploadBanner(file),
     onSuccess: ({ bannerUrl }) => {
       qc.setQueryData(QUERY_KEYS.profile, (old: any) =>
         old ? { ...old, bannerUrl } : old,
@@ -123,9 +124,9 @@ export function useRemoveBanner() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => removeBanner(),
-    onSuccess: () => {
+    onSuccess: ({ bannerUrl }) => {
       qc.setQueryData(QUERY_KEYS.profile, (old: any) =>
-        old ? { ...old, bannerUrl: undefined } : old,
+        old ? { ...old, bannerUrl } : old,
       );
       qc.invalidateQueries({ queryKey: QUERY_KEYS.profile });
     },
