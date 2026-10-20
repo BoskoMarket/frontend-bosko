@@ -15,7 +15,8 @@ export function mapService(s: any): ServiceSummary {
   return {
     id: s.id,
     categoryId: s.category?.id ?? s.categoryId ?? '',
-    providerId: s.provider?.id ?? s.providerId ?? '',
+    // `userId` is the owner (provider) on legacy service payloads.
+    providerId: s.provider?.id ?? s.providerId ?? s.userId ?? '',
     name: [s.provider?.firstName, s.provider?.lastName].filter(Boolean).join(' ') || s.provider?.username || '',
     title: s.title ?? '',
     summary: s.description ?? '',

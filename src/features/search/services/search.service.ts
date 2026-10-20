@@ -1,5 +1,5 @@
 import api from "@/core/api/axiosinstance";
-import { mapService } from "@/features/servicesUser/services/catalog";
+import { mapCategory, mapService } from "@/features/servicesUser/services/catalog";
 import type { SearchProvider, SearchResponse } from "../../../interfaces/search";
 
 export function mapSearchProvider(p: any): SearchProvider {
@@ -14,15 +14,27 @@ export function mapSearchProvider(p: any): SearchProvider {
   };
 }
 
+/** Plain array or `{ data: [...] }` page; anything else counts as no results. */
+function toList(value: unknown): any[] {
+  if (Array.isArray(value)) return value;
+  if (value && typeof value === "object" && Array.isArray((value as { data?: unknown }).data)) {
+    return (value as { data: any[] }).data;
+  }
+  return [];
+}
+
+const hasId = (item: { id?: unknown }) => !!item?.id;
+
 /** Adapts the backend SearchResultDto (nested provider, price object) to SearchResponse. */
 export function adaptSearchResponse(raw: any, query = ""): SearchResponse {
-  const rawServices: any[] = Array.isArray(raw) ? raw : raw?.services ?? [];
-  const rawProviders: any[] = Array.isArray(raw) ? [] : raw?.providers ?? [];
+  const isBareList = Array.isArray(raw);
   return {
     query: raw?.query ?? query,
-    services: rawServices.map((s) => ({ ...mapService(s), categoryName: s?.category?.name ?? s?.categoryName })),
-    providers: rawProviders.map(mapSearchProvider).filter((p) => !!p.id),
-    categories: Array.isArray(raw) ? [] : raw?.categories ?? [],
+    services: toList(isBareList ? raw : raw?.services)
+      .filter(hasId)
+      .map((s) => ({ ...mapService(s), categoryName: s?.category?.name ?? s?.categoryName })),
+    providers: toList(isBareList ? [] : raw?.providers).map(mapSearchProvider).filter(hasId),
+    categories: toList(isBareList ? [] : raw?.categories).filter(hasId).map(mapCategory),
   };
 }
 

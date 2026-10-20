@@ -31,6 +31,7 @@ import {
   useIsDark,
   useThemeColors,
   withAlpha,
+  formatServicePrice,
 } from "@/core/design-system";
 import type { Category } from "@/interfaces/category";
 import type { SearchProvider } from "@/interfaces/search";
@@ -133,13 +134,15 @@ export const SearchPage = () => {
     }
 
     if (item.type === "service") {
+      const providerId = getProviderRouteId(item.data);
       return (
         <Pressable
+          disabled={!providerId}
           onPress={() => {
-            const providerId = getProviderRouteId(item.data);
             if (providerId) router.push({ pathname: "/(tabs)/services/provider/[id]", params: { id: providerId, from: "search" } });
           }}
           accessibilityRole="button"
+          accessibilityState={{ disabled: !providerId }}
           accessibilityLabel={`Servicio ${item.data.title}`}
           style={[s.card, { backgroundColor: tc.card, borderColor: tc.border }]}
         >
@@ -157,14 +160,14 @@ export const SearchPage = () => {
               ) : null}
               {item.data.rate.amount > 0 ? (
                 <Text variant="bodySmall" weight="700" color={SIGNAL}>
-                  Desde ${item.data.rate.amount}
+                  Desde {formatServicePrice(item.data.rate)}
                 </Text>
               ) : (
                 <Text variant="bodySmall" color={tc.textSub}>Consultar precio</Text>
               )}
             </View>
           </View>
-          <Ionicons name="chevron-forward" size={16} color={tc.border} />
+          {providerId ? <Ionicons name="chevron-forward" size={16} color={tc.border} /> : null}
         </Pressable>
       );
     }

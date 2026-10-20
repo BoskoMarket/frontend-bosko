@@ -44,3 +44,25 @@ describe("search adapter", () => {
     expect(res.services[0].providerId).toBe("");
   });
 });
+
+describe('adaptSearchResponse robustness', () => {
+  it('accepts paginated sections and drops items without id', () => {
+    const res = adaptSearchResponse({
+      services: { data: [{ id: 's1', title: 'Plomería urgente', provider: { id: 'p1' } }, { title: 'sin id' }], total: 2 },
+      providers: null,
+      categories: [{ id: 'c1', name: 'Plomería' }, null],
+    });
+    expect(res.services.map((s) => s.id)).toEqual(['s1']);
+    expect(res.providers).toEqual([]);
+    expect(res.categories.map((c) => c.id)).toEqual(['c1']);
+  });
+
+  it('treats unexpected section shapes as empty instead of throwing', () => {
+    expect(() => adaptSearchResponse({ services: { total: 0 }, categories: 'x' })).not.toThrow();
+  });
+
+  it('falls back to the legacy userId as provider id', () => {
+    const res = adaptSearchResponse({ services: [{ id: 's2', title: 'Electricidad', userId: 'u9' }] });
+    expect(res.services[0].providerId).toBe('u9');
+  });
+});
