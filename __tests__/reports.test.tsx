@@ -15,7 +15,7 @@ jest.mock('@/core/api/axiosinstance', () => ({
     post: (...a: any[]) => mockPost(...a),
     get: (url: string) => {
       if (url.includes('/public')) {
-        return Promise.resolve({ data: { id: 'prov1', firstName: 'Ana', lastName: 'Gomez', rating: 4, reviewsCount: 2 } });
+         return Promise.resolve({ data: { id: 'prov1', firstName: 'Ana', lastName: 'Gomez', bannerUrl: 'https://cdn.test/banner.jpg', rating: 4, reviewsCount: 2 } });
       }
       if (url.includes('/reviews/providers')) {
         return Promise.resolve({
@@ -112,6 +112,14 @@ describe.each(['dark', 'light'] as const)('ReportSheet (%s)', (mode) => {
     expect(onSubmit).toHaveBeenCalledWith({ reason: 'other', details: 'me insultó' });
   });
 
+  it('allows optional details for any other reason', () => {
+    const { getByLabelText, getByText, getByPlaceholderText, onSubmit } = setup();
+    fireEvent.press(getByLabelText('Acoso o lenguaje ofensivo'));
+    fireEvent.changeText(getByPlaceholderText('Describí el problema'), '  mensaje ofensivo  ');
+    fireEvent.press(getByText('Enviar reporte'));
+    expect(onSubmit).toHaveBeenCalledWith({ reason: 'harassment', details: 'mensaje ofensivo' });
+  });
+
   it('locks the options and cancel while submitting', () => {
     const { getByLabelText, onCancel } = setup({ submitting: true });
     fireEvent.press(getByLabelText('Cerrar'));
@@ -121,11 +129,24 @@ describe.each(['dark', 'light'] as const)('ReportSheet (%s)', (mode) => {
 });
 
 describe('reportErrorFeedback', () => {
-  it.each([404, 405, 501])('maps %s to "not available yet"', (status) => {
-    expect(reportErrorFeedback(httpError(status))).toEqual({ title: 'Los reportes todavía no están disponibles.' });
+  it('treats 404 as a missing target, not an unshipped endpoint', () => {
+    expect(reportErrorFeedback(httpError(404))).toEqual({ title: 'Este contenido ya no está disponible.', close: true });
+  });
+  it.each([405, 501])('maps %s to a retryable server error', (status) => {
+    expect(reportErrorFeedback(httpError(status))).toEqual({ title: 'No pudimos enviar el reporte. Intentá de nuevo más tarde.', close: false });
   });
   it('maps 409 ALREADY_REPORTED', () => {
     expect(reportErrorFeedback(httpError(409, 'ALREADY_REPORTED')).title).toBe('Ya reportaste esto.');
+    expect(reportErrorFeedback(httpError(409))).not.toHaveProperty('title', 'Ya reportaste esto.');
+  });
+  it.each([
+    [400, 'INVALID_REPORT', false],
+    [422, 'CANNOT_REPORT_SELF', true],
+    [400, 'CANNOT_REPORT_OWN_REVIEW', true],
+    [403, 'NOT_ORDER_PARTICIPANT', true],
+    [429, 'RATE_LIMITED', false],
+  ] as const)('maps %s %s with close=%s', (status, code, close) => {
+    expect(reportErrorFeedback(httpError(status, code)).close).toBe(close);
   });
   it('falls back to a retryable error', () => {
     const fb = reportErrorFeedback(httpError(500));
@@ -157,11 +178,11 @@ describe('ReportFlow', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('shows "no disponibles" on 404 and closes', async () => {
+  it('shows a missing-target message on 404 and closes', async () => {
     const submit = jest.fn().mockRejectedValue(httpError(404));
     const { getByText, onClose } = open(submit);
     fireEvent.press(getByText('Enviar reporte'));
-    await waitFor(() => expect(mockToast.error).toHaveBeenCalledWith('Los reportes todavía no están disponibles.', undefined));
+    await waitFor(() => expect(mockToast.error).toHaveBeenCalledWith('Este contenido ya no está disponible.', undefined));
     expect(onClose).toHaveBeenCalled();
   });
 
@@ -187,11 +208,12 @@ describe('ReportFlow', () => {
 describe('report services send the right payload', () => {
   beforeEach(() => { mockPost.mockReset().mockResolvedValue({ data: {} }); });
 
-  it('reels: only { reason } (backend DTO), details appended to the code', async () => {
+  it('reels: sends separate reason and details and accepts a 204 with no body', async () => {
+    mockPost.mockResolvedValueOnce({ status: 204, data: undefined });
     await reportReel('reel1', 'spam');
     expect(mockPost).toHaveBeenLastCalledWith('/reels/reel1/report', { reason: 'spam' });
     await reportReel('reel1', 'other', 'texto');
-    expect(mockPost).toHaveBeenLastCalledWith('/reels/reel1/report', { reason: 'other: texto' });
+    expect(mockPost).toHaveBeenLastCalledWith('/reels/reel1/report', { reason: 'other', details: 'texto' });
   });
 
   it('reviews: reason + details (proposed body)', async () => {
@@ -222,6 +244,7 @@ describe('ProviderProfileScreen report entries', () => {
   it('offers report only on other people\'s reviews and submits the review report', async () => {
     const { findByText, getAllByLabelText, getByLabelText, getByText } = render(<ProviderProfileScreen />);
     await findByText('Excelente');
+    expect(getByLabelText('Portada del profesional')).toBeTruthy();
     expect(getAllByLabelText('Reportar reseña')).toHaveLength(1); // not on the viewer's own review
     fireEvent.press(getByLabelText('Reportar reseña'));
     fireEvent.press(getByLabelText('Acoso o lenguaje ofensivo'));

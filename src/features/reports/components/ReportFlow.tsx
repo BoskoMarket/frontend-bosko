@@ -37,8 +37,7 @@ export function ReportFlow({ visible, title, message, onClose, submit }: ReportF
     } catch (err) {
       const fb = reportErrorFeedback(err);
       toast.error(fb.title, fb.message);
-      // Reports that can never succeed (unavailable / already reported) close the sheet; others allow retry.
-      if (fb.message === undefined) onClose();
+      if (fb.close) onClose();
     } finally {
       inFlight.current = false;
       setSubmitting(false);
