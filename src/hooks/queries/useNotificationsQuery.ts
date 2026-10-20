@@ -1,4 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
+import { nextCollectionPage } from '@/core/api/collections';
+import type { PaginatedNotifications } from '@/features/notifications/services/notifications.service';
 import { QUERY_KEYS } from '@/core/query/queryKeys';
 import {
   fetchNotifications,
@@ -8,10 +10,12 @@ import {
   deleteNotification,
 } from '@/features/notifications/services/notifications.service';
 
-export function useNotificationsQuery(page = 1) {
-  return useQuery({
-    queryKey: QUERY_KEYS.notifications(page),
-    queryFn: () => fetchNotifications(page),
+export function useNotificationsQuery() {
+  return useInfiniteQuery({
+    queryKey: QUERY_KEYS.notifications(1),
+    queryFn: ({ pageParam }) => fetchNotifications(pageParam),
+    initialPageParam: 1,
+    getNextPageParam: nextCollectionPage,
   });
 }
 
@@ -28,11 +32,14 @@ export function useMarkNotificationRead() {
   return useMutation({
     mutationFn: (id: string) => markNotificationRead(id),
     onMutate: async (id) => {
-      qc.setQueryData(QUERY_KEYS.notifications(1), (old: any) => {
+      qc.setQueryData<InfiniteData<PaginatedNotifications>>(QUERY_KEYS.notifications(1), (old) => {
         if (!old) return old;
         return {
           ...old,
-          data: old.data.map((n: any) => (n.id === id ? { ...n, read: true } : n)),
+          pages: old.pages.map(page => ({
+            ...page,
+            data: page.data.map(n => n.id === id ? { ...n, read: true } : n),
+          })),
         };
       });
       qc.setQueryData(QUERY_KEYS.unreadCount, (old: number) =>

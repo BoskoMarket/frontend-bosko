@@ -24,7 +24,7 @@ import { useOrders } from '../state/OrdersContext';
 import { useIsProvider } from '@/hooks/queries/useProfileQuery';
 import { Order, OrderStatus } from '../types/orders.types';
 import { ORDER_STATUS } from '../constants/orderStatus';
-import { Badge, EmptyState, ScreenHeader, SkeletonList, TOKENS, useThemeColors, FONT_FAMILY } from '@/core/design-system';
+import { Badge, Button, EmptyState, ScreenHeader, SkeletonList, TOKENS, useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 type TabType = 'client' | 'provider';
@@ -103,7 +103,10 @@ function OrderCard({ order, onPress }: { order: Order; onPress: () => void }) {
 export default function OrdersListScreen() {
   const tc = useThemeColors();
   const insets = useSafeAreaInsets();
-  const { clientOrders, providerOrders, loading, loadClientOrders, loadProviderOrders } = useOrders();
+  const { clientOrders, providerOrders, loading, loadClientOrders, loadProviderOrders,
+    clientHasMore, providerHasMore, clientLoadingMore, providerLoadingMore,
+    clientFetching, providerFetching,
+    clientMoreError, providerMoreError, loadMoreClientOrders, loadMoreProviderOrders } = useOrders();
   // `?tab=provider` (e.g. from the provider home) opens the provider list.
   const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
   const isProvider = useIsProvider();
@@ -126,6 +129,11 @@ export default function OrdersListScreen() {
   }, [loadClientOrders, loadProviderOrders]);
 
   const orders = activeTab === 'client' ? clientOrders : providerOrders;
+  const hasMore = activeTab === 'client' ? clientHasMore : providerHasMore;
+  const loadingMore = activeTab === 'client' ? clientLoadingMore : providerLoadingMore;
+  const fetching = activeTab === 'client' ? clientFetching : providerFetching;
+  const moreError = activeTab === 'client' ? clientMoreError : providerMoreError;
+  const loadMore = activeTab === 'client' ? loadMoreClientOrders : loadMoreProviderOrders;
 
   const OrdersEmptyState = () =>
     activeTab === 'client' ? (
@@ -178,6 +186,11 @@ export default function OrdersListScreen() {
       ) : (
         <FlatList
           data={orders}
+          onEndReached={() => { if (hasMore && !fetching && !moreError) loadMore(); }}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={loadingMore ? <SkeletonList variant="card" count={2} /> : moreError ? (
+            <Button label="Reintentar cargar más" onPress={() => { loadMore(); }} />
+          ) : null}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <OrderCard

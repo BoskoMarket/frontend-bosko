@@ -15,7 +15,14 @@ jest.mock('@/stores/notificationsUI.store', () => ({ openNotifications: jest.fn(
 
 const mockOrders = jest.fn();
 const mockStats = jest.fn();
-jest.mock('@/hooks/queries/useOrdersQuery', () => ({ useProviderOrders: () => mockOrders() }));
+jest.mock('@/hooks/queries/useOrdersQuery', () => ({
+  useProviderOrders: () => mockOrders(),
+  usePendingProviderRequestsQuery: () => {
+    const orders = mockOrders();
+    return { data: orders.data?.filter((o: { status: string }) => o.status === 'pending').length,
+      isLoading: orders.isLoading, isError: orders.isError, refetch: jest.fn() };
+  },
+}));
 jest.mock('@/hooks/queries/useProfileQuery', () => ({ useProfileStats: () => mockStats() }));
 
 const ok = (data: unknown) => ({ data, isLoading: false, isError: false, refetch: jest.fn() });

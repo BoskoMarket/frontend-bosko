@@ -84,7 +84,7 @@ export default function MyServiceScreen() {
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();
   const myServicesQuery = useMyServices();
-  const services = myServicesQuery.data ?? [];
+  const services = myServicesQuery.data?.pages.flatMap(page => page.data) ?? [];
   const loading = myServicesQuery.isLoading;
   const deleteServiceM = useDeleteService();
 
@@ -174,6 +174,13 @@ export default function MyServiceScreen() {
       ) : (
         <FlatList
           data={services}
+          onEndReached={() => { if (myServicesQuery.hasNextPage && !myServicesQuery.isFetching && !myServicesQuery.isFetchNextPageError) myServicesQuery.fetchNextPage(); }}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={myServicesQuery.isFetchingNextPage ? <SkeletonList variant="card" count={2} /> : myServicesQuery.isFetchNextPageError ? (
+            <Pressable onPress={() => myServicesQuery.fetchNextPage()} accessibilityRole="button">
+              <Text style={{ color: tc.text }}>Reintentar cargar más</Text>
+            </Pressable>
+          ) : null}
           keyExtractor={(item, index) => item.id ?? `service-${index}`}
           renderItem={renderService}
           contentContainerStyle={styles.listContent}

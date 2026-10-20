@@ -4,6 +4,7 @@
  */
 
 import api from '@/core/api/axiosinstance';
+import { readPaginatedCollection, type PaginatedCollection } from '@/core/api/collections';
 
 export interface Notification {
   id: string;
@@ -16,19 +17,14 @@ export interface Notification {
   createdAt: string;
 }
 
-export interface PaginatedNotifications {
-  data: Notification[];
-  total: number;
-  page: number;
-  limit: number;
-}
+export type PaginatedNotifications = PaginatedCollection<Notification>;
 
 /** Listar notificaciones — GET /notifications */
 export async function fetchNotifications(page = 1, limit = 20): Promise<PaginatedNotifications> {
   const { data } = await api.get<PaginatedNotifications>('/notifications', {
     params: { page, limit },
   });
-  return data;
+  return readPaginatedCollection<Notification>(data);
 }
 
 /** Contador de no leídas — GET /notifications/unread-count */

@@ -72,7 +72,11 @@ export default function ServiceFormScreen() {
   const tc = useThemeColors();
   const params = useLocalSearchParams<{ serviceId?: string }>();
   const myServicesQuery = useMyServices();
-  const myServices = myServicesQuery.data ?? [];
+  // Memoized: a new array each render would re-run the prefill effect below in a loop.
+  const myServices = useMemo(
+    () => myServicesQuery.data?.pages.flatMap(page => page.data) ?? [],
+    [myServicesQuery.data],
+  );
   const addServiceM = useAddServiceWithPlanLimit();
   const updateServiceM = useUpdateService();
   const categoriesQuery = useCategories();

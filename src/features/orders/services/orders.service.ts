@@ -1,4 +1,4 @@
-import { readCollection } from '@/core/api/collections';
+import { readCollection, readPaginatedCollection } from '@/core/api/collections';
 /**
  * Servicio de órdenes.
  * Encapsula todas las llamadas al backend relacionadas con órdenes.
@@ -27,15 +27,17 @@ export async function fetchOrders(params?: FetchOrdersParams): Promise<Order[]> 
 }
 
 /** Obtener órdenes donde el usuario es cliente */
-export async function fetchOrdersAsClient(params?: FetchOrdersParams): Promise<Order[]> {
+export async function fetchOrdersAsClient(params?: FetchOrdersParams): Promise<PaginatedResponse<Order>> {
   const { data } = await api.get<any>('/orders/client', { params });
-  return readCollection<any>(data).map(normalizeOrder);
+  const page = readPaginatedCollection<any>(data);
+  return { ...page, data: page.data.map(normalizeOrder) };
 }
 
 /** Obtener órdenes donde el usuario es proveedor */
-export async function fetchOrdersAsProvider(params?: FetchOrdersParams): Promise<Order[]> {
+export async function fetchOrdersAsProvider(params?: FetchOrdersParams): Promise<PaginatedResponse<Order>> {
   const { data } = await api.get<any>('/orders/provider', { params });
-  return readCollection<any>(data).map(normalizeOrder);
+  const page = readPaginatedCollection<any>(data);
+  return { ...page, data: page.data.map(normalizeOrder) };
 }
 
 /** Obtener detalle de una orden por ID */

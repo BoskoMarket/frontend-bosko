@@ -40,7 +40,7 @@ function fmtNum(n: number): string {
 // ── Grid tile ────────────────────────────────────────────────────────────────
 function ReelTile({ reel, onPress }: { reel: Reel; onPress: () => void }) {
   const tc = useThemeColors();
-  const thumb = reel.type === 'before_after' ? reel.afterImageUrl : null;
+  const thumb = reel.type === 'before_after' ? reel.afterImageUrl : reel.thumbnailUrl;
 
   return (
     <Pressable
@@ -50,7 +50,7 @@ function ReelTile({ reel, onPress }: { reel: Reel; onPress: () => void }) {
       style={[styles.tile, { backgroundColor: tc.surface, borderColor: tc.cardBorder }]}
     >
       {thumb ? (
-        <Image source={{ uri: thumb }} style={StyleSheet.absoluteFill} contentFit="cover" />
+        <Image source={{ uri: thumb }} style={StyleSheet.absoluteFill} contentFit="cover" accessibilityLabel="Miniatura del reel" />
       ) : (
         <View style={[StyleSheet.absoluteFill, styles.tilePlaceholder, { backgroundColor: tc.surface2 }]}>
           <Ionicons name="play" size={28} color={tc.textMuted} />
@@ -214,10 +214,9 @@ export default function MyReelsScreen() {
   useRequireProviderStatus('provider');
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();
-  const { data: reels = [], isLoading, isError, isFetching, refetch } = useMyReels();
+  const { data, isLoading, isError, isFetching, isFetchingNextPage, isFetchNextPageError, hasNextPage, fetchNextPage, refetch } = useMyReels();
+  const reels = data?.pages.flatMap(page => page.data) ?? [];
   const [editingReel, setEditingReel] = useState<Reel | null>(null);
-
-  const totalLikes = reels.reduce((acc, r) => acc + (r.likes ?? 0), 0);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
@@ -238,7 +237,7 @@ export default function MyReelsScreen() {
       {reels.length > 0 && (
         <View style={styles.summaryRow}>
           <Text style={[styles.summaryText, { color: tc.textSub }]}>
-            {reels.length} {reels.length === 1 ? 'reel' : 'reels'} · {fmtNum(totalLikes)} me gusta en total
+            {data?.pages[0]?.total ?? reels.length} {(data?.pages[0]?.total ?? reels.length) === 1 ? 'reel' : 'reels'}
           </Text>
         </View>
       )}
@@ -264,6 +263,11 @@ export default function MyReelsScreen() {
       ) : (
         <FlatList
           data={reels}
+          onEndReached={() => { if (hasNextPage && !isFetching && !isFetchNextPageError) fetchNextPage(); }}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={isFetchingNextPage ? <ActivityIndicator color={tc.textSub} /> : isFetchNextPageError ? (
+            <Button label="Reintentar cargar más" onPress={() => { fetchNextPage(); }} />
+          ) : null}
           keyExtractor={(item) => item.id}
           numColumns={COLS}
           columnWrapperStyle={{ gap: GAP }}
@@ -271,7 +275,7 @@ export default function MyReelsScreen() {
           renderItem={({ item }) => (
             <ReelTile reel={item} onPress={() => setEditingReel(item)} />
           )}
-          refreshControl={<RefreshControl refreshing={isFetching && !isLoading} onRefresh={refetch} />}
+          refreshControl={<RefreshControl refreshing={isFetching && !isLoading && !isFetchingNextPage} onRefresh={refetch} />}
         />
       )}
 

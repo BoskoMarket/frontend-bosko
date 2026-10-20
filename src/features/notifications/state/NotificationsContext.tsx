@@ -31,7 +31,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
 export function useNotifications() {
   const qc = useQueryClient();
-  const notifQ = useNotificationsQuery(1);
+  const notifQ = useNotificationsQuery();
   const unreadQ = useUnreadNotificationsCount();
   const markReadM = useMarkNotificationRead();
   const markAllM = useMarkAllNotificationsRead();
@@ -47,7 +47,12 @@ export function useNotifications() {
   }, [qc]);
 
   return {
-    notifications: notifQ.data?.data ?? [],
+    notifications: notifQ.data?.pages.flatMap(page => page.data) ?? [],
+    hasMore: notifQ.hasNextPage,
+    loadingMore: notifQ.isFetchingNextPage,
+    fetching: notifQ.isFetching,
+    moreError: notifQ.isFetchNextPageError,
+    loadMore: () => notifQ.fetchNextPage(),
     unreadCount: unreadQ.data ?? 0,
     loading: notifQ.isLoading,
     error: notifQ.error ? getUserErrorMessage(notifQ.error) : '',

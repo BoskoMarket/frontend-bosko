@@ -70,7 +70,7 @@ export default function MyReviewsScreen() {
   const tc = useThemeColors();
   const { profile } = useProfile();
   const reviewsQuery = useServiceReviews(profile?.id);
-  const reviews = (reviewsQuery.data ?? []) as unknown as ReviewItem[];
+  const reviews = (reviewsQuery.data?.pages.flatMap(page => page.data) ?? []) as unknown as ReviewItem[];
   const loading = reviewsQuery.isLoading;
   const [refreshing, setRefreshing] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -112,6 +112,11 @@ export default function MyReviewsScreen() {
       ) : (
         <FlatList
           data={reviews}
+          onEndReached={() => { if (reviewsQuery.hasNextPage && !reviewsQuery.isFetching && !reviewsQuery.isFetchNextPageError) reviewsQuery.fetchNextPage(); }}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={reviewsQuery.isFetchingNextPage ? <SkeletonList variant="card" count={2} /> : reviewsQuery.isFetchNextPageError ? (
+            <Button label="Reintentar cargar más" onPress={() => { reviewsQuery.fetchNextPage(); }} />
+          ) : null}
           keyExtractor={item => item.id}
           contentContainerStyle={[styles.listContent, reviews.length === 0 && styles.listEmpty]}
           showsVerticalScrollIndicator={false}

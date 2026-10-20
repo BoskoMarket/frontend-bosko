@@ -1,4 +1,5 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient, type InfiniteData } from '@tanstack/react-query';
+import { nextCollectionPage } from '@/core/api/collections';
 import { QUERY_KEYS } from '@/core/query/queryKeys';
 import {
   fetchOrdersAsClient,
@@ -18,37 +19,74 @@ import type {
   DisputeOrderPayload,
   Order,
   OrderStatus,
+  PaginatedResponse,
 } from '@/features/orders/types/orders.types';
 import { toast } from '@/core/components/Toast';
 import { getUserErrorMessage } from '@/lib/errors';
 
 export function useClientOrders() {
-  return useQuery({
+  const query = useInfiniteQuery({
     queryKey: QUERY_KEYS.clientOrders,
-    queryFn: () => fetchOrdersAsClient(),
+    queryFn: ({ pageParam }) => fetchOrdersAsClient({ page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: nextCollectionPage,
   });
+  return { ...query, data: query.data?.pages.flatMap(page => page.data) };
 }
 
 export function useProviderOrders() {
-  return useQuery({
+  const query = useInfiniteQuery({
     queryKey: QUERY_KEYS.providerOrders,
-    queryFn: () => fetchOrdersAsProvider(),
+    queryFn: ({ pageParam }) => fetchOrdersAsProvider({ page: pageParam }),
+    initialPageParam: 1,
+    getNextPageParam: nextCollectionPage,
   });
+  return { ...query, data: query.data?.pages.flatMap(page => page.data) };
 }
 
 /**
  * Number of provider orders still waiting for a response (status "pending").
- * Shares the provider-orders cache entry (same key/fn) and only runs for
- * providers; `select` derives the count without an extra request.
+ * The API has no filtered count. Read every page so the badge never mistakes
+ * the first page for the full pending total.
  */
-export function usePendingProviderRequestsCount(enabled: boolean) {
-  const { data } = useQuery({
-    queryKey: QUERY_KEYS.providerOrders,
-    queryFn: () => fetchOrdersAsProvider(),
+export function usePendingProviderRequestsQuery(enabled: boolean) {
+  const qc = useQueryClient();
+  return useQuery({
+    queryKey: [...QUERY_KEYS.providerOrders, 'pending-count'],
+    queryFn: async () => {
+      const listState = qc.getQueryState<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders);
+      const cachedPages = listState && !listState.isInvalidated && listState.fetchStatus === 'idle' &&
+        Date.now() - listState.dataUpdatedAt < 60_000
+        ? listState.data?.pages : undefined;
+      let page = cachedPages?.length ? cachedPages[cachedPages.length - 1] : await fetchOrdersAsProvider({ page: 1 });
+      let count = cachedPages?.length
+        ? cachedPages.flatMap(cached => cached.data).filter(order => order.status === 'pending').length
+        : page.data.filter(order => order.status === 'pending').length;
+      while (nextCollectionPage(page)) {
+        page = await fetchOrdersAsProvider({ page: nextCollectionPage(page) });
+        count += page.data.filter(order => order.status === 'pending').length;
+      }
+      return count;
+    },
     enabled,
-    select: (orders: Order[]) => orders.filter((o) => o.status === 'pending').length,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
   });
+}
+
+export function usePendingProviderRequestsCount(enabled: boolean) {
+  const { data } = usePendingProviderRequestsQuery(enabled);
   return enabled ? data ?? 0 : 0;
+}
+
+function patchOrders(old: InfiniteData<PaginatedResponse<Order>, number> | undefined, id: string, status: OrderStatus) {
+  return old && {
+    ...old,
+    pages: old.pages.map(page => ({
+      ...page,
+      data: page.data.map(order => order.id === id ? { ...order, status } : order),
+    })),
+  };
 }
 
 export function useOrder(id: string | undefined) {
@@ -76,11 +114,9 @@ export function useAcceptOrder() {
     onMutate: async (id) => {
       await qc.cancelQueries({ queryKey: QUERY_KEYS.providerOrders });
       await qc.cancelQueries({ queryKey: QUERY_KEYS.orderById(id) });
-      const prevList  = qc.getQueryData<Order[]>(QUERY_KEYS.providerOrders);
+      const prevList  = qc.getQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders);
       const prevOrder = qc.getQueryData<Order>(QUERY_KEYS.orderById(id));
-      qc.setQueryData<Order[]>(QUERY_KEYS.providerOrders, old =>
-        old?.map(o => o.id === id ? { ...o, status: 'accepted' as OrderStatus } : o)
-      );
+      qc.setQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders, old => patchOrders(old, id, 'accepted'));
       if (prevOrder) {
         qc.setQueryData<Order>(QUERY_KEYS.orderById(id), { ...prevOrder, status: 'accepted' });
       }
@@ -106,11 +142,9 @@ export function useRejectOrder() {
     onMutate: async ({ id }) => {
       await qc.cancelQueries({ queryKey: QUERY_KEYS.providerOrders });
       await qc.cancelQueries({ queryKey: QUERY_KEYS.orderById(id) });
-      const prevList  = qc.getQueryData<Order[]>(QUERY_KEYS.providerOrders);
+      const prevList  = qc.getQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders);
       const prevOrder = qc.getQueryData<Order>(QUERY_KEYS.orderById(id));
-      qc.setQueryData<Order[]>(QUERY_KEYS.providerOrders, old =>
-        old?.map(o => o.id === id ? { ...o, status: 'cancelled' as OrderStatus } : o)
-      );
+      qc.setQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders, old => patchOrders(old, id, 'cancelled'));
       if (prevOrder) {
         qc.setQueryData<Order>(QUERY_KEYS.orderById(id), { ...prevOrder, status: 'cancelled' });
       }
@@ -135,11 +169,9 @@ export function useStartOrder() {
     onMutate: async (id) => {
       await qc.cancelQueries({ queryKey: QUERY_KEYS.providerOrders });
       await qc.cancelQueries({ queryKey: QUERY_KEYS.orderById(id) });
-      const prevList  = qc.getQueryData<Order[]>(QUERY_KEYS.providerOrders);
+      const prevList  = qc.getQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders);
       const prevOrder = qc.getQueryData<Order>(QUERY_KEYS.orderById(id));
-      qc.setQueryData<Order[]>(QUERY_KEYS.providerOrders, old =>
-        old?.map(o => o.id === id ? { ...o, status: 'in_progress' as OrderStatus } : o)
-      );
+      qc.setQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders, old => patchOrders(old, id, 'in_progress'));
       if (prevOrder) {
         qc.setQueryData<Order>(QUERY_KEYS.orderById(id), { ...prevOrder, status: 'in_progress' });
       }
@@ -165,13 +197,11 @@ export function useCompleteOrder() {
       await qc.cancelQueries({ queryKey: QUERY_KEYS.clientOrders });
       await qc.cancelQueries({ queryKey: QUERY_KEYS.providerOrders });
       await qc.cancelQueries({ queryKey: QUERY_KEYS.orderById(id) });
-      const prevClient  = qc.getQueryData<Order[]>(QUERY_KEYS.clientOrders);
-      const prevProvider = qc.getQueryData<Order[]>(QUERY_KEYS.providerOrders);
+      const prevClient  = qc.getQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.clientOrders);
+      const prevProvider = qc.getQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders);
       const prevOrder   = qc.getQueryData<Order>(QUERY_KEYS.orderById(id));
-      const patch = (old?: Order[]) =>
-        old?.map(o => o.id === id ? { ...o, status: 'completed' as OrderStatus } : o);
-      qc.setQueryData<Order[]>(QUERY_KEYS.clientOrders, patch);
-      qc.setQueryData<Order[]>(QUERY_KEYS.providerOrders, patch);
+      qc.setQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.clientOrders, old => patchOrders(old, id, 'completed'));
+      qc.setQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders, old => patchOrders(old, id, 'completed'));
       if (prevOrder) {
         qc.setQueryData<Order>(QUERY_KEYS.orderById(id), { ...prevOrder, status: 'completed' });
       }
@@ -200,13 +230,11 @@ export function useCancelOrder() {
       await qc.cancelQueries({ queryKey: QUERY_KEYS.clientOrders });
       await qc.cancelQueries({ queryKey: QUERY_KEYS.providerOrders });
       await qc.cancelQueries({ queryKey: QUERY_KEYS.orderById(id) });
-      const prevClient   = qc.getQueryData<Order[]>(QUERY_KEYS.clientOrders);
-      const prevProvider = qc.getQueryData<Order[]>(QUERY_KEYS.providerOrders);
+      const prevClient   = qc.getQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.clientOrders);
+      const prevProvider = qc.getQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders);
       const prevOrder    = qc.getQueryData<Order>(QUERY_KEYS.orderById(id));
-      const patch = (old?: Order[]) =>
-        old?.map(o => o.id === id ? { ...o, status: 'cancelled' as OrderStatus } : o);
-      qc.setQueryData<Order[]>(QUERY_KEYS.clientOrders, patch);
-      qc.setQueryData<Order[]>(QUERY_KEYS.providerOrders, patch);
+      qc.setQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.clientOrders, old => patchOrders(old, id, 'cancelled'));
+      qc.setQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders, old => patchOrders(old, id, 'cancelled'));
       if (prevOrder) {
         qc.setQueryData<Order>(QUERY_KEYS.orderById(id), { ...prevOrder, status: 'cancelled' });
       }

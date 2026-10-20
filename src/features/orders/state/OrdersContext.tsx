@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { fetchOrderById } from '../services/orders.service';
 import type { CreateOrderPayload, RejectOrderPayload, DisputeOrderPayload, Order } from '../types/orders.types';
 import {
@@ -28,10 +28,22 @@ export const useOrders = () => {
   const completeM = useCompleteOrder();
   const cancelM = useCancelOrder();
   const disputeM = useDisputeOrder();
+  const loadClientOrders = useCallback(async () => { await clientQ.refetch(); }, [clientQ.refetch]);
+  const loadProviderOrders = useCallback(async () => { await providerQ.refetch(); }, [providerQ.refetch]);
 
   return {
     clientOrders: clientQ.data ?? [],
     providerOrders: providerQ.data ?? [],
+    clientHasMore: clientQ.hasNextPage,
+    providerHasMore: providerQ.hasNextPage,
+    clientLoadingMore: clientQ.isFetchingNextPage,
+    providerLoadingMore: providerQ.isFetchingNextPage,
+    clientFetching: clientQ.isFetching,
+    providerFetching: providerQ.isFetching,
+    clientMoreError: clientQ.isFetchNextPageError,
+    providerMoreError: providerQ.isFetchNextPageError,
+    loadMoreClientOrders: clientQ.fetchNextPage,
+    loadMoreProviderOrders: providerQ.fetchNextPage,
     loading: clientQ.isLoading || providerQ.isLoading,
     error: clientQ.error
       ? getUserErrorMessage(clientQ.error)
@@ -39,8 +51,8 @@ export const useOrders = () => {
         ? getUserErrorMessage(providerQ.error)
         : null,
 
-    loadClientOrders: async () => { await clientQ.refetch(); },
-    loadProviderOrders: async () => { await providerQ.refetch(); },
+    loadClientOrders,
+    loadProviderOrders,
     getOrder: (id: string): Promise<Order | undefined> =>
       fetchOrderById(id).catch(() => undefined),
     addOrder: (payload: CreateOrderPayload): Promise<Order> =>

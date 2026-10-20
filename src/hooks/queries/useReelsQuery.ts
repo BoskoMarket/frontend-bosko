@@ -1,5 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/core/query/queryKeys';
+import { nextCollectionPage } from '@/core/api/collections';
 import {
   getReelsFeed,
   toggleLikeReel,
@@ -84,9 +85,11 @@ export function useDeleteReel() {
 }
 
 export function useMyReels() {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: MY_REELS_KEY,
-    queryFn: getMyReels,
+    queryFn: ({ pageParam }) => getMyReels(pageParam),
+    initialPageParam: 1,
+    getNextPageParam: nextCollectionPage,
   });
 }
 
@@ -123,7 +126,7 @@ export function useDeleteReelComment(reelId: string) {
 
 export function useReportReel() {
   return useMutation({
-    mutationFn: ({ reelId, reason, details }: { reelId: string; reason?: string; details?: string }) =>
+    mutationFn: ({ reelId, reason, details }: { reelId: string; reason: string; details?: string }) =>
       reportReel(reelId, reason, details),
   });
 }
