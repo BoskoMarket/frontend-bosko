@@ -15,7 +15,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useNavigation, useRouter } from "expo-router";
 import { safeBack } from '@/core/navigation/safeBack';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -50,15 +50,33 @@ export const SearchPage = () => {
   const SIGNAL = tc.signal;
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const navigation = useNavigation();
   const inputRef = useRef<TextInput>(null);
   const [focused, setFocused] = useState(false);
   const [value, setValue] = useState("");
   const debouncedValue = useDebouncedValue(value, 320);
   const { results, loading, error, runSearch, lastQuery } = useSearch();
 
+  // Focus once the push animation has finished. Focusing mid-transition (the old 100 ms timer)
+  // made Android open the keyboard and close it again a few milliseconds later.
   useEffect(() => {
-    setTimeout(() => inputRef.current?.focus(), 100);
-  }, []);
+    let done = false;
+    const focusInput = () => {
+      if (done) return;
+      done = true;
+      inputRef.current?.focus();
+    };
+    const unsubscribe = navigation.addListener('transitionEnd' as never, (e: { data?: { closing?: boolean } }) => {
+      if (!e?.data?.closing) focusInput();
+    });
+    // Fallback when no transition event fires (e.g. animations disabled).
+    const fallback = setTimeout(focusInput, 600);
+    return () => {
+      done = true;
+      clearTimeout(fallback);
+      unsubscribe();
+    };
+  }, [navigation]);
 
   useEffect(() => {
     if (!debouncedValue.trim()) return;
