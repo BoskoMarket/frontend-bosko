@@ -68,9 +68,10 @@ function AnimatedItem({ index, children }: { index: number; children: React.Reac
   const tx = useRef(new Animated.Value(-12)).current;
 
   useEffect(() => {
+    const delay = Math.min(index, 8) * 30;
     Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: 280, delay: index * 30, useNativeDriver: true }),
-      Animated.timing(tx, { toValue: 0, duration: 280, delay: index * 30, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 1, duration: 280, delay, useNativeDriver: true }),
+      Animated.timing(tx, { toValue: 0, duration: 280, delay, useNativeDriver: true }),
     ]).start();
   }, []);
 
@@ -139,7 +140,7 @@ function NotificationItem({ item, onPress, onDelete }: { item: Notification; onP
 
 export default function NotificationsScreen() {
   const tc = useThemeColors();
-  const { notifications, unreadCount, loading, error, load, markRead, markAllRead, remove, clearAll } = useNotifications();
+  const { notifications, unreadCount, loading, error, load, hasMore, loadingMore, fetching, moreError, loadMore, markRead, markAllRead, remove, clearAll } = useNotifications();
   const permissionDenied = useNotificationsDenied();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -219,6 +220,13 @@ export default function NotificationsScreen() {
 
       <FlatList
         data={notifications}
+        onEndReached={() => { if (hasMore && !loadingMore && !moreError) loadMore(); }}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={loadingMore ? <SkeletonList variant="row" count={2} /> : moreError ? (
+          <Pressable onPress={() => loadMore()} accessibilityRole="button" accessibilityLabel="Reintentar cargar notificaciones">
+            <Text color={tc.signal}>Reintentar cargar más</Text>
+          </Pressable>
+        ) : null}
         keyExtractor={n => n.id}
         renderItem={({ item, index }) => (
           <AnimatedItem index={index}>

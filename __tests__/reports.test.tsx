@@ -24,6 +24,7 @@ jest.mock('@/core/api/axiosinstance', () => ({
               { id: 'r-other', rating: 5, comment: 'Excelente', createdAt: '', reviewer: { id: 'u2', firstName: 'Luis', lastName: 'P' } },
               { id: 'r-mine', rating: 4, comment: 'Bien', createdAt: '', reviewer: { id: 'me', firstName: 'Yo', lastName: 'Mismo' } },
             ],
+            total: 2, page: 1, limit: 10,
           },
         });
       }

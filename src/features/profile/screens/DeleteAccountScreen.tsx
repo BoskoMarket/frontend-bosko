@@ -69,6 +69,22 @@ export default function DeleteAccountScreen() {
   const { loading: googleLoading, getGoogleIdToken } = useGoogleReauth();
   const clientOrders = useClientOrders();
   const providerOrders = useProviderOrders();
+  useEffect(() => {
+    if (clientOrders.hasNextPage && !clientOrders.isFetching && !clientOrders.isError) {
+      void clientOrders.fetchNextPage();
+    }
+  }, [clientOrders.hasNextPage, clientOrders.isFetching, clientOrders.isError, clientOrders.fetchNextPage]);
+  useEffect(() => {
+    if (providerOrders.hasNextPage && !providerOrders.isFetching && !providerOrders.isError) {
+      void providerOrders.fetchNextPage();
+    }
+  }, [providerOrders.hasNextPage, providerOrders.isFetching, providerOrders.isError, providerOrders.fetchNextPage]);
+  // Background refetches (reconnect, invalidation) must not unmount the confirmation step;
+  // only a first load, pending pages or a failure without data block it.
+  const checkingOrders = clientOrders.isLoading || providerOrders.isLoading ||
+    clientOrders.hasNextPage || providerOrders.hasNextPage ||
+    clientOrders.isFetchingNextPage || providerOrders.isFetchingNextPage ||
+    (clientOrders.isError && !clientOrders.data) || (providerOrders.isError && !providerOrders.data);
   const myPlan = useMyPlan();
   const blocking = blockingOrders(mergeOrders(clientOrders.data, providerOrders.data));
   const providerIds = new Set((providerOrders.data ?? []).map((o) => o.id));
@@ -94,7 +110,7 @@ export default function DeleteAccountScreen() {
   }, []);
 
   const canProceed = confirmText === CONFIRM_WORD;
-  const canDelete = canProceed && (isGoogle || password.length >= 6);
+  const canDelete = canProceed && !checkingOrders && (isGoogle || password.length >= 6);
 
   const goToStep2 = () => {
     setError('');
@@ -200,6 +216,21 @@ export default function DeleteAccountScreen() {
           </Text>
         </Animated.View>
 
+        {checkingOrders && !isBlocked && (
+          <NoticeBanner variant="pending">
+            {clientOrders.isError || providerOrders.isError
+              ? 'No pudimos verificar todas tus órdenes. Reintentá para continuar.'
+              : 'Estamos verificando tus órdenes antes de continuar.'}
+          </NoticeBanner>
+        )}
+        {checkingOrders && !isBlocked && (clientOrders.isError || providerOrders.isError) && (
+          <Button label="Reintentar verificación" onPress={() => {
+            if (clientOrders.isFetchNextPageError) void clientOrders.fetchNextPage();
+            else if (clientOrders.isError) void clientOrders.refetch();
+            if (providerOrders.isFetchNextPageError) void providerOrders.fetchNextPage();
+            else if (providerOrders.isError) void providerOrders.refetch();
+          }} />
+        )}
         {isBlocked && (
           <FadeSlide delay={100}>
             <NoticeBanner variant="error">{BLOCKED_MESSAGE}</NoticeBanner>
@@ -219,7 +250,7 @@ export default function DeleteAccountScreen() {
           </FadeSlide>
         )}
 
-        {step === 1 && !isBlocked && (
+        {step === 1 && !isBlocked && !checkingOrders && (
           <>
             {/* Consequences */}
             <FadeSlide delay={100}>

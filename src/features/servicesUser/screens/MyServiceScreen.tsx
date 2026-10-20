@@ -16,7 +16,7 @@ import { useMyServices, useDeleteService } from "@/hooks/queries/useMarketplaceQ
 import type { Service } from "@/features/servicesUser/services/service";
 import { EmptyState } from '@/core/components/EmptyState';
 import { getUserErrorMessage } from '@/lib/errors';
-import { BRAND_RADIAL_FILL, ScreenHeader, SkeletonList, TOKENS, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
+import { BRAND_RADIAL_FILL, Button, ScreenHeader, SkeletonList, TOKENS, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -84,7 +84,7 @@ export default function MyServiceScreen() {
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();
   const myServicesQuery = useMyServices();
-  const services = myServicesQuery.data ?? [];
+  const services = myServicesQuery.data?.pages.flatMap(page => page.data) ?? [];
   const loading = myServicesQuery.isLoading;
   const deleteServiceM = useDeleteService();
 
@@ -174,6 +174,11 @@ export default function MyServiceScreen() {
       ) : (
         <FlatList
           data={services}
+          onEndReached={() => { if (myServicesQuery.hasNextPage && !myServicesQuery.isFetchingNextPage && !myServicesQuery.isFetchNextPageError) myServicesQuery.fetchNextPage(); }}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={myServicesQuery.isFetchingNextPage ? <SkeletonList variant="card" count={2} /> : myServicesQuery.isFetchNextPageError ? (
+            <Button label="Reintentar cargar más" onPress={() => { myServicesQuery.fetchNextPage(); }} />
+          ) : null}
           keyExtractor={(item, index) => item.id ?? `service-${index}`}
           renderItem={renderService}
           contentContainerStyle={styles.listContent}
