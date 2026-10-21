@@ -6,7 +6,9 @@ import {
   SearchTrigger,
   getCategoryTint,
   CATEGORY_TINT_COUNT,
+  resolveCategoryIcon,
 } from '@/core/design-system';
+import { Ionicons } from '@expo/vector-icons';
 import { useThemeStore } from '@/stores/theme.store';
 
 const IMG = { uri: 'https://example.com/person.png' };
@@ -18,7 +20,8 @@ describe('home promo cards', () => {
     const onPress = jest.fn();
     const { getByText, getByRole } = render(<SearchTrigger placeholder="Buscar" onPress={onPress} />);
     expect(getByText('Buscar')).toBeTruthy();
-    fireEvent.press(getByRole('search'));
+    fireEvent.press(getByRole('button'));
+    expect(getByRole('button').props.accessibilityHint).toBe('Abre la búsqueda');
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
@@ -34,12 +37,27 @@ describe('home promo cards', () => {
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
-  it('CategoryPromoCard renders without image or subtitle, with an emoji icon', () => {
-    const { getAllByText, getByText } = render(
+  it('CategoryPromoCard never renders an emoji icon', () => {
+    const { queryByText, getByText } = render(
       <CategoryPromoCard title="Gas" ctaLabel="Ver" tintIndex={2} icon="🔥" onPress={() => {}} />,
     );
     expect(getByText('Gas')).toBeTruthy();
-    expect(getAllByText('🔥').length).toBeGreaterThan(0);
+    expect(queryByText('🔥')).toBeNull();
+  });
+
+  it('CategoryPromoCard shows the glyph once without image and once (small icon) with image', () => {
+    const noImg = render(<CategoryPromoCard title="Gas" ctaLabel="Ver" tintIndex={2} icon="flame-outline" onPress={() => {}} />);
+    expect(noImg.UNSAFE_queryAllByType(Ionicons).length).toBe(1);
+    noImg.unmount();
+    const withImg = render(<CategoryPromoCard title="Gas" ctaLabel="Ver" tintIndex={2} icon="flame-outline" image={IMG} onPress={() => {}} />);
+    expect(withImg.UNSAFE_queryAllByType(Ionicons).length).toBe(1);
+  });
+
+  it('resolveCategoryIcon accepts Ionicons names only', () => {
+    expect(resolveCategoryIcon('water-outline')).toBe('water-outline');
+    expect(resolveCategoryIcon('⚡')).toBe('construct-outline');
+    expect(resolveCategoryIcon('toString')).toBe('construct-outline');
+    expect(resolveCategoryIcon(undefined)).toBe('construct-outline');
   });
 
   it('FeaturedPromoCard renders eyebrow, badge, title, CTA and fires onPress', () => {
@@ -64,6 +82,11 @@ describe('home promo cards', () => {
       expect(getByText('T')).toBeTruthy();
       unmount();
     }
+  });
+
+  it('getCategoryTint treats a non-finite index as 0', () => {
+    expect(getCategoryTint(NaN, false)).toEqual(getCategoryTint(0, false));
+    expect(getCategoryTint(Infinity, true)).toEqual(getCategoryTint(0, true));
   });
 
   it('getCategoryTint cycles by index and differs per theme', () => {

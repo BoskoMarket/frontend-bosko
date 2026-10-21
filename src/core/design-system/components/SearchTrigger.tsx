@@ -18,7 +18,8 @@ export function SearchTrigger({ placeholder = 'Buscar servicios', onPress, style
   return (
     <Pressable
       onPress={onPress}
-      accessibilityRole="search"
+      accessibilityRole="button"
+      accessibilityHint="Abre la búsqueda"
       accessibilityLabel={placeholder}
       style={({ pressed }) => [
         styles.pill,

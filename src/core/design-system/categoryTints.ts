@@ -23,11 +23,7 @@ export interface CategoryTint {
 
 export const CATEGORY_TINT_COUNT = T.light.length;
 
-/** Tint for a list position; cycles through the six tints. */
-export function getCategoryTint(index: number, isDark: boolean): CategoryTint {
-  const list = isDark ? T.dark : T.light;
-  const i = ((Math.trunc(index) % list.length) + list.length) % list.length;
-  const t = list[i];
+function buildTint(t: { bg: string; ink: string; cta: string }, isDark: boolean): CategoryTint {
   return {
     bg: t.bg,
     text: t.ink,
@@ -37,6 +33,19 @@ export function getCategoryTint(index: number, isDark: boolean): CategoryTint {
     ctaText: t.bg,
     iconBg: withAlpha(BRAND.colors.white, isDark ? 0.1 : 0.55),
   };
+}
+
+// Built once at module load; lookups just index into it.
+const TINTS = {
+  light: T.light.map((t) => buildTint(t, false)),
+  dark: T.dark.map((t) => buildTint(t, true)),
+};
+
+/** Tint for a list position; cycles through the six tints. Non-finite index counts as 0. */
+export function getCategoryTint(index: number, isDark: boolean): CategoryTint {
+  const list = isDark ? TINTS.dark : TINTS.light;
+  const n = Number.isFinite(index) ? Math.trunc(index) : 0;
+  return list[((n % list.length) + list.length) % list.length];
 }
 
 export function useCategoryTint(index: number): CategoryTint {

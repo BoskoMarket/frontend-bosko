@@ -21,9 +21,7 @@ export interface FeaturedPromoCardProps {
   style?: StyleProp<ViewStyle>;
 }
 
-const CARD_HEIGHT = 360;
-const IMAGE_WIDTH = 250;
-const IMAGE_HEIGHT = 340;
+const CARD_MIN_HEIGHT = 360;
 
 /** Tall featured card: eyebrow + badge, big title, dark CTA pill and a person on the right. */
 export function FeaturedPromoCard({ eyebrow, title, badge, ctaLabel, onPress, tintIndex, image, style }: FeaturedPromoCardProps) {
@@ -74,14 +72,14 @@ export function FeaturedPromoCard({ eyebrow, title, badge, ctaLabel, onPress, ti
 
 const styles = StyleSheet.create({
   card: {
-    height: CARD_HEIGHT,
+    minHeight: CARD_MIN_HEIGHT,
     borderRadius: TOKENS.radius.xl,
     overflow: 'hidden',
     padding: SPACING.lg,
     justifyContent: 'space-between',
   },
   pressed: { opacity: 0.92 },
-  image: { position: 'absolute', right: 0, bottom: 0, width: IMAGE_WIDTH, height: IMAGE_HEIGHT },
+  image: { position: 'absolute', top: 0, right: 0, bottom: 0, width: '45%' },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.sm },
   pill: {
     paddingHorizontal: SPACING.md,
@@ -89,7 +87,7 @@ const styles = StyleSheet.create({
     borderRadius: TOKENS.radius.pill,
   },
   bottom: { gap: SPACING.lg },
-  title: { width: '60%' },
+  title: { maxWidth: '55%' },
   cta: {
     alignSelf: 'flex-start',
     flexDirection: 'row',
