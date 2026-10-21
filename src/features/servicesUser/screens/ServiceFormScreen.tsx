@@ -5,6 +5,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  StatusBar,
   Image,
   ScrollView,
   StyleSheet,
@@ -12,7 +13,6 @@ import {
   Pressable,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { safeBack } from '@/core/navigation/safeBack';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -21,7 +21,7 @@ import { uploadServiceImages } from "@/features/servicesUser/services/service";
 import { useCategories, useMyServices, useUpdateService } from "@/hooks/queries/useMarketplaceQuery";
 import { useAddServiceWithPlanLimit } from "@/features/servicesUser/hooks/useAddServiceWithPlanLimit";
 import { fetchServiceById } from "../services/services";
-import { Button, Card, Chip, GRADIENTS, Input, ScreenHeader, SPACING, Text, TOKENS, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
+import { Button, Card, Chip, Input, ScreenHeader, SPACING, Text, TOKENS, useIsDark, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
 import { toast } from '@/core/components/Toast';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
@@ -70,6 +70,7 @@ export default function ServiceFormScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();
+  const isDark = useIsDark();
   const params = useLocalSearchParams<{ serviceId?: string }>();
   const myServicesQuery = useMyServices();
   // Memoized: a new array each render would re-run the prefill effect below in a loop.
@@ -242,21 +243,21 @@ export default function ServiceFormScreen() {
   };
 
   return (
-    <View style={[styles.screen, { backgroundColor: tc.bg }]}>
+    <View style={[styles.screen, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={tc.bg} />
       <AnimatedBackground variant="minimal" />
 
       {/* Header */}
-      <LinearGradient colors={GRADIENTS.brandDeep} style={[styles.header, { paddingTop: insets.top + 12 }]}>
+      <View style={styles.header}>
         <ScreenHeader
-          tone="onBrand"
           title={isEditing ? "Editar servicio" : "Publicar servicio"}
           onBack={() => safeBack(router, '/(tabs)/profile')}
         />
-      </LinearGradient>
+      </View>
 
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 110 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + SPACING.xxxl }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -433,8 +434,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
   scroll: {
     flex: 1,
