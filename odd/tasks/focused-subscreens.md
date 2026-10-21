@@ -1,4 +1,4 @@
- ✅ | see commit log (N4) |✅ | see commit log (N3) |✅ | see commit log (N2) |✅ | see commit log (N1) |# Focused sub-screens — tab bar only on tab roots, standard headers
+# Focused sub-screens — tab bar only on tab roots, standard headers
 
 **Branch:** `feat/focused-subscreens` (from `dev` @ `87aef15`)
 **Engram mirror:** `odd/focused-subscreens/tasks`
@@ -18,10 +18,10 @@ Make sub-screens feel like part of the same app: hide the floating tab bar on ev
 
 | ID | Task | Route | Status | Evidence |
 |---|---|---|---|---|
-| N1 | `CustomTabBar`: render nothing unless the focused route is a visible tab at its stack root (`route.state` undefined or `index === 0`); hidden `services` route never shows it; tests | delegated | ⏳ | |
-| N2 | Remove the extra bottom padding reserved for the tab bar on sub-screens that no longer show it, where it leaves an obvious empty gap (only if a shared constant/pattern makes it safe) | delegated | ⏳ | |
-| N3 | `BecomeProviderScreen` + `ServiceFormScreen`: standard `ScreenHeader` (default tone), status bar follows the theme; tests | delegated | ⏳ | |
-| N4 | Docs: CLAUDE.md tab bar rules + `odd/nav-map.md` | delegated | ⏳ | |
+| N1 | `CustomTabBar`: render nothing unless the focused route is a visible tab at its stack root (`route.state` undefined or `index === 0`); hidden `services` route never shows it; tests | delegated | ✅ | see commit log (N1) |
+| N2 | Remove the extra bottom padding reserved for the tab bar on sub-screens that no longer show it, where it leaves an obvious empty gap (only if a shared constant/pattern makes it safe) | delegated + inline | ✅ | see commit log (N2) |
+| N3 | `BecomeProviderScreen` + `ServiceFormScreen`: standard `ScreenHeader` (default tone), status bar follows the theme; tests | delegated | ✅ | see commit log (N3) |
+| N4 | Docs: CLAUDE.md tab bar rules + `odd/nav-map.md` | delegated | ✅ | see commit log (N4) |
 
 ## Acceptance criteria
 
