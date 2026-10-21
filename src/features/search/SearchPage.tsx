@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   FlatList,
   Keyboard,
+  Platform,
   Pressable,
   StatusBar,
   StyleSheet,
@@ -325,12 +326,16 @@ const s = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: 9,
   },
-  inputWrapFocused: {
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.35,
-    shadowRadius: 4,
-    elevation: 2,
-  },
+  // Focus glow on iOS only. Android `elevation` under the translucent (glass) card color drew a
+  // square shadow visible through the input; there the colored border marks the focus.
+  inputWrapFocused: Platform.select({
+    ios: {
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.35,
+      shadowRadius: 4,
+    },
+    default: {},
+  }),
   input: {
     flex: 1,
     fontSize: 15,
