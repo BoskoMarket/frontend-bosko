@@ -1,7 +1,7 @@
 import React from 'react';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { act, fireEvent, render } from '@testing-library/react-native';
-import { CustomTabBar, getTabLabel, getVisibleRoutes } from '@/components/CustomTabBar';
+import { CustomTabBar, getTabLabel, getVisibleRoutes, shouldShowTabBar } from '@/components/CustomTabBar';
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
@@ -22,8 +22,12 @@ jest.mock('@/hooks/queries/useProfileQuery', () => ({ useIsProvider: () => mockI
 
 const ORDER = ['index', 'reels', 'orders', 'chat', 'profile', 'services'];
 
-function makeProps(focusedName: string, hidden: string[] = ['services']) {
-  const routes = ORDER.map((name) => ({ key: `${name}-key`, name }));
+function makeProps(
+  focusedName: string,
+  hidden: string[] = ['services'],
+  nested: Record<string, { index: number }> = {},
+) {
+  const routes = ORDER.map((name) => ({ key: `${name}-key`, name, ...(nested[name] ? { state: nested[name] } : {}) }));
   const descriptors: Record<string, { options: { href?: null } }> = {};
   routes.forEach((r) => {
     descriptors[r.key] = { options: hidden.includes(r.name) ? { href: null } : {} };
@@ -104,14 +108,35 @@ describe('CustomTabBar', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('profile', undefined);
   });
 
-  it('keeps all five tabs rendered while a hidden route is focused', () => {
+  it('renders nothing while a hidden route (services) is focused', () => {
     const { props } = makeProps('services');
-    const { getAllByRole } = render(<CustomTabBar {...props} />);
-    expect(getAllByRole('tab')).toHaveLength(5);
+    const { queryAllByRole } = render(<CustomTabBar {...props} />);
+    expect(queryAllByRole('tab')).toHaveLength(0);
+  });
+
+  it('renders nothing on a nested profile screen and returns at the stack root', () => {
+    const nested = render(<CustomTabBar {...makeProps('profile', ['services'], { profile: { index: 1 } }).props} />);
+    expect(nested.queryAllByRole('tab')).toHaveLength(0);
+    nested.unmount();
+    const root = render(<CustomTabBar {...makeProps('profile', ['services'], { profile: { index: 0 } }).props} />);
+    expect(root.getAllByRole('tab')).toHaveLength(5);
   });
 });
 
 describe('tab helpers', () => {
+  it('shouldShowTabBar only shows the bar on visible tab roots', () => {
+    const show = (name: string, nested: Record<string, { index: number }> = {}) => {
+      const { props } = makeProps(name, ['services'], nested);
+      return shouldShowTabBar(props.state, props.descriptors);
+    };
+    expect(show('profile', { profile: { index: 0 } })).toBe(true);
+    expect(show('profile', { profile: { index: 1 } })).toBe(false);
+    expect(show('profile')).toBe(true);
+    expect(show('services')).toBe(false);
+    expect(show('services', { services: { index: 0 } })).toBe(false);
+    expect(show('reels')).toBe(true);
+  });
+
   it('getVisibleRoutes drops routes without a TABS entry or with href null', () => {
     const { props } = makeProps('index', ['services', 'reels']);
     expect(getVisibleRoutes(props.state, props.descriptors).map((v) => v.route.name)).toEqual(['index', 'orders', 'chat', 'profile']);
@@ -147,17 +172,12 @@ describe('CustomTabBar bubble icon', () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
 
-  it('hides the bar icon under the bubble, also on a hidden route (after animations settle)', () => {
+  it('hides the bar icon under the bubble (after animations settle)', () => {
     const { props } = makeProps('reels');
-    const { getByTestId, rerender } = render(<CustomTabBar {...props} />);
+    const { getByTestId } = render(<CustomTabBar {...props} />);
     settle();
     expect(opacityOf(getByTestId('tab-icon-reels'))).toBe(0);
     expect(opacityOf(getByTestId('tab-icon-index'))).toBe(0.55);
-
-    // Hidden services route: no tab is focused but the bubble stays on Reels.
-    rerender(<CustomTabBar {...makeProps('services').props} />);
-    settle();
-    expect(opacityOf(getByTestId('tab-icon-reels'))).toBe(0);
   });
 
 });

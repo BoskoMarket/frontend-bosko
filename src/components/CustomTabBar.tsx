@@ -70,6 +70,22 @@ export function getVisibleRoutes(
     });
 }
 
+/**
+ * The bar only shows on the root of a visible tab: the focused route must be a
+ * visible tab (hidden routes like `services` never show it) and its nested stack,
+ * if any, must be at its first screen. Sub-screens leave the back button as the exit.
+ */
+export function shouldShowTabBar(
+  state: BottomTabBarProps['state'],
+  descriptors: BottomTabBarProps['descriptors'],
+): boolean {
+  const focused = state.routes[state.index];
+  if (!focused) return false;
+  if (!getVisibleRoutes(state, descriptors).some(v => v.route.key === focused.key)) return false;
+  const nested = focused.state as { index?: number } | undefined;
+  return !nested || (nested.index ?? 0) === 0;
+}
+
 /** Label shown under each tab; "Pedidos" reads "Órdenes" for providers. */
 export function getTabLabel(routeName: string, isProvider: boolean): string {
   if (routeName === 'orders' && isProvider) return 'Órdenes';
@@ -149,6 +165,9 @@ export function CustomTabBar({ state, navigation, descriptors }: BottomTabBarPro
   }, [navigation, state.routes]);
 
   const activeTab = TABS[visible[activeIndex]?.route.name ?? ''] ?? TABS.index;
+
+  // Hooks stay above this return (rules of hooks).
+  if (!shouldShowTabBar(state, descriptors)) return null;
 
   return (
     <View

@@ -26,7 +26,7 @@ import { useCategories, useServicesByCategory } from '@/hooks/queries/useMarketp
 import type { ServiceSummary } from '@/types/services';
 import { getProviderRouteId } from '@/features/servicesUser/services/catalog';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
-import { GRADIENTS, Skeleton, TOKENS, useIsDark, useThemeColors, FONT_FAMILY } from '@/core/design-system';
+import { GRADIENTS, Skeleton, TOKENS, useIsDark, useThemeColors, FONT_FAMILY, SPACING } from '@/core/design-system';
 import { categoryVisual, SERVICE_FALLBACK_IMAGE } from '@/features/servicesUser/utils/categoryVisuals';
 import { RadialBlob } from '@/core/components/RadialBlob';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
@@ -347,7 +347,7 @@ export default function CategoryServicesScreen() {
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.4}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 100 }]}
+        contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + SPACING.xxxl }]}
       />
     </View>
   );

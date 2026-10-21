@@ -170,7 +170,7 @@ export function FavoritesScreen() {
         )}
         contentContainerStyle={[
           s.list,
-          { paddingBottom: insets.bottom + 100 },
+          { paddingBottom: insets.bottom + SPACING.xxxl },
           favorites.length === 0 && s.listEmpty,
         ]}
         showsVerticalScrollIndicator={false}

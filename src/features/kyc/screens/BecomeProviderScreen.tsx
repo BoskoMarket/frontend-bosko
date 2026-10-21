@@ -28,7 +28,9 @@ import {
   Button,
   Card,
   ScreenHeader,
+  SPACING,
   Text,
+  useIsDark,
   useThemeColors,
   withAlpha,
 } from '@/core/design-system';
@@ -148,6 +150,7 @@ const BENEFITS: { icon: React.ComponentProps<typeof Ionicons>['name']; text: str
 export function BecomeProviderScreen() {
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();
+  const isDark = useIsDark();
   const { profile } = useProfile();
   const { verification, loading: kycLoading, refresh: refreshKYC } = useKYC();
 
@@ -300,13 +303,13 @@ export function BecomeProviderScreen() {
 
   return (
     <View style={[s.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={tc.bg} />
       <AnimatedBackground variant="minimal" />
 
-      {/* ── Header con gradiente de marca ──────────────────────────────────── */}
-      <LinearGradient colors={GRADIENTS.brandDeep} style={s.header}>
-        <ScreenHeader tone="onBrand" title="Convertirte en prestador" onBack={() => safeBack(router, '/(tabs)/profile')} />
-      </LinearGradient>
+      {/* ── Header estándar ────────────────────────────────────────────────── */}
+      <View style={s.header}>
+        <ScreenHeader title="Convertirte en prestador" onBack={() => safeBack(router, '/(tabs)/profile')} />
+      </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -377,8 +380,8 @@ const s = StyleSheet.create({
   root:    { flex: 1 },
 
   header: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
 
   scroll: { paddingHorizontal: 16, paddingTop: 20, gap: 20 },

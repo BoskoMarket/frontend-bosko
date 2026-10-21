@@ -21,7 +21,7 @@ import { safeBack } from '@/core/navigation/safeBack';
 import { useCategories } from '@/hooks/queries/useMarketplaceQuery';
 import type { Category } from '@/types/services';
 import { EmptyState } from '@/core/components/EmptyState';
-import { ScreenHeader, Skeleton, TOKENS, useIsDark, useThemeColors, FONT_FAMILY } from '@/core/design-system';
+import { ScreenHeader, Skeleton, TOKENS, useIsDark, useThemeColors, FONT_FAMILY, SPACING } from '@/core/design-system';
 import { FeaturedCard } from '../components/FeaturedCard';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -163,7 +163,7 @@ export default function ServicesScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 100 }]}
+        contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + SPACING.xxxl }]}
       >
         {loading ? (
           <SkeletonScreen />
