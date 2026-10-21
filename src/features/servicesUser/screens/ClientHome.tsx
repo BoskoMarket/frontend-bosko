@@ -18,7 +18,7 @@ import { useCategories, useFeaturedServices } from '@/hooks/queries/useMarketpla
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { HomeTopBar } from '@/features/servicesUser/components/HomeTopBar';
 import { RoleSelectionModal, ROLE_MODAL_SEEN_KEY } from '@/features/servicesUser/components/RoleSelectionModal';
-import { categoryVisual, HERO_IMAGE } from '@/features/servicesUser/utils/categoryVisuals';
+import { categoryVisual, HERO_IMAGE, SERVICE_FALLBACK_IMAGE } from '@/features/servicesUser/utils/categoryVisuals';
 import type { ServiceSummary } from '@/types/services';
 import {
   Button,
@@ -279,7 +279,7 @@ export default function ClientHome() {
                 <ServiceCard
                   title={item.title || item.name}
                   imageUri={item.thumbnail ?? item.images?.[0]}
-                  fallbackIcon={resolveCategoryIcon(categories.find((c) => c.id === item.categoryId)?.icon)}
+                  fallbackImage={SERVICE_FALLBACK_IMAGE}
                   category={categoryName(item)}
                   location={item.location}
                   rating={item.averageRating ? Number(item.averageRating) : null}

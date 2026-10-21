@@ -2,9 +2,10 @@
  * Rebrand "Señal Nocturna" — CategoryServicesScreen: misma lógica, estado y navegación que
  * el archivo original. Mismo hero + lista infinita + skeleton shimmer que el original — stop bordo intermedio → signal, emoji de ícono/empty → Ionicons, precio a signal.
  */
-import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  ImageSourcePropType,
   Animated,
   Dimensions,
   FlatList,
@@ -26,6 +27,7 @@ import type { ServiceSummary } from '@/types/services';
 import { getProviderRouteId } from '@/features/servicesUser/services/catalog';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { GRADIENTS, Skeleton, TOKENS, useIsDark, useThemeColors, FONT_FAMILY } from '@/core/design-system';
+import { categoryVisual, SERVICE_FALLBACK_IMAGE } from '@/features/servicesUser/utils/categoryVisuals';
 import { RadialBlob } from '@/core/components/RadialBlob';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -78,6 +80,8 @@ const ServiceCard = memo(function ServiceCard({
   const { isFavorite, toggle } = useFavorites();
   const fav = isFavorite(item.id);
   const heartScale = useRef(new Animated.Value(1)).current;
+  const [failedThumb, setFailedThumb] = useState<string | undefined>();
+  const showThumb = Boolean(item.thumbnail) && failedThumb !== item.thumbnail;
 
   const handleFavorite = () => {
     Animated.sequence([
@@ -112,12 +116,15 @@ const ServiceCard = memo(function ServiceCard({
       <Pressable onPressIn={pressIn} onPressOut={pressOut} onPress={onPress} style={[s.serviceCard, { backgroundColor: c.card, borderColor: c.border }]}>
         {/* Avatar + availability dot */}
         <View style={s.avatarWrap}>
-          {item.thumbnail ? (
-            <Image source={{ uri: item.thumbnail }} style={s.avatar} contentFit="cover" />
+          {showThumb ? (
+            <Image
+              source={{ uri: item.thumbnail }}
+              style={s.avatar}
+              contentFit="cover"
+              onError={() => setFailedThumb(item.thumbnail)}
+            />
           ) : (
-            <View style={[s.avatarFallback, { backgroundColor: c.surface2 }]}>
-              <Ionicons name="person-outline" size={24} color={c.sub} />
-            </View>
+            <Image source={SERVICE_FALLBACK_IMAGE} style={s.avatar} contentFit="cover" />
           )}
           {item.isAvailable !== undefined && (
             <View style={[s.availDot, { backgroundColor: item.isAvailable ? TOKENS.color.mint : c.sub, borderColor: c.card }]} />
@@ -164,9 +171,11 @@ const ServiceCard = memo(function ServiceCard({
 function Hero({
   category,
   onBack,
+  image,
 }: {
   category: { name: string; description: string; icon: string } | undefined;
   onBack: () => void;
+  image?: ImageSourcePropType;
 }) {
   const c = useC();
   const scaleA   = useRef(new Animated.Value(0.9)).current;
@@ -205,8 +214,20 @@ function Hero({
         <Ionicons name="arrow-back" size={18} color={c.text} />
       </Pressable>
 
+      {image ? (
+        <Image
+          testID="category-hero-image"
+          source={image}
+          style={s.heroImage}
+          contentFit="contain"
+          contentPosition="bottom right"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        />
+      ) : null}
+
       {/* Content */}
-      <View style={s.heroContent}>
+      <View style={[s.heroContent, image ? s.heroContentWithImage : null]}>
         <View style={s.heroIconWrap}>
           <Text style={s.heroIcon}>{category?.icon ?? '🔧'}</Text>
         </View>
@@ -265,6 +286,7 @@ export default function CategoryServicesScreen() {
       <View style={s.heroPad}>
         <Hero
           category={category as any}
+          image={category ? categoryVisual(category.name).detailImage : undefined}
           onBack={() => {
             if (fromHome) return router.replace('/(tabs)');
             if (fromFavorites) return router.replace('/(tabs)/profile/favorites');
@@ -370,6 +392,16 @@ const s = StyleSheet.create({
     gap: 8,
     marginTop: 12,
   },
+  heroContentWithImage: {
+    maxWidth: '58%',
+  },
+  heroImage: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: '40%',
+  },
   heroIconWrap: {
     width: 56,
     height: 56,
@@ -456,13 +488,6 @@ const s = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 18,
-  },
-  avatarFallback: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   availDot: {
     position: 'absolute',

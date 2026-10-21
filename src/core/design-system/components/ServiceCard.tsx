@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable, StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
+import React, { useState } from 'react';
+import { ImageSourcePropType, Pressable, StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,6 +29,8 @@ export interface ServiceCardProps {
   /** Remote image. Without it (or while it is missing) a brand panel with `fallbackIcon` is shown. */
   imageUri?: string;
   fallbackIcon?: IconName;
+  /** Local photo shown (cover) when there is no `imageUri` or it fails to load; replaces the brand panel. */
+  fallbackImage?: ImageSourcePropType;
   /** Mono meta line, e.g. "Electricidad". Joined with `location` by " · ". */
   category?: string;
   location?: string;
@@ -55,6 +57,7 @@ export function ServiceCard({
   title,
   imageUri,
   fallbackIcon = 'construct-outline',
+  fallbackImage,
   category,
   location,
   rating,
@@ -67,6 +70,9 @@ export function ServiceCard({
   style,
 }: ServiceCardProps) {
   const tc = useThemeColors();
+  // Compared against the current uri so a new uri never shows a stale failure.
+  const [failedUri, setFailedUri] = useState<string | undefined>();
+  const showRemote = Boolean(imageUri) && failedUri !== imageUri;
   const meta = [category, location].filter(Boolean).join(' · ');
   const hasRating = typeof rating === 'number' && rating > 0;
   const a11y = [title, meta, hasRating ? `${rating.toFixed(1)} estrellas` : null, price, isAvailable ? 'Disponible hoy' : null]
@@ -86,8 +92,16 @@ export function ServiceCard({
       ]}
     >
       <View style={styles.media}>
-        {imageUri ? (
-          <Image source={{ uri: imageUri }} style={StyleSheet.absoluteFill} contentFit="cover" />
+        {showRemote ? (
+          <Image
+            testID="service-card-remote-image"
+            source={{ uri: imageUri }}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+            onError={() => setFailedUri(imageUri)}
+          />
+        ) : fallbackImage ? (
+          <Image testID="service-card-fallback-image" source={fallbackImage} style={StyleSheet.absoluteFill} contentFit="cover" />
         ) : (
           <LinearGradient colors={GRADIENTS.brandDeep} style={[StyleSheet.absoluteFill, styles.fallback]}>
             <Ionicons name={fallbackIcon} size={34} color={TOKENS.onMedia.icon} />

@@ -1,6 +1,6 @@
 # Home category cards — reference-style home with people per trade
 
-**Branch:** `feat/home-category-cards` (from `dev` @ `6998201`)
+**Branch:** `feat/home-category-cards` (from `dev` @ `6998201`). Delivered as stacked PRs: `feat/home-cards-1` (#56, design system) -> `feat/home-cards-2` (#57, home) -> `feat/home-category-cards` (#58, category hero + fallback image).
 **Engram mirror:** `odd/home-category-cards/tasks`
 **TDD:** off. Checks: `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit -p .`, `npm test -- --runInBand`, `npm run lint:ds`. Runner: jest (`jest-expo`).
 **Review:** each task reviewed (diff + checks) before the next; RDD off (global).
@@ -26,8 +26,8 @@ Make the client home look like the reference: headline, a standalone search bar 
 | H3 | Category image map (`categoryImage(name)` with normalization + fallback) and Spanish subtitles per trade | delegated | ✅ | see commit log (H3) |
 | H4 | ClientHome: headline + SearchTrigger outside the card, category chips, featured card, category cards list; keep popular services and the rest | delegated | ✅ | see commit log (H4); tsc ok, 51/51 suites (613), lint:ds 0 |
 
-| H5 | Category screen hero card: cut-out of the trade in action (new Codex images in `assets/images/categories/detail/`) | inline | ⏳ | |
-| H6 | ServiceCard fallback image for services without a photo (`assets/images/services/service-fallback.png`) | inline | ⏳ | |
+| H5 | Category screen hero card: cut-out of the trade in action (new Codex images in `assets/images/categories/detail/`) | inline | ✅ | see commit log (H5); detail cut-outs 172–197 KB |
+| H6 | ServiceCard fallback image for services without a photo (`assets/images/services/service-fallback.jpg`) | inline | ✅ | see commit log (H6); tsc ok, 51/51 suites (621), lint:ds 0 |
 | H7 | Search input: square shadow on focus (Android elevation under translucent glass card) | inline | ✅ | see commit log (H7) |
 
 ## Acceptance criteria
@@ -42,3 +42,4 @@ Make the client home look like the reference: headline, a standalone search bar 
 - 2026-10-20: H2 done — BRAND.colors.categoryTints (6 pastel light/dark), getCategoryTint/useCategoryTint, SearchTrigger, CategoryPromoCard, FeaturedPromoCard (expo-image cut-outs). Next: H3+H4.
 - 2026-10-20: H3+H4 done — categoryVisuals (slug map + subtitles + HERO_IMAGE); ClientHome: headline, standalone SearchTrigger, chips, FeaturedPromoCard, Rubros cards. Writer stopped at the Sonnet usage limit with work complete; finished/reviewed inline (removed italic: Archivo italic not loaded, Android falls back). Next: H5–H7 (category screen image, service fallback image, search focus shadow).
 - 2026-10-20: H7 done — removed Android elevation on the focused search input (square shadow through the translucent dark card); iOS keeps the glow, Android marks focus with the border. Codex generating H5/H6 images.
+- 2026-10-20: H5+H6 done (delegated writer) — category Hero shows the trade-in-action cut-out (text column 60%); ServiceCard `fallbackImage` (no uri or onError) used by Servicios populares (service-fallback.jpg 73 KB). Note: the 6 detail cut-outs show the same man; offered to regenerate. Device check pending.
