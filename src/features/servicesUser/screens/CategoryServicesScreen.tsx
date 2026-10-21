@@ -5,6 +5,7 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   ActivityIndicator,
+  ImageSourcePropType,
   Animated,
   Dimensions,
   FlatList,
@@ -26,6 +27,7 @@ import type { ServiceSummary } from '@/types/services';
 import { getProviderRouteId } from '@/features/servicesUser/services/catalog';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { GRADIENTS, Skeleton, TOKENS, useIsDark, useThemeColors, FONT_FAMILY } from '@/core/design-system';
+import { categoryVisual } from '@/features/servicesUser/utils/categoryVisuals';
 import { RadialBlob } from '@/core/components/RadialBlob';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -164,9 +166,11 @@ const ServiceCard = memo(function ServiceCard({
 function Hero({
   category,
   onBack,
+  image,
 }: {
   category: { name: string; description: string; icon: string } | undefined;
   onBack: () => void;
+  image?: ImageSourcePropType;
 }) {
   const c = useC();
   const scaleA   = useRef(new Animated.Value(0.9)).current;
@@ -205,8 +209,20 @@ function Hero({
         <Ionicons name="arrow-back" size={18} color={c.text} />
       </Pressable>
 
+      {image ? (
+        <Image
+          testID="category-hero-image"
+          source={image}
+          style={s.heroImage}
+          contentFit="contain"
+          contentPosition="bottom right"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        />
+      ) : null}
+
       {/* Content */}
-      <View style={s.heroContent}>
+      <View style={[s.heroContent, image ? s.heroContentWithImage : null]}>
         <View style={s.heroIconWrap}>
           <Text style={s.heroIcon}>{category?.icon ?? '🔧'}</Text>
         </View>
@@ -265,6 +281,7 @@ export default function CategoryServicesScreen() {
       <View style={s.heroPad}>
         <Hero
           category={category as any}
+          image={category ? categoryVisual(category.name).detailImage : undefined}
           onBack={() => {
             if (fromHome) return router.replace('/(tabs)');
             if (fromFavorites) return router.replace('/(tabs)/profile/favorites');
@@ -369,6 +386,16 @@ const s = StyleSheet.create({
   heroContent: {
     gap: 8,
     marginTop: 12,
+  },
+  heroContentWithImage: {
+    maxWidth: '60%',
+  },
+  heroImage: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    width: 150,
+    height: 200,
   },
   heroIconWrap: {
     width: 56,
