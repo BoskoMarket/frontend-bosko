@@ -33,6 +33,7 @@ import {
   Skeleton,
   SPACING,
   StepCard,
+  resolveCategoryIcon,
   Text,
   TOKENS,
   TrustRow,
@@ -43,6 +44,9 @@ import {
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const SERVICES_LIMIT = 6;
+const CATEGORY_CARD_LIMIT = 6;
+/** Featured card uses tint 1; offset category cards so the first one doesn't repeat it. */
+const CATEGORY_TINT_OFFSET = 2;
 const SERVICE_COLUMNS = 2;
 
 const STEPS = [
@@ -56,12 +60,6 @@ const TRUST: { icon: IconName; title: string; caption: string }[] = [
   { icon: 'star-outline', title: 'Reseñas reales', caption: 'Solo califica quien contrató el servicio' },
   { icon: 'chatbubbles-outline', title: 'Chat por orden', caption: 'Toda la conversación queda en un lugar' },
 ];
-
-function categoryIcon(icon?: string): IconName {
-  // Backend may send an emoji or nothing: never render an emoji as UI icon.
-  if (!icon || /\p{Extended_Pictographic}/u.test(icon)) return 'construct-outline';
-  return icon as IconName;
-}
 
 function chunk<T>(items: T[], size: number): T[][] {
   const rows: T[][] = [];
@@ -210,7 +208,7 @@ export default function ClientHome() {
             contentContainerStyle={styles.chipsRow}
             style={styles.chipsScroll}
           >
-            <Chip label="Todas" selected onPress={goServices} />
+            <Chip label="Ver todas" onPress={goServices} />
             {categories.map((c) => <Chip key={c.id} label={c.name} onPress={() => goCategory(c.id)} />)}
           </ScrollView>
         ) : null}
@@ -233,7 +231,7 @@ export default function ClientHome() {
             <InlineError message="No se pudieron cargar las categorías" onRetry={() => categoriesQuery.refetch()} />
           ) : (
             <View style={styles.cards}>
-              {categories.map((c, i) => {
+              {categories.slice(0, CATEGORY_CARD_LIMIT).map((c, i) => {
                 const visual = categoryVisual(c.name);
                 return (
                   <CategoryPromoCard
@@ -241,8 +239,8 @@ export default function ClientHome() {
                     title={c.name}
                     subtitle={visual.subtitle}
                     image={visual.image}
-                    icon={c.icon || undefined}
-                    tintIndex={i}
+                    icon={resolveCategoryIcon(c.icon)}
+                    tintIndex={i + CATEGORY_TINT_OFFSET}
                     ctaLabel="Ver profesionales"
                     onPress={() => goCategory(c.id)}
                   />
@@ -281,7 +279,7 @@ export default function ClientHome() {
                 <ServiceCard
                   title={item.title || item.name}
                   imageUri={item.thumbnail ?? item.images?.[0]}
-                  fallbackIcon={categoryIcon(categories.find((c) => c.id === item.categoryId)?.icon)}
+                  fallbackIcon={resolveCategoryIcon(categories.find((c) => c.id === item.categoryId)?.icon)}
                   category={categoryName(item)}
                   location={item.location}
                   rating={item.averageRating ? Number(item.averageRating) : null}

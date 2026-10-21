@@ -53,7 +53,7 @@ describe('ClientHome', () => {
     fireEvent.press(getByText('Buscar ahora'));
     expect(router.push).toHaveBeenLastCalledWith('/search');
 
-    fireEvent.press(getByText('Todas'));
+    fireEvent.press(getByText('Ver todas'));
     expect(router.push).toHaveBeenLastCalledWith('/(tabs)/services');
 
     fireEvent.press(getAllByText('Ofrecer').at(-1)!);
@@ -72,6 +72,17 @@ describe('ClientHome', () => {
 
     fireEvent.press(getByText('Ver profesionales')); // card CTA
     expect(router.push).toHaveBeenLastCalledWith(expected);
+  });
+
+  it('limits the category cards to six, keeps every chip, and never renders an emoji icon', () => {
+    const many = Array.from({ length: 8 }, (_, i) => ({
+      id: `c${i}`, name: `Rubro ${i}`, icon: i === 0 ? '⚡' : 'flash-outline', description: '', accent: '',
+    }));
+    mockCategories.mockReturnValue(ok(many));
+    const { getAllByText, getByLabelText, queryByText } = render(<ClientHome />);
+    expect(getAllByText('Ver profesionales')).toHaveLength(6);
+    expect(getByLabelText('Rubro 7')).toBeTruthy(); // chip for the 8th category still exists
+    expect(queryByText('⚡')).toBeNull();
   });
 
   it('shows popular services, keeping the provider route params', () => {
