@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ImageSourcePropType, Pressable, StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -70,9 +70,9 @@ export function ServiceCard({
   style,
 }: ServiceCardProps) {
   const tc = useThemeColors();
-  const [imageFailed, setImageFailed] = useState(false);
-  useEffect(() => setImageFailed(false), [imageUri]);
-  const showRemote = Boolean(imageUri) && !imageFailed;
+  // Compared against the current uri so a new uri never shows a stale failure.
+  const [failedUri, setFailedUri] = useState<string | undefined>();
+  const showRemote = Boolean(imageUri) && failedUri !== imageUri;
   const meta = [category, location].filter(Boolean).join(' · ');
   const hasRating = typeof rating === 'number' && rating > 0;
   const a11y = [title, meta, hasRating ? `${rating.toFixed(1)} estrellas` : null, price, isAvailable ? 'Disponible hoy' : null]
@@ -94,10 +94,11 @@ export function ServiceCard({
       <View style={styles.media}>
         {showRemote ? (
           <Image
+            testID="service-card-remote-image"
             source={{ uri: imageUri }}
             style={StyleSheet.absoluteFill}
             contentFit="cover"
-            onError={fallbackImage ? () => setImageFailed(true) : undefined}
+            onError={() => setFailedUri(imageUri)}
           />
         ) : fallbackImage ? (
           <Image testID="service-card-fallback-image" source={fallbackImage} style={StyleSheet.absoluteFill} contentFit="cover" />

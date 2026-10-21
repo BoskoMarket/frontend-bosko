@@ -1,6 +1,6 @@
 # Home category cards — reference-style home with people per trade
 
-**Branch:** `feat/home-category-cards` (from `dev` @ `6998201`)
+**Branch:** `feat/home-category-cards` (from `dev` @ `6998201`). Delivered as stacked PRs: `feat/home-cards-1` (#56, design system) -> `feat/home-cards-2` (#57, home) -> `feat/home-category-cards` (#58, category hero + fallback image).
 **Engram mirror:** `odd/home-category-cards/tasks`
 **TDD:** off. Checks: `NODE_OPTIONS=--max-old-space-size=6144 npx tsc --noEmit -p .`, `npm test -- --runInBand`, `npm run lint:ds`. Runner: jest (`jest-expo`).
 **Review:** each task reviewed (diff + checks) before the next; RDD off (global).
@@ -27,7 +27,7 @@ Make the client home look like the reference: headline, a standalone search bar 
 | H4 | ClientHome: headline + SearchTrigger outside the card, category chips, featured card, category cards list; keep popular services and the rest | delegated | ✅ | see commit log (H4); tsc ok, 51/51 suites (613), lint:ds 0 |
 
 | H5 | Category screen hero card: cut-out of the trade in action (new Codex images in `assets/images/categories/detail/`) | inline | ✅ | see commit log (H5); detail cut-outs 172–197 KB |
-| H6 | ServiceCard fallback image for services without a photo (`assets/images/services/service-fallback.png`) | inline | ✅ | see commit log (H6); tsc ok, 51/51 suites (621), lint:ds 0 |
+| H6 | ServiceCard fallback image for services without a photo (`assets/images/services/service-fallback.jpg`) | inline | ✅ | see commit log (H6); tsc ok, 51/51 suites (621), lint:ds 0 |
 | H7 | Search input: square shadow on focus (Android elevation under translucent glass card) | inline | ✅ | see commit log (H7) |
 
 ## Acceptance criteria

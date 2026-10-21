@@ -65,13 +65,21 @@ describe.each(['dark', 'light'] as const)('home components (%s theme)', (mode) =
   });
 
   it('ServiceCard swaps to the fallback image when the remote image fails', () => {
-    const { getByTestId, queryByTestId, UNSAFE_getAllByProps } = render(
+    const { getByTestId, queryByTestId } = render(
       <ServiceCard title="Foto rota" imageUri="https://x.test/a.jpg" fallbackImage={1} onPress={jest.fn()} />,
     );
     expect(queryByTestId('service-card-fallback-image')).toBeNull();
-    const remote = UNSAFE_getAllByProps({ contentFit: 'cover' })[0];
-    act(() => remote.props.onError());
+    act(() => getByTestId('service-card-remote-image').props.onError());
     expect(getByTestId('service-card-fallback-image')).toBeTruthy();
+  });
+
+  it('ServiceCard falls back to the brand panel when the remote image fails and there is no fallback image', () => {
+    const { getByTestId, queryByTestId } = render(
+      <ServiceCard title="Foto rota" imageUri="https://x.test/a.jpg" onPress={jest.fn()} />,
+    );
+    act(() => getByTestId('service-card-remote-image').props.onError());
+    expect(queryByTestId('service-card-remote-image')).toBeNull();
+    expect(queryByTestId('service-card-fallback-image')).toBeNull();
   });
 
   it('ServiceCard hides the pill and rating when there is no data, and toggles favorite', () => {

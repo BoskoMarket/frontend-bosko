@@ -279,7 +279,6 @@ export default function ClientHome() {
                 <ServiceCard
                   title={item.title || item.name}
                   imageUri={item.thumbnail ?? item.images?.[0]}
-                  fallbackIcon={resolveCategoryIcon(categories.find((c) => c.id === item.categoryId)?.icon)}
                   fallbackImage={SERVICE_FALLBACK_IMAGE}
                   category={categoryName(item)}
                   location={item.location}
