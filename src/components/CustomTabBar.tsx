@@ -183,6 +183,7 @@ export function CustomTabBar({ state, navigation, descriptors }: BottomTabBarPro
               return (
                 <TabSlot
                   key={route.key}
+                  routeName={route.name}
                   icon={cfg.icon}
                   label={label}
                   a11yLabel={badge > 0 ? `${label}, ${badge} ${badgeNoun}` : label}
@@ -213,8 +214,8 @@ export function CustomTabBar({ state, navigation, descriptors }: BottomTabBarPro
 }
 
 // ── Tab slot ──────────────────────────────────────────────────────────────────
-function TabSlot({ icon, label, a11yLabel, focused, covered, badge, onPress, onLongPress }: {
-  icon: IconName; label: string; a11yLabel: string; focused: boolean; covered: boolean; badge: number;
+function TabSlot({ routeName, icon, label, a11yLabel, focused, covered, badge, onPress, onLongPress }: {
+  routeName: string; icon: IconName; label: string; a11yLabel: string; focused: boolean; covered: boolean; badge: number;
   onPress: () => void; onLongPress: () => void;
 }) {
   const tc = useThemeColors();
@@ -224,12 +225,15 @@ function TabSlot({ icon, label, a11yLabel, focused, covered, badge, onPress, onL
   // covers one. Timing, not a spring: an underdamped spring overshot 0 and flashed the icon back.
   const opacity = useRef(new Animated.Value(covered ? 0 : 0.55)).current;
 
+  // Hide instantly when the bubble lands here; reappear only after the bubble's spring has
+  // moved away, so the old icon never shows next to the travelling bubble.
   useEffect(() => {
-    Animated.timing(opacity, {
-      toValue: covered ? 0 : 0.55,
-      duration: covered ? 120 : 220,
-      useNativeDriver: true,
-    }).start();
+    opacity.stopAnimation();
+    if (covered) {
+      opacity.setValue(0);
+      return;
+    }
+    Animated.timing(opacity, { toValue: 0.55, duration: 180, delay: 220, useNativeDriver: true }).start();
   }, [covered, opacity]);
 
   return (
@@ -242,7 +246,7 @@ function TabSlot({ icon, label, a11yLabel, focused, covered, badge, onPress, onL
       onLongPress={onLongPress}
       hitSlop={8}
     >
-      <Animated.View testID={`tab-icon-${label}`} style={[styles.iconWrap, { opacity }]}>
+      <Animated.View testID={`tab-icon-${routeName}`} style={[styles.iconWrap, { opacity }]}>
         <Ionicons name={icon} size={22} color={tc.text} />
         {badge > 0 && (
           <View style={styles.badge}>

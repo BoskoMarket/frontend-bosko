@@ -814,9 +814,19 @@ export default function ReelsScreen() {
   // Page height = the list's real viewport, measured on layout. `Dimensions.get('window')` does not
   // match it on Android edge-to-edge (system bars), which cut the reel or showed the next one.
   const [pageH, setPageH] = useState(H);
+  // Raw (unrounded) height: rounding left a sub-pixel strip of the next reel on fractional densities.
+  const activeIndexRef = useRef(0);
+  activeIndexRef.current = activeIndex;
   const handleListLayout = useCallback((e: LayoutChangeEvent) => {
-    const h = Math.round(e.nativeEvent.layout.height);
-    if (h > 0) setPageH((prev) => (prev === h ? prev : h));
+    const h = e.nativeEvent.layout.height;
+    if (h <= 0) return;
+    setPageH((prev) => {
+      if (prev === h) return prev;
+      // Resized after scrolling (multi-window, bar insets): keep the current reel aligned.
+      const index = activeIndexRef.current;
+      if (index > 0) requestAnimationFrame(() => listRef.current?.scrollToOffset({ offset: index * h, animated: false }));
+      return h;
+    });
   }, []);
 
   // renderItem depends on activeIndex — React.memo on ReelItem ensures only

@@ -1,6 +1,6 @@
 import React from 'react';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import { CustomTabBar, getTabLabel, getVisibleRoutes } from '@/components/CustomTabBar';
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -142,15 +142,22 @@ describe('CustomTabBar bubble icon', () => {
     const { StyleSheet } = require('react-native');
     return StyleSheet.flatten(node.props.style).opacity;
   };
+  const settle = () => act(() => { jest.runAllTimers(); });
 
-  it('hides the bar icon under the bubble, also on a hidden route', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  it('hides the bar icon under the bubble, also on a hidden route (after animations settle)', () => {
     const { props } = makeProps('reels');
     const { getByTestId, rerender } = render(<CustomTabBar {...props} />);
-    expect(opacityOf(getByTestId('tab-icon-Reels'))).toBe(0);
-    expect(opacityOf(getByTestId('tab-icon-Inicio'))).toBe(0.55);
+    settle();
+    expect(opacityOf(getByTestId('tab-icon-reels'))).toBe(0);
+    expect(opacityOf(getByTestId('tab-icon-index'))).toBe(0.55);
 
-    // Navigate to the hidden services route: the bubble stays on Reels, so its icon stays hidden.
+    // Hidden services route: no tab is focused but the bubble stays on Reels.
     rerender(<CustomTabBar {...makeProps('services').props} />);
-    expect(opacityOf(getByTestId('tab-icon-Reels'))).toBe(0);
+    settle();
+    expect(opacityOf(getByTestId('tab-icon-reels'))).toBe(0);
   });
+
 });

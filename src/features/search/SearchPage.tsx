@@ -69,8 +69,9 @@ export const SearchPage = () => {
     const unsubscribe = navigation.addListener('transitionEnd' as never, (e: { data?: { closing?: boolean } }) => {
       if (!e?.data?.closing) focusInput();
     });
-    // Fallback when no transition event fires (e.g. animations disabled).
-    const fallback = setTimeout(focusInput, 600);
+    // Fallback when no transition event fires (e.g. animations disabled). Long enough that a slow
+    // device still gets the real transitionEnd first and never focuses mid-animation.
+    const fallback = setTimeout(focusInput, 1500);
     return () => {
       done = true;
       clearTimeout(fallback);
