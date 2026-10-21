@@ -20,6 +20,8 @@ Estados: ✅ ok · ❌ roto · ⚠️ dudoso (ruta dinámica armada con string, 
 | 4 | Mensajes | `/(tabs)/chat` | Badge = no leídos (`useUnreadTotal`). |
 | 5 | Perfil | `/(tabs)/profile` | Grupo por rol: proveedor "Mi negocio", cliente "Mi actividad" (`profileSections.ts`). |
 
+**La barra solo se ve en las 5 raíces de tab** (`shouldShowTabBar` en `CustomTabBar`): se oculta en pantallas anidadas del stack de Perfil y en el stack oculto `services`; la salida es el botón volver.
+
 **Servicios ya no es un tab.** `app/(tabs)/services/*` sigue dentro de `(tabs)` con `href: null` en su `Tabs.Screen`: queda fuera de la barra pero sigue ruteable (catálogo, `category/[id]`, `provider/[id]`), así que los deep links y los `/(tabs)/services/...` existentes no cambian. `Tabs` usa `backBehavior="history"` para que el back desde una ruta oculta vuelva al tab de origen. `CustomTabBar` ignora rutas sin entrada en `TABS` o con `href: null` (el cálculo del pill usa solo los tabs visibles).
 
 Cambios de destino de esta reestructura:

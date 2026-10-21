@@ -68,6 +68,7 @@ Auth guards:
 
 Tab bar rules (`src/components/CustomTabBar.tsx`, map in `odd/nav-map.md`):
 - Visible tabs = routes with an entry in `TABS` and without `href: null`; the bubble/notch math uses only those. Adding a tab means adding a `Tabs.Screen` (order = bar order) and a `TABS` entry.
+- The bar renders only on the 5 tab roots: `shouldShowTabBar(state, descriptors)` is false (bar returns `null`) when the focused route is hidden (`services`, `href: null`) or its nested stack is past the root (`route.state.index > 0`, e.g. `profile/kyc`). Nested screens use their back button as the exit and must not reserve bottom space for the bar.
 - Labels are always visible; Pedidos reads "Órdenes" for providers. Each tab exposes `accessibilityRole="tab"`, label and selected state.
 - Badges: Mensajes = `useUnreadTotal()`; Pedidos/Órdenes (providers only) = `usePendingProviderRequestsCount()` (pending provider orders, shares the `providerOrders` query cache).
 - Orders opens on the provider segment for providers; an explicit `?tab=client|provider` always wins (`resolveOrdersSegment`).
