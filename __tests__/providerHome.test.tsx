@@ -80,7 +80,7 @@ describe('ProviderHome', () => {
     fireEvent.press(getByText('Mis servicios'));
     expect(router.push).toHaveBeenLastCalledWith('/(tabs)/profile/Services');
     fireEvent.press(getByText('Subir reel'));
-    expect(router.push).toHaveBeenLastCalledWith('/(tabs)/profile/upload-reel');
+    expect(router.push).toHaveBeenLastCalledWith('/upload-reel');
   });
 
   it('shows the empty state without pending requests', () => {

@@ -58,6 +58,7 @@ app/(tabs)/            → Authenticated tab navigator: 5 labeled tabs (Inicio �
 app/(tabs)/services/   → Catalog + category/[id] + provider/[id] stack. NOT a tab: hidden with `href: null`, still routable at /(tabs)/services/...
 app/chat/[id].tsx      → Individual chat screen (outside tabs, id = orderId)
 app/search.tsx         → Search screen
+app/upload-reel.tsx    → Publish a reel (providers), root stack
 ```
 
 Auth guards:

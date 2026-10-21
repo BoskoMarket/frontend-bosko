@@ -21,6 +21,7 @@ import { ReelVideoPreview } from '../components/ReelVideoPreview';
 import { getUserErrorMessage } from '@/lib/errors';
 import { alertPermissionDenied } from '@/lib/permissionAlert';
 import { safeBack } from '@/core/navigation/safeBack';
+import { MY_REELS_ROUTE } from '@/features/reels/routes';
 
 export default function ReelUploadScreen() {
   useRequireProviderStatus('provider');
@@ -224,7 +225,7 @@ export default function ReelUploadScreen() {
         {error && <NoticeBanner variant="error">{error}</NoticeBanner>}
         {publicationUncertain && (
           <View style={styles.row}>
-            <Button style={styles.flex} label="Ver mis reels" variant="secondary" onPress={() => router.replace('/(tabs)/profile/my-reels')} />
+            <Button style={styles.flex} label="Ver mis reels" variant="secondary" onPress={() => router.replace(MY_REELS_ROUTE)} />
             <Button style={styles.flex} label="Reintentar" variant="outline" onPress={retryAfterUncertain} />
           </View>
         )}

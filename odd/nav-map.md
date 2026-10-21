@@ -60,7 +60,6 @@ Generado con `npm run routes:generate` (`scripts/generate-routes.cjs` → `.expo
 | `/(tabs)/profile/my-reels` | `app/(tabs)/profile/my-reels.tsx` |
 | `/(tabs)/profile/my-reviews` | `app/(tabs)/profile/my-reviews.tsx` |
 | `/(tabs)/profile/plans` | `app/(tabs)/profile/plans.tsx` |
-| `/(tabs)/profile/upload-reel` | `app/(tabs)/profile/upload-reel.tsx` |
 | `/(tabs)/profile/verify-phone` | `app/(tabs)/profile/verify-phone.tsx` |
 | `/(tabs)/reels` | `app/(tabs)/reels.tsx` |
 | `/(tabs)/services/category/[id]` | `app/(tabs)/services/category/[id].tsx` |
@@ -87,6 +86,7 @@ Generado con `npm run routes:generate` (`scripts/generate-routes.cjs` → `.expo
 | `/orders/status` | `app/orders/status.tsx` |
 | `/search` | `app/search.tsx` |
 | `/service-form` | `app/service-form.tsx` |
+| `/upload-reel` | `app/upload-reel.tsx` |
 | `/welcome-video` | `app/welcome-video.tsx` |
 
 Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)/profile/kyc/_layout.tsx`, `app/(tabs)/services/_layout.tsx`, `app/_layout.tsx`, `app/auth/_layout.tsx`, `app/chat/_layout.tsx`, `app/login/_layout.tsx`, `app/orders/_layout.tsx`.
@@ -127,7 +127,7 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Cambiar contraseña (`/(tabs)/profile/ChangePassword`) | `screens/ChangePasswordScreen.tsx:129` | Header atrás | `safeBack` | `router.back()` o fallback `/(tabs)/profile` | - | ✅ |
 | Cambiar contraseña (`/(tabs)/profile/ChangePassword`) | `screens/ChangePasswordScreen.tsx:105` | "OK" del `Alert` de éxito | `Alert.alert` → `safeBack` | `router.back()` o fallback `/(tabs)/profile` | - | ✅ |
 | Layout tabs (`/(tabs)/*`) | `app/(tabs)/_layout.tsx:25` | Sin sesión (guard) | `<Redirect>` | `/login` | - | ✅ |
-| Layout raíz | `app/_layout.tsx:70` | Sin sesión y segmento protegido (`(tabs)`, `orders`, `chat`, `admin`, `service-form`, `search`) | `router.replace` (effect) | `/login` | - | ✅ |
+| Layout raíz | `app/_layout.tsx:70` | Sin sesión y segmento protegido (`(tabs)`, `orders`, `chat`, `admin`, `service-form`, `search`, `upload-reel`) | `router.replace` (effect) | `/login` | - | ✅ |
 | Rutas duplicadas | `app/login/LogInView.tsx`, `app/login/RegisterView.tsx` | - | Wrappers de ruta que renderizan la vista sin props | - | - | ⚠️ ver "Enlaces rotos / dudosos" |
 | Tab bar (`/(tabs)/*`) | `src/components/CustomTabBar.tsx` (`onPress`) | Tap en un tab no enfocado (Inicio, Reels, Pedidos/Órdenes, Mensajes, Perfil) | `navigation.navigate` | `/(tabs)`, `/(tabs)/reels`, `/(tabs)/orders`, `/(tabs)/chat`, `/(tabs)/profile` | `route.params` | ✅ los 5 existen en `app/(tabs)/_layout.tsx`; `services` está oculto (`href: null`) |
 | Tab bar (`/(tabs)/*`) | `src/components/CustomTabBar.tsx` (`onPress`) | Tap en el tab ya enfocado con stack anidado | `StackActions.popToTop` | Raíz del stack del tab (ej. `/(tabs)/profile`) | - | ✅ |

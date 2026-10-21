@@ -12,6 +12,7 @@ import { RefreshControl, ScrollView, StatusBar, StyleSheet, View } from 'react-n
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { REEL_UPLOAD_ROUTE } from '@/features/reels/routes';
 
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { useProviderOrders, usePendingProviderRequestsQuery } from '@/hooks/queries/useOrdersQuery';
@@ -45,7 +46,7 @@ const goPublish = () => router.push('/service-form');
 const QUICK_ACTIONS: { id: string; label: string; icon: IconName; go: () => void }[] = [
   { id: 'post', label: 'Publicar servicio', icon: 'add-circle-outline', go: goPublish },
   { id: 'services', label: 'Mis servicios', icon: 'list-outline', go: () => router.push('/(tabs)/profile/Services') },
-  { id: 'reel', label: 'Subir reel', icon: 'videocam-outline', go: () => router.push('/(tabs)/profile/upload-reel') },
+  { id: 'reel', label: 'Subir reel', icon: 'videocam-outline', go: () => router.push(REEL_UPLOAD_ROUTE) },
 ];
 
 function requestsTitle(count: number): string {

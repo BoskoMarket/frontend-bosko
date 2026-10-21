@@ -30,6 +30,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { toggleLikeReel, commentOnReel, Reel } from '@/features/reels/services/reels.service';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { getUserErrorMessage } from '@/lib/errors';
@@ -47,6 +48,8 @@ import { useConnectionType } from '@/hooks/useConnectionType';
 import { shouldAutoplay } from '@/features/reels/utils/shouldAutoplay';
 import { getReelIsFollowing } from '@/features/reels/utils/reelFollow';
 import { ReportFlow } from '@/features/reports/components/ReportFlow';
+import { ReelsTopBar, type FeedTab } from '@/features/reels/components/ReelsTopBar';
+import { useIsProvider } from '@/hooks/queries/useProfileQuery';
 
 const { width: W, height: H } = Dimensions.get('window');
 
@@ -738,46 +741,19 @@ const ReelItem = React.memo(function ReelItem({
   );
 });
 
-// ── Top bar ───────────────────────────────────────────────────────────────────
-type FeedTab = 'siguiendo' | 'parati';
-
-function TopBar({ insetTop, tab, setTab }: { insetTop: number; tab: FeedTab; setTab: (t: FeedTab) => void }) {
-  return (
-    <View style={[s.topBar, { paddingTop: insetTop + 8 }]} pointerEvents="box-none">
-      <View style={s.topTabs} pointerEvents="auto">
-        <Pressable onPress={() => setTab('siguiendo')} accessibilityRole="tab" accessibilityState={{ selected: tab === 'siguiendo' }}>
-          <Text style={[s.topTab, tab === 'siguiendo' && s.topTabActive]}>Siguiendo</Text>
-        </Pressable>
-        <View style={s.topDivider} />
-        <Pressable onPress={() => setTab('parati')} accessibilityRole="tab" accessibilityState={{ selected: tab === 'parati' }}>
-          <Text style={[s.topTab, tab === 'parati' && s.topTabActive]}>Para ti</Text>
-        </Pressable>
-      </View>
-      <Pressable
-        style={s.topSearch}
-        pointerEvents="auto"
-        onPress={() => router.push('/search')}
-        accessibilityRole="button"
-        accessibilityLabel="Buscar"
-        hitSlop={8}
-      >
-        <Ionicons name="search" size={22} color={TOKENS.onMedia.icon} />
-      </Pressable>
-    </View>
-  );
-}
-
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function ReelsScreen() {
   const insets = useSafeAreaInsets();
   const { authState } = useAuth();
   const currentUserId = authState.user?.id;
+  const isProvider = useIsProvider();
   const [feedTab, setFeedTab] = useState<FeedTab>('parati');
   const isFollowingFeed = feedTab === 'siguiendo';
   const { data, isLoading, isError, isRefetching, refetch, isFetchingNextPage, fetchNextPage, hasNextPage } =
     useReelsFeed(isFollowingFeed ? 'following' : undefined);
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
   const reels = (data?.pages.flat() ?? []).filter(r => !ignoredIds.has(r.id));
+  const isFocused = useIsFocused();
   const [activeIndex, setActiveIndex] = useState(0);
   const listRef = useRef<FlatList<Reel>>(null);
 
@@ -835,13 +811,13 @@ export default function ReelsScreen() {
     ({ item, index }: { item: Reel; index: number }) => (
       <ReelItem
         reel={item}
-        isActive={index === activeIndex}
+        isActive={isFocused && index === activeIndex}
         currentUserId={currentUserId}
         onNotInterested={handleNotInterested}
         pageHeight={pageH}
       />
     ),
-    [activeIndex, currentUserId, handleNotInterested, pageH],
+    [activeIndex, isFocused, currentUserId, handleNotInterested, pageH],
   );
 
   const keyExtractor = useCallback((item: Reel) => item.id, []);
@@ -855,7 +831,7 @@ export default function ReelsScreen() {
     return (
       <View style={[s.root, s.center]}>
         <ActivityIndicator size="large" color={TOKENS.onMedia.icon} />
-        <TopBar insetTop={insets.top} tab={feedTab} setTab={handleTabChange} />
+        <ReelsTopBar insetTop={insets.top} tab={feedTab} setTab={handleTabChange} canUpload={isProvider} />
       </View>
     );
   }
@@ -868,7 +844,7 @@ export default function ReelsScreen() {
         <Text style={s.emptyTitle}>No pudimos cargar los reels</Text>
         <Text style={s.emptySubtitle}>Revisá tu conexión e intentá de nuevo.</Text>
         <Button label="Reintentar" onPress={() => refetch()} style={s.retryBtn} />
-        <TopBar insetTop={insets.top} tab={feedTab} setTab={handleTabChange} />
+        <ReelsTopBar insetTop={insets.top} tab={feedTab} setTab={handleTabChange} canUpload={isProvider} />
       </View>
     );
   }
@@ -931,7 +907,7 @@ export default function ReelsScreen() {
       />
 
       {/* Floating top bar */}
-      <TopBar insetTop={insets.top} tab={feedTab} setTab={handleTabChange} />
+      <ReelsTopBar insetTop={insets.top} tab={feedTab} setTab={handleTabChange} canUpload={isProvider} />
     </View>
   );
 }
@@ -1328,41 +1304,5 @@ const s = StyleSheet.create({
     height: '100%',
     backgroundColor: TOKENS.onMedia.solid,
     borderRadius: 1,
-  },
-
-  // Top bar
-  topBar: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    zIndex: 10,
-  },
-  topTabs: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  topDivider: {
-    width: 1,
-    height: 16,
-    backgroundColor: TOKENS.onMedia.border,
-  },
-  topTab: {
-    fontSize: 16,
-    fontFamily: FONT_FAMILY.headingMedium,
-    color: TOKENS.onMedia.textMuted,
-  },
-  topTabActive: {
-    color: TOKENS.onMedia.text,
-    textDecorationLine: 'underline',
-    textDecorationColor: TOKENS.onMedia.text,
-  },
-  topSearch: {
-    position: 'absolute',
-    right: 16,
-    padding: 4,
   },
 });
