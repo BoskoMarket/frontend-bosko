@@ -47,6 +47,8 @@ import { useConnectionType } from '@/hooks/useConnectionType';
 import { shouldAutoplay } from '@/features/reels/utils/shouldAutoplay';
 import { getReelIsFollowing } from '@/features/reels/utils/reelFollow';
 import { ReportFlow } from '@/features/reports/components/ReportFlow';
+import { ReelsTopBar, type FeedTab } from '@/features/reels/components/ReelsTopBar';
+import { useIsProvider } from '@/hooks/queries/useProfileQuery';
 
 const { width: W, height: H } = Dimensions.get('window');
 
@@ -739,39 +741,12 @@ const ReelItem = React.memo(function ReelItem({
 });
 
 // ── Top bar ───────────────────────────────────────────────────────────────────
-type FeedTab = 'siguiendo' | 'parati';
-
-function TopBar({ insetTop, tab, setTab }: { insetTop: number; tab: FeedTab; setTab: (t: FeedTab) => void }) {
-  return (
-    <View style={[s.topBar, { paddingTop: insetTop + 8 }]} pointerEvents="box-none">
-      <View style={s.topTabs} pointerEvents="auto">
-        <Pressable onPress={() => setTab('siguiendo')} accessibilityRole="tab" accessibilityState={{ selected: tab === 'siguiendo' }}>
-          <Text style={[s.topTab, tab === 'siguiendo' && s.topTabActive]}>Siguiendo</Text>
-        </Pressable>
-        <View style={s.topDivider} />
-        <Pressable onPress={() => setTab('parati')} accessibilityRole="tab" accessibilityState={{ selected: tab === 'parati' }}>
-          <Text style={[s.topTab, tab === 'parati' && s.topTabActive]}>Para ti</Text>
-        </Pressable>
-      </View>
-      <Pressable
-        style={s.topSearch}
-        pointerEvents="auto"
-        onPress={() => router.push('/search')}
-        accessibilityRole="button"
-        accessibilityLabel="Buscar"
-        hitSlop={8}
-      >
-        <Ionicons name="search" size={22} color={TOKENS.onMedia.icon} />
-      </Pressable>
-    </View>
-  );
-}
-
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function ReelsScreen() {
   const insets = useSafeAreaInsets();
   const { authState } = useAuth();
   const currentUserId = authState.user?.id;
+  const isProvider = useIsProvider();
   const [feedTab, setFeedTab] = useState<FeedTab>('parati');
   const isFollowingFeed = feedTab === 'siguiendo';
   const { data, isLoading, isError, isRefetching, refetch, isFetchingNextPage, fetchNextPage, hasNextPage } =
@@ -855,7 +830,7 @@ export default function ReelsScreen() {
     return (
       <View style={[s.root, s.center]}>
         <ActivityIndicator size="large" color={TOKENS.onMedia.icon} />
-        <TopBar insetTop={insets.top} tab={feedTab} setTab={handleTabChange} />
+        <ReelsTopBar insetTop={insets.top} tab={feedTab} setTab={handleTabChange} canUpload={isProvider} />
       </View>
     );
   }
@@ -868,7 +843,7 @@ export default function ReelsScreen() {
         <Text style={s.emptyTitle}>No pudimos cargar los reels</Text>
         <Text style={s.emptySubtitle}>Revisá tu conexión e intentá de nuevo.</Text>
         <Button label="Reintentar" onPress={() => refetch()} style={s.retryBtn} />
-        <TopBar insetTop={insets.top} tab={feedTab} setTab={handleTabChange} />
+        <ReelsTopBar insetTop={insets.top} tab={feedTab} setTab={handleTabChange} canUpload={isProvider} />
       </View>
     );
   }
@@ -931,7 +906,7 @@ export default function ReelsScreen() {
       />
 
       {/* Floating top bar */}
-      <TopBar insetTop={insets.top} tab={feedTab} setTab={handleTabChange} />
+      <ReelsTopBar insetTop={insets.top} tab={feedTab} setTab={handleTabChange} canUpload={isProvider} />
     </View>
   );
 }
@@ -1331,38 +1306,4 @@ const s = StyleSheet.create({
   },
 
   // Top bar
-  topBar: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    zIndex: 10,
-  },
-  topTabs: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  topDivider: {
-    width: 1,
-    height: 16,
-    backgroundColor: TOKENS.onMedia.border,
-  },
-  topTab: {
-    fontSize: 16,
-    fontFamily: FONT_FAMILY.headingMedium,
-    color: TOKENS.onMedia.textMuted,
-  },
-  topTabActive: {
-    color: TOKENS.onMedia.text,
-    textDecorationLine: 'underline',
-    textDecorationColor: TOKENS.onMedia.text,
-  },
-  topSearch: {
-    position: 'absolute',
-    right: 16,
-    padding: 4,
-  },
 });
