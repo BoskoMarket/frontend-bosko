@@ -58,6 +58,27 @@ export const BRAND = {
       sub: '#6B6B6B',
     },
 
+    // Pastel category tints for promo cards (pink, green, yellow, blue, lilac, peach).
+    // bg = card surface, ink = text/icon on it, cta = CTA pill fill. Dark = deeper, muted surfaces.
+    categoryTints: {
+      light: [
+        { bg: '#F9C6EE', ink: '#3A1233', cta: '#3A1233' }, // pink
+        { bg: '#CDE8B8', ink: '#1F3318', cta: '#1F3318' }, // green
+        { bg: '#F7E2A6', ink: '#3B2E08', cta: '#3B2E08' }, // yellow
+        { bg: '#B9DCF8', ink: '#112A44', cta: '#112A44' }, // blue
+        { bg: '#DCCDF3', ink: '#2A1A48', cta: '#2A1A48' }, // lilac
+        { bg: '#F8D3BC', ink: '#40200E', cta: '#40200E' }, // peach
+      ],
+      dark: [
+        { bg: '#4A2145', ink: '#FBE4F7', cta: '#F9C6EE' },
+        { bg: '#243A22', ink: '#E6F5D9', cta: '#CDE8B8' },
+        { bg: '#4A3D14', ink: '#FBF0CC', cta: '#F7E2A6' },
+        { bg: '#1C3550', ink: '#DCEEFC', cta: '#B9DCF8' },
+        { bg: '#392C57', ink: '#EEE6FB', cta: '#DCCDF3' },
+        { bg: '#4D2E1C', ink: '#FCE8DB', cta: '#F8D3BC' },
+      ],
+    },
+
     // Premium (gold) treatment. Primary/primaryDark are the brand ones (the legacy
     // Colors.ts #850221/#5c0117 were a typo). Gold fills are theme-independent; the
     // theme-specific values drive PREMIUM_PALETTE.dark / .light.
