@@ -4,7 +4,8 @@ import { fireEvent, render } from '@testing-library/react-native';
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({ router: { push: (...a: any[]) => mockPush(...a) } }));
 
-import { ReelsTopBar, REEL_UPLOAD_ROUTE } from '@/features/reels/components/ReelsTopBar';
+import { ReelsTopBar } from '@/features/reels/components/ReelsTopBar';
+import { REEL_UPLOAD_ROUTE } from '@/features/reels/routes';
 
 describe('ReelsTopBar', () => {
   beforeEach(() => mockPush.mockReset());

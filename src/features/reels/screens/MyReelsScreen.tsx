@@ -25,6 +25,7 @@ import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useMyReels, useUpdateReel, useDeleteReel } from '@/hooks/queries/useReelsQuery';
 import { getUserErrorMessage } from '@/lib/errors';
 import type { Reel } from '@/features/reels/services/reels.service';
+import { REEL_UPLOAD_ROUTE } from '@/features/reels/routes';
 
 const { width: W } = Dimensions.get('window');
 const GAP = 10;
@@ -228,7 +229,7 @@ export default function MyReelsScreen() {
         onBack={() => safeBack(router, '/(tabs)/profile')}
         style={styles.headerRow}
         right={(
-          <Pressable accessibilityRole="button" accessibilityLabel="Publicar reel" onPress={() => router.push('/(tabs)/profile/upload-reel')} hitSlop={12}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Publicar reel" onPress={() => router.push(REEL_UPLOAD_ROUTE)} hitSlop={12}>
           <Ionicons name="add" size={26} color={tc.text} />
         </Pressable>
         )}
@@ -258,7 +259,7 @@ export default function MyReelsScreen() {
           icon="film-outline"
           title="Todavía no subiste reels"
           subtitle="Mostrá tu trabajo en video y llegá a más clientes."
-          cta={{ label: 'Publicar un reel', onPress: () => router.push('/(tabs)/profile/upload-reel') }}
+          cta={{ label: 'Publicar un reel', onPress: () => router.push(REEL_UPLOAD_ROUTE) }}
         />
       ) : (
         <FlatList

@@ -98,7 +98,7 @@ function RootLayoutNav() {
   const navigation = useRootNavigationState();
   useEffect(() => {
     if (!navigation?.key || !authLoaded || isAuthenticated) return;
-    if (['(tabs)', 'orders', 'chat', 'admin', 'service-form', 'search'].includes(segments[0] ?? '')) router.replace('/login');
+    if (['(tabs)', 'orders', 'chat', 'admin', 'service-form', 'search', 'upload-reel'].includes(segments[0] ?? '')) router.replace('/login');
   }, [authLoaded, isAuthenticated, segments, navigation?.key]);
   useChatSync();
   useNotificationNavigation(authLoaded && !!navigation?.key);
@@ -117,6 +117,7 @@ function RootLayoutNav() {
       <Stack.Screen name="chat" options={{ headerShown: false }} />
       <Stack.Screen name="orders" options={{ headerShown: false }} />
       <Stack.Screen name="service-form" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="upload-reel" options={{ headerShown: false }} />
     </Stack>
   );
 }

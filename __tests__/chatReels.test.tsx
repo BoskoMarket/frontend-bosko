@@ -102,7 +102,7 @@ describe.each(['dark', 'light'] as const)('chat and reels screens (%s)', (mode) 
     it('offers a call to action when there are no reels', () => {
       const { getByText } = render(<MyReelsScreen />);
       fireEvent.press(getByText('Publicar un reel'));
-      expect(mockPush).toHaveBeenCalledWith('/(tabs)/profile/upload-reel');
+      expect(mockPush).toHaveBeenCalledWith('/upload-reel');
     });
 
     it('labels the icon-only buttons', () => {
@@ -141,7 +141,7 @@ describe('chat and reels have no hard-coded design literals', () => {
     path.join(repo, 'app/(tabs)/chat.tsx'),
     path.join(repo, 'app/(tabs)/reels.tsx'),
     path.join(repo, 'app/(tabs)/profile/my-reels.tsx'),
-    path.join(repo, 'app/(tabs)/profile/upload-reel.tsx'),
+    path.join(repo, 'app/upload-reel.tsx'),
   ];
 
   it('finds the files', () => {

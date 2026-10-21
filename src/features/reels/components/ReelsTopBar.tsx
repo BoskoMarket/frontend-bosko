@@ -1,12 +1,15 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { FONT_FAMILY, TOKENS } from '@/core/design-system';
+import { SPACING, TOKENS, Text } from '@/core/design-system';
+import { REEL_UPLOAD_ROUTE } from '@/features/reels/routes';
 
 export type FeedTab = 'siguiendo' | 'parati';
 
-export const REEL_UPLOAD_ROUTE = '/(tabs)/profile/upload-reel';
+/** Width reserved on each side for the absolute "+" / search buttons (icon 26 + padding 2*xs). */
+const ADD_ICON_SIZE = 26;
+const SIDE_SLOT = ADD_ICON_SIZE + SPACING.xs * 2;
 
 /**
  * Overlay bar of the reels feed: "Siguiendo / Para ti" tabs, search on the right and,
@@ -24,7 +27,7 @@ export function ReelsTopBar({
   canUpload: boolean;
 }) {
   return (
-    <View style={[s.topBar, { paddingTop: insetTop + 8 }]} pointerEvents="box-none">
+    <View style={[s.topBar, { paddingTop: insetTop + SPACING.sm }]} pointerEvents="box-none">
       {canUpload ? (
         <Pressable
           style={s.topUpload}
@@ -34,16 +37,16 @@ export function ReelsTopBar({
           accessibilityLabel="Publicar reel"
           hitSlop={8}
         >
-          <Ionicons name="add-circle-outline" size={26} color={TOKENS.onMedia.icon} />
+          <Ionicons name="add-circle-outline" size={ADD_ICON_SIZE} color={TOKENS.onMedia.icon} />
         </Pressable>
       ) : null}
       <View style={s.topTabs} pointerEvents="auto">
         <Pressable onPress={() => setTab('siguiendo')} accessibilityRole="tab" accessibilityState={{ selected: tab === 'siguiendo' }}>
-          <Text style={[s.topTab, tab === 'siguiendo' && s.topTabActive]}>Siguiendo</Text>
+          <Text variant="subtitle" color={TOKENS.onMedia.textMuted} style={tab === 'siguiendo' ? s.topTabActive : undefined}>Siguiendo</Text>
         </Pressable>
         <View style={s.topDivider} />
         <Pressable onPress={() => setTab('parati')} accessibilityRole="tab" accessibilityState={{ selected: tab === 'parati' }}>
-          <Text style={[s.topTab, tab === 'parati' && s.topTabActive]}>Para ti</Text>
+          <Text variant="subtitle" color={TOKENS.onMedia.textMuted} style={tab === 'parati' ? s.topTabActive : undefined}>Para ti</Text>
         </Pressable>
       </View>
       <Pressable
@@ -67,23 +70,20 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.lg,
     zIndex: 10,
   },
   topTabs: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: SPACING.lg,
+    flexShrink: 1,
+    marginHorizontal: SIDE_SLOT,
   },
   topDivider: {
     width: 1,
-    height: 16,
+    height: SPACING.lg,
     backgroundColor: TOKENS.onMedia.border,
-  },
-  topTab: {
-    fontSize: 16,
-    fontFamily: FONT_FAMILY.headingMedium,
-    color: TOKENS.onMedia.textMuted,
   },
   topTabActive: {
     color: TOKENS.onMedia.text,
@@ -92,12 +92,12 @@ const s = StyleSheet.create({
   },
   topUpload: {
     position: 'absolute',
-    left: 16,
-    padding: 4,
+    left: SPACING.lg,
+    padding: SPACING.xs,
   },
   topSearch: {
     position: 'absolute',
-    right: 16,
-    padding: 4,
+    right: SPACING.lg,
+    padding: SPACING.xs,
   },
 });

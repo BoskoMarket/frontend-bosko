@@ -30,6 +30,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { useIsFocused } from '@react-navigation/native';
 import { toggleLikeReel, commentOnReel, Reel } from '@/features/reels/services/reels.service';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { getUserErrorMessage } from '@/lib/errors';
@@ -740,7 +741,6 @@ const ReelItem = React.memo(function ReelItem({
   );
 });
 
-// ── Top bar ───────────────────────────────────────────────────────────────────
 // ── Main screen ───────────────────────────────────────────────────────────────
 export default function ReelsScreen() {
   const insets = useSafeAreaInsets();
@@ -753,6 +753,7 @@ export default function ReelsScreen() {
     useReelsFeed(isFollowingFeed ? 'following' : undefined);
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
   const reels = (data?.pages.flat() ?? []).filter(r => !ignoredIds.has(r.id));
+  const isFocused = useIsFocused();
   const [activeIndex, setActiveIndex] = useState(0);
   const listRef = useRef<FlatList<Reel>>(null);
 
@@ -810,13 +811,13 @@ export default function ReelsScreen() {
     ({ item, index }: { item: Reel; index: number }) => (
       <ReelItem
         reel={item}
-        isActive={index === activeIndex}
+        isActive={isFocused && index === activeIndex}
         currentUserId={currentUserId}
         onNotInterested={handleNotInterested}
         pageHeight={pageH}
       />
     ),
-    [activeIndex, currentUserId, handleNotInterested, pageH],
+    [activeIndex, isFocused, currentUserId, handleNotInterested, pageH],
   );
 
   const keyExtractor = useCallback((item: Reel) => item.id, []);
@@ -1304,6 +1305,4 @@ const s = StyleSheet.create({
     backgroundColor: TOKENS.onMedia.solid,
     borderRadius: 1,
   },
-
-  // Top bar
 });
