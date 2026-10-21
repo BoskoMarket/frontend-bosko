@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 import {
   CategoryTile,
   PathCard,
@@ -50,6 +50,28 @@ describe.each(['dark', 'light'] as const)('home components (%s theme)', (mode) =
     expect(queryByText('Quitar de favoritos')).toBeNull();
     fireEvent.press(getByText('Instalación de tomas'));
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('ServiceCard renders the fallback image when imageUri is missing', () => {
+    const { getByTestId } = render(
+      <ServiceCard title="Sin foto" fallbackImage={1} onPress={jest.fn()} />,
+    );
+    expect(getByTestId('service-card-fallback-image')).toBeTruthy();
+  });
+
+  it('ServiceCard keeps the brand panel when neither imageUri nor fallbackImage are given', () => {
+    const { queryByTestId } = render(<ServiceCard title="Sin foto" onPress={jest.fn()} />);
+    expect(queryByTestId('service-card-fallback-image')).toBeNull();
+  });
+
+  it('ServiceCard swaps to the fallback image when the remote image fails', () => {
+    const { getByTestId, queryByTestId, UNSAFE_getAllByProps } = render(
+      <ServiceCard title="Foto rota" imageUri="https://x.test/a.jpg" fallbackImage={1} onPress={jest.fn()} />,
+    );
+    expect(queryByTestId('service-card-fallback-image')).toBeNull();
+    const remote = UNSAFE_getAllByProps({ contentFit: 'cover' })[0];
+    act(() => remote.props.onError());
+    expect(getByTestId('service-card-fallback-image')).toBeTruthy();
   });
 
   it('ServiceCard hides the pill and rating when there is no data, and toggles favorite', () => {
