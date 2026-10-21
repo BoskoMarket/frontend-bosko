@@ -172,19 +172,23 @@ export function CustomTabBar({ state, navigation, descriptors }: BottomTabBarPro
           </Svg>
 
           <View style={styles.row}>
-            {visible.map(({ route, routeIndex: idx }) => {
+            {visible.map(({ route, routeIndex: idx }, visibleIdx) => {
               const cfg     = TABS[route.name];
               const focused = idx === state.index;
+              // The bubble sits over `activeIndex` (also on hidden routes): hide the icon under it.
+              const covered = visibleIdx === activeIndex;
               const label   = getTabLabel(route.name, isProvider);
               const badge   = route.name === 'chat' ? unread : route.name === 'orders' ? pendingRequests : 0;
               const badgeNoun = route.name === 'orders' ? 'pendientes' : 'sin leer';
               return (
                 <TabSlot
                   key={route.key}
+                  routeName={route.name}
                   icon={cfg.icon}
                   label={label}
                   a11yLabel={badge > 0 ? `${label}, ${badge} ${badgeNoun}` : label}
                   focused={focused}
+                  covered={covered}
                   badge={badge}
                   onPress={() => onPress(idx)}
                   onLongPress={() => onLongPress(idx)}
@@ -210,21 +214,27 @@ export function CustomTabBar({ state, navigation, descriptors }: BottomTabBarPro
 }
 
 // ── Tab slot ──────────────────────────────────────────────────────────────────
-function TabSlot({ icon, label, a11yLabel, focused, badge, onPress, onLongPress }: {
-  icon: IconName; label: string; a11yLabel: string; focused: boolean; badge: number;
+function TabSlot({ routeName, icon, label, a11yLabel, focused, covered, badge, onPress, onLongPress }: {
+  routeName: string; icon: IconName; label: string; a11yLabel: string; focused: boolean; covered: boolean; badge: number;
   onPress: () => void; onLongPress: () => void;
 }) {
   const tc = useThemeColors();
   const styles = useMemo(() => createStyles(tc), [tc]);
   // The icon of the focused tab lives in the floating bubble, so only its label stays in the bar.
-  const opacity = useRef(new Animated.Value(focused ? 0 : 0.55)).current;
+  // `covered` (not `focused`) drives it: on hidden routes no tab is focused but the bubble still
+  // covers one. Timing, not a spring: an underdamped spring overshot 0 and flashed the icon back.
+  const opacity = useRef(new Animated.Value(covered ? 0 : 0.55)).current;
 
+  // Hide instantly when the bubble lands here; reappear only after the bubble's spring has
+  // moved away, so the old icon never shows next to the travelling bubble.
   useEffect(() => {
-    Animated.spring(opacity, {
-      toValue: focused ? 0 : 0.55,
-      ...SPRING,
-    }).start();
-  }, [focused]);
+    opacity.stopAnimation();
+    if (covered) {
+      opacity.setValue(0);
+      return;
+    }
+    Animated.timing(opacity, { toValue: 0.55, duration: 180, delay: 220, useNativeDriver: true }).start();
+  }, [covered, opacity]);
 
   return (
     <Pressable
@@ -236,7 +246,7 @@ function TabSlot({ icon, label, a11yLabel, focused, badge, onPress, onLongPress 
       onLongPress={onLongPress}
       hitSlop={8}
     >
-      <Animated.View style={[styles.iconWrap, { opacity }]}>
+      <Animated.View testID={`tab-icon-${routeName}`} style={[styles.iconWrap, { opacity }]}>
         <Ionicons name={icon} size={22} color={tc.text} />
         {badge > 0 && (
           <View style={styles.badge}>
