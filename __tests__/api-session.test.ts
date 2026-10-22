@@ -47,6 +47,21 @@ test('un refresh revocado cierra la sesión', async () => {
   expect(logout).toHaveBeenCalled();
   expect(tokenStorage.getAccessToken()).toBeNull();
 });
+test('un 401 de negocio no refresca ni reintenta', async () => {
+  const refresh = jest.fn();
+  axios.defaults.adapter = refresh;
+  const calls = jest.fn();
+  api.defaults.adapter = async config => {
+    calls();
+    const error = unauthorized(config);
+    error.response!.data = { code: 'INVALID_PASSWORD' };
+    throw error;
+  };
+  await expect(api.delete('/users/me', { data: { password: 'wrong' } })).rejects.toThrow('Unauthorized');
+  expect(calls).toHaveBeenCalledTimes(1);
+  expect(refresh).not.toHaveBeenCalled();
+  expect(tokenStorage.getAccessToken()).toBe('old');
+});
 test('un error temporal de red conserva los tokens para reintentar', async () => {
   axios.defaults.adapter = async () => { throw new AxiosError('Network Error'); };
   api.defaults.adapter = async config => { throw unauthorized(config); };
