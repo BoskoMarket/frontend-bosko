@@ -110,7 +110,9 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
     const { getByText } = render(<DeleteAccountScreen />);
     expect(getByText('Si eliminás tu cuenta:')).toBeTruthy();
     expect(getByText(/Tenés 30 días para cambiar de idea/)).toBeTruthy();
-    expect(getByText(/Pasados los 30 días, tu cuenta y tus datos se eliminan definitivamente/)).toBeTruthy();
+    expect(getByText(/se reactiva con los servicios que tenías activos/)).toBeTruthy();
+    expect(getByText(/Pasados los 30 días, se eliminan tus datos de perfil y tu cuenta se anonimiza/)).toBeTruthy();
+    expect(getByText(/El historial compartido con otras personas .* se conserva/)).toBeTruthy();
   });
 
   it('keeps Continue disabled until the confirmation word is typed', () => {
@@ -146,8 +148,8 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
     expect(getByText('Continuar')).toBeTruthy();
   });
 
-  it('warns about losing Premium only for an active plan', () => {
-    const premium = 'Vas a perder tu plan Premium sin reembolso del período restante.';
+  it('warns that Premium billing is not cancelled, only for an active plan', () => {
+    const premium = 'Eliminar tu cuenta no cancela los cobros de tu plan Premium. Cancelalo por separado antes de continuar.';
     const free = render(<DeleteAccountScreen />);
     expect(free.queryByText(premium)).toBeNull();
     free.unmount();
@@ -180,6 +182,40 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
     fireEvent.press(utils.getByText('Eliminar mi cuenta'));
     await waitFor(() => expect(utils.getByText('Contraseña incorrecta. Verificá e intentá de nuevo.')).toBeTruthy());
     expect(mockDeleteAccount).toHaveBeenCalledWith({ password: 'secret1' });
+    expect(mockLogout).not.toHaveBeenCalled();
+  });
+
+  const submitPassword = (utils: ReturnType<typeof render>) => {
+    goToStep2(utils);
+    fireEvent.changeText(utils.getByPlaceholderText('••••••••'), 'secret1');
+    fireEvent.press(utils.getByText('Eliminar mi cuenta'));
+  };
+
+  it('logs out and asks to log in again on INVALID_CREDENTIALS (revoked session)', async () => {
+    autoConfirm();
+    mockDeleteAccount.mockRejectedValueOnce({ response: { status: 401, data: { code: 'INVALID_CREDENTIALS' } } });
+    const utils = render(<DeleteAccountScreen />);
+    submitPassword(utils);
+    await waitFor(() => expect(mockLogout).toHaveBeenCalledTimes(1));
+    expect(errorSpy).toHaveBeenCalledWith('Tu sesión se cerró', 'Iniciá sesión de nuevo para continuar.');
+    expect(utils.queryByText('Contraseña incorrecta. Verificá e intentá de nuevo.')).toBeNull();
+  });
+
+  it('asks to wait on 429 without logging out', async () => {
+    autoConfirm();
+    mockDeleteAccount.mockRejectedValueOnce({ response: { status: 429, data: {} } });
+    const utils = render(<DeleteAccountScreen />);
+    submitPassword(utils);
+    await waitFor(() => expect(utils.getByText('Demasiados intentos. Esperá un minuto antes de reintentar.')).toBeTruthy());
+    expect(mockLogout).not.toHaveBeenCalled();
+  });
+
+  it('shows a validation message on VALIDATION_ERROR', async () => {
+    autoConfirm();
+    mockDeleteAccount.mockRejectedValueOnce({ response: { status: 400, data: { code: 'VALIDATION_ERROR' } } });
+    const utils = render(<DeleteAccountScreen />);
+    submitPassword(utils);
+    await waitFor(() => expect(utils.getByText('Revisá los datos e intentá de nuevo.')).toBeTruthy());
     expect(mockLogout).not.toHaveBeenCalled();
   });
 

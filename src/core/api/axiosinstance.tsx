@@ -7,6 +7,7 @@ const TIMEOUT = 30_000;
 type SessionConfig = InternalAxiosRequestConfig & { _retry?: boolean; _sessionVersion?: number };
 const api = axios.create({ baseURL: API_URL, timeout: TIMEOUT });
 let refreshing: { version: number; promise: Promise<string> } | null = null;
+const BUSINESS_401_CODES = new Set(['INVALID_PASSWORD', 'REAUTH_FAILED']);
 
 export function unwrapResponse<T>(response: AxiosResponse<T>): AxiosResponse<T> {
   const body = response.data;
@@ -71,6 +72,8 @@ api.interceptors.response.use(response => {
 }, async (error: AxiosError) => {
   const original = error.config as SessionConfig | undefined;
   if (!original || original.url?.startsWith('/auth/') || error.response?.status !== 401 || original._retry) throw error;
+  // Un 401 de negocio (contraseña o reautenticación inválida) no es un token vencido: refrescar y reintentar gastaría intentos.
+  if (BUSINESS_401_CODES.has((error.response?.data as { code?: string } | undefined)?.code ?? '')) throw error;
   if (original._sessionVersion !== tokenStorage.getSessionVersion()) throw new axios.CanceledError('La sesión cambió.');
   original._retry = true;
   const token = tokenStorage.getAccessToken();

@@ -1,10 +1,13 @@
 /**
  * appConfig.service.ts — Config remota para gate de versión mínima / mantenimiento.
  *
- * GET /app/config — este endpoint todavía no existe en el backend (Bosko).
- * Hasta que se implemente, cualquier error (404, red, timeout) hace fail-open:
- * la app nunca se bloquea por falta de este endpoint, solo cuando el backend
- * responde explícitamente con maintenanceMode o minVersion.
+ * GET /app/config — público, wrapper habitual (el interceptor lo desempaqueta).
+ * El backend lo arma desde APP_MIN_VERSION / APP_MAINTENANCE_MODE /
+ * APP_MAINTENANCE_MESSAGE al iniciar: cambiarlo requiere redeploy, y con la caché
+ * de 5 min de useAppGate no es un interruptor instantáneo. Solo controla la UI,
+ * no bloquea la API. Cualquier error (404 de un backend viejo, red, timeout) hace
+ * fail-open: la app solo se bloquea cuando el backend responde explícitamente
+ * con maintenanceMode o minVersion.
  */
 import api from '@/core/api/axiosinstance';
 
