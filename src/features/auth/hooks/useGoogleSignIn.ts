@@ -52,9 +52,11 @@ export function useGoogleSignIn() {
 }
 
 /**
- * useGoogleReauth — pide un idToken de Google FRESCO sin iniciar sesión de nuevo.
- * Se usa para confirmar acciones sensibles (ej: eliminar cuenta) de usuarios
- * que no tienen contraseña. Devuelve null si el usuario canceló el selector.
+ * useGoogleReauth — reautentica con Google y devuelve un idToken de Firebase FRESCO
+ * sin iniciar sesión de nuevo en Bosko. Se usa para confirmar acciones sensibles
+ * (ej: eliminar cuenta) de usuarios sin contraseña: el backend exige un token de
+ * Firebase con `auth_time` de los últimos 5 minutos, y `signInWithCredential` lo
+ * renueva (un refresh silencioso no). Devuelve null si el usuario canceló el selector.
  */
 export function useGoogleReauth() {
   const [loading, setLoading] = useState(false);
@@ -66,6 +68,7 @@ export function useGoogleReauth() {
     setLoading(true);
     try {
       const { GoogleSignin, isSuccessResponse, isCancelledResponse } = require('@react-native-google-signin/google-signin');
+      const auth = require('@react-native-firebase/auth').default;
       GoogleSignin.configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
       await GoogleSignin.hasPlayServices();
       const response = await GoogleSignin.signIn();
@@ -73,7 +76,9 @@ export function useGoogleReauth() {
       if (!isSuccessResponse(response) || !response.data.idToken) {
         throw new Error('Google no devolvió un idToken válido.');
       }
-      return response.data.idToken as string;
+      const credential = auth.GoogleAuthProvider.credential(response.data.idToken);
+      const userCredential = await auth().signInWithCredential(credential);
+      return (await userCredential.user.getIdToken()) as string;
     } finally {
       setLoading(false);
     }
