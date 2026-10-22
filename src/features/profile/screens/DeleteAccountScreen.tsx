@@ -37,10 +37,10 @@ const CONFIRM_WORD = 'ELIMINAR';
 
 const WARNINGS = [
   'Tu cuenta se desactiva y tu perfil, servicios y reels dejan de verse.',
-  `Tenés ${DELETION_GRACE_DAYS} días para cambiar de idea: si volvés a iniciar sesión en ese plazo, tu cuenta se reactiva.`,
-  `Pasados los ${DELETION_GRACE_DAYS} días, tu cuenta y tus datos se eliminan definitivamente.`,
+  `Tenés ${DELETION_GRACE_DAYS} días para cambiar de idea: si volvés a iniciar sesión en ese plazo, tu cuenta se reactiva con los servicios que tenías activos. Tu disponibilidad queda apagada hasta que la actives.`,
+  `Pasados los ${DELETION_GRACE_DAYS} días, se eliminan tus datos de perfil y tu cuenta se anonimiza. El historial compartido con otras personas (órdenes, mensajes, reseñas) se conserva, sin tus datos de perfil.`,
 ];
-const PREMIUM_WARNING = 'Vas a perder tu plan Premium sin reembolso del período restante.';
+const PREMIUM_WARNING = 'Eliminar tu cuenta no cancela los cobros de tu plan Premium. Cancelalo por separado antes de continuar.';
 const BLOCKED_MESSAGE = 'No podés eliminar tu cuenta mientras tengas órdenes activas.';
 
 function FadeSlide({ delay, children }: { delay: number; children: React.ReactNode }) {
@@ -166,16 +166,23 @@ export default function DeleteAccountScreen() {
               toast.success('Cuenta desactivada', deactivationMessage(result?.deletionScheduledAt));
             } catch (err: any) {
               const code = err?.response?.data?.code;
-              if (code === 'ACTIVE_ORDERS' || err?.response?.status === 409) {
+              const status = err?.response?.status;
+              if (code === 'ACTIVE_ORDERS' || status === 409) {
                 setServerBlocked(true);
                 setStep(1);
                 void clientOrders.refetch();
                 void providerOrders.refetch();
+              } else if (code === 'INVALID_CREDENTIALS') {
+                // Session revoked or changed concurrently: the account is untouched, the user must log in again.
+                await logout();
+                toast.error('Tu sesión se cerró', 'Iniciá sesión de nuevo para continuar.');
               } else if (!err?.response) setError('Sin conexión. Revisá tu internet e intentá de nuevo.');
+              else if (status === 429) setError('Demasiados intentos. Esperá un minuto antes de reintentar.');
+              else if (code === 'VALIDATION_ERROR' || status === 400) setError('Revisá los datos e intentá de nuevo.');
               else if (code === 'NOT_FOUND') setError('Usuario no encontrado.');
               else if (code === 'REAUTH_FAILED')
                 setError('No pudimos verificar tu cuenta de Google. Intentá de nuevo.');
-              else if (code === 'INVALID_PASSWORD' || err?.response?.status === 401)
+              else if (code === 'INVALID_PASSWORD' || status === 401)
                 setError(isGoogle ? 'No pudimos verificar tu cuenta de Google. Intentá de nuevo.' : 'Contraseña incorrecta. Verificá e intentá de nuevo.');
               else setError('Error al eliminar la cuenta. Intentá más tarde.');
             } finally {
