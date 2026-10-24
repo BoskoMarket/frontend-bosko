@@ -38,6 +38,10 @@
 - 2026-10-24: T2 done (6f3fac7): AdminReportsScreen + /admin/reports route; ReasonDialog gained optional+showCounter props; 7 tests green.
 - 2026-10-24: T3 done (1131929): Perfil 'Administración' group with 'Moderación' row, admin only; tests added to profileSections.test.ts.
 
+- 2026-10-24: full checks: `npx jest` 54 suites / 656 tests green, `tsc --noEmit` clean, `lint:ds` 0. Diff vs `origin/dev`: 13 files, +742/−6 (over the ~400 forecast; single coherent feature, kept as one PR). RDD assess: medium, `slice_budget_reached`; preflight status → `rdd_disabled` (clone), review not run, delivery `disabled/unmanaged`.
+- Assumed report item shape (no DTO in generated schema): only `id` required; `reporter`/`owner` object or id; `context` string or `{type, orderId}`. Adjust in `reportPresentation.ts` / `reports.service.ts` if the real payload differs.
+- Pending: device check with a real admin account (dark + light).
+
 ## Next step
 
-All tasks done; pending: PR (user decision).
+Push `feat/admin-reports` and open a PR to `dev` (user decision).
