@@ -22,7 +22,7 @@
 | ID | Task | Route | Status | Evidence |
 |---|---|---|---|---|
 | T1 | Service + query keys + hooks: `useAdminReports(status)` (infinite, strict adapter), `useReviewReport()` mutation (invalidates the queue). Types for report items. Tests. | delegated (writer trigger: 2+ non-trivial files) | ✅ | efea424 |
-| T2 | `AdminReportsScreen` + route `app/admin/reports.tsx`: status filter chips (Pendientes default / Revisadas / Descartadas / Todas), report card (target type, reason label, details, reporter, owner, context, date, status badge), Revisar / Descartar with optional notes (≤ 2000) in a cross-platform sheet, load-more, empty/error/403 states. Tests. | delegated | ⬜ | |
+| T2 | `AdminReportsScreen` + route `app/admin/reports.tsx`: status filter chips (Pendientes default / Revisadas / Descartadas / Todas), report card (target type, reason label, details, reporter, owner, context, date, status badge), Revisar / Descartar with optional notes (≤ 2000) in a cross-platform sheet, load-more, empty/error/403 states. Tests. | delegated | ✅ | 6f3fac7 |
 | T3 | Entry point: Perfil row "Moderación" visible only for `role === 'admin'`. Test. | delegated | ⬜ | |
 
 ## Acceptance
@@ -35,6 +35,7 @@
 
 - 2026-10-24: feature document created; branch `feat/admin-reports` from `origin/dev` (`3e165a7`).
 - 2026-10-24: T1 done (efea424): service, query key, hooks, 4 tests green.
+- 2026-10-24: T2 done (6f3fac7): AdminReportsScreen + /admin/reports route; ReasonDialog gained optional+showCounter props; 7 tests green.
 
 ## Next step
 
