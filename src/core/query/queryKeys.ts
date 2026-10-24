@@ -33,6 +33,8 @@ export const QUERY_KEYS = {
 
   kycStatus:        ['kyc', 'status']                                    as const,
 
+  adminReports:     (status?: string) => ['admin', 'reports', status ?? 'all'] as const,
+
   reelsFeedAll:     ['reels', 'feed']                                    as const,
   reelsFeed:        (feed: 'foryou' | 'following' = 'foryou') => ['reels', 'feed', feed] as const,
 
