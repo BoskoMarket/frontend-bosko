@@ -44,7 +44,7 @@ import { openNotifications } from '@/stores/notificationsUI.store';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { toneColors } from '@/features/kyc/constants/kycStatus';
 import type { KYCStatus } from '@/features/kyc/types/kyc.types';
-import { getRoleSection } from './utils/profileSections';
+import { getAdminSection, getRoleSection } from './utils/profileSections';
 import type { ProfileRowBadge } from './utils/profileSections';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -122,10 +122,11 @@ function StatsSkeleton({ cells }: { cells: number }) {
 
 // ── Settings row: ListRow + optional badge (+ chevron when pressable) ────────
 function SettingsRow({
-  icon, label, badge, badgeTone, onPress, danger, accessory,
+  icon, label, subtitle, badge, badgeTone, onPress, danger, accessory,
 }: {
   icon: IoniconName;
   label: string;
+  subtitle?: string;
   badge?: string;
   badgeTone?: BadgeTone;
   onPress?: () => void;
@@ -139,7 +140,7 @@ function SettingsRow({
       {onPress ? <Ionicons name="chevron-forward" size={16} color={tc.textMuted} /> : null}
     </View>
   ) : undefined);
-  return <ListRow icon={icon} label={label} danger={danger} onPress={onPress} right={right} />;
+  return <ListRow icon={icon} label={label} subtitle={subtitle} danger={danger} onPress={onPress} right={right} />;
 }
 
 // ── Settings group ────────────────────────────────────────────────────────────
@@ -228,6 +229,7 @@ export const ProfileScreen: React.FC = () => {
   const isProvider = roleStatus === 'provider';
   const isPending  = roleStatus === 'pending';
   const roleSection = getRoleSection(roleStatus);
+  const adminSection = getAdminSection(profile?.role);
   const kycCfg     = KYC_CONFIG[kycStatus];
   const kycColors  = kycCfg ? toneColors(kycCfg.tone, tc) : null;
   const rowBadge = (kind?: ProfileRowBadge): { label: string; tone: BadgeTone } | undefined => {
@@ -463,6 +465,23 @@ export const ProfileScreen: React.FC = () => {
                   </React.Fragment>
                 );
               })}
+            </SettingsGroup>
+          </Animated.View>
+        ) : null}
+
+        {/* ── Administración (solo role === 'admin') ────────────────────── */}
+        {adminSection ? (
+          <Animated.View style={sec(2)}>
+            <SettingsGroup title={adminSection.title}>
+              {adminSection.rows.map((row) => (
+                <SettingsRow
+                  key={row.id}
+                  icon={row.icon}
+                  label={row.label}
+                  subtitle={row.subtitle}
+                  onPress={() => router.push(row.href as never)}
+                />
+              ))}
             </SettingsGroup>
           </Animated.View>
         ) : null}
