@@ -17,6 +17,7 @@ export interface ProfileRow {
   icon: IoniconName;
   label: string;
   href: string;
+  subtitle?: string;
   badge?: ProfileRowBadge;
 }
 
@@ -48,4 +49,19 @@ export function getRoleSection(status: ProviderStatus): ProfileSection | null {
   if (status === 'provider') return { title: 'Mi negocio', rows: PROVIDER_ROWS };
   if (status === 'client') return { title: 'Mi actividad', rows: CLIENT_ROWS };
   return null;
+}
+
+const ADMIN_ROWS: ProfileRow[] = [
+  {
+    id: 'moderation',
+    icon: 'shield-outline',
+    label: 'Moderación',
+    subtitle: 'Denuncias de usuarios, reseñas y reels',
+    href: '/admin/reports',
+  },
+];
+
+/** Moderation entry, only for admin accounts (`profile.role === 'admin'`). */
+export function getAdminSection(role?: string | null): ProfileSection | null {
+  return role === 'admin' ? { title: 'Administración', rows: ADMIN_ROWS } : null;
 }
