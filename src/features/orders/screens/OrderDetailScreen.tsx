@@ -39,6 +39,7 @@ import {
   useThemeColors,
   usePremiumColors,
   dialog,
+  BRAND_NAME,
 } from '@/core/design-system';
 import type { TimelineStep } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
@@ -398,7 +399,7 @@ export default function OrderDetailScreen() {
               loading={actionLoading === 'Abrir disputa'}
               onPress={() => promptAndRun(
                 'Abrir disputa',
-                'Describí el problema para que el equipo de Bosko pueda ayudarte',
+                `Describí el problema para que el equipo de ${BRAND_NAME} pueda ayudarte`,
                 reason => disputeOrder(order.id, { reason }),
               )}
             />

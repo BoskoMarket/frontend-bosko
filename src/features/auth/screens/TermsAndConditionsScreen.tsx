@@ -9,14 +9,14 @@ import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Button, Card, GRADIENTS, NoticeBanner, SPACING, Text, TOKENS, useThemeColors } from '@/core/design-system';
+import { BRAND_NAME, Button, Card, GRADIENTS, NoticeBanner, SPACING, Text, TOKENS, useThemeColors } from '@/core/design-system';
 import { safeBack } from '@/core/navigation/safeBack';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const SECTIONS = [
   {
     title: '1. Uso de la plataforma',
-    body: 'Al continuar, confirmás que aceptás el uso responsable de Bosko como espacio de intermediación entre clientes y proveedores de servicios.',
+    body: `Al continuar, confirmás que aceptás el uso responsable de ${BRAND_NAME} como espacio de intermediación entre clientes y proveedores de servicios.`,
   },
   {
     title: '2. Tratamiento de datos',

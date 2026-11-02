@@ -6,6 +6,7 @@ import { GRADIENTS } from '../gradients';
 import { MOTION } from '../motion';
 import { TOKENS } from '../tokens';
 import { withAlpha } from '../color';
+import { BRAND_NAME } from '../brand/brand';
 
 // Same asset the native splash uses (app.json), so the first frame matches it exactly.
 const LOGO = require('../../../../assets/images/bosko-logo.png');
@@ -134,7 +135,7 @@ export function BootSplash({ ready, onHidden, onFirstLayout }: BootSplashProps) 
     <Animated.View
       accessible
       accessibilityRole="progressbar"
-      accessibilityLabel="Cargando Bosko"
+      accessibilityLabel={`Cargando ${BRAND_NAME}`}
       style={[styles.root, { opacity: fade }]}
       onLayout={handleLayout}
     >

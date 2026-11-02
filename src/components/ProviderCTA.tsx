@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Pressable, Dimensions, Animated } from 'react-n
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
-import { PREMIUM_SHADOWS, TOKENS, usePremiumColors, FONT_FAMILY } from '@/core/design-system';
+import { BRAND_NAME, PREMIUM_SHADOWS, TOKENS, usePremiumColors, FONT_FAMILY } from '@/core/design-system';
 import type { PremiumColors } from '@/core/design-system';
 import { PremiumButton } from '@/components/PremiumButton';
 
@@ -50,7 +50,7 @@ export const ProviderCTA = () => {
                         </View>
                         <View style={styles.textBlock}>
                             <Text style={styles.mainText}>Únete a la Élite</Text>
-                            <Text style={styles.subText}>Monetiza tu talento en Bosko</Text>
+                            <Text style={styles.subText}>{`Monetiza tu talento en ${BRAND_NAME}`}</Text>
                         </View>
                     </View>
 

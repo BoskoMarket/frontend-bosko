@@ -42,7 +42,7 @@ import {
   useReportReel,
 } from '@/hooks/queries/useReelsQuery';
 import { useFollowUser, useUnfollowUser } from '@/hooks/mutations/useFollowMutations';
-import { Avatar, Button, GRADIENTS, TOKENS, toast, useThemeColors, type ReportSheetSubmit, dialog, FONT_FAMILY } from '@/core/design-system';
+import { BRAND_NAME, Avatar, Button, GRADIENTS, TOKENS, toast, useThemeColors, type ReportSheetSubmit, dialog, FONT_FAMILY } from '@/core/design-system';
 import { useReelsAutoplay } from '@/stores/preferences.store';
 import { useConnectionType } from '@/hooks/useConnectionType';
 import { shouldAutoplay } from '@/features/reels/utils/shouldAutoplay';
@@ -506,7 +506,7 @@ const ReelItem = React.memo(function ReelItem({
   const handleShare = useCallback(async () => {
     try {
       await Share.share({
-        message: `Mirá el trabajo de @${reel.user.username} en Bosko`,
+        message: `Mirá el trabajo de @${reel.user.username} en ${BRAND_NAME}`,
         url: `https://boskoapp.site/provider/${reel.user.id}`,
       });
     } catch {}

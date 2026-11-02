@@ -9,7 +9,7 @@ import React, { useRef, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { FullScreenModal, BRAND_RADIAL_FILL, TOKENS, useThemeColors, FONT_FAMILY } from '@/core/design-system';
+import { BRAND_NAME, FullScreenModal, BRAND_RADIAL_FILL, TOKENS, useThemeColors, FONT_FAMILY } from '@/core/design-system';
 
 export const ROLE_MODAL_SEEN_KEY = 'BOSKO_ROLE_MODAL_SEEN';
 
@@ -56,7 +56,7 @@ export function RoleSelectionModal({ visible, onSelectClient, onSelectProvider }
               <Ionicons name="hand-left" size={30} color={TOKENS.color.signal} />
             </View>
 
-            <Text style={[styles.title, { color: tc.text }]}>¡Bienvenido a Bosko!</Text>
+            <Text style={[styles.title, { color: tc.text }]}>¡Bienvenido a {BRAND_NAME}!</Text>
             <Text style={[styles.subtitle, { color: tc.textSub }]}>
               Contanos qué te trae por acá para armarte la mejor experiencia.
             </Text>

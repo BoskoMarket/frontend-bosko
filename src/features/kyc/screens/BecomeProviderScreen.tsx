@@ -33,6 +33,7 @@ import {
   useIsDark,
   useThemeColors,
   withAlpha,
+  BRAND_NAME,
 } from '@/core/design-system';
 import type { BadgeTone } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
@@ -142,7 +143,7 @@ function ProviderActiveCard() {
 
 const BENEFITS: { icon: React.ComponentProps<typeof Ionicons>['name']; text: string }[] = [
   { icon: 'cash-outline',             text: 'Recibí pagos seguros por tus servicios' },
-  { icon: 'people-outline',           text: 'Accedé a miles de clientes en Bosko' },
+  { icon: 'people-outline',           text: `Accedé a miles de clientes en ${BRAND_NAME}` },
   { icon: 'star-outline',             text: 'Construí tu reputación con reseñas' },
   { icon: 'shield-checkmark-outline', text: 'Badge de prestador verificado en tu perfil' },
 ];
@@ -274,7 +275,7 @@ export function BecomeProviderScreen() {
       description: bgStatus === 'APPROVED'
         ? 'Tu documento fue verificado exitosamente.'
         : bgStatus === 'UNDER_REVIEW'
-          ? 'Tu documento está siendo revisado por el equipo de Bosko.'
+          ? `Tu documento está siendo revisado por el equipo de ${BRAND_NAME}.`
           : bgStatus === 'REJECTED'
             ? bgCheck?.notes ?? 'El documento fue rechazado. Cargá uno válido.'
             : 'Cargá tu certificado de antecedentes penales para continuar.',

@@ -17,6 +17,7 @@ export { resolveCategoryIcon, DEFAULT_CATEGORY_ICON } from './categoryIcon';
 export type { CategoryIconName } from './categoryIcon';
 export { MOTION } from './motion';
 export { useNavigationTheme } from './navigationTheme';
+export { BRAND_NAME } from './brand/brand';
 
 export { useThemeColors, useIsDark, useToggleTheme, useThemeMode, usePremiumColors, THEME_COLORS } from '@/stores/theme.store';
 export type { ThemeColors, ThemeMode } from '@/stores/theme.store';

@@ -1,4 +1,4 @@
-import type { ReportSheetReason } from '@/core/design-system';
+import { BRAND_NAME, type ReportSheetReason } from '@/core/design-system';
 
 /** Stable machine codes accepted by the backend (BR03). Never rename: they are stored server-side. */
 export type ReportReasonCode =
@@ -22,7 +22,7 @@ export const REPORT_REASONS: ReadonlyArray<ReportSheetReason & { code: ReportRea
 ];
 
 export const REPORT_SENT_TITLE = 'Reporte enviado';
-export const REPORT_SENT_MESSAGE = 'El equipo de Bosko lo va a revisar.';
+export const REPORT_SENT_MESSAGE = `El equipo de ${BRAND_NAME} lo va a revisar.`;
 export const REPORT_UNAVAILABLE_MESSAGE = 'No pudimos enviar el reporte. Intentá de nuevo más tarde.';
 export const REPORT_TARGET_MISSING_MESSAGE = 'Este contenido ya no está disponible.';
 export const REPORT_INVALID_MESSAGE = 'Revisá el motivo y los detalles antes de enviar.';

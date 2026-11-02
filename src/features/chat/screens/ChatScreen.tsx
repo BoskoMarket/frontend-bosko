@@ -77,6 +77,7 @@ import {
   withAlpha,
   type ReportSheetSubmit,
   dialog,
+  BRAND_NAME,
 } from '@/core/design-system';
 import { ReportFlow } from '@/features/reports/components/ReportFlow';
 import { canReport } from '@/features/reports/canReport';
@@ -995,7 +996,7 @@ export default function ChatScreen() {
       <ReportFlow
         visible={reportOpen}
         title="Reportar usuario"
-        message="Contanos por qué querés reportar a esta persona. El equipo de Bosko lo va a revisar."
+        message={`Contanos por qué querés reportar a esta persona. El equipo de ${BRAND_NAME} lo va a revisar.`}
         onClose={closeReport}
         submit={submitUserReport}
       />

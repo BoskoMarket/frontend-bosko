@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, AppStateStatus, StyleSheet, View } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Ionicons } from '@expo/vector-icons';
-import { Button, Text, useThemeColors } from '@/core/design-system';
+import { BRAND_NAME, Button, Text, useThemeColors } from '@/core/design-system';
 import { SPACING } from '@/core/design-system/spacing';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useBiometricEnabled } from '@/stores/appLock.store';
@@ -47,7 +47,7 @@ export function BiometricLockGate({ children }: { children: React.ReactNode }) {
 
   const promptUnlock = useCallback(async () => {
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: 'Desbloqueá Bosko',
+      promptMessage: `Desbloqueá ${BRAND_NAME}`,
       cancelLabel: 'Cancelar',
     });
     if (result.success) setLocked(false);
