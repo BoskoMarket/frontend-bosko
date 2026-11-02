@@ -8,7 +8,7 @@ import { TOKENS } from '../tokens';
 import { withAlpha } from '../color';
 import { BRAND_NAME } from '../brand/brand';
 
-// Same asset the native splash uses (app.json), so the first frame matches it exactly.
+// Same asset the native splash uses (app.config.ts), so the first frame matches it exactly.
 const LOGO = require('../../../../assets/images/bosko-logo.png');
 
 const LOGO_SIZE = TOKENS.splash.logoSize;
