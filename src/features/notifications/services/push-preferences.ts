@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_PREFIX } from '@/core/config/storage';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
@@ -7,7 +8,7 @@ import { registerPushToken } from './notifications.service';
 import { tokenStorage } from '@/core/auth/tokenStorage';
 import { BRAND_NAME } from '@/core/design-system';
 
-const key = (accountId: string) => `BOSKO_PUSH_v1:${accountId}`;
+const key = (accountId: string) => `${STORAGE_PREFIX}_PUSH_v1:${accountId}`;
 export async function readPushPreference(accountId: string) {
   return (await AsyncStorage.getItem(key(accountId))) !== 'off';
 }

@@ -6,12 +6,13 @@
  */
 
 import React, { useRef, useEffect } from 'react';
+import { STORAGE_PREFIX } from '@/core/config/storage';
 import { View, Text, Pressable, StyleSheet, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { BRAND_NAME, FullScreenModal, BRAND_RADIAL_FILL, TOKENS, useThemeColors, FONT_FAMILY } from '@/core/design-system';
 
-export const ROLE_MODAL_SEEN_KEY = 'BOSKO_ROLE_MODAL_SEEN';
+export const ROLE_MODAL_SEEN_KEY = `${STORAGE_PREFIX}_ROLE_MODAL_SEEN`;
 
 interface Props {
   visible: boolean;

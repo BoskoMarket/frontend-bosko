@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_PREFIX } from '@/core/config/storage';
 import { PALETTE } from '@/core/design-system/palette';
 import type { PaletteColors } from '@/core/design-system/palette';
 import { PREMIUM_PALETTE } from '@/core/design-system/premium';
@@ -27,7 +28,7 @@ export const useThemeStore = create<ThemeState>()(
       setMode: (mode) => set({ mode }),
     }),
     {
-      name: 'BOSKO_THEME_v1',
+      name: `${STORAGE_PREFIX}_THEME_v1`,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({ mode: state.mode }),
     },

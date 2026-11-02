@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_PREFIX } from '@/core/config/storage';
 
 /** When reels start playing on their own. */
 export type ReelsAutoplay = 'always' | 'wifi';
@@ -18,7 +19,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       setReelsAutoplay: (reelsAutoplay) => set({ reelsAutoplay }),
     }),
     {
-      name: 'BOSKO_PREFERENCES_v1',
+      name: `${STORAGE_PREFIX}_PREFERENCES_v1`,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({ reelsAutoplay: state.reelsAutoplay }),
     },
