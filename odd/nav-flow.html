@@ -19,7 +19,7 @@ const NAVMAP = {
   areas: [
     { id: "ext",      title: "Guards y entradas externas",      x: 0,    y: 0,    cols: 1 },
     { id: "auth",     title: "Auth y onboarding",               x: 250,  y: 0,    cols: 3 },
-    { id: "tabs",     title: "Tabs (barra de 5)",               x: 850,  y: 0,    cols: 3 },
+    { id: "tabs",     title: "Tabs (barra de 5; Trabajos en el lugar de reels)",               x: 850,  y: 0,    cols: 3 },
     { id: "catalog",  title: "Catalogo y busqueda (stack services oculto)", x: 850, y: 270, cols: 3 },
     { id: "orders",   title: "Ordenes y chat (stack raiz)",     x: 250,  y: 400,  cols: 3 },
     { id: "provider", title: "Proveedor (publicar y reels)",    x: 250,  y: 700,  cols: 3 },
@@ -47,12 +47,14 @@ const NAVMAP = {
 
     ["tabbar", "Tab bar", "CustomTabBar", "src/components/CustomTabBar.tsx", "tabs", "tab", [], "entry"],
     ["home", "Inicio", "/(tabs)", "ClientHome.tsx / ProviderHome.tsx (via DashboardScreen)", "tabs", "tab", [], ""],
+    ["works", "Trabajos", "/(tabs)/works", "src/features/works/screens/WorksFeedScreen.tsx", "tabs", "tab", [], ""],
     ["reels", "Reels (oculto: FEATURES.reels)", "/(tabs)/reels", "app/(tabs)/reels.tsx", "tabs", "tab", [], ""],
     ["orders", "Pedidos / Ordenes", "/(tabs)/orders", "app/(tabs)/orders.tsx", "tabs", "tab", [], ""],
     ["chat_tab", "Mensajes", "/(tabs)/chat", "app/(tabs)/chat.tsx", "tabs", "tab", [], ""],
     ["profile", "Perfil", "/(tabs)/profile", "src/features/profile/ProfileScreen.tsx", "tabs", "tab", [], ""],
 
     ["services_index", "Catalogo", "/(tabs)/services", "app/(tabs)/services/index.tsx", "catalog", "screen", [], ""],
+    ["work_detail", "Trabajo (detalle)", "/work/[id]", "src/features/works/screens/WorkDetailScreen.tsx", "catalog", "screen", [], ""],
     ["category", "Categoria", "/(tabs)/services/category/[id]", "src/features/servicesUser/screens/CategoryServicesScreen.tsx", "catalog", "screen", [], ""],
     ["provider", "Perfil de proveedor", "/(tabs)/services/provider/[id]", "src/features/servicesUser/screens/ProviderProfileScreen.tsx", "catalog", "screen", [], ""],
     ["m_service_picker", "Elegir servicio", "bottom sheet (OptionSheet)", "src/core/design-system/components/OptionSheet.tsx", "catalog", "modal", ["client"], ""],
@@ -70,6 +72,7 @@ const NAVMAP = {
 
     ["my_services", "Mis servicios", "/(tabs)/profile/Services", "src/features/servicesUser/screens/MyServiceScreen.tsx", "provider", "screen", ["provider"], ""],
     ["service_form", "Publicar servicio", "/service-form", "src/features/servicesUser/screens/ServiceFormScreen.tsx", "provider", "screen", ["provider"], ""],
+    ["my_works", "Mis trabajos", "/(tabs)/profile/my-works", "src/features/works/screens/MyWorksScreen.tsx", "provider", "screen", ["provider"], ""],
     ["my_reels", "Mis reels (oculto)", "/(tabs)/profile/my-reels", "src/features/reels/screens/MyReelsScreen.tsx", "provider", "screen", ["provider"], ""],
     ["my_reviews", "Mis resenas", "/(tabs)/profile/my-reviews", "src/features/reviews/screens/MyReviewsScreen.tsx", "provider", "screen", ["provider"], ""],
     ["upload_reel", "Publicar reel (oculto)", "/upload-reel", "src/features/reels/screens/ReelUploadScreen.tsx", "provider", "screen", ["provider"], ""],
@@ -129,6 +132,7 @@ const NAVMAP = {
 
     // tab bar
     ["tabbar", "home", "tap tab", "tab", "ok", "all", "CustomTabBar.tsx"],
+    ["tabbar", "works", "tap tab", "tab", "ok", "all", "CustomTabBar.tsx"],
     ["tabbar", "reels", "tap tab", "tab", "ok", "all", "CustomTabBar.tsx"],
     ["tabbar", "orders", "tap tab (badge: pendientes)", "tab", "ok", "all", "CustomTabBar.tsx"],
     ["tabbar", "chat_tab", "tap tab (badge: no leidos)", "tab", "ok", "all", "CustomTabBar.tsx"],
@@ -148,6 +152,13 @@ const NAVMAP = {
     ["home", "my_services", "Mis servicios", "push", "ok", "provider", "ProviderHome.tsx:48"],
     ["home", "upload_reel", "Subir reel", "push", "ok", "provider", "ProviderHome.tsx:49"],
 
+    // trabajos
+    ["works", "work_detail", "tocar foto", "push", "ok", "all", "WorksFeedScreen.tsx"],
+    ["works", "my_works", "vacio proveedor: Mis trabajos", "push", "ok", "provider", "WorksFeedScreen.tsx"],
+    ["work_detail", "provider", "fila del proveedor", "push", "ok", "all", "WorkDetailScreen.tsx"],
+    ["work_detail", "quote", "Cotizar (servicio de la foto)", "push", "ok", "client", "WorkDetailScreen.tsx"],
+    ["my_works", "service_form", "sin servicios: Publicar servicio", "push", "ok", "provider", "MyWorksScreen.tsx"],
+    ["my_works", "become_provider", "guard: sin status de proveedor", "guard", "ok", "client", "useRequireProviderStatus.ts:22"],
     // reels
     ["reels", "provider", "ir al proveedor (from=reels)", "push", "ok", "all", "ReelsScreen.tsx:488"],
     ["reels", "upload_reel", "Publicar reel", "push", "ok", "provider", "ReelsTopBar.tsx:35"],
@@ -196,6 +207,7 @@ const NAVMAP = {
     ["profile", "dev", "solo __DEV__", "push", "ok", "all", "ProfileScreen.tsx:519"],
     ["profile", "my_services", "Mi negocio: Mis servicios", "push", "ok", "provider", "profileSections.ts:29"],
     ["profile", "service_form", "Mi negocio: Publicar servicio", "push", "ok", "provider", "profileSections.ts:30"],
+    ["profile", "my_works", "Mi negocio: Mis trabajos", "push", "ok", "provider", "profileSections.ts"],
     ["profile", "my_reels", "Mi negocio: Mis reels", "push", "ok", "provider", "profileSections.ts:31"],
     ["profile", "my_reviews", "Mi negocio: Mis resenas", "push", "ok", "provider", "profileSections.ts:32"],
     ["profile", "kyc", "Mi negocio: Verificacion", "push", "ok", "provider", "profileSections.ts:33"],

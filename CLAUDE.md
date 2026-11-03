@@ -54,8 +54,11 @@ npx jest __tests__/login.test.tsx
 ```
 app/index.tsx          → Gate: authenticated → /(tabs), else → OnBoarding
 app/login/             → Login / Register flow
-app/(tabs)/            → Authenticated tab navigator: 4 visible labeled tabs (Inicio · Pedidos/Órdenes · Mensajes · Perfil); the Reels tab is hidden (`href: null`) behind `FEATURES.reels`
+app/(tabs)/            → Authenticated tab navigator: 5 visible labeled tabs (Inicio · Trabajos · Pedidos/Órdenes · Mensajes · Perfil); the Reels tab is hidden (`href: null`) behind `FEATURES.reels`
 app/(tabs)/services/   → Catalog + category/[id] + provider/[id] stack. NOT a tab: hidden with `href: null`, still routable at /(tabs)/services/...
+app/(tabs)/works.tsx   → Trabajos tab: public masonry feed of finished-job photos (`features/works`)
+app/work/[id].tsx      → Photo detail (root stack): provider, Cotizar CTA, report
+app/(tabs)/profile/my-works.tsx → Mis trabajos (providers): upload / edit / delete photos per service
 app/chat/[id].tsx      → Individual chat screen (outside tabs, id = orderId)
 app/search.tsx         → Search screen
 app/upload-reel.tsx    → Publish a reel (providers), root stack
@@ -69,7 +72,7 @@ Auth guards:
 Tab bar rules (`src/components/CustomTabBar.tsx`, map in `odd/nav-map.md`):
 - Visible tabs = routes with an entry in `TABS` and without `href: null`; the bubble/notch math uses only those. Adding a tab means adding a `Tabs.Screen` (order = bar order) and a `TABS` entry.
 - The bar renders only on the 4 tab roots: `shouldShowTabBar(state, descriptors)` is false (bar returns `null`) when the focused route is hidden (`services`, `href: null`) or its nested stack is past the root (`route.state.index > 0`, e.g. `profile/kyc`). Nested screens use their back button as the exit and must not reserve bottom space for the bar.
-- Reels are postponed to the next version: `FEATURES.reels` (`src/core/config/features.ts`, `false`) hides the `reels` tab (`href: null`), the Perfil "Mis reels" row and autoplay row, and the ProviderHome "Subir reel" action; `/(tabs)/reels`, `/(tabs)/profile/my-reels` and `/upload-reel` redirect to `/(tabs)`. All reels code is kept: flip the flag to re-enable (then also bump the tab count above). A "Trabajos" tab (gallery of finished work) is planned to take the slot later; not built yet.
+- Reels are postponed to the next version: `FEATURES.reels` (`src/core/config/features.ts`, `false`) hides the `reels` tab (`href: null`), the Perfil "Mis reels" row and autoplay row, and the ProviderHome "Subir reel" action; `/(tabs)/reels`, `/(tabs)/profile/my-reels` and `/upload-reel` redirect to `/(tabs)`. All reels code is kept: flip the flag to re-enable (the bar then has 6 tabs: reels sits next to Trabajos). The **Trabajos** tab took reels' slot: `works` is a `TABS` entry + `Tabs.Screen` right after `reels`/before `orders`.
 - Labels are always visible; Pedidos reads "Órdenes" for providers. Each tab exposes `accessibilityRole="tab"`, label and selected state.
 - Badges: Mensajes = `useUnreadTotal()`; Pedidos/Órdenes (providers only) = `usePendingProviderRequestsCount()` (pending provider orders, shares the `providerOrders` query cache).
 - Orders opens on the provider segment for providers; an explicit `?tab=client|provider` always wins (`resolveOrdersSegment`).
@@ -182,6 +185,7 @@ src/
 | `kyc` | KYC / background check flow | TanStack Query (`useKYCQuery`) |
 | `reviews` | Reviews and ratings | TanStack Query hooks |
 | `reels` | Video reels feed | TanStack Query (`useReelsQuery`) |
+| `works` | Trabajos: photo feed (cursor, masonry), detail, Mis trabajos (multipart upload, PATCH, DELETE), report via `ReportFlow` | TanStack Query (`useWorksQuery`); detail reads the item from the cached feed pages (no single-post endpoint); errors in `works/utils/workErrors.ts` |
 | `search` | Search services/providers | TanStack Query + Zustand (query state) |
 | `notifications` | Push notifications (expo-notifications, dev build only) | TanStack Query + `usePushNotificationSetup` hook |
 | `plans` | Subscription plan management | — |
