@@ -51,3 +51,30 @@ Route declaration: all tasks inline by the single writer (user asked for one wri
 - `GET /services/:id/posts` pagination is not specified in the contract: Mis trabajos counts the returned list; if the endpoint paginates (<30 per page) the "x/30" count would be low. Confirm with backend.
 - Admin reports label for target `post` lives on branch `feat/admin-reports` (not done here).
 - Mirror this document to Engram (`odd/trabajos-tab/tasks`) from the orchestrator.
+
+## Review round 1 (findings and fixes)
+
+| # | Finding | Fix |
+|---|---|---|
+| R1 | Mis trabajos asked for library permission and aborted on denial | Removed `requestMediaLibraryPermissionsAsync`; `launchImageLibraryAsync` is called directly (system picker, expo-image-picker 17) |
+| R2 | Large / HEIC photos hit the 10 MiB preflight or the server | `prepareWorkImage`: `expo-image-manipulator` (already a dependency) resizes to 2048 px long side and re-encodes JPEG 0.85 before the preflight; undecodable files show "Formato no compatible" |
+| R3 | Delete 404 left a stale state; writes invalidated only on success; uploads timed out | `deleteWork` treats 404 `POST_NOT_FOUND` as success; create/update/delete invalidate feed + service posts in `onSettled`; `createWork` timeout 120 s; filename `work-<timestamp>.<ext>` |
+| R4 | Per-service errors invisible, upload enabled before the count was known, only first page of services | Error state with "Reintentar"; "Subir foto" disabled until counts load; all pages of own services loaded (`fetchNextPage` loop); `useServicesWorks` uses `useQueries` `combine` |
+| R5 | Detail did not react to cache changes | `useWorkFromCache` uses `useSyncExternalStore` over the query cache subscription; a deleted/edited photo updates while open (deleted -> "Esta foto ya no está disponible") |
+| R6 | Scroll paging could cancel pull-to-refresh and never fired on short content | `fetchNextPage({ cancelRefetch: false })`, skipped while `isRefetching`; auto-fetch when content is shorter than the viewport; tiles use `cachePolicy="memory-disk"` + `recyclingKey` |
+| R7 | WorkFormSheet had its own modal plumbing | New DS `BottomSheet` (modal + backdrop + handle, `dismissible`, backdrop `accessibilityRole`), used by `WorkFormSheet`; backdrop / back disabled while busy; last image kept during the close animation; preview `accessibilityLabel`. `OptionSheet` / `ReportSheet` left as is (not covered enough to refactor safely) |
+| R8 | Error copy gaps | `VALIDATION_ERROR` (PATCH > 500), network/timeout upload copy ("Se cortó la subida, revisá tu conexión..."), `UPLOAD_BUSY` 429 and generic 429 tested |
+| R9 | Small | useCallback deps use the destructured query fns; `TAB_BAR_CLEARANCE` (DS, replaces `+110`); star uses `TOKENS.color.rating`; stray blank line removed |
+| R10 | Tests lacked a real QueryClient | `__tests__/worksCache.test.tsx`: invalidation on create/update/delete (also on failure), delete of an already-removed post, `useWorkFromCache` over cached pages + updates, per-category feed keys |
+
+Not a bug (verified): `provider.id` in the feed is the User id (same as `profile.id`). The feed lives inside the protected `(tabs)` group by design (the endpoint is public, but the app requires login to reach the tab).
+
+### Deferred
+
+- **Virtualization:** the masonry is a plain `ScrollView` (all loaded tiles stay mounted). Follow-up: FlashList masonry (needs a new dependency; none allowed in this round).
+- `OptionSheet` / `ReportSheet` could be rebuilt on `BottomSheet`.
+- Cold deep link to `/work/[id]` still needs a `GET /posts/:id` endpoint.
+
+### Evidence (review round 1)
+
+`npx tsc --noEmit -p .` clean; `npm run lint` 0; `npm run lint:ds` 0; jest `--forceExit` all green (see final run in the commit history).

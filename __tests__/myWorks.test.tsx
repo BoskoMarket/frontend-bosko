@@ -3,6 +3,12 @@ import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 
 const mockCreate = jest.fn();
 const mockPickerLaunch = jest.fn();
+const mockManipulate = jest.fn();
+const mockRefetchWorks = jest.fn();
+const mockFetchNextServices = jest.fn();
+let mockHasNextServices = false;
+let mockErrored: string[] = [];
+let mockUnloaded: string[] = [];
 let mockPhotos: Record<string, any[]> = {};
 const SERVICES = [
   { id: 's1', title: 'Plomería' },
@@ -16,8 +22,13 @@ jest.mock('react-native-safe-area-context', () => ({
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), back: jest.fn(), replace: jest.fn(), canGoBack: () => true },
 }));
+const mockRequestPermission = jest.fn();
+jest.mock('expo-image-manipulator', () => ({
+  SaveFormat: { JPEG: 'jpeg' },
+  manipulateAsync: (...a: unknown[]) => mockManipulate(...a),
+}));
 jest.mock('expo-image-picker', () => ({
-  requestMediaLibraryPermissionsAsync: () => Promise.resolve({ status: 'granted' }),
+  requestMediaLibraryPermissionsAsync: (...a: unknown[]) => mockRequestPermission(...a),
   launchImageLibraryAsync: (...a: unknown[]) => mockPickerLaunch(...a),
   UIImagePickerPreferredAssetRepresentationMode: { Compatible: 'compatible' },
 }));
@@ -28,10 +39,19 @@ jest.mock('@/hooks/queries/useMarketplaceQuery', () => ({
     isPending: false,
     isError: false,
     refetch: jest.fn(),
+    hasNextPage: mockHasNextServices,
+    isFetchingNextPage: false,
+    fetchNextPage: mockFetchNextServices,
   }),
 }));
 jest.mock('@/hooks/queries/useWorksQuery', () => ({
-  useServicesWorks: (ids: string[]) => ids.map((id) => ({ data: mockPhotos[id] ?? [], isPending: false })),
+  useServicesWorks: (ids: string[]) =>
+    ids.map((id) => ({
+      data: mockErrored.includes(id) || mockUnloaded.includes(id) ? undefined : mockPhotos[id] ?? [],
+      isPending: mockUnloaded.includes(id),
+      isError: mockErrored.includes(id),
+      refetch: mockRefetchWorks,
+    })),
   useCreateWork: () => ({ mutateAsync: (...a: unknown[]) => mockCreate(...a), isPending: false }),
   useUpdateWork: () => ({ mutateAsync: jest.fn(), isPending: false }),
   useDeleteWork: () => ({ mutateAsync: jest.fn(), isPending: false }),
@@ -64,11 +84,15 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockPhotos = {};
   mockServices = SERVICES;
+  mockHasNextServices = false;
+  mockErrored = [];
+  mockUnloaded = [];
+  mockManipulate.mockResolvedValue({ uri: 'file:///out.jpg' });
   errorSpy = jest.spyOn(toast, 'error').mockImplementation(() => undefined as any);
   jest.spyOn(toast, 'success').mockImplementation(() => undefined as any);
   mockPickerLaunch.mockResolvedValue({
     canceled: false,
-    assets: [{ uri: 'file:///a.jpg', mimeType: 'image/jpeg', fileSize: 1000 }],
+    assets: [{ uri: 'file:///a.jpg', mimeType: 'image/jpeg', fileSize: 1000, width: 4000, height: 3000 }],
   });
 });
 
@@ -96,14 +120,15 @@ describe('MyWorksScreen', () => {
     expect(await findByText('¿En qué servicio la subís?')).toBeTruthy();
   });
 
-  it('rejects unsupported formats before uploading', async () => {
+  it('rejects images the device cannot convert before uploading', async () => {
+    mockManipulate.mockRejectedValueOnce(new Error('decode'));
     mockPickerLaunch.mockResolvedValue({ canceled: false, assets: [{ uri: 'file:///a.heic', mimeType: 'image/heic' }] });
     const { getByText } = render(<MyWorksScreen />);
     fireEvent.press(getByText('Plomería'));
     await act(async () => {
       fireEvent.press(getByText('Subir foto'));
     });
-    expect(errorSpy).toHaveBeenCalledWith('Formato no válido', expect.any(String));
+    expect(errorSpy).toHaveBeenCalledWith('Formato no compatible', expect.any(String));
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
@@ -120,9 +145,61 @@ describe('MyWorksScreen', () => {
     );
     expect(mockCreate).toHaveBeenCalledWith({
       serviceId: 's1',
-      file: { uri: 'file:///a.jpg', mimeType: 'image/jpeg' },
+      file: { uri: 'file:///out.jpg', mimeType: 'image/jpeg' },
       description: '',
     });
+  });
+
+  it('opens the system picker without asking for library permission, resizing to 2048px JPEG', async () => {
+    const { getByText, findByText } = render(<MyWorksScreen />);
+    fireEvent.press(getByText('Plomería'));
+    await act(async () => {
+      fireEvent.press(getByText('Subir foto'));
+    });
+    expect(mockRequestPermission).not.toHaveBeenCalled();
+    expect(mockPickerLaunch).toHaveBeenCalledTimes(1);
+    expect(mockManipulate).toHaveBeenCalledWith('file:///a.jpg', [{ resize: { width: 2048 } }], {
+      compress: 0.85,
+      format: 'jpeg',
+    });
+    expect(await findByText('Publicar')).toBeTruthy();
+  });
+
+  it('maps a dropped connection to the upload-specific copy', async () => {
+    mockCreate.mockRejectedValueOnce({ isAxiosError: true, message: 'timeout of 120000ms exceeded' });
+    const { getByText, findByText } = render(<MyWorksScreen />);
+    fireEvent.press(getByText('Plomería'));
+    await act(async () => {
+      fireEvent.press(getByText('Subir foto'));
+    });
+    fireEvent.press(await findByText('Publicar'));
+    await waitFor(() =>
+      expect(errorSpy).toHaveBeenCalledWith('No se pudo subir la foto', expect.stringMatching(/Se cortó la subida/)),
+    );
+  });
+
+  it('shows an error state with retry when a service photos query fails', () => {
+    mockErrored = ['s1'];
+    const { getByText } = render(<MyWorksScreen />);
+    expect(getByText('No pudimos cargar tus fotos')).toBeTruthy();
+    fireEvent.press(getByText('Reintentar'));
+    expect(mockRefetchWorks).toHaveBeenCalled();
+  });
+
+  it('keeps upload disabled until the count of the service is loaded', async () => {
+    mockUnloaded = ['s1'];
+    const { getByText } = render(<MyWorksScreen />);
+    fireEvent.press(getByText('Plomería'));
+    await act(async () => {
+      fireEvent.press(getByText('Subir foto'));
+    });
+    expect(mockPickerLaunch).not.toHaveBeenCalled();
+  });
+
+  it('loads every page of services', () => {
+    mockHasNextServices = true;
+    render(<MyWorksScreen />);
+    expect(mockFetchNextServices).toHaveBeenCalled();
   });
 
   it('invites to publish a service when the provider has none', () => {

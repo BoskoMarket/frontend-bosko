@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, RefreshControl, type LayoutChangeEvent, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -9,6 +9,7 @@ import {
   ScreenHeader,
   Skeleton,
   SPACING,
+  TAB_BAR_CLEARANCE,
   TOKENS,
   useThemeColors,
 } from '@/core/design-system';
@@ -56,23 +57,50 @@ export default function WorksFeedScreen() {
   const items = useMemo(() => flattenWorksPages(feed.data?.pages), [feed.data]);
   const category = categories.find((c) => c.id === categoryId);
 
+  const { refetch, fetchNextPage, hasNextPage, isFetchingNextPage, isRefetching } = feed;
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await feed.refetch();
+      await refetch();
     } finally {
       setRefreshing(false);
     }
-  }, [feed]);
+  }, [refetch]);
+
+  // Never start a page fetch while a refetch runs, and never cancel it: both would break pull-to-refresh.
+  const loadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage && !isRefetching) fetchNextPage({ cancelRefetch: false });
+  }, [hasNextPage, isFetchingNextPage, isRefetching, fetchNextPage]);
+
+  const viewportH = useRef(0);
+  const contentH = useRef(0);
+  // If the first pages do not fill the screen there is nothing to scroll, so scroll paging never fires.
+  const fillViewport = useCallback(() => {
+    if (viewportH.current > 0 && contentH.current > 0 && contentH.current < viewportH.current) loadMore();
+  }, [loadMore]);
+  const handleLayout = useCallback(
+    (e: LayoutChangeEvent) => {
+      viewportH.current = e.nativeEvent.layout.height;
+      fillViewport();
+    },
+    [fillViewport],
+  );
+  const handleContentSize = useCallback(
+    (_w: number, h: number) => {
+      contentH.current = h;
+      fillViewport();
+    },
+    [fillViewport],
+  );
 
   const handleScroll = useCallback(
     (e: { nativeEvent: { layoutMeasurement: { height: number }; contentOffset: { y: number }; contentSize: { height: number } } }) => {
       const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
       const remaining = contentSize.height - (contentOffset.y + layoutMeasurement.height);
-      if (remaining < NEAR_END_PX && feed.hasNextPage && !feed.isFetchingNextPage) feed.fetchNextPage();
+      if (remaining < NEAR_END_PX) loadMore();
     },
-    [feed],
+    [loadMore],
   );
 
   const openWork = useCallback((item: WorkFeedItem) => router.push(workDetailHref(item.id)), []);
@@ -103,8 +131,10 @@ export default function WorksFeedScreen() {
 
       <ScrollView
         style={styles.flex}
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 110 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + TAB_BAR_CLEARANCE }]}
         onScroll={handleScroll}
+        onLayout={handleLayout}
+        onContentSizeChange={handleContentSize}
         scrollEventThrottle={64}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -118,7 +148,7 @@ export default function WorksFeedScreen() {
             icon="cloud-offline-outline"
             title="No pudimos cargar los trabajos"
             subtitle="Revisá tu conexión e intentá de nuevo."
-            cta={{ label: 'Reintentar', onPress: () => feed.refetch() }}
+            cta={{ label: 'Reintentar', onPress: () => refetch() }}
           />
         ) : null}
 

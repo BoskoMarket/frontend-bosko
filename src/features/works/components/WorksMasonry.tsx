@@ -56,6 +56,8 @@ export function WorksMasonry<T extends MasonryItem>({
                 style={StyleSheet.absoluteFill}
                 contentFit="cover"
                 transition={150}
+                cachePolicy="memory-disk"
+                recyclingKey={item.id}
               />
             </Pressable>
           ))}

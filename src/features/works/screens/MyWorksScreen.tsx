@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -33,7 +33,7 @@ import { WorksMasonry } from '../components/WorksMasonry';
 import { WORKS_LIMIT_PER_SERVICE } from '../constants';
 import type { WorkImageFile, WorkPhoto } from '../types';
 import { WORK_LIMIT_MESSAGE, getWorkErrorMessage } from '../utils/workErrors';
-import { checkWorkImage } from '../utils/workImage';
+import { prepareWorkImage } from '../utils/workImage';
 
 type OwnService = { id: string; title: string };
 type Draft = { service: OwnService; file: WorkImageFile };
@@ -54,20 +54,26 @@ export default function MyWorksScreen() {
       ),
     [servicesQuery.data],
   );
-  const worksQueries = useServicesWorks(services.map((s) => s.id));
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = servicesQuery;
+  // A provider can have more than one page of services: load them all so every one is selectable.
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const loadingMoreServices = !!hasNextPage || isFetchingNextPage;
 
-  const photosByService = useMemo(() => {
-    const map = new Map<string, WorkPhoto[]>();
-    services.forEach((s, i) => map.set(s.id, worksQueries[i]?.data ?? []));
-    return map;
-  }, [services, worksQueries]);
-  const countOf = useCallback((id: string) => photosByService.get(id)?.length ?? 0, [photosByService]);
+  const worksQueries = useServicesWorks(services.map((s) => s.id));
+  const stateOf = useCallback(
+    (id: string) => worksQueries[services.findIndex((s) => s.id === id)],
+    [worksQueries, services],
+  );
+  const countOf = useCallback((id: string) => stateOf(id)?.data?.length ?? 0, [stateOf]);
+  const isCountReady = useCallback((id: string) => stateOf(id)?.data !== undefined, [stateOf]);
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = services.find((s) => s.id === selectedId) ?? null;
-  const photos = useMemo(
-    () => (selected ? photosByService.get(selected.id) ?? [] : Array.from(photosByService.values()).flat()),
-    [selected, photosByService],
+  const photos = useMemo<WorkPhoto[]>(
+    () => (selected ? [selected] : services).flatMap((s) => stateOf(s.id)?.data ?? []),
+    [selected, services, stateOf],
   );
 
   const [chooserOpen, setChooserOpen] = useState(false);
@@ -77,29 +83,26 @@ export default function MyWorksScreen() {
   const { mutateAsync: update, isPending: updating } = useUpdateWork();
   const { mutateAsync: remove, isPending: deleting } = useDeleteWork();
 
+  const allReady = services.every((s) => isCountReady(s.id));
   const allFull = services.length > 0 && services.every((s) => countOf(s.id) >= WORKS_LIMIT_PER_SERVICE);
-  const uploadDisabled = selected ? countOf(selected.id) >= WORKS_LIMIT_PER_SERVICE : allFull;
+  // The limit is enforced client-side, so a service's count has to be known before offering an upload to it.
+  const uploadDisabled = selected
+    ? !isCountReady(selected.id) || countOf(selected.id) >= WORKS_LIMIT_PER_SERVICE
+    : !allReady || allFull;
 
   const picking = useRef(false);
   const pickImage = useCallback(async (service: OwnService) => {
     if (picking.current) return;
     picking.current = true;
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        dialog.fromAlert('Permiso requerido', 'Necesitamos acceso a tu galería para subir fotos.', [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Abrir ajustes', onPress: () => { Linking.openSettings(); } },
-        ]);
-        return;
-      }
+      // The system picker needs no library permission (expo-image-picker >= 14 on both platforms).
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         quality: 0.9,
         preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode?.Compatible,
       });
       if (result.canceled || !result.assets[0]) return;
-      const check = checkWorkImage(result.assets[0]);
+      const check = await prepareWorkImage(result.assets[0]);
       if (!check.ok) {
         toast.error(check.title, check.message);
         return;
@@ -135,7 +138,7 @@ export default function MyWorksScreen() {
         toast.success('Foto publicada');
         setDraft(null);
       } catch (err) {
-        toast.error('No se pudo subir la foto', getWorkErrorMessage(err));
+        toast.error('No se pudo subir la foto', getWorkErrorMessage(err, { upload: true }));
       }
     },
     [draft, create],
@@ -173,7 +176,10 @@ export default function MyWorksScreen() {
     }
   }, [editing, remove]);
 
-  const loading = servicesQuery.isPending || (services.length > 0 && worksQueries.some((q) => q.isPending));
+  const selectedStates = (selected ? [selected] : services).map((s) => stateOf(s.id));
+  const loading = servicesQuery.isPending || loadingMoreServices || selectedStates.some((q) => q?.isPending);
+  const failedStates = selectedStates.filter((q) => q?.isError && q.data === undefined);
+  const worksError = !loading && failedStates.length > 0;
   const counter = selected ? `${countOf(selected.id)}/${WORKS_LIMIT_PER_SERVICE}` : null;
 
   return (
@@ -236,7 +242,14 @@ export default function MyWorksScreen() {
             contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + SPACING.xxxl }]}
             showsVerticalScrollIndicator={false}
           >
-            {loading ? (
+            {worksError ? (
+              <EmptyState
+                icon="cloud-offline-outline"
+                title="No pudimos cargar tus fotos"
+                subtitle="Revisá tu conexión e intentá de nuevo."
+                cta={{ label: 'Reintentar', onPress: () => failedStates.forEach((q) => q?.refetch()) }}
+              />
+            ) : loading ? (
               <View accessible accessibilityRole="progressbar" accessibilityLabel="Cargando fotos" style={styles.skeleton}>
                 <Skeleton height={160} radius={TOKENS.radius.md} />
                 <Skeleton height={160} radius={TOKENS.radius.md} />

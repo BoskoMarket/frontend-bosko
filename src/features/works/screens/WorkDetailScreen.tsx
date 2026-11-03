@@ -66,7 +66,6 @@ export default function WorkDetailScreen() {
     <View style={[styles.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
       <ScreenHeader
         title="Trabajo"
-       
         style={styles.header}
         right={
           showReport ? (
@@ -118,7 +117,7 @@ export default function WorkDetailScreen() {
             <View style={styles.meta}>
               {provider.rating != null ? (
                 <View style={styles.rating}>
-                  <Ionicons name="star" size={14} color={TOKENS.status.pending.fg} />
+                  <Ionicons name="star" size={14} color={TOKENS.color.rating} />
                   <Text variant="caption" color={tc.textSub}>
                     {provider.rating.toFixed(1)}
                   </Text>

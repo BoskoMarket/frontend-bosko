@@ -52,6 +52,7 @@ const feedState = (over: Record<string, unknown> = {}) => ({
   isError: false,
   hasNextPage: false,
   isFetchingNextPage: false,
+  isRefetching: false,
   refetch: mockRefetch,
   fetchNextPage: mockFetchNext,
   ...over,
@@ -122,5 +123,31 @@ describe('WorksFeedScreen', () => {
       nativeEvent: { layoutMeasurement: { height: 800 }, contentOffset: { y: 900 }, contentSize: { height: 1800 } },
     });
     expect(mockFetchNext).toHaveBeenCalledTimes(1);
+    expect(mockFetchNext).toHaveBeenCalledWith({ cancelRefetch: false });
+  });
+
+  it('does not page while a refetch (pull-to-refresh) is running', () => {
+    mockFeed = feedState({
+      data: { pages: [{ data: [item('w1')], nextCursor: 'n' }] },
+      hasNextPage: true,
+      isRefetching: true,
+    });
+    const { UNSAFE_getAllByType } = render(<WorksFeedScreen />);
+    const { ScrollView } = require('react-native');
+    const vertical = UNSAFE_getAllByType(ScrollView).find((s: any) => !s.props.horizontal)!;
+    fireEvent.scroll(vertical, {
+      nativeEvent: { layoutMeasurement: { height: 800 }, contentOffset: { y: 900 }, contentSize: { height: 1800 } },
+    });
+    expect(mockFetchNext).not.toHaveBeenCalled();
+  });
+
+  it('fetches the next page when the content is shorter than the viewport', () => {
+    mockFeed = feedState({ data: { pages: [{ data: [item('w1')], nextCursor: 'n' }] }, hasNextPage: true });
+    const { UNSAFE_getAllByType } = render(<WorksFeedScreen />);
+    const { ScrollView } = require('react-native');
+    const vertical = UNSAFE_getAllByType(ScrollView).find((s: any) => !s.props.horizontal)!;
+    fireEvent(vertical, 'layout', { nativeEvent: { layout: { height: 900, width: 400, x: 0, y: 0 } } });
+    fireEvent(vertical, 'contentSizeChange', 400, 300);
+    expect(mockFetchNext).toHaveBeenCalledWith({ cancelRefetch: false });
   });
 });
