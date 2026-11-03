@@ -2,8 +2,8 @@ import tseslint from 'typescript-eslint';
 
 // Design-system guard: outside src/core/design-system/ every color and font must
 // come from tokens (tc.*, TOKENS, GRADIENTS, FONT_FAMILY, PREMIUM...). See CLAUDE.md.
-// Severity is 'warn' while screens are migrated; switch to 'error' when the
-// count from `npm run lint:ds` reaches 0.
+// Severity is 'error': `npm run lint` (and CI) fails on any hardcoded design
+// literal outside src/core/design-system/. `npm run lint:ds` prints the count.
 const DS_MESSAGE = 'Hardcoded design value. Use design-system tokens/components (or add the token to src/core/design-system first).';
 
 export const DS_RESTRICTED_SYNTAX = [
@@ -31,7 +31,7 @@ export default tseslint.config(
     files: ['src/**/*.{ts,tsx}', 'app/**/*.{ts,tsx}'],
     ignores: ['src/core/design-system/**'],
     rules: {
-      'no-restricted-syntax': ['warn', ...DS_RESTRICTED_SYNTAX],
+      'no-restricted-syntax': ['error', ...DS_RESTRICTED_SYNTAX],
     },
   },
 );
