@@ -8,7 +8,8 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
+import { useAuth } from '@/features/auth/state/AuthContext';
 import { Text, TOKENS, useThemeColors, withAlpha } from '@/core/design-system';
 
 const VIDEO_SRC = require('../../../../assets/videos/bosko-logo-loading.mp4');
@@ -16,7 +17,18 @@ const VIDEO_SRC = require('../../../../assets/videos/bosko-logo-loading.mp4');
 // Red de seguridad por si el evento playToEnd no llega (fallo de carga, etc.)
 const FALLBACK_TIMEOUT_MS = 8000;
 
+/**
+ * Session guard: without a session the screen redirects to /login (deep link case).
+ * While auth is still bootstrapping it renders nothing, so there is no flash redirect.
+ */
 export default function WelcomeVideoScreen() {
+  const { authLoaded, isAuthenticated } = useAuth();
+  if (!authLoaded) return null;
+  if (!isAuthenticated) return <Redirect href="/login" />;
+  return <WelcomeVideoPlayer />;
+}
+
+function WelcomeVideoPlayer() {
   const tc = useThemeColors();
   const doneRef = useRef(false);
 
