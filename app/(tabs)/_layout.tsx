@@ -16,6 +16,7 @@ import { useAuth } from '@/features/auth/state/AuthContext';
 import { useIsProvider } from '@/hooks/queries/useProfileQuery';
 import { useThemeColors } from '@/stores/theme.store';
 import { AuthBackdrop } from '@/core/design-system';
+import { FEATURES } from '@/core/config/features';
 import { ErrorBoundary } from '@/core/components/ErrorBoundary';
 
 export default function TabsLayout() {
@@ -54,7 +55,8 @@ export default function TabsLayout() {
           )}
         >
           <Tabs.Screen name="index"    options={{ title: 'Inicio'    }} />
-          <Tabs.Screen name="reels"    options={{ title: 'Reels'     }} />
+          {/* Postponed to the next version: hidden from the bar; the route itself redirects. */}
+          <Tabs.Screen name="reels"    options={FEATURES.reels ? { title: 'Reels' } : { title: 'Reels', href: null }} />
           <Tabs.Screen name="orders"   options={{ title: isProvider ? 'Órdenes' : 'Pedidos' }} />
           <Tabs.Screen name="chat"     options={{ title: 'Mensajes'  }} />
           <Tabs.Screen name="profile"  options={{ title: 'Perfil'    }} />

@@ -12,17 +12,17 @@ Estados: ✅ ok · ❌ roto · ⚠️ dudoso (ruta dinámica armada con string, 
 
 ## Estructura de tabs (2026-10-16)
 
-5 tabs con label visible, en este orden (el orden sale de los `Tabs.Screen` de `app/(tabs)/_layout.tsx`):
+4 tabs visibles con label, en este orden (Reels está oculto tras `FEATURES.reels`, pospuesto a la próxima versión) (el orden sale de los `Tabs.Screen` de `app/(tabs)/_layout.tsx`):. Planned: una tab "Trabajos" (galería de trabajos terminados) ocupará ese lugar más adelante.
 
 | # | Tab | Ruta | Notas por rol |
 |---|---|---|---|
 | 1 | Inicio | `/(tabs)` | Cliente: explorar (`ClientHome`). Proveedor: trabajo (`ProviderHome`). |
-| 2 | Reels | `/(tabs)/reels` | - |
-| 3 | Pedidos / Órdenes | `/(tabs)/orders` | Label "Órdenes" para proveedores. Abre en el segmento "Como proveedor" si es proveedor (un `?tab=` explícito gana). Badge = órdenes recibidas con status `pending`. |
-| 4 | Mensajes | `/(tabs)/chat` | Badge = no leídos (`useUnreadTotal`). |
-| 5 | Perfil | `/(tabs)/profile` | Grupo por rol: proveedor "Mi negocio", cliente "Mi actividad" (`profileSections.ts`). |
+| - | ~~Reels~~ (oculto) | `/(tabs)/reels` | `href: null` mientras `FEATURES.reels` es `false`; la ruta redirige a `/(tabs)`. Sin slot en la barra. |
+| 2 | Pedidos / Órdenes | `/(tabs)/orders` | Label "Órdenes" para proveedores. Abre en el segmento "Como proveedor" si es proveedor (un `?tab=` explícito gana). Badge = órdenes recibidas con status `pending`. |
+| 3 | Mensajes | `/(tabs)/chat` | Badge = no leídos (`useUnreadTotal`). |
+| 4 | Perfil | `/(tabs)/profile` | Grupo por rol: proveedor "Mi negocio", cliente "Mi actividad" (`profileSections.ts`). |
 
-**La barra solo se ve en las 5 raíces de tab** (`shouldShowTabBar` en `CustomTabBar`): se oculta en pantallas anidadas del stack de Perfil y en el stack oculto `services`; la salida es el botón volver.
+**La barra solo se ve en las 4 raíces de tab** (`shouldShowTabBar` en `CustomTabBar`): se oculta en pantallas anidadas del stack de Perfil y en el stack oculto `services`; la salida es el botón volver.
 
 **Servicios ya no es un tab.** `app/(tabs)/services/*` sigue dentro de `(tabs)` con `href: null` en su `Tabs.Screen`: queda fuera de la barra pero sigue ruteable (catálogo, `category/[id]`, `provider/[id]`), así que los deep links y los `/(tabs)/services/...` existentes no cambian. `Tabs` usa `backBehavior="history"` para que el back desde una ruta oculta vuelva al tab de origen. `CustomTabBar` ignora rutas sin entrada en `TABS` o con `href: null` (el cálculo del pill usa solo los tabs visibles).
 
@@ -34,7 +34,7 @@ Cambios de destino de esta reestructura:
 | Home cliente: "Ver todas" (categorías), "Servicios populares", "Explorar categorías" | `/(tabs)/services` | `/(tabs)/services` (catálogo oculto, sin cambio) |
 | Empty state "Explorar servicios" en Mensajes, Favoritos y Pedidos | `/(tabs)/services` | `/(tabs)` (Inicio) |
 | Home proveedor: resumen de órdenes | `/(tabs)/orders?tab=provider` | sin cambio |
-| Perfil proveedor: "Servicios", "Órdenes", "Reseñas", "Mis reels" (acceso rápido) | `/(tabs)/profile/Services`, `/(tabs)/orders`, `/(tabs)/profile/my-reviews`, `/(tabs)/profile/my-reels` | grupo "Mi negocio": Mis servicios, Publicar servicio (`/service-form`), Mis reels, Mis reseñas, Verificación (`/(tabs)/profile/kyc`), Antecedentes, Plan (`/(tabs)/profile/plans`). "Órdenes" se quitó (es un tab). |
+| Perfil proveedor: "Servicios", "Órdenes", "Reseñas" (acceso rápido; "Mis reels" oculto por `FEATURES.reels`) | `/(tabs)/profile/Services`, `/(tabs)/orders`, `/(tabs)/profile/my-reviews`, `/(tabs)/profile/my-reels` | grupo "Mi negocio": Mis servicios, Publicar servicio (`/service-form`), (Mis reels oculto), Mis reseñas, Verificación (`/(tabs)/profile/kyc`), Antecedentes, Plan (`/(tabs)/profile/plans`). "Órdenes" se quitó (es un tab). |
 | Perfil cliente: "Mis pedidos", "Mensajes" (acceso rápido) + CTA "¿Querés ofrecer servicios?" | `/(tabs)/orders`, `/(tabs)/chat`, `/(tabs)/profile/become-provider` | grupo "Mi actividad": Favoritos (`/(tabs)/profile/favorites`), Convertirme en proveedor (`/(tabs)/profile/become-provider`) |
 | Perfil: "Cambiar Contraseña" | grupo "Preferencias" | grupo "Seguridad" |
 
@@ -127,7 +127,7 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Cambiar contraseña (`/(tabs)/profile/ChangePassword`) | `screens/ChangePasswordScreen.tsx:105` | "OK" del `Alert` de éxito | `Alert.alert` → `safeBack` | `router.back()` o fallback `/(tabs)/profile` | - | ✅ |
 | Layout tabs (`/(tabs)/*`) | `app/(tabs)/_layout.tsx:25` | Sin sesión (guard) | `<Redirect>` | `/login` | - | ✅ |
 | Layout raíz | `app/_layout.tsx:70` | Sin sesión y segmento protegido (`(tabs)`, `orders`, `chat`, `admin`, `service-form`, `search`, `upload-reel`) | `router.replace` (effect) | `/login` | - | ✅ |
-| Tab bar (`/(tabs)/*`) | `src/components/CustomTabBar.tsx` (`onPress`) | Tap en un tab no enfocado (Inicio, Reels, Pedidos/Órdenes, Mensajes, Perfil) | `navigation.navigate` | `/(tabs)`, `/(tabs)/reels`, `/(tabs)/orders`, `/(tabs)/chat`, `/(tabs)/profile` | `route.params` | ✅ los 5 existen en `app/(tabs)/_layout.tsx`; `services` está oculto (`href: null`) |
+| Tab bar (`/(tabs)/*`) | `src/components/CustomTabBar.tsx` (`onPress`) | Tap en un tab no enfocado (Inicio, Pedidos/Órdenes, Mensajes, Perfil) | `navigation.navigate` | `/(tabs)`, `/(tabs)/orders`, `/(tabs)/chat`, `/(tabs)/profile` | `route.params` | ✅ los 4 visibles existen en `app/(tabs)/_layout.tsx`; `services` está oculto (`href: null`) |
 | Tab bar (`/(tabs)/*`) | `src/components/CustomTabBar.tsx` (`onPress`) | Tap en el tab ya enfocado con stack anidado | `StackActions.popToTop` | Raíz del stack del tab (ej. `/(tabs)/profile`) | - | ✅ |
 | Perfil (`/(tabs)/profile`) | `src/features/profile/ProfileScreen.tsx:349` | Tap en el avatar del hero | `router.push` | `/(tabs)/profile/EditProfile` | - | ✅ |
 | Perfil (`/(tabs)/profile`) | `src/features/profile/ProfileScreen.tsx:408` | "Editar perfil" (botón del hero) | `router.push` | `/(tabs)/profile/EditProfile` | - | ✅ |
@@ -175,7 +175,7 @@ Derivadas de `rg` sobre `router.*` / `<Redirect>` / hrefs en `src/` y `app/` par
 
 | Pantalla (ruta) | Archivo | Disparador | Destino | Estado |
 |---|---|---|---|---|
-| Reels (`/(tabs)/reels`) | `ReelsScreen.tsx:488`, `ReelsTopBar.tsx:35,:55` | Ir al proveedor (`from=reels`) / "Publicar reel" / lupa | `/(tabs)/services/provider/[id]`, `/upload-reel`, `/search` | ✅ |
+| (oculto, `FEATURES.reels`) Reels (`/(tabs)/reels`) | `ReelsScreen.tsx:488`, `ReelsTopBar.tsx:35,:55` | Ir al proveedor (`from=reels`) / "Publicar reel" / lupa | `/(tabs)/services/provider/[id]`, `/upload-reel`, `/search` | ✅ |
 | Buscar (`/search`) | `SearchPage.tsx:107,:127,:162` | Resultado categoría / profesional (`from=search`) | `/(tabs)/services/category/[id]`, `/(tabs)/services/provider/[id]` | ✅ |
 | Pedidos (`/(tabs)/orders`) | `OrdersListScreen.tsx:144,:151,:152,:198` | Tap en orden / vacío: Explorar, Ver mi perfil, Publicar | `/orders/[id]`, `/(tabs)`, `/(tabs)/profile`, `/service-form` | ✅ |
 | Detalle de orden (`/orders/[id]`) | `OrderDetailScreen.tsx:136,:250,:371` | Pagar / Chat / Calificar | `/orders/checkout`, `/chat/[id]`, `/orders/review` | ✅ |
@@ -187,7 +187,7 @@ Derivadas de `rg` sobre `router.*` / `<Redirect>` / hrefs en `src/` y `app/` par
 | Perfil (`/(tabs)/profile`) | `ProfileScreen.tsx:211,:356,:410,:425,:493,:501,:519,:534`, `profileSections.ts:29-35,:39-40` | Editar, chip KYC / become-provider, Favoritos, Convertirme, Cambiar clave, Notificaciones (modal), Component showcase (`__DEV__`), Borrar cuenta; filas por rol | rutas de Perfil + `/service-form` | ✅ |
 | Convertirme en proveedor | `BecomeProviderScreen.tsx:266,:285,:296` | Verificación / Antecedentes / Publicar servicio | `/(tabs)/profile/kyc`, `/(tabs)/profile/background-check`, `/service-form` | ✅ |
 | KYC (`/(tabs)/profile/kyc`) | `KYCStatusScreen.tsx:126,:137` | Iniciar / volver | `/(tabs)/profile/kyc/intro`, `/(tabs)/profile` | ✅ |
-| Mis reels / Publicar reel | `MyReelsScreen.tsx:232,:262`, `ReelUploadScreen.tsx:228` | Publicar / "Ver mis reels" | `/upload-reel`, `/(tabs)/profile/my-reels` | ✅ |
+| (oculto, `FEATURES.reels`) Mis reels / Publicar reel | `MyReelsScreen.tsx:232,:262`, `ReelUploadScreen.tsx:228` | Publicar / "Ver mis reels" | `/upload-reel`, `/(tabs)/profile/my-reels` | ✅ |
 | Favoritos | `FavoritesScreen.tsx:61,:182` | Tap favorito / vacío | `/(tabs)/services/category/[id]` (`from=favorites`), `/(tabs)` | ✅ |
 | Borrar cuenta | `DeleteAccountScreen.tsx:245` | Orden activa que bloquea | `/orders/[id]` | ✅ |
 | Notificaciones (modal) | `NotificationsScreen.tsx:160`, `notificationRoute.ts` | Tap en una notificación | `/chat/[id]`, `/orders/[id]`, `/(tabs)/profile/become-provider`, `/(tabs)/orders` (`Href` tipado, `eab57d2`) | ✅ |
