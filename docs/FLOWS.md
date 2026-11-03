@@ -139,7 +139,6 @@ Real-time vía socket.io con poll de respaldo cada 10s si el socket está descon
 |---|---|---|
 | `(tabs)/profile/index` | `ProfileScreen` (`features/profile/ProfileScreen.tsx`) | Perfil propio — hub de todo lo demás |
 | `(tabs)/profile/EditProfile` | `EditProfileScreen` | Edición de perfil |
-| `(tabs)/profile/edit/[type]` | `ProfileEditScreen` | Edición por campo (foto/descripción/pagos/notificaciones/email — componentes en `features/users/components/edit/`) |
 | `(tabs)/profile/verify-phone` | `VerifyPhoneScreen` | Verificación de teléfono (Firebase) |
 | `(tabs)/profile/delete-account` | `DeleteAccountScreen` | Baja de cuenta — **requerido por Apple**, ya existe ✅ |
 

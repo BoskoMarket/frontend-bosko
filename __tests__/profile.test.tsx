@@ -10,8 +10,6 @@ const mockReplace = jest.fn();
 const mockLogout = jest.fn(async () => {});
 const mockUpdateProfile = jest.fn(async () => {});
 const mockRefreshProfile = jest.fn(async () => {});
-const mockLoadHistory = jest.fn(async () => {});
-let mockPayments: any = { history: [], loading: false, error: '', loadHistory: mockLoadHistory };
 let mockProfileState: any = { profile: null, isLoading: false, error: null };
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -23,7 +21,6 @@ jest.mock('@/components/AnimatedBackground', () => ({ AnimatedBackground: () => 
 jest.mock('@/features/auth/state/AuthContext', () => ({
   useAuth: () => ({ logout: mockLogout, authState: { user: { email: 'a@b.c' } } }),
 }));
-jest.mock('@/features/payments/state/PaymentContext', () => ({ usePayments: () => mockPayments }));
 jest.mock('@/features/profile/state/ProfileContext', () => ({
   useProfile: () => ({
     ...mockProfileState,
@@ -40,7 +37,6 @@ jest.mock('expo-image-picker', () => ({}));
 jest.mock('expo-location', () => ({}));
 
 import VerifyPhoneScreen from '@/features/profile/screens/VerifyPhoneScreen';
-import EditPayments from '@/features/users/components/edit/EditPayments';
 import EditProfileScreen from '@/features/users/screens/EditProfileScreen';
 
 const setMode = (mode: 'dark' | 'light') => act(() => { useThemeStore.getState().setMode(mode); });
@@ -49,37 +45,9 @@ describe.each(['dark', 'light'] as const)('profile screens (%s)', (mode) => {
   beforeEach(() => {
     jest.clearAllMocks();
     setMode(mode);
-    mockPayments = { history: [], loading: false, error: '', loadHistory: mockLoadHistory };
     mockProfileState = { profile: null, isLoading: false, error: null };
   });
   afterAll(() => setMode('dark'));
-
-  describe('EditPayments', () => {
-    it('shows an error with retry when the history fails to load', () => {
-      mockPayments = { ...mockPayments, error: 'boom' };
-      const { getByText } = render(<EditPayments />);
-      expect(getByText('No pudimos cargar tus pagos')).toBeTruthy();
-      mockLoadHistory.mockClear();
-      fireEvent.press(getByText('Reintentar'));
-      expect(mockLoadHistory).toHaveBeenCalledTimes(1);
-    });
-
-    it('shows the empty state when there are no payments', () => {
-      const { getByText } = render(<EditPayments />);
-      expect(getByText('Sin pagos registrados')).toBeTruthy();
-    });
-
-    it('lists payments with a status badge', () => {
-      mockPayments = {
-        ...mockPayments,
-        history: [{ id: 'p1', orderId: 'order-12345678', amount: 1000, currency: 'ARS', status: 'released', createdAt: '2026-01-05T10:00:00Z' }],
-      };
-      const { getByText } = render(<EditPayments />);
-      expect(getByText('Liberado')).toBeTruthy();
-      expect(getByText('Orden order-12')).toBeTruthy();
-    });
-  });
-
 
   describe('VerifyPhoneScreen', () => {
     it('rejects a malformed number inline before calling the SMS provider', () => {
@@ -190,7 +158,6 @@ describe('profile and users have no hard-coded design literals', () => {
   const files = [
     ...walk(path.join(repo, 'src/features/profile')),
     ...walk(path.join(repo, 'src/features/users')),
-    ...walk(path.join(repo, 'app/(tabs)/profile/edit')),
     path.join(repo, 'app/(tabs)/profile/index.tsx'),
     path.join(repo, 'app/(tabs)/profile/EditProfile.tsx'),
     path.join(repo, 'app/(tabs)/profile/verify-phone.tsx'),

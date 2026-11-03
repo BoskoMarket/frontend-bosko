@@ -18,7 +18,6 @@ export default function ProfileLayout() {
       <Stack.Screen name="background-check" />
       <Stack.Screen name="verify-phone" />
       <Stack.Screen name="delete-account" />
-      <Stack.Screen name="edit/[type]" />
     </Stack>
   );
 }
