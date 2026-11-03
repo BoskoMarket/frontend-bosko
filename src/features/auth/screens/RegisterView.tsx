@@ -226,8 +226,23 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
                     onPress={handleNext}
                     loading={isLoading}
                     fullWidth
-                    style={styles.ctaButton}
+                    style={isLastStep ? styles.ctaButtonTight : styles.ctaButton}
                   />
+
+                  {isLastStep && (
+                    <Text variant="caption" color={tc.textSub} style={styles.legalText}>
+                      {'Al registrarte aceptás los '}
+                      <Text
+                        variant="caption"
+                        weight="600"
+                        color={TOKENS.color.signal}
+                        accessibilityRole="link"
+                        onPress={() => router.push('/terms')}
+                      >
+                        Términos y condiciones
+                      </Text>
+                    </Text>
+                  )}
 
                   {step === 0 && (
                     <>
@@ -280,6 +295,8 @@ const styles = StyleSheet.create({
   fieldGap: { marginBottom: 14 },
   errorText: { marginBottom: 14, marginLeft: SPACING.xs },
   ctaButton: { marginTop: 10, marginBottom: 26 },
+  ctaButtonTight: { marginTop: 10, marginBottom: SPACING.md },
+  legalText: { textAlign: 'center', marginBottom: SPACING.lg },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.xl },
   dividerLine: { flex: 1 },
   googleButton: { marginBottom: SPACING.xl },

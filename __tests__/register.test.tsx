@@ -84,6 +84,29 @@ describe("RegisterView", () => {
     );
   });
 
+  it("enlaza los términos y condiciones solo en el último paso", async () => {
+    const { getByPlaceholderText, getByText, queryByText } = render(
+      <RegisterView toRegister={jest.fn()} />
+    );
+    expect(queryByText("Términos y condiciones")).toBeNull();
+
+    const steps: [string, string][] = [
+      ["Tu nombre", "Nuevo"],
+      ["Tu apellido", "Usuario"],
+      ["tucorreo@ejemplo.com", "nuevo@bosko.com"],
+    ];
+    for (const [placeholder, value] of steps) {
+      fireEvent.changeText(getByPlaceholderText(placeholder), value);
+      await act(async () => {
+        fireEvent.press(getByText("Siguiente"));
+      });
+    }
+
+    expect(getByText(/Al registrarte aceptás los/)).toBeTruthy();
+    fireEvent.press(getByText("Términos y condiciones"));
+    expect(router.push).toHaveBeenCalledWith("/terms");
+  });
+
   it("no avanza si el campo del paso actual está vacío", async () => {
     const { getByText, findByText } = render(
       <RegisterView toRegister={jest.fn()} />

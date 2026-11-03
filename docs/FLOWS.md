@@ -15,7 +15,7 @@ Roles: **client** (usuario común) · **pending** (inició KYC, no aprobado aún
 | `/login/forgot-password` | `ForgotPasswordScreen` | anónimo | Pide email para código de recuperación |
 | `/auth/verify-reset-code` | `VerifyResetCodeScreen` | anónimo | Input de OTP recibido por email |
 | `/auth/reset-password` | `ResetPasswordScreen` | anónimo | Nueva contraseña tras OTP válido |
-| `/login/termsAndConditions` | `TermsAndConditionsScreen` | anónimo | T&C (requerido en registro) |
+| `/terms` | `TermsAndConditionsScreen` | anónimo y autenticado | T&C (enlazado desde el último paso del registro y desde Perfil) |
 | `/auth/verify-email` | `VerifyEmailScreen` | recién registrado | Verificación de email post-registro |
 | `/welcome-video` | `WelcomeVideoScreen` | recién registrado | Video de bienvenida (una sola vez) |
 | — | `OnBoarding` | primer uso | Slides de onboarding (`screens/OnBoarding.tsx`) |

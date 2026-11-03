@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { getRoleSection } from '@/features/profile/utils/profileSections';
+import { getRoleSection, INFO_SECTION } from '@/features/profile/utils/profileSections';
 
 const repo = path.resolve(__dirname, '..');
 
@@ -45,5 +45,12 @@ describe('getRoleSection', () => {
   it('only points to routes that exist in app/', () => {
     const rows = [...getRoleSection('provider')!.rows, ...getRoleSection('client')!.rows];
     rows.forEach((row) => expect({ href: row.href, exists: routeExists(row.href) }).toEqual({ href: row.href, exists: true }));
+  });
+});
+
+describe('INFO_SECTION', () => {
+  it('links the terms and conditions for every role', () => {
+    expect(INFO_SECTION.rows.map((r) => r.label)).toEqual(['Términos y condiciones']);
+    expect(routeExists(INFO_SECTION.rows[0].href)).toBe(true);
   });
 });
