@@ -32,6 +32,7 @@ describe('getRoleSection', () => {
     expect(section.rows.map((r) => r.label)).toEqual([
       'Mis servicios',
       'Publicar servicio',
+      'Mis trabajos',
       'Mis reseñas',
       'Verificación de identidad',
       'Antecedentes penales',

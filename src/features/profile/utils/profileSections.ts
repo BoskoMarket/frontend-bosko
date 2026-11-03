@@ -29,6 +29,7 @@ export interface ProfileSection {
 const PROVIDER_ROWS: ProfileRow[] = [
   { id: 'my-services', icon: 'construct-outline', label: 'Mis servicios', href: '/(tabs)/profile/Services' },
   { id: 'publish-service', icon: 'add-circle-outline', label: 'Publicar servicio', href: '/service-form' },
+  { id: 'my-works', icon: 'images-outline', label: 'Mis trabajos', href: '/(tabs)/profile/my-works' },
   { id: 'my-reels', icon: 'film-outline', label: 'Mis reels', href: '/(tabs)/profile/my-reels' },
   { id: 'my-reviews', icon: 'star-outline', label: 'Mis reseñas', href: '/(tabs)/profile/my-reviews' },
   { id: 'kyc', icon: 'shield-checkmark-outline', label: 'Verificación de identidad', href: '/(tabs)/profile/kyc', badge: 'kyc' },

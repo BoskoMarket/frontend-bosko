@@ -1,11 +1,13 @@
 import { extractApiError, getUserErrorMessage } from '@/lib/errors';
 import { WORKS_LIMIT_PER_SERVICE } from '../constants';
 
+export const WORK_LIMIT_MESSAGE = `Llegaste al máximo de ${WORKS_LIMIT_PER_SERVICE} fotos en este servicio. Borrá alguna para subir otra.`;
+
 /** Maps a failed upload / edit / delete request to Spanish toast copy. Never throws. */
 export function getWorkErrorMessage(err: unknown): string {
   const { statusCode, code } = extractApiError(err);
   if (code === 'POST_LIMIT_REACHED') {
-    return `Llegaste al máximo de ${WORKS_LIMIT_PER_SERVICE} fotos en este servicio. Borrá alguna para subir otra.`;
+    return WORK_LIMIT_MESSAGE;
   }
   if (code === 'UPLOAD_BUSY') return 'Estamos procesando otra foto. Probá de nuevo en unos segundos.';
   if (code === 'RATE_LIMITED' || statusCode === 429) {
