@@ -40,7 +40,7 @@ Cambios de destino de esta reestructura:
 
 ## Rutas existentes (`app/`)
 
-Generado con `npm run routes:generate` (`scripts/generate-routes.cjs` → `.expo/types/router.d.ts`, ignorado por git, no se commitea) y contrastado con `git ls-files app`. 46 pantallas + 9 layouts (2026-11-02: se agregó `/dev/components`, ruta solo-dev que faltaba en la tabla). Los grupos `(tabs)` no aparecen en la URL pública (`/(tabs)/profile` ≡ `/profile`).
+Generado con `npm run routes:generate` (`scripts/generate-routes.cjs` → `.expo/types/router.d.ts`, ignorado por git, no se commitea) y contrastado con `git ls-files app`. 42 pantallas + 9 layouts (2026-11-02: se agregó `/dev/components`; se borraron `Payments`, `edit/[type]`, `kyc/document` y `orders/status`; `termsAndConditions` pasó de `/login/*` a `/terms`). Los grupos `(tabs)` no aparecen en la URL pública (`/(tabs)/profile` ≡ `/profile`).
 
 | Ruta | Archivo |
 |---|---|
@@ -49,15 +49,12 @@ Generado con `npm run routes:generate` (`scripts/generate-routes.cjs` → `.expo
 | `/(tabs)/orders` | `app/(tabs)/orders.tsx` |
 | `/(tabs)/profile/ChangePassword` | `app/(tabs)/profile/ChangePassword.tsx` |
 | `/(tabs)/profile/EditProfile` | `app/(tabs)/profile/EditProfile.tsx` |
-| `/(tabs)/profile/Payments` | `app/(tabs)/profile/Payments.tsx` |
 | `/(tabs)/profile/Services` | `app/(tabs)/profile/Services.tsx` |
 | `/(tabs)/profile/background-check` | `app/(tabs)/profile/background-check.tsx` |
 | `/(tabs)/profile/become-provider` | `app/(tabs)/profile/become-provider.tsx` |
 | `/(tabs)/profile/delete-account` | `app/(tabs)/profile/delete-account.tsx` |
-| `/(tabs)/profile/edit/[type]` | `app/(tabs)/profile/edit/[type].tsx` |
 | `/(tabs)/profile/favorites` | `app/(tabs)/profile/favorites.tsx` |
 | `/(tabs)/profile` | `app/(tabs)/profile/index.tsx` |
-| `/(tabs)/profile/kyc/document` | `app/(tabs)/profile/kyc/document.tsx` |
 | `/(tabs)/profile/kyc` | `app/(tabs)/profile/kyc/index.tsx` |
 | `/(tabs)/profile/kyc/intro` | `app/(tabs)/profile/kyc/intro.tsx` |
 | `/(tabs)/profile/my-reels` | `app/(tabs)/profile/my-reels.tsx` |
@@ -78,15 +75,14 @@ Generado con `npm run routes:generate` (`scripts/generate-routes.cjs` → `.expo
 | `/` | `app/index.tsx` |
 | `/login/forgot-password` | `app/login/forgot-password.tsx` |
 | `/login` | `app/login/index.tsx` |
-| `/login/termsAndConditions` | `app/login/termsAndConditions.tsx` |
 | `/orders/[id]` | `app/orders/[id].tsx` |
 | `/orders/checkout` | `app/orders/checkout.tsx` |
 | `/orders` | `app/orders/index.tsx` |
 | `/orders/payment-success` | `app/orders/payment-success.tsx` |
 | `/orders/quote` | `app/orders/quote.tsx` |
 | `/orders/review` | `app/orders/review.tsx` |
-| `/orders/status` | `app/orders/status.tsx` |
 | `/search` | `app/search.tsx` |
+| `/terms` | `app/terms.tsx` |
 | `/service-form` | `app/service-form.tsx` |
 | `/upload-reel` | `app/upload-reel.tsx` |
 | `/welcome-video` | `app/welcome-video.tsx` |
@@ -109,7 +105,8 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Login (`/login`) | `screens/LogInView.tsx:110` | "Continuar con Google" ok | `router.replace` | `/(tabs)` | - | ✅ |
 | Login (`/login`) | `screens/LogInView.tsx:186` | "¿Olvidaste tu contraseña?" | `router.push` | `/login/forgot-password` | - | ✅ |
 | Login (`/login`) | `screens/LogInView.tsx` (prop `toRegister`) | "Registrarse" | Callback al padre → `showRegister=true` | `RegisterView` (vista local) | - | ✅ (rutas duplicadas eliminadas en `e971f5a`) |
-| Registro (`/login`, vista) | `screens/RegisterView.tsx:138` | "Crear cuenta" (paso 4) ok | `router.push` (string armado) | `/auth/verify-email` | `email` (query en el string, `encodeURIComponent`) | ⚠️ href string, no objeto |
+| Registro (`/login`, vista) | `screens/RegisterView.tsx:138` | "Crear cuenta" (paso 4) ok | `router.push` | `/auth/verify-email` | `email` | ✅ (href tipado, `a7ce64c`) |
+| Registro (`/login`, vista) | `screens/RegisterView.tsx` (último paso) | Texto "Al registrarte aceptás los **Términos y condiciones**" (solo paso 4) | `router.push` | `/terms` | - | ✅ (N2) |
 | Registro (`/login`, vista) | `screens/RegisterView.tsx:159` | "Registrarse con Google" ok | `router.replace` | `/(tabs)` | - | ✅ |
 | Registro (`/login`, vista) | `screens/RegisterView.tsx` (`handleBack`) | Flecha atrás en paso 1 | Callback `toRegister` → `showRegister=false` | `LogInView` (vista local) | - | ✅ |
 | Registro (`/login`, vista) | `screens/RegisterView.tsx` (prop `toRegister`) | "Ingresar" (¿Ya tenés cuenta?) | Callback al padre → `showRegister=false` | `LogInView` (vista local) | - | ✅ |
@@ -122,9 +119,9 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Verificar código de reseteo (`/auth/verify-reset-code`) | `screens/VerifyResetCodeScreen.tsx:103` | "Continuar" | `router.push` | `/auth/reset-password` | `email`, `code` | ✅ |
 | Nueva contraseña (`/auth/reset-password`) | `screens/ResetPasswordScreen.tsx:140` | Botón atrás | `safeBack` | `router.back()` o fallback `/login` | - | ✅ |
 | Nueva contraseña (`/auth/reset-password`) | `screens/ResetPasswordScreen.tsx:126` | "Iniciar sesión" (éxito) | `router.replace` | `/login` | - | ✅ |
-| Layout auth (`/auth/*`) | `app/auth/_layout.tsx` | - | Stack con `presentation: "modal"` (verify-email, verify-reset-code, reset-password) | - | - | ⚠️ sin guard inverso (usuario autenticado puede abrir `/auth/*` por deep link) |
-| Términos (`/login/termsAndConditions`) | `screens/TermsAndConditionsScreen.tsx:39` | Botón atrás | `safeBack` | `router.back()` o fallback `/login` | - | ✅ |
-| Términos (`/login/termsAndConditions`) | `screens/TermsAndConditionsScreen.tsx:76` | "Volver al inicio" | `router.replace` | `/login` | - | ✅ |
+| Layout auth (`/auth/*`) | `app/auth/_layout.tsx` | Usuario ya autenticado al llegar (guard inverso, solo arranque en frío) | `<Redirect>` | `/(tabs)` | - | ✅ (N3) |
+| Layout auth (`/auth/*`) | `app/auth/_layout.tsx` | Anónimo (o sesión iniciada estando en `/auth/*`, p.ej. el OTP de verify-email) | Stack con `presentation: "modal"` (verify-email, verify-reset-code, reset-password) | - | - | ✅ no redirige |
+| Términos (`/terms`) | `screens/TermsAndConditionsScreen.tsx` | Botón atrás / "Entendido" | `safeBack` | `router.back()` o fallback `/login` (autenticado: el guard de `/login` lo manda a `/(tabs)`) | - | ✅ (informativa: sin banner de verificación ni checkbox) |
 | Video de bienvenida (`/welcome-video`) | `screens/WelcomeVideoScreen.tsx:31` | `playToEnd`, timeout 8 s o "Saltar" | `router.replace` | `/(tabs)` | - | ✅ |
 | Cambiar contraseña (`/(tabs)/profile/ChangePassword`) | `screens/ChangePasswordScreen.tsx:129` | Header atrás | `safeBack` | `router.back()` o fallback `/(tabs)/profile` | - | ✅ |
 | Cambiar contraseña (`/(tabs)/profile/ChangePassword`) | `screens/ChangePasswordScreen.tsx:105` | "OK" del `Alert` de éxito | `Alert.alert` → `safeBack` | `router.back()` o fallback `/(tabs)/profile` | - | ✅ |
@@ -135,6 +132,7 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Perfil (`/(tabs)/profile`) | `src/features/profile/ProfileScreen.tsx:349` | Tap en el avatar del hero | `router.push` | `/(tabs)/profile/EditProfile` | - | ✅ |
 | Perfil (`/(tabs)/profile`) | `src/features/profile/ProfileScreen.tsx:408` | "Editar perfil" (botón del hero) | `router.push` | `/(tabs)/profile/EditProfile` | - | ✅ |
 | Perfil (`/(tabs)/profile`) | `src/features/profile/ProfileScreen.tsx` | "Editar Perfil" (grupo "Mi cuenta") | `router.push` | `/(tabs)/profile/EditProfile` | - | ✅ |
+| Perfil (`/(tabs)/profile`) | `src/features/profile/ProfileScreen.tsx`, `profileSections.ts` (`INFO_SECTION`) | "Términos y condiciones" (grupo "Información", todos los roles) | `router.push` | `/terms` | - | ✅ (N2) |
 | Editar perfil (`/(tabs)/profile/EditProfile`) | `src/features/users/screens/EditProfileScreen.tsx` | "Verificar" teléfono | `router.push` | `/(tabs)/profile/verify-phone` | - | ✅ |
 | Proveedor (`/(tabs)/services/provider/[id]`) | `src/features/servicesUser/components/ServiceDetailModal.tsx:162` | "Solicitar Servicio" (modal de detalle) | cierra el modal + `router.push({ pathname, params })` | `/orders/quote` | `serviceId`, `serviceTitle`, `providerName` (los lee `QuoteRequestScreen`) | ✅ |
 | Proveedor (`/(tabs)/services/provider/[id]`) | `src/features/servicesUser/components/ServiceDetailModal.tsx` | Abrir/cerrar detalle de servicio (lo monta `ProviderProfileScreen`) | `Modal` | - (modal, sin ruta) | - | ✅ |
@@ -154,10 +152,12 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Home proveedor (`/(tabs)`) | `ProviderHome.tsx:48,:49` | "Mis servicios" / "Subir reel" | `router.push` | `/(tabs)/profile/Services`, `/upload-reel` | - | ✅ |
 | Servicios (`/(tabs)/services`) | `screens/ServicesScreen.tsx:80` | Tap en una categoría (`FeaturedCard`) | `router.push` | `/(tabs)/services/category/[id]` | `id` | ✅ |
 | Servicios (`/(tabs)/services`) | `screens/ServicesScreen.tsx:99`, `:111` | Ícono de lupa / barra de búsqueda | `router.push` | `/search` | - | ✅ |
-| Categoría (`/(tabs)/services/category/[id]`) | `screens/CategoryServicesScreen.tsx:269` | Tap en un profesional | `router.push` | `/(tabs)/services/provider/[id]` | `id` (`getProviderRouteId`) | ⚠️ el texto de la tarjeta dice "Cotizar por chat" (`:149`), B34 |
+| Categoría (`/(tabs)/services/category/[id]`) | `screens/CategoryServicesScreen.tsx` | Tap en la tarjeta del profesional | `router.push` | `/(tabs)/services/provider/[id]` | `id` (`getProviderRouteId`) | ✅ |
+| Categoría (`/(tabs)/services/category/[id]`) | `screens/CategoryServicesScreen.tsx` | "Cotizar" (dentro de la tarjeta) | `router.push` | `/orders/quote` | `serviceId`, `providerName`, `serviceTitle` (de ESE servicio) | ✅ (N7) |
 | Categoría (`/(tabs)/services/category/[id]`) | `screens/CategoryServicesScreen.tsx:266-269` | Flecha atrás del hero | `router.replace` según `from` / `safeBack` | `/(tabs)` (`home`), `/(tabs)/profile/favorites` (`favorites`), `/search` (`search`), fallback `/(tabs)/services` | `from` | ✅ |
 | Proveedor (`/(tabs)/services/provider/[id]`) | `screens/ProviderProfileScreen.tsx:100-103` | Flecha atrás (también en la vista de error) | `router.replace` según `from` / `safeBack` | `/(tabs)` (`home`), `/(tabs)/reels` (`reels`), `/search` (`search`), fallback `/(tabs)/services` | `from` | ✅ |
-| Proveedor (`/(tabs)/services/provider/[id]`) | `screens/ProviderProfileScreen.tsx:292-299` | "Solicitar servicio" (footer) | `router.push` | `/orders/quote` | `serviceId` (`services[0]`), `providerName`, `serviceTitle` | ⚠️ siempre el primer servicio (B35) |
+| Proveedor (`/(tabs)/services/provider/[id]`) | `screens/ProviderProfileScreen.tsx` | "Solicitar servicio" (footer), un solo servicio | `router.push` (`quoteHref`) | `/orders/quote` | `serviceId`, `providerName`, `serviceTitle` | ✅ (N6) |
+| Proveedor (`/(tabs)/services/provider/[id]`) | `screens/ProviderProfileScreen.tsx` | "Solicitar servicio" (footer), varios servicios | `OptionSheet` (bottom sheet del DS) → elegir → `router.push` | `/orders/quote` | `serviceId` del elegido, `providerName`, `serviceTitle` | ✅ (N6) |
 | Mis servicios (`/(tabs)/profile/Services`) | `screens/MyServiceScreen.tsx:96` | "Editar" en una tarjeta | `router.push` | `/service-form` | `serviceId` | ✅ |
 | Mis servicios (`/(tabs)/profile/Services`) | `screens/MyServiceScreen.tsx:152`, `:176` | "Publicar" (header) / "Publicar primer servicio" (vacío) | `router.push` | `/service-form` | - | ✅ |
 | Mis servicios (`/(tabs)/profile/Services`) | `screens/MyServiceScreen.tsx:147` | Botón atrás | `safeBack` | `router.back()` o fallback `/(tabs)/profile` | - | ✅ |
@@ -182,18 +182,15 @@ Derivadas de `rg` sobre `router.*` / `<Redirect>` / hrefs en `src/` y `app/` par
 | Checkout (`/orders/checkout`) | `CheckoutScreen.tsx:92` | Pago simulado ok | `/orders/payment-success` (replace) | ✅ |
 | Pago exitoso (`/orders/payment-success`) | `PaymentSuccessScreen.tsx:78,:84` | Ver orden / Ir al inicio | `/orders/[id]`, `/(tabs)` (replace) | ✅ |
 | Cotizar (`/orders/quote`) | `QuoteRequestScreen.tsx:100` | "Ver mis órdenes" tras solicitar | `/(tabs)/orders` (replace) | ✅ |
-| Seguimiento (`/orders/status`) | `OrderStatusScreen.tsx:257,:265` | Ver detalle / Chat | `/orders/[id]`, `/chat/[id]` | ✅ (pantalla huérfana) |
 | Mensajes (`/(tabs)/chat`) | `ConversationsListScreen.tsx:102,:256` | Tap en conversación / vacío: Explorar | `/chat/[id]`, `/(tabs)` | ✅ |
 | Chat (`/chat/[id]`) | `ChatScreen.tsx:975,:1008` | Ver orden (header / banner) | `/orders/[id]` | ✅ |
 | Perfil (`/(tabs)/profile`) | `ProfileScreen.tsx:211,:356,:410,:425,:493,:501,:519,:534`, `profileSections.ts:29-35,:39-40` | Editar, chip KYC / become-provider, Favoritos, Convertirme, Cambiar clave, Notificaciones (modal), Component showcase (`__DEV__`), Borrar cuenta; filas por rol | rutas de Perfil + `/service-form` | ✅ |
 | Convertirme en proveedor | `BecomeProviderScreen.tsx:266,:285,:296` | Verificación / Antecedentes / Publicar servicio | `/(tabs)/profile/kyc`, `/(tabs)/profile/background-check`, `/service-form` | ✅ |
 | KYC (`/(tabs)/profile/kyc`) | `KYCStatusScreen.tsx:126,:137` | Iniciar / volver | `/(tabs)/profile/kyc/intro`, `/(tabs)/profile` | ✅ |
-| KYC documento (`.../kyc/document`) | `KYCDocumentScreen.tsx:138` | Al terminar | `/(tabs)/profile/kyc` (replace) | ✅ (pantalla huérfana) |
 | Mis reels / Publicar reel | `MyReelsScreen.tsx:232,:262`, `ReelUploadScreen.tsx:228` | Publicar / "Ver mis reels" | `/upload-reel`, `/(tabs)/profile/my-reels` | ✅ |
 | Favoritos | `FavoritesScreen.tsx:61,:182` | Tap favorito / vacío | `/(tabs)/services/category/[id]` (`from=favorites`), `/(tabs)` | ✅ |
 | Borrar cuenta | `DeleteAccountScreen.tsx:245` | Orden activa que bloquea | `/orders/[id]` | ✅ |
-| Pagos (`/(tabs)/profile/Payments`) | `PaymentsScreen.tsx:86` | Tap en un pago | `/orders/${id}` (template string) | ⚠️ href string; pantalla huérfana |
-| Notificaciones (modal) | `NotificationsScreen.tsx:160`, `notificationRoute.ts:23-27` | Tap en una notificación | `/chat/${orderId}`, `/orders/${orderId}`, `/(tabs)/profile/become-provider`, `/(tabs)/orders` (strings, `route as any`) | ⚠️ hrefs string sin tipos |
+| Notificaciones (modal) | `NotificationsScreen.tsx:160`, `notificationRoute.ts` | Tap en una notificación | `/chat/[id]`, `/orders/[id]`, `/(tabs)/profile/become-provider`, `/(tabs)/orders` (`Href` tipado, `eab57d2`) | ✅ |
 | Push (`app/_layout.tsx`) | `app/_layout.tsx:77-89` | Tap en notificación push | `/orders/[id]`, `/chat/[id]`, notificaciones (modal) | ✅ |
 | Compat | `app/orders/index.tsx:4`, `app/chat/index.tsx:4` | Deep link a `/orders` / `/chat` | `<Redirect>` a `/(tabs)/orders` / `/(tabs)/chat` | ✅ |
 
@@ -201,18 +198,18 @@ Derivadas de `rg` sobre `router.*` / `<Redirect>` / hrefs en `src/` y `app/` par
 
 | Origen | Archivo:línea | Destino | Problema |
 |---|---|---|---|
-| Registro | `src/features/auth/screens/RegisterView.tsx:138` | `/auth/verify-email?email=…` | Href armado con template string en vez de `{ pathname, params }`; la ruta existe, pero no hay chequeo de tipos de params. |
+| Registro | `src/features/auth/screens/RegisterView.tsx:138` | `/auth/verify-email` | ✅ N1 (`a7ce64c`): href tipado `{ pathname, params }`. |
 | Login / Registro (rutas) | `app/login/LogInView.tsx`, `app/login/RegisterView.tsx` | `/login/LogInView`, `/login/RegisterView` | ✅ removido en `e971f5a` (rutas huérfanas; `/login` ya muestra ambas vistas vía `LoginIndex`). |
-| Términos | `app/login/termsAndConditions.tsx` | `/login/termsAndConditions` | Sin entrada: ninguna pantalla enlaza a Términos (ni el registro ni el login). El banner de la pantalla asume que viene post-registro. |
-| Verificar email / reseteo | `app/auth/_layout.tsx` | `/auth/*` | Sin guard inverso: un usuario autenticado puede abrir `/auth/verify-email` o `/auth/reset-password` por deep link. |
-| Video de bienvenida | `app/welcome-video.tsx` | `/welcome-video` | Sin guard: se puede abrir por deep link sin sesión (termina en `/(tabs)` → redirige a `/login`) y sin el flag `WELCOME_VIDEO_PENDING_KEY`. |
+| Términos | `app/terms.tsx` | `/terms` | ✅ N2: enlazada desde el último paso del registro y desde Perfil ("Información"). La ruta pasó de `/login/termsAndConditions` a `/terms` porque el guard inverso de `/login/*` redirigía a los autenticados. Pantalla neutral (sin banner ni checkbox). |
+| Verificar email / reseteo | `app/auth/_layout.tsx` | `/auth/*` | ✅ N3: guard inverso en arranque en frío (autenticado → `/(tabs)`); la sesión iniciada estando en `/auth/*` no redirige (el OTP de `verify-email` la crea y la pantalla hace `logout()`). |
+| Video de bienvenida | `app/welcome-video.tsx` | `/welcome-video` | ✅ N4 (`0077067`, `08d6982`): sin sesión → `/login`; sin flag `WELCOME_VIDEO_PENDING_KEY` → `/(tabs)`; una sola vez tras el registro. |
 | Banner premium | `src/components/PremiumBanner.tsx` | (ícono de notificaciones) | ✅ removido en `e971f5a` (código muerto, sin importadores). |
 | CTA proveedor / Promo | `src/components/ProviderCTA.tsx`, `src/features/servicesUser/components/PromoBanner.tsx` | `become-provider` / `plans` (inferidos) | ✅ removidos en `e971f5a` (código muerto, sin importadores). |
 | Tarjeta profesional | `ProfesionalCard.tsx`, `ProfesionalCarousel.tsx` | "Reservar" | ✅ removidos en `e971f5a` (código muerto). También `FeaturesSection` y `CategoryVideoCarousel`. |
 | Home | (era `DashboardScreen.tsx:521`) | `/(tabs)/profile` | ✅ Banner "¿Ofrecés servicios?" (B33) ya no existe tras el rediseño del Home (`ClientHome`/`ProviderHome`); `ClientHome` tiene "Ofrecer" → `become-provider`. Verificado 2026-11-02 (ver N5). |
-| Proveedor | `ProviderProfileScreen.tsx:292-299` | `/orders/quote` | Siempre cotiza `services[0]` (B35). |
-| Categoría | `CategoryServicesScreen.tsx:149,:269` | `/(tabs)/services/provider/[id]` | Texto "Cotizar por chat" lleva al perfil, no al chat (B34). El Home ya no lo muestra. |
-| Pagos / Notificaciones | `PaymentsScreen.tsx:86`, `notificationRoute.ts:23-27` | `/orders/${id}`, `/chat/${id}`, … | Hrefs armados con template string (`as any` en notificaciones): sin chequeo de tipos de params. |
+| Proveedor | `ProviderProfileScreen.tsx` | `/orders/quote` | ✅ N6 (B35): un servicio → directo; varios → `OptionSheet` para elegir. |
+| Categoría | `CategoryServicesScreen.tsx` | `/orders/quote` | ✅ N7 (B34): "Cotizar por chat" → "Cotizar", lleva a la cotización de ese servicio. |
+| Pagos / Notificaciones | `notificationRoute.ts` | `/orders/[id]`, `/chat/[id]`, … | ✅ N8 (`eab57d2`): `Href` tipado sin `as any`. `PaymentsScreen` se borró (N9). |
 | Publicar (ruta duplicada) | `app/(tabs)/profile/AddServices.tsx` | `/(tabs)/profile/AddServices` | ✅ removido en `e971f5a` (duplicaba `/service-form`; también su `Stack.Screen`). |
 
 ## Pantallas sin entrada
@@ -223,13 +220,11 @@ Cruce de "Rutas existentes" contra los destinos de `router.*` / `<Redirect>` / `
 
 | Ruta | Archivo | Qué es | Decisión |
 |---|---|---|---|
-| `/login/termsAndConditions` | `app/login/termsAndConditions.tsx` | Términos y condiciones (nadie enlaza: ni login ni registro) | **Se queda** (decisión de producto). Abierto: enlazarla desde el registro. |
-| `/welcome-video` | `app/welcome-video.tsx` | Video de bienvenida | **Se queda** (decisión de producto). Sí tiene entrada: `LogInView` hace `replace` tras verificar email; queda abierto el guard por deep link. |
-| `/(tabs)/profile/Payments` | `app/(tabs)/profile/Payments.tsx` | `PaymentsScreen` | Abierto: ninguna fila de Perfil ni acceso rápido la enlaza (¿entrada en "Mi actividad"?). |
-| `/(tabs)/profile/edit/[type]` | `app/(tabs)/profile/edit/[type].tsx` | `ProfileEditScreen` (editor legado por tipo) | Abierto: reemplazado por `EditProfile`; candidato a borrar. |
-| `/(tabs)/profile/kyc/document` | `app/(tabs)/profile/kyc/document.tsx` | `KYCDocumentScreen` | Abierto: `KYCStatus`/`KYCIntro` no la enlazan (el flujo vuelve a `/kyc`). Verificar si el flujo Didit la reemplazó. |
-| `/orders/status` | `app/orders/status.tsx` | `OrderStatusScreen` | Abierto: nadie la enlaza (el detalle vive en `/orders/[id]`). |
+| `/terms` | `app/terms.tsx` | Términos y condiciones | **Se queda** (decisión de producto 2026-11-02). Cerrado (N2): enlazada desde el registro (último paso) y Perfil. |
+| `/welcome-video` | `app/welcome-video.tsx` | Video de bienvenida | **Se queda** (decisión de producto). Sí tiene entrada: `LogInView` hace `replace` tras verificar email; guard por deep link cerrado (N4). |
 | `/admin/background-check` | `app/admin/background-check.tsx` | Panel admin de antecedentes | Abierto: sin entrada en la UI (solo deep link; hay guard de rol en la pantalla). |
 | `/orders` y `/chat` | `app/orders/index.tsx`, `app/chat/index.tsx` | Redirects a `/(tabs)/orders` y `/(tabs)/chat` | Se quedan: compat de deep links, no son pantallas. |
 
-Confirmadas con entrada: `dev/components` (Perfil > Preferencias, solo `__DEV__`), `kyc`, `kyc/intro`, `my-reels`, `my-reviews`, `favorites`, `plans`, `become-provider`, `verify-phone`, `delete-account`, `ChangePassword`, `EditProfile`, `Services`, `background-check`, `upload-reel`, `orders/{[id],checkout,quote,review,payment-success}`, `chat/[id]`, `auth/*`, `login/forgot-password`, `search`, `service-form`.
+Borradas por decisión de producto (2026-11-02): `/(tabs)/profile/Payments` (N9, pagos aún no conectados), `/(tabs)/profile/edit/[type]` (N10, reemplazada por `EditProfile`), `/(tabs)/profile/kyc/document` (N11, Didit reemplazó la subida manual), `/orders/status` (N12, el detalle `/orders/[id]` ya tiene el timeline).
+
+Confirmadas con entrada: `dev/components` (Perfil > Preferencias, solo `__DEV__`), `kyc`, `kyc/intro`, `my-reels`, `my-reviews`, `favorites`, `plans`, `become-provider`, `verify-phone`, `delete-account`, `ChangePassword`, `EditProfile`, `Services`, `background-check`, `upload-reel`, `orders/{[id],checkout,quote,review,payment-success}`, `chat/[id]`, `auth/*`, `terms`, `login/forgot-password`, `search`, `service-form`.
