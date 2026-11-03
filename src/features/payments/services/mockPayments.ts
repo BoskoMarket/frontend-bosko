@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_PREFIX } from '@/core/config/storage';
 import { tokenStorage } from '@/core/auth/tokenStorage';
 import { fetchOrderById } from '@/features/orders/services/orders.service';
 import type { PaymentHistoryItem } from './payments';
@@ -12,7 +13,7 @@ export function paymentBreakdown(subtotal: number) {
 function accountKey() {
   const email = tokenStorage.getUserEmail();
   if (!email || !tokenStorage.getAccessToken()) throw new Error('Iniciá sesión para consultar tus simulaciones.');
-  return `BOSKO_MOCK_PAYMENTS_v1:${encodeURIComponent(email.toLowerCase())}`;
+  return `${STORAGE_PREFIX}_MOCK_PAYMENTS_v1:${encodeURIComponent(email.toLowerCase())}`;
 }
 async function read(key: string): Promise<PaymentHistoryItem[]> {
   const raw = await AsyncStorage.getItem(key);

@@ -1,3 +1,4 @@
+import { BRAND_NAME } from '@/core/design-system';
 import type { OrderStatus } from '@/features/orders/types/orders.types';
 import { ORDER_STATUS, type OrderStatusTone } from '@/features/orders/constants/orderStatus';
 
@@ -47,7 +48,7 @@ export function chatNoticeFor(
     case 'cancelled':
       return { kind: 'readOnly', message: 'Orden cancelada. El chat queda en modo lectura.' };
     case 'disputed':
-      return { kind: 'info', message: 'Orden en disputa: el equipo de Bosko está revisando.' };
+      return { kind: 'info', message: `Orden en disputa: el equipo de ${BRAND_NAME} está revisando.` };
     default:
       return null;
   }

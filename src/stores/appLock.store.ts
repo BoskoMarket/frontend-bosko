@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_PREFIX } from '@/core/config/storage';
 
 interface AppLockState {
   biometricEnabled: boolean;
@@ -14,7 +15,7 @@ export const useAppLockStore = create<AppLockState>()(
       setBiometricEnabled: (biometricEnabled) => set({ biometricEnabled }),
     }),
     {
-      name: 'BOSKO_APP_LOCK_v1',
+      name: `${STORAGE_PREFIX}_APP_LOCK_v1`,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({ biometricEnabled: state.biometricEnabled }),
     },

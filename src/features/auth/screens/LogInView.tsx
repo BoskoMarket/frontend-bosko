@@ -19,6 +19,7 @@ import {
   ScrollView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_PREFIX } from '@/core/config/storage';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
@@ -38,7 +39,7 @@ import { getUserErrorMessage } from '@/lib/errors';
 import { BrandMark } from '@/components/BrandMark';
 import { WELCOME_VIDEO_PENDING_KEY } from '@/features/auth/constants';
 
-const REMEMBERED_EMAIL_KEY = 'BOSKO_REMEMBERED_EMAIL';
+const REMEMBERED_EMAIL_KEY = `${STORAGE_PREFIX}_REMEMBERED_EMAIL`;
 
 export default function LogInView({ toRegister }: { toRegister?: () => void }) {
   const tc = useThemeColors();

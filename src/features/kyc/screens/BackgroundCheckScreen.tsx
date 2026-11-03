@@ -27,6 +27,7 @@ import {
   useThemeColors,
   useIsDark,
   dialog,
+  BRAND_NAME,
 } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
 import {
@@ -119,7 +120,7 @@ export default function BackgroundCheckScreen() {
     try {
       await uploadBackgroundCheck(uri, mimeType, fileName);
       await load();
-      dialog.fromAlert('¡Enviado!', 'Tu documento fue enviado y está bajo revisión del equipo de Bosko.');
+      dialog.fromAlert('¡Enviado!', `Tu documento fue enviado y está bajo revisión del equipo de ${BRAND_NAME}.`);
     } catch (e: any) {
       dialog.fromAlert('Error', getUserErrorMessage(e));
     } finally {
@@ -219,7 +220,7 @@ export default function BackgroundCheckScreen() {
 
               {status === 'UNDER_REVIEW' && (
                 <NoticeBanner variant="pending" style={s.reviewNote}>
-                  El equipo de Bosko revisará tu documento en un plazo de 1-3 días hábiles.
+                  El equipo de {BRAND_NAME} revisará tu documento en un plazo de 1-3 días hábiles.
                 </NoticeBanner>
               )}
             </>

@@ -2,7 +2,7 @@ import React from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Text, useThemeColors } from '@/core/design-system';
+import { BRAND_NAME, Button, Text, useThemeColors } from '@/core/design-system';
 import { SPACING } from '@/core/design-system/spacing';
 import type { AppGateState } from '../hooks/useAppGate';
 
@@ -11,7 +11,7 @@ const ANDROID_PACKAGE = 'com.boskoapp.mobile';
 function openStore() {
   const url = Platform.select({
     android: `market://details?id=${ANDROID_PACKAGE}`,
-    ios: 'https://apps.apple.com/search?term=Bosko',
+    ios: `https://apps.apple.com/search?term=${encodeURIComponent(BRAND_NAME)}`,
     default: undefined,
   });
   if (url) Linking.openURL(url).catch(() => {});
@@ -35,8 +35,8 @@ export function AppGateScreen({ state }: { state: Extract<AppGateState, { blocke
       </Text>
       <Text variant="body" color={tc.textSub} style={styles.body}>
         {isMaintenance
-          ? state.message || 'Bosko está en mantenimiento. Volvé a intentar en unos minutos.'
-          : 'Esta versión de Bosko ya no es compatible. Actualizá para seguir usando la app.'}
+          ? state.message || `${BRAND_NAME} está en mantenimiento. Volvé a intentar en unos minutos.`
+          : `Esta versión de ${BRAND_NAME} ya no es compatible. Actualizá para seguir usando la app.`}
       </Text>
       {!isMaintenance && (
         <Button label="Actualizar ahora" onPress={openStore} style={{ marginTop: SPACING.xxl }} />

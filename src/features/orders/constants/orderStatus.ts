@@ -1,6 +1,6 @@
 import type { ComponentProps } from 'react';
 import type { MaterialIcons } from '@expo/vector-icons';
-import type { TOKENS } from '@/core/design-system';
+import { BRAND_NAME, type TOKENS } from '@/core/design-system';
 import type { OrderStatus } from '../types/orders.types';
 
 type MaterialIconName = ComponentProps<typeof MaterialIcons>['name'];
@@ -22,5 +22,5 @@ export const ORDER_STATUS: Record<OrderStatus, OrderStatusInfo> = {
   in_progress: { label: 'En progreso', desc: 'El proveedor está trabajando',      icon: 'build',           tone: 'progress' },
   completed:   { label: 'Completada',  desc: 'Trabajo terminado exitosamente',    icon: 'verified',        tone: 'done' },
   cancelled:   { label: 'Cancelada',   desc: 'La orden fue cancelada',            icon: 'cancel',          tone: 'cancelled' },
-  disputed:    { label: 'En disputa',  desc: 'Equipo Bosko está revisando',       icon: 'gavel',           tone: 'pending' },
+  disputed:    { label: 'En disputa',  desc: `Equipo ${BRAND_NAME} está revisando`,       icon: 'gavel',           tone: 'pending' },
 };

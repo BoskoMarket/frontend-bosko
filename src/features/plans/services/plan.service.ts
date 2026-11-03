@@ -5,12 +5,13 @@
 
 import api from '@/core/api/axiosinstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_PREFIX } from '@/core/config/storage';
 import { tokenStorage } from '@/core/auth/tokenStorage';
 import { readCollection } from '@/core/api/collections';
 const storageKey = () => {
   const email = tokenStorage.getUserEmail();
   if (!email || !tokenStorage.getAccessToken()) throw new Error('Iniciá sesión para simular una suscripción.');
-  return `BOSKO_MOCK_SUBSCRIPTIONS_v1:${encodeURIComponent(email.toLowerCase())}`;
+  return `${STORAGE_PREFIX}_MOCK_SUBSCRIPTIONS_v1:${encodeURIComponent(email.toLowerCase())}`;
 };
 async function readSubscriptions(): Promise<Subscription[]> {
   const value = await AsyncStorage.getItem(storageKey());
