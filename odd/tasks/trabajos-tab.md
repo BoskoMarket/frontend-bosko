@@ -43,7 +43,7 @@ Route declaration: all tasks inline by the single writer (user asked for one wri
 
 ## Checks
 
-See the final report of the run; results recorded at close: `tsc` clean, `lint` 0 errors, `lint:ds` 0, jest full suite (see below).
+`tsc` clean; `npm run lint` 0 errors; `npm run lint:ds` 0; jest 61 suites / 676 tests passing (run with --forceExit: the plain run hangs on open handles).
 
 ## Next steps / pending
 
