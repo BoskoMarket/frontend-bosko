@@ -91,7 +91,7 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
       // Primer login después de verificar el email recién registrado → video de bienvenida, una sola vez
       const showWelcomeVideo = await AsyncStorage.getItem(WELCOME_VIDEO_PENDING_KEY);
       if (showWelcomeVideo) {
-        await AsyncStorage.removeItem(WELCOME_VIDEO_PENDING_KEY);
+        // The flag is consumed by WelcomeVideoScreen once the video finishes or is skipped.
         router.replace('/welcome-video');
       } else {
         router.replace('/(tabs)');
