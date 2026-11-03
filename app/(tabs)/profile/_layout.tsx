@@ -10,7 +10,6 @@ export default function ProfileLayout() {
       <Stack.Screen name="Services" />
       <Stack.Screen name="EditProfile" />
       <Stack.Screen name="ChangePassword" />
-      <Stack.Screen name="Payments" />
       <Stack.Screen name="kyc" />
       <Stack.Screen name="become-provider" />
       <Stack.Screen name="favorites" />
@@ -19,7 +18,6 @@ export default function ProfileLayout() {
       <Stack.Screen name="background-check" />
       <Stack.Screen name="verify-phone" />
       <Stack.Screen name="delete-account" />
-      <Stack.Screen name="edit/[type]" />
     </Stack>
   );
 }

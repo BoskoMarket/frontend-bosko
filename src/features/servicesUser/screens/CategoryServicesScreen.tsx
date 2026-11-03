@@ -28,6 +28,7 @@ import { getProviderRouteId } from '@/features/servicesUser/services/catalog';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
 import { GRADIENTS, Skeleton, TOKENS, useIsDark, useThemeColors, FONT_FAMILY, SPACING } from '@/core/design-system';
 import { categoryVisual, SERVICE_FALLBACK_IMAGE } from '@/features/servicesUser/utils/categoryVisuals';
+import { quoteHref } from '@/features/servicesUser/utils/quoteRoute';
 import { RadialBlob } from '@/core/components/RadialBlob';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -71,10 +72,12 @@ const ServiceCard = memo(function ServiceCard({
   item,
   index,
   onPress,
+  onQuote,
 }: {
   item: ServiceSummary;
   index: number;
   onPress: () => void;
+  onQuote: () => void;
 }) {
   const c = useC();
   const { isFavorite, toggle } = useFavorites();
@@ -146,7 +149,9 @@ const ServiceCard = memo(function ServiceCard({
             <Text style={[s.location, { color: c.sub }]} numberOfLines={1}>{item.location}</Text>
           </View>
 
-          <Text style={s.price}>Cotizar por chat</Text>
+          <Pressable onPress={onQuote} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Cotizar ${item.title}`}>
+            <Text style={s.price}>Cotizar</Text>
+          </Pressable>
         </View>
 
         {/* Favorite + chevron */}
@@ -272,6 +277,10 @@ export default function CategoryServicesScreen() {
     });
   }, [router]);
 
+  const handleQuotePress = useCallback((item: ServiceSummary) => {
+    router.push(quoteHref(item, item.name));
+  }, [router]);
+
   const handleEndReached = useCallback(() => {
     if (hasMore && !isLoadingMore) {
       servicesQuery.fetchNextPage();
@@ -337,6 +346,7 @@ export default function CategoryServicesScreen() {
               item={item}
               index={index}
               onPress={() => handleProviderPress(item)}
+              onQuote={() => handleQuotePress(item)}
             />
           </View>
         )}

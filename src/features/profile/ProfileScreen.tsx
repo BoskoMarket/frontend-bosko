@@ -44,7 +44,7 @@ import { openNotifications } from '@/stores/notificationsUI.store';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { toneColors } from '@/features/kyc/constants/kycStatus';
 import type { KYCStatus } from '@/features/kyc/types/kyc.types';
-import { getRoleSection } from './utils/profileSections';
+import { getRoleSection, INFO_SECTION } from './utils/profileSections';
 import type { ProfileRowBadge } from './utils/profileSections';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -520,6 +520,17 @@ export const ProfileScreen: React.FC = () => {
                 />
               </>
             ) : null}
+          </SettingsGroup>
+
+          <SettingsGroup title={INFO_SECTION.title}>
+            {INFO_SECTION.rows.map((row) => (
+              <SettingsRow
+                key={row.id}
+                icon={row.icon}
+                label={row.label}
+                onPress={() => router.push(row.href as never)}
+              />
+            ))}
           </SettingsGroup>
 
           <View style={ss.dangerGroup}>
