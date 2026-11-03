@@ -1,7 +1,7 @@
 import React from 'react';
 import { act, render } from '@testing-library/react-native';
 import { renderHook } from '@testing-library/react-native';
-import { BootSplash } from '@/core/design-system';
+import { BRAND_NAME, BootSplash } from '@/core/design-system';
 import { BOOT_CONFIG_TIMEOUT_MS, BOOT_MIN_MS, useBootReady } from '@/hooks/useBootReady';
 
 beforeEach(() => jest.useFakeTimers());
@@ -12,7 +12,7 @@ describe('BootSplash', () => {
     const onHidden = jest.fn();
     const onFirstLayout = jest.fn();
     const ui = render(<BootSplash ready={false} onHidden={onHidden} onFirstLayout={onFirstLayout} />);
-    const root = ui.getByLabelText('Cargando Bosko');
+    const root = ui.getByLabelText(`Cargando ${BRAND_NAME}`);
     act(() => {
       root.props.onLayout?.({ nativeEvent: { layout: { width: 1, height: 1, x: 0, y: 0 } } });
       root.props.onLayout?.({ nativeEvent: { layout: { width: 1, height: 1, x: 0, y: 0 } } });
