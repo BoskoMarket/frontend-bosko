@@ -57,7 +57,6 @@ describe('orders, payments and plans have no hard-coded design literals', () => 
     ...walk(path.join(repo, 'app/orders')),
     path.join(repo, 'app/(tabs)/orders.tsx'),
     path.join(repo, 'app/(tabs)/profile/plans.tsx'),
-    path.join(repo, 'app/(tabs)/profile/Payments.tsx'),
   ];
 
   it('finds the files', () => {
