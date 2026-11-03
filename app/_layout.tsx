@@ -82,7 +82,7 @@ function handleNotificationResponse(response: Notifications.NotificationResponse
       void resolveNotificationRoute(
         { id: '', userId: '', title: '', body: '', read: false, createdAt: '', type: 'chat', data: { conversationId: data.conversationId } } as Notification,
         lookupOrderIdByConversation,
-      ).then((route) => { try { if (route) router.push(route as any); } catch {} });
+      ).then((route) => { try { if (route) router.push(route); } catch {} });
     } else if (data.type === 'review' && data.orderId) {
       router.push({ pathname: '/orders/[id]', params: { id: data.orderId } });
     } else {

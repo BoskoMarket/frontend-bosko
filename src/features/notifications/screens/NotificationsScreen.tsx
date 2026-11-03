@@ -157,7 +157,7 @@ export default function NotificationsScreen() {
 
     closeNotifications();
     const route = await resolveNotificationRoute(item, lookupOrderIdByConversation);
-    if (route) router.push(route as any);
+    if (route) router.push(route);
   };
 
   const handleClearAll = () => {
