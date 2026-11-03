@@ -116,7 +116,7 @@ Cambios al DS existente en esta tarea: sacados todos los literales de `Button`, 
 | T11 | Migrar resto: reviews, notifications, search, favorites, appConfig, `serviceCategories.ts` | delegada | ✅ `d9f2b37` `27baaec` `6521802` `2e43e10` |
 | T12 | Nombre de marca: `BRAND.name` en copy, `STORAGE_PREFIX` estable, `app.json` → `app.config.ts` desde brand | delegada | ✅ `5b2ab0b` `d2b7448` `b0b7ff1` |
 | T13 | ESLint a `error`, violaciones = 0, simulacro de rebrand, actualizar `CLAUDE.md`; cerrar `nav-map.md` (pantallas huérfanas) | inline | ✅ `d40126b` `e75c3c4` `0b270b1` `e971f5a` `95043d4` `c71d541` |
-| T14 | Diagrama navegable del flujo (estilo prototipo Figma) generado desde `odd/nav-map.md` + tareas para los enlaces rotos | delegada | ⬜ |
+| T14 | Diagrama navegable del flujo (estilo prototipo Figma) generado desde `odd/nav-map.md` + tareas para los enlaces rotos | delegada | ✅ `e37fd61` `b55c73c` |
 
 ## Cómo retomar (si se corta la sesión)
 
@@ -179,6 +179,8 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 
 - 2026-11-02 T13 ✅ `d40126b` `e75c3c4` `0b270b1` `e971f5a` `95043d4` `c71d541` (rama `feat/ds-t13-enforce`, apilada sobre T12): (1) regla ESLint DS a `error` (`d40126b`); `npm run lint` exit 0, `lint:ds` 0. (2) **Simulacro de rebrand** (solo `brand.ts`: nombre → "Acme", `#850021` → `#0A5FD0`, mint → `#FFD400`; revertido con `git checkout`): `npx jest` verde (53 suites), `tsc` 0, `lint:ds` 0; `npx expo config` cambió `name`, `splash.backgroundColor`, color de `expo-notifications` y los textos de permisos, y NO cambió `slug`/`scheme`/`package`/`bundleIdentifier`/`projectId`/`updates.url`. Primera corrida: 5 tests fallaban por afirmar el literal "Bosko" en copy (`bootSplash`, `chatOrderStatus`, `reports`) → ahora usan `BRAND_NAME` (`0b270b1`). Permisos iOS (`NS*UsageDescription`) y de plugins (`expo-image-picker`, `expo-location`) pasaron a plantillas con `BRAND.name` en `app.config.ts` (`e75c3c4`; salida de `expo config` idéntica con la marca actual). **Sobras fuera de `brand.ts` (no seguirán un rebrand)**: assets `bosko-logo.png`/`adaptive-icon`/video de bienvenida y `slug`/`scheme`/`package` (intencional), wordmark literal "bosko" en `BrandMark.tsx` y `BootSplash.tsx`, mensaje de `src/core/config/env.ts`, URL `https://boskoapp.site/provider/…` en `ReelsScreen.tsx`, `ANDROID_PACKAGE` en `AppGateScreen.tsx`, `STORAGE_PREFIX = 'BOSKO'` (intencional, estable). (3) **Huérfanos** (`e971f5a`, `95043d4`): borrados `PremiumBanner`, `ProviderCTA`, `FeaturesSection`, `CategoryVideoCarousel`, `PromoBanner`, `ProfesionalCard`, `ProfesionalCarousel`, rutas `app/login/{LogInView,RegisterView}.tsx` y `app/(tabs)/profile/AddServices.tsx` (+ su `Stack.Screen`); test de `FeaturesSection` quitado; sin assets exclusivos. `nav-map.md`: sección "Pantallas sin entrada" completa. (4) `CLAUDE.md`: sección Design system con capa de marca, `BRAND_NAME`, `STORAGE_PREFIX`, `app.config.ts` y enforcement (`c71d541`). Checks finales: `npx jest` 53 suites / 635 tests, `tsc` 0, `npm run lint` 0, `lint:ds` 0. **Abiertos (producto)**: `termsAndConditions` y `welcome-video` se quedan; rutas sin enlace en la UI: `profile/Payments`, `profile/edit/[type]`, `profile/kyc/document`, `orders/status`, `admin/background-check` (ver `nav-map.md`). Pendiente menor: `TOKENS.color.success` === `mint` (duplicado) no se unificó.
 
+- 2026-11-02 T14 ✅ `e37fd61` `b55c73c` (rama `feat/ds-t14-nav-diagram`, apilada sobre `feat/ds-t13-enforce`; solo docs, sin cambios en `src/` ni `app/`): (1) `odd/nav-flow.html`, diagrama navegable autocontenido (SVG/JS/CSS inline, tema claro/oscuro, pan/zoom, click para enfocar, filtro por rol cliente/proveedor/admin, "Solo problemas", búsqueda); datos en un bloque JS al inicio, fuente de verdad `odd/nav-map.md`. 57 nodos, 107 enlaces, 0 rotos, 10 dudosos, 6 huérfanas; validado abriéndolo en Edge headless (sin errores de datos, capturas dark y light). (2) `odd/tasks/navigation-fixes.md`: N1–N13 (2 fixes puros, 1 fix + decisión menor, 1 verificación, 9 decisiones de producto pendientes). (3) Correcciones a `nav-map.md`: faltaba `/dev/components` (46 pantallas, no 45); las filas del Home apuntaban a `DashboardScreen.tsx` (ahora delega en `ClientHome`/`ProviderHome`; B33 ya no existe y "Cotizar por chat" solo queda en Categoría); líneas corridas en auth y `ProviderProfileScreen`; sección nueva "Salidas adicionales" (órdenes, chat, perfil, KYC, reels, búsqueda, notificaciones, push) y hrefs string en Pagos/Notificaciones.
+
 ## Conteo de violaciones (`npm run lint:ds`)
 
 | Después de | Total | Archivos |
@@ -229,10 +231,6 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 
 ## Próximo paso
 
-0. **Usuario probando en dispositivo (dark + light) T4–T11.** Con su feedback: corregir lo que aparezca y armar PRs encadenados de las ramas apiladas (`feat/ds-t3-components` … `feat/ds-t11-rest`).
-1. Implementar decisiones T11 (G101, G102, G107, G97) + BR que hagan falta (editar reseña, reseña del prestador al cliente).
-2. G37 (cambio de teléfono verificado) pendiente de respuesta; ❔ restantes de `odd/ux-gaps.md`.
-1. T14: diagrama navegable del flujo generado desde `odd/nav-map.md` + tareas para los enlaces rotos/huérfanos abiertos.
-2. Antes de PRs: verificar en dispositivo (dark + light) T4–T13 y armar PRs encadenados de las ramas apiladas (`feat/ds-t3-components` … `feat/ds-t13-enforce`).
-1. Responder las preguntas ❔ de `odd/ux-gaps.md` (de a una) e implementar las que queden definidas.
-2. T10: migrar `features/chat` + `features/reels` (ReelsScreen 67, ChatScreen 33, MyReels 10, ConversationsList 5) aplicando también el registro de faltantes UX. Antes: verificar en dispositivo (dark + light) T4–T9.
+**La feature de design system está completa (T1–T14).** El trabajo que sigue vive en `odd/tasks/navigation-fixes.md` (N1–N13: empezar por N1 y N8, fixes puros).
+
+Pendiente fuera de esta feature: verificar en dispositivo (dark + light) T4–T13 y armar PRs encadenados de las ramas apiladas (`feat/ds-t3-components` … `feat/ds-t14-nav-diagram`); decisiones T11 (G101, G102, G107, G97) y ❔ de `odd/ux-gaps.md`.
