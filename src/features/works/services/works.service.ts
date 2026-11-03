@@ -1,7 +1,8 @@
 import api from '@/core/api/axiosinstance';
 import { readCollection } from '@/core/api/collections';
+import { extractApiError } from '@/lib/errors';
 import { extensionForMime } from '@/core/media/imageMime';
-import { WORKS_FEED_PAGE_SIZE } from '../constants';
+import { WORKS_FEED_PAGE_SIZE, WORK_UPLOAD_TIMEOUT_MS } from '../constants';
 import type { WorkFeedItem, WorkImageFile, WorkPhoto, WorksFeedPage } from '../types';
 
 /** GET /posts/feed — public, newest first, cursor pagination. */
@@ -35,12 +36,14 @@ export async function createWork(
   form.append('image', {
     uri: payload.file.uri,
     type: payload.file.mimeType,
-    name: `work.${extensionForMime(payload.file.mimeType)}`,
+    name: `work-${Date.now()}.${extensionForMime(payload.file.mimeType)}`,
   } as any);
   const description = payload.description?.trim();
   if (description) form.append('description', description);
   const { data } = await api.post<WorkFeedItem>(`/services/${serviceId}/posts`, form, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    // Uploads over mobile data can be slow; the default timeout is too short for them.
+    timeout: WORK_UPLOAD_TIMEOUT_MS,
   });
   return data;
 }
@@ -51,9 +54,14 @@ export async function updateWork(postId: string, description: string): Promise<W
   return data;
 }
 
-/** DELETE /posts/:id — 204. */
+/** DELETE /posts/:id — 204. An already-deleted post (404 POST_NOT_FOUND) counts as deleted. */
 export async function deleteWork(postId: string): Promise<void> {
-  await api.delete(`/posts/${postId}`);
+  try {
+    await api.delete(`/posts/${postId}`);
+  } catch (err) {
+    if (extractApiError(err).code === 'POST_NOT_FOUND') return;
+    throw err;
+  }
 }
 
 /** POST /posts/:id/report — 204. */

@@ -1,11 +1,18 @@
 import { extractApiError, getUserErrorMessage } from '@/lib/errors';
-import { WORKS_LIMIT_PER_SERVICE } from '../constants';
+import { WORKS_LIMIT_PER_SERVICE, WORK_DESCRIPTION_MAX } from '../constants';
 
 export const WORK_LIMIT_MESSAGE = `Llegaste al máximo de ${WORKS_LIMIT_PER_SERVICE} fotos en este servicio. Borrá alguna para subir otra.`;
 
-/** Maps a failed upload / edit / delete request to Spanish toast copy. Never throws. */
-export function getWorkErrorMessage(err: unknown): string {
+/**
+ * Maps a failed upload / edit / delete request to Spanish toast copy. Never throws.
+ * `upload` selects the copy for a dropped connection while the photo is being sent.
+ */
+export function getWorkErrorMessage(err: unknown, opts: { upload?: boolean } = {}): string {
   const { statusCode, code } = extractApiError(err);
+  if (code === 'NETWORK_ERROR' && opts.upload) return 'Se cortó la subida, revisá tu conexión e intentá de nuevo.';
+  if (code === 'VALIDATION_ERROR') {
+    return `La descripción no es válida. Puede tener hasta ${WORK_DESCRIPTION_MAX} caracteres.`;
+  }
   if (code === 'POST_LIMIT_REACHED') {
     return WORK_LIMIT_MESSAGE;
   }

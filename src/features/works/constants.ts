@@ -5,6 +5,10 @@ export const WORKS_FEED_PAGE_SIZE = 20;
 export const WORKS_LIMIT_PER_SERVICE = 30;
 export const WORK_DESCRIPTION_MAX = 500;
 export const WORK_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
+/** Photos are resized to this long side and re-encoded as JPEG before upload. */
+export const WORK_IMAGE_MAX_SIDE = 2048;
+export const WORK_IMAGE_JPEG_QUALITY = 0.85;
+export const WORK_UPLOAD_TIMEOUT_MS = 120_000;
 /** Aspect ratio (width / height) used when the backend sent no dimensions. */
 export const WORK_FALLBACK_RATIO = 4 / 5;
 /** Ratios are clamped so one extreme photo cannot break the masonry. */
