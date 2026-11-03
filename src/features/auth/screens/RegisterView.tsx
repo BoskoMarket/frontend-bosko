@@ -135,7 +135,7 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
     const lastName = formData.lastName.trim();
     try {
       await registerUser({ firstName, lastName, email, password: formData.password });
-      router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
+      router.push({ pathname: '/auth/verify-email', params: { email } });
     } catch (err) {
       // VALIDATION_ERROR: volver al primer paso con error y mostrarlo en su input
       const { fields, general } = getFormErrors(err, REGISTER_FIELDS);
