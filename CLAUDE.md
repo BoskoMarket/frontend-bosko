@@ -230,20 +230,29 @@ Real-time chat tied to orders (no free DMs).
 
 All of it lives under `src/core/design-system/` — the one folder to check before touching colors, spacing, typography, gradients, or reaching for a Button/Text/Card. Import from the barrel: `import { TOKENS, SPACING, TYPE_SCALE, GRADIENTS, useThemeColors, Button, Text, Card } from '@/core/design-system'`.
 
-#### Regla obligatoria: nada hardcodeado (desde 2026-10-05)
+#### Regla obligatoria: nada hardcodeado (desde 2026-10-05, enforced desde 2026-11-02)
 
 - Fuera de `src/core/design-system/` **no** puede haber literales de diseño: nada de hex (`'#fff'`, `'#850021'`), `rgb()/rgba()`, nombres de color (`'white'`), `fontFamily` literal, arrays de gradiente a mano, ni sombras/radios sueltos. Siempre tokens (`tc.*`, `TOKENS`, `GRADIENTS`, `FONT_FAMILY`, `TYPE_SCALE`, `SPACING`, `usePremiumColors()`).
 - Siempre usar los componentes del DS (`Button`, `Text`, `Card`, …) antes de armar UI a mano.
 - **Toda pantalla sigue el tema claro/oscuro** (`tc.*` de `useThemeColors()`). Nada de pantallas "siempre dark". Excepción: contenido sobre video/imagen usa `TOKENS.onMedia` / `TOKENS.scrim` por legibilidad.
 - Si falta un token o un componente: **se agrega primero al design system** (y se exporta en el barrel), después se usa. Nunca resolverlo local en la pantalla.
-- Objetivo: rebranding cambiando solo la capa de marca. Plan de migración del código existente: `odd/tasks/design-system-centralization.md`.
+- **Enforcement**: la regla ESLint `no-restricted-syntax` de `eslint.config.mjs` está en `error` (ya no `warn`): `npm run lint` y CI fallan ante un literal de diseño fuera de `src/core/design-system/`. `npm run lint:ds` imprime el conteo de violaciones (debe ser 0). Un test sobre `src/components` y `src/core/components` también prohíbe literales.
+- Objetivo: rebranding cambiando solo la capa de marca (simulacro hecho en T13: cambiar nombre y colores en `brand.ts` movió toda la UI, el nombre/splash de `app.config.ts` y los permisos de iOS/Android). Historial de la migración: `odd/tasks/design-system-centralization.md`.
 
-- **`tokens.ts`** → `TOKENS` — **static** values only: brand color `#850021`, radius, shadows, glass. Never use `TOKENS.color.bg/text/sub` for dynamic UI — those are light-mode only remnants.
+#### Capa de marca (rebrand)
+
+- **`brand/brand.ts`** → `BRAND` es el **único archivo a editar** para un rebrand: `name`, todos los colores crudos y las familias tipográficas. `palette`, `tokens`, `gradients`, `premium` y `typography` derivan de acá. Las pantallas no importan `BRAND` directo.
+- **Nombre de la marca en copy**: `BRAND_NAME` desde el barrel (`import { BRAND_NAME } from '@/core/design-system'`). Nunca escribir "Bosko" a mano en textos de UI, toasts, alertas ni tests de copy.
+- **`STORAGE_PREFIX`** (`src/core/config/storage.ts`, `'BOSKO'`) es **estable y NUNCA se deriva de la marca**: cambiarlo borraría los datos persistidos del usuario (claves de AsyncStorage / SecureStore).
+- **`app.config.ts`** (ya no existe `app.json`) lee `BRAND` para `name`, color del splash, color de notificaciones y los textos de permisos (`NS*UsageDescription`, plugins). La identidad de store (`slug`, `owner`, `scheme`, `package`/`bundleIdentifier`, `projectId`, URL de updates) queda **fija a propósito**: un rebrand no la cambia. Imports en este archivo con extensión `.ts` explícita (el loader de Expo no resuelve imports sin extensión).
+- **Fuera de `BRAND` (a revisar a mano en un rebrand real)**: assets (`bosko-logo.png`, `adaptive-icon`, video de bienvenida), wordmark literal "bosko" en `BrandMark` y `BootSplash`, mensaje de error de `src/core/config/env.ts`, URL de share de reels (`boskoapp.site`) y el package en `AppGateScreen`.
+
+- **`tokens.ts`** → `TOKENS` — **static** values only: brand color (from `BRAND.colors.primary`), radius, shadows, glass. Never use `TOKENS.color.bg/text/sub` for dynamic UI — those are light-mode only remnants.
 - **`palette.ts`** → `PALETTE.dark / PALETTE.light` — the real dark/light color data. `src/stores/theme.store.ts` imports this and only adds the toggle/persist (Zustand) on top; `THEME_COLORS` there is just `= PALETTE`.
 - **`spacing.ts`** → `SPACING` — base-4 scale (`xs`4 · `sm`8 · `md`12 · `lg`16 · `xl`20 · `xxl`24 · `xxxl`32 · `huge`40 · `giant`64).
 - **`typography.ts`** → `TYPE_SCALE` (h1/h2/h3/title/subtitle/body/bodySmall/caption/label/button presets) + `FONT_FAMILY` (`display`/`heading`/`headingMedium` = Archivo, `mono` = JetBrains Mono, `body` = system; loaded in `app/_layout.tsx` via `useFonts`).
 - **`gradients.ts`** → `GRADIENTS.brand/brandDeep/brandActive/overlayFadeDown/overlayFadeUp` (named presets, replace hand-typed `LinearGradient colors={[...]}` arrays) + `wash(tc)`, the theme-aware replacement for the old hardcoded light-only wash gradient.
-- **`components/`** → all UI primitives, theme-aware, zero raw literals (a test enforces it). Import from the barrel. Adopt incrementally: most existing screens still hand-roll `StyleSheet.create`.
+- **`components/`** → all UI primitives, theme-aware, zero raw literals (a test enforces it). Import from the barrel. All screens are migrated: use these before hand-rolling `StyleSheet.create` UI.
   - `Button` (variant primary|secondary|outline|ghost|danger × size, loading, `icon` + `iconPosition`; `primary` IS the brand-gradient CTA), `Text` (wraps `TYPE_SCALE`), `Card` (glass surface)
   - `Input` (label/error/leftIcon/rightIcon, password eye toggle, animated focus glow; old path `@/core/components/Input` re-exports it), `OtpInput` (controlled one-box-per-digit code, paste support)
   - `EmptyState` (icon + copy + brand CTA + text CTA), `ToastRoot` + `toast.success|error|warning` (old path re-exports), `NoticeBanner` (info|trust), `Skeleton`/`SkeletonRow`
@@ -252,7 +261,7 @@ All of it lives under `src/core/design-system/` — the one folder to check befo
   - `AuthCard` (glass auth card with signal glow), `AuthBackdrop` (auth/splash screen root: bg → wine tint gradient + pulsing glow; follows the theme), `BackButton` (glass chevron-back), `FullScreenModal`
 - **Theme hooks** (also re-exported from the barrel): `useThemeColors()` (`tc.bg`, `tc.text`, `tc.surface2`, `tc.border`, etc.), `useIsDark()` (for `BlurView tint`), `useToggleTheme()`.
 - **Convention**: every screen must call `const tc = useThemeColors()` and apply dynamic colors inline (`backgroundColor: tc.bg`, etc.). Never hardcode `#FAFAFC`, `rgba(255,255,255,0.75)`, etc. for backgrounds/text.
-- **`premium.ts`** → `PREMIUM_PALETTE.dark / .light` + `PREMIUM_SHADOWS` — gold treatment for premium/provider-tier UI (`ProviderCTA`, `PremiumButton`, `PremiumBanner`, `FeaturesSection`, `PromoBanner`, `ServiceDetailModal`, `CategoryVideoCarousel`). **Follows the theme** like everything else: consume it with `const pc = usePremiumColors()` (same pattern as `useThemeColors()`, exported from the barrel; `pc.gold` is a darker gold with ≥4.5:1 contrast in light). Gold *fills* are theme-independent: `pc.goldFill` / `pc.goldFillEnd` / `pc.onGold`; over brand-colored surfaces use `TOKENS.color.onPrimary`, not `pc.textPrimary`. `primary`/`primaryDark` are the brand ones. Shadows (`PREMIUM_SHADOWS.*`) are static.
+- **`premium.ts`** → `PREMIUM_PALETTE.dark / .light` + `PREMIUM_SHADOWS` — gold treatment for premium/provider-tier UI (`PremiumButton`, `ServiceDetailModal`, `HeroCarousel`, `ProviderProfile`, `QuickActions`). **Follows the theme** like everything else: consume it with `const pc = usePremiumColors()` (same pattern as `useThemeColors()`, exported from the barrel; `pc.gold` is a darker gold with ≥4.5:1 contrast in light). Gold *fills* are theme-independent: `pc.goldFill` / `pc.goldFillEnd` / `pc.onGold`; over brand-colored surfaces use `TOKENS.color.onPrimary`, not `pc.textPrimary`. `primary`/`primaryDark` are the brand ones. Shadows (`PREMIUM_SHADOWS.*`) are static.
 - **Fonts**: Archivo (`@expo-google-fonts/archivo`) + JetBrains Mono (`@expo-google-fonts/jetbrains-mono`) — loaded once in `app/_layout.tsx` (`useFonts` + `SplashScreen` hold). Body text uses the system font. Always reference them via `FONT_FAMILY` / `TYPE_SCALE`, never by string name.
 - **MotiView**: `src/core/components/MotiView.ios.tsx` / `.android.tsx` — thin re-export of `moti`. Requires dev build (TurboModule).
 

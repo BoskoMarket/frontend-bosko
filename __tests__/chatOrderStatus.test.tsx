@@ -1,3 +1,4 @@
+import { BRAND_NAME } from '@/core/design-system';
 import React from 'react';
 import { act, render } from '@testing-library/react-native';
 import { useThemeStore } from '@/stores/theme.store';
@@ -22,7 +23,7 @@ describe('chat order rules (G68)', () => {
     ['in_progress', false, null],
     ['completed', true, 'Orden finalizada. El chat queda en modo lectura.'],
     ['cancelled', true, 'Orden cancelada. El chat queda en modo lectura.'],
-    ['disputed', false, 'Orden en disputa: el equipo de Bosko está revisando.'],
+    ['disputed', false, `Orden en disputa: el equipo de ${BRAND_NAME} está revisando.`],
   ])('%s -> readOnly=%s', (status, readOnly, message) => {
     expect(isChatReadOnly(status)).toBe(readOnly);
     expect(chatNoticeFor(status)?.message ?? null).toBe(message);
@@ -88,7 +89,7 @@ describe.each(['dark', 'light'] as const)('ChatOrderNotice (%s)', (mode) => {
   });
 
   it('renders the dispute notice', () => {
-    expect(render(<ChatOrderNotice status="disputed" />).getByText('Orden en disputa: el equipo de Bosko está revisando.')).toBeTruthy();
+    expect(render(<ChatOrderNotice status="disputed" />).getByText(`Orden en disputa: el equipo de ${BRAND_NAME} está revisando.`)).toBeTruthy();
   });
 
   it('renders nothing for open statuses', () => {

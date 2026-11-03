@@ -8,7 +8,6 @@ export default function ProfileLayout() {
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: tc.bg } }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="Services" />
-      <Stack.Screen name="AddServices" />
       <Stack.Screen name="EditProfile" />
       <Stack.Screen name="ChangePassword" />
       <Stack.Screen name="Payments" />

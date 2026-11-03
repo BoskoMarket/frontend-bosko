@@ -1,3 +1,4 @@
+import { BRAND_NAME } from '@/core/design-system';
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { useThemeStore } from '@/stores/theme.store';
@@ -179,7 +180,7 @@ describe('ReportFlow', () => {
     expect(submit).toHaveBeenCalledTimes(1);
     expect(submit).toHaveBeenCalledWith({ reason: 'fraud' });
     await act(async () => { resolve(); });
-    expect(mockToast.success).toHaveBeenCalledWith('Reporte enviado', 'El equipo de Bosko lo va a revisar.');
+    expect(mockToast.success).toHaveBeenCalledWith('Reporte enviado', `El equipo de ${BRAND_NAME} lo va a revisar.`);
     expect(onClose).toHaveBeenCalled();
   });
 
