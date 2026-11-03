@@ -57,6 +57,8 @@ export default function TabsLayout() {
           <Tabs.Screen name="index"    options={{ title: 'Inicio'    }} />
           {/* Postponed to the next version: hidden from the bar; the route itself redirects. */}
           <Tabs.Screen name="reels"    options={FEATURES.reels ? { title: 'Reels' } : { title: 'Reels', href: null }} />
+          {/* Trabajos takes the slot reels had in the bar. */}
+          <Tabs.Screen name="works"    options={{ title: 'Trabajos'  }} />
           <Tabs.Screen name="orders"   options={{ title: isProvider ? 'Órdenes' : 'Pedidos' }} />
           <Tabs.Screen name="chat"     options={{ title: 'Mensajes'  }} />
           <Tabs.Screen name="profile"  options={{ title: 'Perfil'    }} />

@@ -20,7 +20,7 @@ jest.mock('@/hooks/queries/useOrdersQuery', () => ({
 jest.mock('@/stores/chat.store', () => ({ useUnreadTotal: () => mockUnread() }));
 jest.mock('@/hooks/queries/useProfileQuery', () => ({ useIsProvider: () => mockIsProvider() }));
 
-const ORDER = ['index', 'reels', 'orders', 'chat', 'profile', 'services'];
+const ORDER = ['index', 'reels', 'works', 'orders', 'chat', 'profile', 'services'];
 
 function makeProps(
   focusedName: string,
@@ -55,11 +55,11 @@ beforeEach(() => {
 });
 
 describe('CustomTabBar', () => {
-  it('renders four labeled tabs in order and skips the hidden services and reels routes', () => {
+  it('renders five labeled tabs in order and skips the hidden services and reels routes', () => {
     const { props } = makeProps('index');
     const { getAllByRole, queryByText } = render(<CustomTabBar {...props} />);
     const tabs = getAllByRole('tab');
-    expect(tabs.map((t) => t.props.accessibilityLabel)).toEqual(['Inicio', 'Pedidos', 'Mensajes', 'Perfil']);
+    expect(tabs.map((t) => t.props.accessibilityLabel)).toEqual(['Inicio', 'Trabajos', 'Pedidos', 'Mensajes', 'Perfil']);
     expect(queryByText('Servicios')).toBeNull();
   });
 
@@ -119,7 +119,7 @@ describe('CustomTabBar', () => {
     expect(nested.queryAllByRole('tab')).toHaveLength(0);
     nested.unmount();
     const root = render(<CustomTabBar {...makeProps('profile', ['services', 'reels'], { profile: { index: 0 } }).props} />);
-    expect(root.getAllByRole('tab')).toHaveLength(4);
+    expect(root.getAllByRole('tab')).toHaveLength(5);
   });
 });
 
@@ -135,17 +135,19 @@ describe('tab helpers', () => {
     expect(show('services')).toBe(false);
     expect(show('services', { services: { index: 0 } })).toBe(false);
     expect(show('reels')).toBe(false);
+    expect(show('works')).toBe(true);
   });
 
   it('getVisibleRoutes drops routes without a TABS entry or with href null', () => {
     const { props } = makeProps('index', ['services', 'reels']);
-    expect(getVisibleRoutes(props.state, props.descriptors).map((v) => v.route.name)).toEqual(['index', 'orders', 'chat', 'profile']);
+    expect(getVisibleRoutes(props.state, props.descriptors).map((v) => v.route.name)).toEqual(['index', 'works', 'orders', 'chat', 'profile']);
   });
 
   it('getTabLabel resolves role-aware labels', () => {
     expect(getTabLabel('orders', false)).toBe('Pedidos');
     expect(getTabLabel('orders', true)).toBe('Órdenes');
     expect(getTabLabel('profile', true)).toBe('Perfil');
+    expect(getTabLabel('works', false)).toBe('Trabajos');
   });
 });
 
@@ -157,7 +159,7 @@ describe('tabs layout', () => {
 
   it('declares the visible tabs in bar order and hides services', () => {
     const names = [...layout.matchAll(/<Tabs\.Screen name="(\w+)"/g)].map((m) => m[1]);
-    expect(names).toEqual(['index', 'reels', 'orders', 'chat', 'profile', 'services']);
+    expect(names).toEqual(['index', 'reels', 'works', 'orders', 'chat', 'profile', 'services']);
     expect(layout).toMatch(/name="services"[^>]*href: null/);
     expect(layout).toContain("FEATURES.reels ? { title: 'Reels' } : { title: 'Reels', href: null }");
   });
@@ -184,8 +186,8 @@ describe('CustomTabBar bubble icon', () => {
 });
 
 describe('reels tab behind the feature flag', () => {
-  it('keeps the bubble on the visible tabs only: reels becomes a fifth tab when not hidden', () => {
+  it('keeps the bubble on the visible tabs only: reels takes its own slot when not hidden', () => {
     const { props } = makeProps('index', ['services']);
-    expect(getVisibleRoutes(props.state, props.descriptors).map((v) => v.route.name)).toEqual(['index', 'reels', 'orders', 'chat', 'profile']);
+    expect(getVisibleRoutes(props.state, props.descriptors).map((v) => v.route.name)).toEqual(['index', 'reels', 'works', 'orders', 'chat', 'profile']);
   });
 });
