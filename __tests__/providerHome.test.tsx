@@ -8,6 +8,8 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+let mockReels = false;
+jest.mock('@/core/config/features', () => ({ FEATURES: { get reels() { return mockReels; } } }));
 jest.mock('@/components/BrandMark', () => ({ BrandMark: () => null }));
 jest.mock('@/features/profile/state/ProfileContext', () => ({ useProfile: () => ({ profile: { firstName: 'Martín' } }) }));
 jest.mock('@/features/notifications/state/NotificationsContext', () => ({ useNotifications: () => ({ unreadCount: 0 }) }));
@@ -34,6 +36,7 @@ const order = (id: string, status: string, name: string, createdAt: string) => (
 });
 
 beforeEach(() => {
+  mockReels = false;
   jest.clearAllMocks();
   useThemeStore.setState({ mode: 'dark' });
   mockOrders.mockReturnValue(ok([
@@ -74,11 +77,18 @@ describe('ProviderHome', () => {
   });
 
   it('routes the quick actions', () => {
-    const { getByText } = render(<ProviderHome />);
+    mockReels = false;
+    const { getByText, queryByText } = render(<ProviderHome />);
     fireEvent.press(getByText('Publicar servicio'));
     expect(router.push).toHaveBeenLastCalledWith('/service-form');
     fireEvent.press(getByText('Mis servicios'));
     expect(router.push).toHaveBeenLastCalledWith('/(tabs)/profile/Services');
+    expect(queryByText('Subir reel')).toBeNull();
+  });
+
+  it('offers Subir reel only when the reels flag is on', () => {
+    mockReels = true;
+    const { getByText } = render(<ProviderHome />);
     fireEvent.press(getByText('Subir reel'));
     expect(router.push).toHaveBeenLastCalledWith('/upload-reel');
   });

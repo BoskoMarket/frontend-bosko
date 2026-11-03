@@ -2,6 +2,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { getRoleSection, INFO_SECTION } from '@/features/profile/utils/profileSections';
 
+let mockReels = false;
+jest.mock('@/core/config/features', () => ({ FEATURES: { get reels() { return mockReels; } } }));
+
 const repo = path.resolve(__dirname, '..');
 
 /** True when an expo-router file exists for the href (file or folder index). */
@@ -11,13 +14,24 @@ function routeExists(href: string): boolean {
 }
 
 describe('getRoleSection', () => {
+  beforeEach(() => {
+    mockReels = false;
+  });
+
+  it('adds Mis reels for providers only when the reels flag is on', () => {
+    expect(getRoleSection('provider')!.rows.map((r) => r.id)).not.toContain('my-reels');
+    mockReels = true;
+    const rows = getRoleSection('provider')!.rows;
+    expect(rows.map((r) => r.label)).toContain('Mis reels');
+    expect(rows.find((r) => r.id === 'my-reels')?.href).toBe('/(tabs)/profile/my-reels');
+  });
+
   it('gives providers their business rows', () => {
     const section = getRoleSection('provider')!;
     expect(section.title).toBe('Mi negocio');
     expect(section.rows.map((r) => r.label)).toEqual([
       'Mis servicios',
       'Publicar servicio',
-      'Mis reels',
       'Mis reseñas',
       'Verificación de identidad',
       'Antecedentes penales',
@@ -43,6 +57,7 @@ describe('getRoleSection', () => {
   });
 
   it('only points to routes that exist in app/', () => {
+    mockReels = true;
     const rows = [...getRoleSection('provider')!.rows, ...getRoleSection('client')!.rows];
     rows.forEach((row) => expect({ href: row.href, exists: routeExists(row.href) }).toEqual({ href: row.href, exists: true }));
   });

@@ -24,7 +24,7 @@ const ORDER = ['index', 'reels', 'orders', 'chat', 'profile', 'services'];
 
 function makeProps(
   focusedName: string,
-  hidden: string[] = ['services'],
+  hidden: string[] = ['services', 'reels'],
   nested: Record<string, { index: number }> = {},
 ) {
   const routes = ORDER.map((name) => ({ key: `${name}-key`, name, ...(nested[name] ? { state: nested[name] } : {}) }));
@@ -55,11 +55,11 @@ beforeEach(() => {
 });
 
 describe('CustomTabBar', () => {
-  it('renders five labeled tabs in order and skips the hidden services route', () => {
+  it('renders four labeled tabs in order and skips the hidden services and reels routes', () => {
     const { props } = makeProps('index');
     const { getAllByRole, queryByText } = render(<CustomTabBar {...props} />);
     const tabs = getAllByRole('tab');
-    expect(tabs.map((t) => t.props.accessibilityLabel)).toEqual(['Inicio', 'Reels', 'Pedidos', 'Mensajes', 'Perfil']);
+    expect(tabs.map((t) => t.props.accessibilityLabel)).toEqual(['Inicio', 'Pedidos', 'Mensajes', 'Perfil']);
     expect(queryByText('Servicios')).toBeNull();
   });
 
@@ -115,18 +115,18 @@ describe('CustomTabBar', () => {
   });
 
   it('renders nothing on a nested profile screen and returns at the stack root', () => {
-    const nested = render(<CustomTabBar {...makeProps('profile', ['services'], { profile: { index: 1 } }).props} />);
+    const nested = render(<CustomTabBar {...makeProps('profile', ['services', 'reels'], { profile: { index: 1 } }).props} />);
     expect(nested.queryAllByRole('tab')).toHaveLength(0);
     nested.unmount();
-    const root = render(<CustomTabBar {...makeProps('profile', ['services'], { profile: { index: 0 } }).props} />);
-    expect(root.getAllByRole('tab')).toHaveLength(5);
+    const root = render(<CustomTabBar {...makeProps('profile', ['services', 'reels'], { profile: { index: 0 } }).props} />);
+    expect(root.getAllByRole('tab')).toHaveLength(4);
   });
 });
 
 describe('tab helpers', () => {
   it('shouldShowTabBar only shows the bar on visible tab roots', () => {
     const show = (name: string, nested: Record<string, { index: number }> = {}) => {
-      const { props } = makeProps(name, ['services'], nested);
+      const { props } = makeProps(name, ['services', 'reels'], nested);
       return shouldShowTabBar(props.state, props.descriptors);
     };
     expect(show('profile', { profile: { index: 0 } })).toBe(true);
@@ -134,7 +134,7 @@ describe('tab helpers', () => {
     expect(show('profile')).toBe(true);
     expect(show('services')).toBe(false);
     expect(show('services', { services: { index: 0 } })).toBe(false);
-    expect(show('reels')).toBe(true);
+    expect(show('reels')).toBe(false);
   });
 
   it('getVisibleRoutes drops routes without a TABS entry or with href null', () => {
@@ -159,6 +159,7 @@ describe('tabs layout', () => {
     const names = [...layout.matchAll(/<Tabs\.Screen name="(\w+)"/g)].map((m) => m[1]);
     expect(names).toEqual(['index', 'reels', 'orders', 'chat', 'profile', 'services']);
     expect(layout).toMatch(/name="services"[^>]*href: null/);
+    expect(layout).toContain("FEATURES.reels ? { title: 'Reels' } : { title: 'Reels', href: null }");
   });
 });
 
@@ -173,11 +174,18 @@ describe('CustomTabBar bubble icon', () => {
   afterEach(() => jest.useRealTimers());
 
   it('hides the bar icon under the bubble (after animations settle)', () => {
-    const { props } = makeProps('reels');
+    const { props } = makeProps('chat');
     const { getByTestId } = render(<CustomTabBar {...props} />);
     settle();
-    expect(opacityOf(getByTestId('tab-icon-reels'))).toBe(0);
+    expect(opacityOf(getByTestId('tab-icon-chat'))).toBe(0);
     expect(opacityOf(getByTestId('tab-icon-index'))).toBe(0.55);
   });
 
+});
+
+describe('reels tab behind the feature flag', () => {
+  it('keeps the bubble on the visible tabs only: reels becomes a fifth tab when not hidden', () => {
+    const { props } = makeProps('index', ['services']);
+    expect(getVisibleRoutes(props.state, props.descriptors).map((v) => v.route.name)).toEqual(['index', 'reels', 'orders', 'chat', 'profile']);
+  });
 });

@@ -5,6 +5,7 @@
 import type React from 'react';
 import type { Ionicons } from '@expo/vector-icons';
 
+import { FEATURES } from '@/core/config/features';
 import type { ProviderStatus } from '@/hooks/useProviderStatus';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -45,7 +46,9 @@ const CLIENT_ROWS: ProfileRow[] = [
  * get no group: the "camino a ser prestador" card above already owns that flow.
  */
 export function getRoleSection(status: ProviderStatus): ProfileSection | null {
-  if (status === 'provider') return { title: 'Mi negocio', rows: PROVIDER_ROWS };
+  if (status === 'provider') {
+    return { title: 'Mi negocio', rows: PROVIDER_ROWS.filter((row) => FEATURES.reels || row.id !== 'my-reels') };
+  }
   if (status === 'client') return { title: 'Mi actividad', rows: CLIENT_ROWS };
   return null;
 }
