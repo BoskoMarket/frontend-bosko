@@ -11,3 +11,6 @@ export const SPACING = {
 } as const;
 
 export type SpacingKey = keyof typeof SPACING;
+
+/** Bottom space screens inside the tab navigator reserve so content clears the floating tab bar. */
+export const TAB_BAR_CLEARANCE = 110;

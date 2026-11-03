@@ -45,6 +45,8 @@ export { ReasonDialog } from './ReasonDialog';
 export type { ReasonDialogProps } from './ReasonDialog';
 export { ReportSheet } from './ReportSheet';
 export type { ReportSheetProps, ReportSheetReason, ReportSheetSubmit } from './ReportSheet';
+export { BottomSheet } from './BottomSheet';
+export type { BottomSheetProps } from './BottomSheet';
 export { OptionSheet } from './OptionSheet';
 export type { OptionSheetProps, OptionSheetOption } from './OptionSheet';
 export { ProgressBar } from './ProgressBar';
