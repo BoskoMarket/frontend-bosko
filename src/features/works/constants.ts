@@ -1,0 +1,13 @@
+export const WORKS_FEED_PAGE_SIZE = 20;
+/** Backend limit of photos per service. */
+export const WORKS_LIMIT_PER_SERVICE = 30;
+export const WORK_DESCRIPTION_MAX = 500;
+export const WORK_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
+/** Aspect ratio (width / height) used when the backend sent no dimensions. */
+export const WORK_FALLBACK_RATIO = 4 / 5;
+/** Ratios are clamped so one extreme photo cannot break the masonry. */
+export const WORK_MIN_RATIO = 0.6;
+export const WORK_MAX_RATIO = 1.6;
+
+export const MY_WORKS_ROUTE = '/(tabs)/profile/my-works';
+export const workDetailHref = (id: string) => ({ pathname: '/work/[id]', params: { id } }) as const;

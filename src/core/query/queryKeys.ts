@@ -12,6 +12,9 @@ export const QUERY_KEYS = {
   providerProfile:  (id: string) => ['providers', id]                    as const,
   serviceReviews:   (id: string) => ['reviews', 'service', id]           as const,
   servicePosts:     (id: string) => ['posts', id]                        as const,
+  servicePostsAll:  ['posts']                                            as const,
+  worksFeedAll:     ['works', 'feed']                                    as const,
+  worksFeed:        (categoryId: string | null) => ['works', 'feed', categoryId ?? 'all'] as const,
 
   clientOrders:     ['orders', 'client']                                 as const,
   providerOrders:   ['orders', 'provider']                               as const,
