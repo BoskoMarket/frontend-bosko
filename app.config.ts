@@ -55,14 +55,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     infoPlist: {
       NSCameraUsageDescription:
-        'Bosko necesita acceso a la cámara para que puedas subir fotos y videos de tus servicios.',
+        `${BRAND.name} necesita acceso a la cámara para que puedas subir fotos y videos de tus servicios.`,
       NSPhotoLibraryUsageDescription:
-        'Bosko necesita acceso a tu galería para que puedas subir fotos y videos de tus servicios.',
-      NSPhotoLibraryAddUsageDescription: 'Bosko necesita permiso para guardar fotos en tu galería.',
+        `${BRAND.name} necesita acceso a tu galería para que puedas subir fotos y videos de tus servicios.`,
+      NSPhotoLibraryAddUsageDescription: `${BRAND.name} necesita permiso para guardar fotos en tu galería.`,
       NSMicrophoneUsageDescription:
-        'Bosko necesita acceso al micrófono para que puedas grabar y enviar mensajes de voz.',
+        `${BRAND.name} necesita acceso al micrófono para que puedas grabar y enviar mensajes de voz.`,
       NSFaceIDUsageDescription:
-        'Bosko usa Face ID para desbloquear la app de forma segura y rápida.',
+        `${BRAND.name} usa Face ID para desbloquear la app de forma segura y rápida.`,
     },
   },
   web: {
@@ -100,10 +100,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-image-picker',
       {
         photosPermission:
-          'Bosko necesita acceso a tu galería para subir fotos y videos de tus servicios.',
+          `${BRAND.name} necesita acceso a tu galería para subir fotos y videos de tus servicios.`,
         cameraPermission:
-          'Bosko necesita acceso a la cámara para subir fotos y videos de tus servicios.',
-        microphonePermission: 'Bosko necesita acceso al micrófono para grabar videos.',
+          `${BRAND.name} necesita acceso a la cámara para subir fotos y videos de tus servicios.`,
+        microphonePermission: `${BRAND.name} necesita acceso al micrófono para grabar videos.`,
       },
     ],
     'expo-document-picker',
@@ -122,7 +122,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-location',
       {
         locationWhenInUsePermission:
-          'Bosko usa tu ubicación para ubicar tu perfil cuando vos lo solicites.',
+          `${BRAND.name} usa tu ubicación para ubicar tu perfil cuando vos lo solicites.`,
       },
     ],
     './plugins/withBouncyCastleFix',
