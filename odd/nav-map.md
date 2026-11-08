@@ -235,3 +235,26 @@ Cruce de "Rutas existentes" contra los destinos de `router.*` / `<Redirect>` / `
 Borradas por decisión de producto (2026-11-02): `/(tabs)/profile/Payments` (N9, pagos aún no conectados), `/(tabs)/profile/edit/[type]` (N10, reemplazada por `EditProfile`), `/(tabs)/profile/kyc/document` (N11, Didit reemplazó la subida manual), `/orders/status` (N12, el detalle `/orders/[id]` ya tiene el timeline).
 
 Confirmadas con entrada: `works`, `work/[id]`, `my-works`, `dev/components` (Perfil > Preferencias, solo `__DEV__`), `kyc`, `kyc/intro`, `my-reels`, `my-reviews`, `favorites`, `plans`, `become-provider`, `verify-phone`, `delete-account`, `ChangePassword`, `EditProfile`, `Services`, `background-check`, `upload-reel`, `orders/{[id],checkout,quote,review,payment-success}`, `chat/[id]`, `auth/*`, `terms`, `login/forgot-password`, `search`, `service-form`.
+
+## Cambios de navegación del PRD v1 (2026-11-08, rama `feat/prd-v1`)
+
+`odd/nav-flow.html` no se regeneró en este cambio: este archivo es la fuente de verdad.
+
+| Ruta / disparador | Cambio | Estado |
+|---|---|---|
+| `/orders/checkout`, `/orders/payment-success` | Redirigen a `/(tabs)/orders` mientras `FEATURES.payments` es `false`. Sin botón «Pagar» en `/orders/[id]` | ✅ |
+| `/(tabs)/profile/plans` | Redirige a `/(tabs)/profile` mientras `FEATURES.payments` es `false`; sin fila «Plan» en Perfil | ✅ |
+| Perfil proveedor «Mi negocio» | Mi servicio, Mis trabajos, Mis reseñas, Verificación de identidad, Antecedentes (opcional), Usuarios bloqueados. Se quitan «Publicar servicio» y «Plan» | ✅ |
+| Perfil cliente «Mi actividad» | Favoritos, Convertirme en proveedor, Usuarios bloqueados | ✅ |
+| Inicio proveedor: acciones rápidas | «Mi servicio» → `/(tabs)/profile/Services` (se quita «Publicar servicio»; el alta se hace desde ahí) | ✅ |
+| `/(tabs)/profile/Services` | Muestra el servicio único; «Publicar» solo si todavía no tiene uno | ✅ |
+| `/service-form` | Sin `canPublish` (KYC aprobado y teléfono verificado) redirige a `/(tabs)/profile/become-provider` o a `/(tabs)/profile/verify-phone` | ✅ |
+| `/(tabs)/profile/become-provider` | Lista de pasos: Identidad → Teléfono → Tu servicio | ✅ |
+| `/login/RegisterView` | Paso «Tu ciudad» y aceptación de términos | ✅ |
+| `/auth/select-city` (nueva) | Alta con Google sin ciudad (`422 CITY_REQUIRED`) o cuenta con `city === null`; `app/index.tsx` redirige si `city === null` | ✅ |
+| `/suspended` (nueva) | Destino de `403 ACCOUNT_SUSPENDED` (logout forzado con motivo); «Volver al inicio de sesión» → `/login` | ✅ |
+| `/chat/[id]` ⋯ | Menú: denunciar (flujo existente) y bloquear/desbloquear | ✅ |
+| `/(tabs)/profile/blocked-users` (nueva) | Lista de bloqueados con «Desbloquear» | ✅ |
+| `/orders/[id]` | Acciones por estado y rol (matriz `getOrderActions`); en `disputed`, bloque de soporte por WhatsApp (URL externa `wa.me`) | ✅ |
+| Notificaciones | `ORDER_*` → `/orders/[id]`; `POST_HIDDEN` → `/(tabs)/profile/my-works`; `REVIEW_REPLIED` → `/(tabs)/profile/my-reviews`; `PLATFORM_NEWS` sin destino | ✅ |
+| Orden cancelada por el sistema (cliente) | «Cotizar a otro proveedor» → `/search` | ✅ |

@@ -2,7 +2,36 @@
 
 Fuente: `docs/PRD.md`. El lado backend está en `docs/backend-prd-v1-contracts.md` (tareas `B1`–`B13`); aquí se referencia como `B#`.
 
-Estado: **plan, sin implementar.** Ninguna tarea tiene trabajo hecho. Ruta de implementación propuesta: una sola persona escribiendo, una tarea por commit de trabajo (Conventional Commits), con sus tests y su documentación en el mismo commit.
+Estado (2026-11-08): **F1 a F15 implementadas en la rama `feat/prd-v1`**; F16 parcial (documentación hecha; falta regenerar el OpenAPI cuando exista B13). Un solo escritor, un commit por tarea (Conventional Commits). Verificado con `tsc`, `eslint`, `lint:ds` y jest (los tests mockean la API: **nada se probó contra un backend real**, porque `B1`–`B13` no están construidas).
+
+> **Orden de merge:** esta rama usa los contratos de `docs/backend-prd-v1-contracts.md`. Contra el backend actual, registrarse (`cityId` y términos), cerrar una orden (`/mark-done`, `/confirm`) y los favoritos de cuenta fallarían. Hay que desplegar el backend antes de mergear, o probar contra uno local.
+
+| Tarea | Estado | Commit | Depende de |
+|---|---|---|---|
+| F1 Pagos y planes fuera de v1 | ✅ | `2f77ac4` | — |
+| F2 Español neutro | ✅ | `47fa203` | — |
+| F3 Formulario de servicio y precio | ✅ | `fe03bd2`, `e89b4a9` | B9 (reemplazar foto principal) |
+| F4 Soporte por WhatsApp | ✅ | `35ca3e1` | B12 (número) |
+| F5 Ciudad y registro | ✅ | `4d164e3` | B1, B2 |
+| F6 Verificación del proveedor | ✅ | `db9ce09` | B10, B12 |
+| F7 Ciclo de la orden | ✅ | `438ea68` | B3, B4 |
+| F8 Disputas y soporte | ✅ | `10c097f` | B3, B7 |
+| F9 Cuenta suspendida | ✅ | `10c097f` | B7 |
+| F10 Bloqueo y denuncia en el chat | ✅ | `c65a932` | B6 |
+| F11 Favoritos en la cuenta | ✅ | `c942e6d` | B8 |
+| F12 Notificaciones nuevas | ✅ | `da0790b` | B4 |
+| F13 Trabajos acotado a v1 | ✅ | `da0790b` | B5, B9 |
+| F14 Errores de red y reintento | ✅ (`runWithRetry`; sin `ErrorState` porque ninguna pantalla mostraba un error pelado) | ver `git log` | — |
+| F15 Copy de baja de cuenta | ✅ | ver `git log` | — |
+| F16 Contratos y documentación | parcial: docs hechas; falta regenerar OpenAPI | — | B13 |
+
+Desvíos respecto del plan original:
+- `formatMoney` no se creó: `formatServicePrice` (design system) cubre el formato de precios con el código de moneda.
+- No existe `KYCDocumentScreen`: `allowedDocumentTypes` se aplica en `KYCIntroScreen`.
+- La fila «Usuarios bloqueados» está en las dos secciones de Perfil existentes (no hay sección de seguridad).
+- El proveedor no puede abrir una disputa desde `awaiting_confirmation` (decisión abierta).
+- Los favoritos locales anteriores no se migran: mencionarlo en las notas de la versión.
+- El paso «Tu servicio» de la lista de BecomeProvider nunca se marca como hecho (la app no sabe si ya existe).
 
 ## Reglas de arquitectura (válidas para toda tarea)
 

@@ -190,27 +190,32 @@ cancelled           cancelled             disputed                          disp
 
 ## 6. Distancia entre el PRD y el código
 
-Verificado en esta revisión (2026-11-07/08):
+Estado al 2026-11-08, rama `feat/prd-v1`. **Frontend** = implementado y probado con la API simulada; **Backend** = pendiente (`docs/backend-prd-v1-contracts.md`). Nada se probó todavía contra un backend real.
 
-| Tema | Estado |
-|---|---|
-| Pagos simulados (`CheckoutScreen`, `PaymentSuccessScreen`, planes) | Sigue en el código; hay que ocultarlo de v1 |
-| Foto principal obligatoria | Hoy es opcional en `ServiceFormScreen` |
-| Selección de ciudad y mercados | No existe; requiere campo en usuario y servicio, y filtro en el backend |
-| Estado `awaiting_confirmation` y cierre automático | No existe |
-| Vencimiento de 48 h de solicitudes | No existe |
-| Ocultamiento automático por 3 denuncias | No existe (backend) |
-| Bloqueo de usuarios | No existe en frontend ni en backend (no hay modelo ni rutas) |
-| Panel admin de antecedentes | Sin listado de pendientes; deja de ser requisito en v1 porque los antecedentes pasan a ser opcionales |
-| Copy en español neutro | El copy actual usa voseo |
-| Favoritos en la cuenta | Hoy son locales por cuenta (`favorites.store`, con `accountId`), sin sincronizar entre dispositivos |
-| Barra «Sin conexión» y reintento automático al reconectar | **Ya existen** (`OfflineBanner`, `networkFocus.ts`) |
-| Interruptor de push | **Ya funciona** (`usePushPreference` registra y borra el token) |
-| Denuncia de usuario desde el chat | **Ya existe** (`ReportFlow` + `reportUser`); falta el bloqueo |
-| Ubicación del perfil | Sin reverificar; no entra en v1 (la cobertura es la ciudad) |
-| Soporte por WhatsApp | El número viene del backend (`GET /app/config`); falta definirlo |
+| Tema | Frontend | Backend |
+|---|---|---|
+| Pagos y planes fuera de v1 | ✅ detrás de `FEATURES.payments` | — |
+| Foto principal obligatoria | ✅ en `ServiceFormScreen` | B9: un servicio sin foto no aparece en el catálogo |
+| Un servicio por proveedor | ✅ «Mi servicio» | B9: constante en lugar del límite por plan |
+| Ciudad, mercados y términos | ✅ registro, Google y perfil de solo lectura | B1, B2 |
+| Estado `awaiting_confirmation`, cierre automático y vencimiento de 48 h | ✅ | B3 (estado, rutas y dos jobs) |
+| Ocultamiento automático por 3 denuncias | ✅ insignia en Mis trabajos | B5 |
+| Bloqueo de usuarios | ✅ menú del chat y lista de bloqueados | B6 |
+| Suspensión total | ✅ pantalla `/suspended` | B7 |
+| Resolución de disputas por soporte | ✅ bloque con WhatsApp | B7 (API de admin para resolver) |
+| Favoritos en la cuenta | ✅ (los locales no se migran) | B8 |
+| KYC + teléfono para publicar; antecedentes opcionales | ✅ | B10 |
+| Avisos nuevos | ✅ rutas e iconos | B4 |
+| Copy en español neutro | ✅ con test que impide volver al voseo | — |
+| Soporte por WhatsApp | ✅ `SupportContactButton` | B12 (falta definir el número) |
+| Errores de red con reintento | ✅ `runWithRetry` | — |
+| Copy de baja de cuenta | ✅ | — |
+| Búsqueda por calificación, verificados primero | sin cambios de UI | B11 |
+| Contrato OpenAPI real | pendiente (F16) | B13 |
+| Barra «Sin conexión», interruptor de push, denuncia desde el chat | ya existían | — |
+| Panel admin de antecedentes | fuera de v1 (los antecedentes son opcionales) | — |
 
-Las tareas para cerrar esta distancia están en `odd/tasks/prd-v1-frontend.md` (F1–F16) y `docs/backend-prd-v1-contracts.md` (B1–B13).
+Detalle por tarea: `odd/tasks/prd-v1-frontend.md` (F1–F16) y `docs/backend-prd-v1-contracts.md` (B1–B13).
 
 ## 7. Decisiones abiertas
 
