@@ -7,9 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Badge,
   Button,
-  Chip,
   EmptyState,
-  OptionSheet,
   ScreenHeader,
   Skeleton,
   SPACING,
@@ -30,15 +28,16 @@ import {
 } from '@/hooks/queries/useWorksQuery';
 import { WorkFormSheet } from '../components/WorkFormSheet';
 import { WorksMasonry } from '../components/WorksMasonry';
-import { WORKS_LIMIT_PER_SERVICE } from '../constants';
+import { WORKS_LIMIT_PER_PROVIDER } from '../constants';
 import type { WorkImageFile, WorkPhoto } from '../types';
 import { WORK_LIMIT_MESSAGE, getWorkErrorMessage } from '../utils/workErrors';
 import { prepareWorkImage } from '../utils/workImage';
+import { WORK_HIDDEN_LABEL, isWorkHidden, workLabel } from '../utils/workStatus';
 
 type OwnService = { id: string; title: string };
 type Draft = { service: OwnService; file: WorkImageFile };
 
-/** Mis trabajos: a provider's photos per service, with upload, edit and delete. */
+/** Mis trabajos: photos of the provider's single service (one list, one global x/30 counter). */
 export default function MyWorksScreen() {
   useRequireProviderStatus('provider');
   const tc = useThemeColors();
@@ -62,33 +61,20 @@ export default function MyWorksScreen() {
   const loadingMoreServices = !!hasNextPage || isFetchingNextPage;
 
   const worksQueries = useServicesWorks(services.map((s) => s.id));
-  const stateOf = useCallback(
-    (id: string) => worksQueries[services.findIndex((s) => s.id === id)],
-    [worksQueries, services],
-  );
-  const countOf = useCallback((id: string) => stateOf(id)?.data?.length ?? 0, [stateOf]);
-  const isCountReady = useCallback((id: string) => stateOf(id)?.data !== undefined, [stateOf]);
+  // v1: one service per provider. If legacy data has more, they share one list and one counter.
+  const service = services[0] ?? null;
+  const photos = useMemo<WorkPhoto[]>(() => worksQueries.flatMap((q) => q?.data ?? []), [worksQueries]);
+  const count = photos.length;
+  const countReady = services.length > 0 && worksQueries.every((q) => q?.data !== undefined);
+  const atLimit = count >= WORKS_LIMIT_PER_PROVIDER;
+  // The limit is enforced client-side, so the count has to be known before offering an upload.
+  const uploadDisabled = !service || !countReady || atLimit;
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const selected = services.find((s) => s.id === selectedId) ?? null;
-  const photos = useMemo<WorkPhoto[]>(
-    () => (selected ? [selected] : services).flatMap((s) => stateOf(s.id)?.data ?? []),
-    [selected, services, stateOf],
-  );
-
-  const [chooserOpen, setChooserOpen] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [editing, setEditing] = useState<WorkPhoto | null>(null);
   const { mutateAsync: create, isPending: creating } = useCreateWork();
   const { mutateAsync: update, isPending: updating } = useUpdateWork();
   const { mutateAsync: remove, isPending: deleting } = useDeleteWork();
-
-  const allReady = services.every((s) => isCountReady(s.id));
-  const allFull = services.length > 0 && services.every((s) => countOf(s.id) >= WORKS_LIMIT_PER_SERVICE);
-  // The limit is enforced client-side, so a service's count has to be known before offering an upload to it.
-  const uploadDisabled = selected
-    ? !isCountReady(selected.id) || countOf(selected.id) >= WORKS_LIMIT_PER_SERVICE
-    : !allReady || allFull;
 
   const picking = useRef(false);
   const pickImage = useCallback(async (service: OwnService) => {
@@ -113,22 +99,14 @@ export default function MyWorksScreen() {
     }
   }, []);
 
-  const chooseTarget = useCallback(
-    (service: OwnService) => {
-      if (countOf(service.id) >= WORKS_LIMIT_PER_SERVICE) {
-        toast.error('Servicio completo', WORK_LIMIT_MESSAGE);
-        return;
-      }
-      pickImage(service);
-    },
-    [countOf, pickImage],
-  );
-
   const startUpload = useCallback(() => {
-    if (selected) return chooseTarget(selected);
-    if (services.length === 1) return chooseTarget(services[0]);
-    setChooserOpen(true);
-  }, [selected, services, chooseTarget]);
+    if (!service) return;
+    if (atLimit) {
+      toast.error('Fotos completas', WORK_LIMIT_MESSAGE);
+      return;
+    }
+    pickImage(service);
+  }, [service, atLimit, pickImage]);
 
   const publish = useCallback(
     async (description: string) => {
@@ -158,29 +136,45 @@ export default function MyWorksScreen() {
     [editing, update],
   );
 
+  const deletePhoto = useCallback(
+    async (photo: WorkPhoto) => {
+      const ok = await dialog.confirm({
+        title: 'Eliminar foto',
+        message: '¿Seguro que quieres eliminarla? No se puede deshacer.',
+        confirmLabel: 'Eliminar',
+        destructive: true,
+      });
+      if (!ok) return;
+      try {
+        await remove(photo.id);
+        toast.success('Foto eliminada');
+        setEditing(null);
+      } catch (err) {
+        toast.error('No se pudo eliminar', getWorkErrorMessage(err));
+      }
+    },
+    [remove],
+  );
   const confirmDelete = useCallback(async () => {
-    if (!editing) return;
-    const ok = await dialog.confirm({
-      title: 'Eliminar foto',
-      message: '¿Seguro que quieres eliminarla? No se puede deshacer.',
-      confirmLabel: 'Eliminar',
-      destructive: true,
-    });
-    if (!ok) return;
-    try {
-      await remove(editing.id);
-      toast.success('Foto eliminada');
-      setEditing(null);
-    } catch (err) {
-      toast.error('No se pudo eliminar', getWorkErrorMessage(err));
-    }
-  }, [editing, remove]);
+    if (editing) await deletePhoto(editing);
+  }, [editing, deletePhoto]);
 
-  const selectedStates = (selected ? [selected] : services).map((s) => stateOf(s.id));
-  const loading = servicesQuery.isPending || loadingMoreServices || selectedStates.some((q) => q?.isPending);
-  const failedStates = selectedStates.filter((q) => q?.isError && q.data === undefined);
+  // Hidden photos (3 reports, pending admin review) are not editable; deleting stays allowed.
+  const onPressPhoto = useCallback(
+    (photo: WorkPhoto) => {
+      if (isWorkHidden(photo)) {
+        deletePhoto(photo);
+        return;
+      }
+      setEditing(photo);
+    },
+    [deletePhoto],
+  );
+
+  const loading = servicesQuery.isPending || loadingMoreServices || worksQueries.some((q) => q?.isPending);
+  const failedStates = worksQueries.filter((q) => q?.isError && q.data === undefined);
   const worksError = !loading && failedStates.length > 0;
-  const counter = selected ? `${countOf(selected.id)}/${WORKS_LIMIT_PER_SERVICE}` : null;
+  const counter = countReady ? `${count}/${WORKS_LIMIT_PER_PROVIDER}` : null;
 
   return (
     <View style={[styles.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
@@ -203,37 +197,18 @@ export default function MyWorksScreen() {
         <EmptyState
           icon="construct-outline"
           title="Primero publica un servicio"
-          subtitle="Las fotos se suben a uno de tus servicios."
+          subtitle="Las fotos se suben a tu servicio."
           cta={{ label: 'Publicar servicio', onPress: () => router.push('/service-form') }}
         />
       ) : (
         <>
-          <View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.chips}
-              accessibilityLabel="Filtrar por servicio"
-            >
-              <Chip label="Todos" selected={selectedId === null} onPress={() => setSelectedId(null)} />
-              {services.map((s) => (
-                <Chip
-                  key={s.id}
-                  label={s.title}
-                  selected={selectedId === s.id}
-                  onPress={() => setSelectedId(s.id)}
-                />
-              ))}
-            </ScrollView>
-          </View>
-
           <View style={styles.toolbar}>
-            {counter ? <Badge label={`${counter} fotos`} tone={uploadDisabled ? 'cancelled' : 'brand'} size="sm" /> : <View />}
+            {counter ? <Badge label={`${counter} fotos`} tone={atLimit ? 'cancelled' : 'brand'} size="sm" /> : <View />}
             <Button
               label="Subir foto"
               size="sm"
               icon={<Ionicons name="add" size={18} color={TOKENS.color.onPrimary} />}
-              disabled={uploadDisabled || services.length === 0}
+              disabled={uploadDisabled}
               onPress={startUpload}
             />
           </View>
@@ -263,29 +238,20 @@ export default function MyWorksScreen() {
             ) : (
               <WorksMasonry
                 items={photos}
-                onPressItem={setEditing}
-                labelFor={(p) => (p.description ? `Editar foto: ${p.description}` : 'Editar foto')}
+                onPressItem={onPressPhoto}
+                labelFor={workLabel}
+                overlayFor={(p) =>
+                  isWorkHidden(p) ? (
+                    <View style={styles.hiddenBadge}>
+                      <Badge label={WORK_HIDDEN_LABEL} tone="pending" size="sm" />
+                    </View>
+                  ) : null
+                }
               />
             )}
           </ScrollView>
         </>
       )}
-
-      <OptionSheet
-        visible={chooserOpen}
-        title="¿En qué servicio la subes?"
-        options={services.map((s) => ({
-          id: s.id,
-          label: s.title,
-          description: `${countOf(s.id)}/${WORKS_LIMIT_PER_SERVICE} fotos`,
-        }))}
-        onCancel={() => setChooserOpen(false)}
-        onSelect={(id) => {
-          setChooserOpen(false);
-          const service = services.find((s) => s.id === id);
-          if (service) chooseTarget(service);
-        }}
-      />
 
       <WorkFormSheet
         visible={!!draft}
@@ -314,7 +280,7 @@ export default function MyWorksScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   header: { paddingHorizontal: SPACING.xl, paddingTop: SPACING.md, paddingBottom: SPACING.md },
-  chips: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md, gap: SPACING.sm },
+  hiddenBadge: { position: 'absolute', left: SPACING.sm, bottom: SPACING.sm, right: SPACING.sm, alignItems: 'flex-start' },
   toolbar: {
     flexDirection: 'row',
     alignItems: 'center',

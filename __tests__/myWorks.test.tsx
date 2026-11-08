@@ -10,10 +10,7 @@ let mockHasNextServices = false;
 let mockErrored: string[] = [];
 let mockUnloaded: string[] = [];
 let mockPhotos: Record<string, any[]> = {};
-const SERVICES = [
-  { id: 's1', title: 'Plomería' },
-  { id: 's2', title: 'Gasista' },
-];
+const SERVICES = [{ id: 's1', title: 'Plomería' }];
 let mockServices = SERVICES;
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -97,34 +94,58 @@ beforeEach(() => {
 });
 
 describe('MyWorksScreen', () => {
-  it('shows x/30 for the selected service and disables upload at the limit', async () => {
-    mockPhotos = { s1: photos(30, "a"), s2: photos(2, "b") };
-    const { getByText, queryByText } = render(<MyWorksScreen />);
-    fireEvent.press(getByText('Plomería'));
+  it('shows one global x/30 counter and disables upload at the limit', async () => {
+    mockPhotos = { s1: photos(30, 'a') };
+    const { getByText } = render(<MyWorksScreen />);
     expect(getByText('30/30 fotos')).toBeTruthy();
     await act(async () => {
       fireEvent.press(getByText('Subir foto'));
     });
     expect(mockPickerLaunch).not.toHaveBeenCalled();
-
-    fireEvent.press(getByText('Gasista'));
-    expect(getByText('2/30 fotos')).toBeTruthy();
-    expect(queryByText('30/30 fotos')).toBeNull();
   });
 
-  it('asks which service when several and none is selected', async () => {
-    const { getByText, findByText } = render(<MyWorksScreen />);
+  it('renders no per-service selector and uploads straight to the single service', async () => {
+    mockPhotos = { s1: photos(2, 'a') };
+    const { getByText, queryByText, findByText } = render(<MyWorksScreen />);
+    expect(getByText('2/30 fotos')).toBeTruthy();
+    expect(queryByText('Todos')).toBeNull();
+    expect(queryByText('Plomería')).toBeNull();
     await act(async () => {
       fireEvent.press(getByText('Subir foto'));
     });
-    expect(await findByText('¿En qué servicio la subes?')).toBeTruthy();
+    expect(queryByText('¿En qué servicio la subes?')).toBeNull();
+    expect(mockPickerLaunch).toHaveBeenCalledTimes(1);
+    expect(await findByText('Publicar')).toBeTruthy();
+  });
+
+  it('sums legacy extra services into the same list and counter', () => {
+    mockServices = [
+      { id: 's1', title: 'Plomería' },
+      { id: 's2', title: 'Gasista' },
+    ];
+    mockPhotos = { s1: photos(3, 'a'), s2: photos(2, 'b') };
+    const { getByText } = render(<MyWorksScreen />);
+    expect(getByText('5/30 fotos')).toBeTruthy();
+  });
+
+  it('flags hidden photos with the review badge and keeps visible ones plain', () => {
+    mockPhotos = { s1: [...photos(1, 'v'), { ...photos(1, 'h')[0], status: 'HIDDEN' }] };
+    const { getAllByText, getByLabelText } = render(<MyWorksScreen />);
+    expect(getAllByText('Oculta por denuncias, en revisión')).toHaveLength(1);
+    expect(getByLabelText(/Oculta por denuncias, en revisión. Toca para eliminar/)).toBeTruthy();
+  });
+
+  it('does not open the edit sheet for a hidden photo', () => {
+    mockPhotos = { s1: [{ ...photos(1, 'h')[0], status: 'HIDDEN' }] };
+    const { getByLabelText, queryByText } = render(<MyWorksScreen />);
+    fireEvent.press(getByLabelText(/Toca para eliminar/));
+    expect(queryByText('Guardar')).toBeNull();
   });
 
   it('rejects images the device cannot convert before uploading', async () => {
     mockManipulate.mockRejectedValueOnce(new Error('decode'));
     mockPickerLaunch.mockResolvedValue({ canceled: false, assets: [{ uri: 'file:///a.heic', mimeType: 'image/heic' }] });
     const { getByText } = render(<MyWorksScreen />);
-    fireEvent.press(getByText('Plomería'));
     await act(async () => {
       fireEvent.press(getByText('Subir foto'));
     });
@@ -135,7 +156,6 @@ describe('MyWorksScreen', () => {
   it('maps a 422 POST_LIMIT_REACHED from the server to a clear toast', async () => {
     mockCreate.mockRejectedValueOnce(apiError(422, 'POST_LIMIT_REACHED'));
     const { getByText, findByText } = render(<MyWorksScreen />);
-    fireEvent.press(getByText('Plomería'));
     await act(async () => {
       fireEvent.press(getByText('Subir foto'));
     });
@@ -152,7 +172,6 @@ describe('MyWorksScreen', () => {
 
   it('opens the system picker without asking for library permission, resizing to 2048px JPEG', async () => {
     const { getByText, findByText } = render(<MyWorksScreen />);
-    fireEvent.press(getByText('Plomería'));
     await act(async () => {
       fireEvent.press(getByText('Subir foto'));
     });
@@ -168,7 +187,6 @@ describe('MyWorksScreen', () => {
   it('maps a dropped connection to the upload-specific copy', async () => {
     mockCreate.mockRejectedValueOnce({ isAxiosError: true, message: 'timeout of 120000ms exceeded' });
     const { getByText, findByText } = render(<MyWorksScreen />);
-    fireEvent.press(getByText('Plomería'));
     await act(async () => {
       fireEvent.press(getByText('Subir foto'));
     });
@@ -189,7 +207,6 @@ describe('MyWorksScreen', () => {
   it('keeps upload disabled until the count of the service is loaded', async () => {
     mockUnloaded = ['s1'];
     const { getByText } = render(<MyWorksScreen />);
-    fireEvent.press(getByText('Plomería'));
     await act(async () => {
       fireEvent.press(getByText('Subir foto'));
     });

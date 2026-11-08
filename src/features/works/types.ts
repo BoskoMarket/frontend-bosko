@@ -8,6 +8,8 @@ export interface WorkPhoto {
   description: string | null;
   createdAt: string;
   likes: number;
+  /** Only the owner sees HIDDEN (3 reports, pending admin review). Missing = visible. */
+  status?: 'HIDDEN' | 'VISIBLE';
 }
 
 export interface WorkService {

@@ -1,8 +1,8 @@
 import type { Href } from 'expo-router';
 
 export const WORKS_FEED_PAGE_SIZE = 20;
-/** Backend limit of photos per service. */
-export const WORKS_LIMIT_PER_SERVICE = 30;
+/** Backend limit of photos per provider (v1: one service per provider). */
+export const WORKS_LIMIT_PER_PROVIDER = 30;
 export const WORK_DESCRIPTION_MAX = 500;
 export const WORK_IMAGE_MAX_BYTES = 10 * 1024 * 1024;
 /** Photos are resized to this long side and re-encoded as JPEG before upload. */

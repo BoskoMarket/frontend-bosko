@@ -20,6 +20,8 @@ export interface WorksMasonryProps<T extends MasonryItem> {
   onPressItem: (item: T) => void;
   /** Accessibility label of one tile. */
   labelFor: (item: T) => string;
+  /** Optional content drawn over a tile (e.g. a status badge). */
+  overlayFor?: (item: T) => React.ReactNode;
   /** Horizontal padding of the parent, used to size the columns. */
   horizontalPadding?: number;
 }
@@ -29,6 +31,7 @@ export function WorksMasonry<T extends MasonryItem>({
   items,
   onPressItem,
   labelFor,
+  overlayFor,
   horizontalPadding = SPACING.lg,
 }: WorksMasonryProps<T>) {
   const tc = useThemeColors();
@@ -59,6 +62,7 @@ export function WorksMasonry<T extends MasonryItem>({
                 cachePolicy="memory-disk"
                 recyclingKey={item.id}
               />
+              {overlayFor?.(item)}
             </Pressable>
           ))}
         </View>

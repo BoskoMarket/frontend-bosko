@@ -1,7 +1,7 @@
 import { extractApiError, getUserErrorMessage } from '@/lib/errors';
-import { WORKS_LIMIT_PER_SERVICE, WORK_DESCRIPTION_MAX } from '../constants';
+import { WORKS_LIMIT_PER_PROVIDER, WORK_DESCRIPTION_MAX } from '../constants';
 
-export const WORK_LIMIT_MESSAGE = `Llegaste al máximo de ${WORKS_LIMIT_PER_SERVICE} fotos en este servicio. Borra alguna para subir otra.`;
+export const WORK_LIMIT_MESSAGE = `Llegaste al máximo de ${WORKS_LIMIT_PER_PROVIDER} fotos. Borra alguna para subir otra.`;
 
 /**
  * Maps a failed upload / edit / delete request to Spanish toast copy. Never throws.

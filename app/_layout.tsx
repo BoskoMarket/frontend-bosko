@@ -18,7 +18,7 @@ import { ThemeProvider } from "@react-navigation/native";
 import { AppBackground } from "@/core/components/AppBackground";
 import { usePushNotificationSetup } from "@/hooks/usePushNotificationSetup";
 import { NotificationsModalRoot } from "@/features/notifications/screens/NotificationsScreen";
-import { isChatNotificationType, resolveNotificationRoute } from "@/features/notifications/utils/notificationRoute";
+import { getNotificationRoute, isChatNotificationType, isV1NotificationType, resolveNotificationRoute } from "@/features/notifications/utils/notificationRoute";
 import { lookupOrderIdByConversation } from "@/features/notifications/utils/conversationOrderLookup";
 import type { Notification } from "@/features/notifications/services/notifications.service";
 import { openNotifications } from "@/stores/notificationsUI.store";
