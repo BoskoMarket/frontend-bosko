@@ -22,7 +22,14 @@ jest.mock('@/core/navigation/safeBack', () => ({ safeBack: jest.fn() }));
 jest.mock('@/components/AnimatedBackground', () => ({ AnimatedBackground: () => null }));
 jest.mock('@/features/notifications/state/NotificationsContext', () => ({ useNotifications: () => mockNotif }));
 jest.mock('@/features/notifications/hooks/useNotificationPermission', () => ({ useNotificationsDenied: () => mockDenied }));
-jest.mock('@/features/favorites/state/FavoritesContext', () => ({ useFavorites: () => mockFavs }));
+jest.mock('@/hooks/queries/useFavoritesQuery', () => ({
+  useFavoritesList: () => ({
+    data: { pages: [{ data: mockFavs.favorites, total: mockFavs.count }] },
+    isPending: false, isError: false, hasNextPage: false, isFetchingNextPage: false, refetch: jest.fn(),
+  }),
+  useFavoriteMutation: () => ({ mutate: (v: any) => mockFavs.toggle(v.service, v.favorite) }),
+  flattenFavorites: (pages: any[] | undefined) => (pages ?? []).flatMap((p) => p.data),
+}));
 jest.mock('@/hooks/mutations/useReviewMutations', () => ({
   useCreateReview: () => ({ mutateAsync: jest.fn(), isPending: false }),
   useReplyToReview: () => ({ mutateAsync: jest.fn(), isPending: false }),
@@ -98,7 +105,7 @@ describe.each(['dark', 'light'] as const)('T11 screens (%s)', (mode) => {
       const undo = await findByText('Deshacer');
       mockToggle.mockClear();
       await act(async () => { fireEvent.press(undo); });
-      expect(mockToggle).toHaveBeenCalledWith(item);
+      expect(mockToggle).toHaveBeenCalledWith(item, true);
     });
   });
 

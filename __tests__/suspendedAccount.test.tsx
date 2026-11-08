@@ -20,7 +20,6 @@ jest.mock('expo-router', () => {
 jest.mock('expo-secure-store', () => ({ getItemAsync: jest.fn(), setItemAsync: jest.fn(), deleteItemAsync: jest.fn() }));
 jest.mock('@/core/api/axiosinstance', () => ({ __esModule: true, default: { get: jest.fn() } }));
 jest.mock('@/features/chat/services/socket.service', () => ({ socketService: { connect: jest.fn(), disconnect: jest.fn() } }));
-jest.mock('@/stores/favorites.store', () => ({ useFavoritesStore: { getState: () => ({ setAccount: jest.fn(async () => {}) }) } }));
 const mockFetchConfig = jest.fn();
 jest.mock('@/features/appConfig/services/appConfig.service', () => ({ fetchAppConfig: () => mockFetchConfig() }));
 jest.mock('expo-application', () => ({ nativeApplicationVersion: '1.0.0' }));

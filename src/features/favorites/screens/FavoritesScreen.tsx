@@ -1,8 +1,10 @@
 ﻿import React, { useRef, useEffect, useCallback, useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   FlatList,
   Pressable,
+  RefreshControl,
   StatusBar,
   StyleSheet,
   View,
@@ -12,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
-import { useFavorites } from '../state/FavoritesContext';
+import { flattenFavorites, useFavoriteMutation, useFavoritesList } from '@/hooks/queries/useFavoritesQuery';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import type { ServiceSummary } from '@/types/services';
 import {
@@ -23,6 +25,7 @@ import {
   EmptyState,
   Card,
   ScreenHeader,
+  SkeletonList,
   Text,
   formatServicePrice,
   useIsDark,
@@ -119,25 +122,39 @@ export function FavoritesScreen() {
   const tc = useThemeColors();
   const isDark = useIsDark();
   const insets = useSafeAreaInsets();
-  const { favorites, toggle, count } = useFavorites();
+  const query = useFavoritesList();
+  const { mutate } = useFavoriteMutation();
+  const toggle = useCallback((service: ServiceSummary, favorite: boolean) => mutate({ service, favorite }), [mutate]);
+  const favorites = flattenFavorites(query.data?.pages);
+  const count = query.data?.pages[0]?.total ?? favorites.length;
+  const [refreshing, setRefreshing] = useState(false);
   const [undoItem, setUndoItem] = useState<ServiceSummary | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => { if (undoTimer.current) clearTimeout(undoTimer.current); }, []);
 
-  const handleRemove = useCallback(async (item: ServiceSummary) => {
-    await toggle(item);
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await query.refetch(); } finally { setRefreshing(false); }
+  }, [query]);
+
+  const onEndReached = useCallback(() => {
+    if (query.hasNextPage && !query.isFetchingNextPage) void query.fetchNextPage();
+  }, [query]);
+
+  const handleRemove = useCallback((item: ServiceSummary) => {
+    toggle(item, false);
     setUndoItem(item);
     if (undoTimer.current) clearTimeout(undoTimer.current);
     undoTimer.current = setTimeout(() => setUndoItem(null), UNDO_MS);
   }, [toggle]);
 
-  const handleUndo = useCallback(async () => {
+  const handleUndo = useCallback(() => {
     if (!undoItem) return;
     const restored = undoItem;
     setUndoItem(null);
     if (undoTimer.current) clearTimeout(undoTimer.current);
-    await toggle(restored);
+    toggle(restored, true);
   }, [undoItem, toggle]);
 
   return (
@@ -154,29 +171,44 @@ export function FavoritesScreen() {
         />
       </View>
 
-      <FlatList
-        data={favorites}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <FavoriteCard item={item} onRemove={() => handleRemove(item)} />
-        )}
-        contentContainerStyle={[
-          s.list,
-          { paddingBottom: insets.bottom + SPACING.xxxl },
-          favorites.length === 0 && s.listEmpty,
-        ]}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <EmptyState
-            icon="heart-outline"
-            title="Sin favoritos todavía"
-            subtitle="Guarda los servicios que te gusten tocando el corazón para encontrarlos rápido."
-            cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)') }}
-            iconColor={TOKENS.color.error}
-            iconBg={TOKENS.status.cancelled.bg}
-          />
-        }
-      />
+      {query.isPending ? (
+        <SkeletonList />
+      ) : query.isError && favorites.length === 0 ? (
+        <EmptyState
+          icon="cloud-offline-outline"
+          title="No pudimos cargar tus favoritos"
+          subtitle="Revisa tu conexión e intenta de nuevo."
+          cta={{ label: 'Reintentar', onPress: () => void query.refetch() }}
+        />
+      ) : (
+        <FlatList
+          data={favorites}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => (
+            <FavoriteCard item={item} onRemove={() => handleRemove(item)} />
+          )}
+          contentContainerStyle={[
+            s.list,
+            { paddingBottom: insets.bottom + SPACING.xxxl },
+            favorites.length === 0 && s.listEmpty,
+          ]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={tc.signal} />}
+          onEndReached={onEndReached}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={query.isFetchingNextPage ? <ActivityIndicator color={tc.signal} style={s.footer} /> : null}
+          ListEmptyComponent={
+            <EmptyState
+              icon="heart-outline"
+              title="Sin favoritos todavía"
+              subtitle="Guarda los servicios que te gusten tocando el corazón para encontrarlos rápido."
+              cta={{ label: 'Explorar servicios', onPress: () => router.push('/search') }}
+              iconColor={TOKENS.color.error}
+              iconBg={TOKENS.status.cancelled.bg}
+            />
+          }
+        />
+      )}
 
       {undoItem && (
         <View style={[s.undo, { bottom: insets.bottom + SPACING.lg }]}>
@@ -210,6 +242,7 @@ const s = StyleSheet.create({
 
   list:      { paddingHorizontal: SPACING.lg, paddingTop: SPACING.sm, gap: 10 },
   listEmpty: { flex: 1 },
+  footer:    { paddingVertical: SPACING.lg },
 
   card: {
     flexDirection: 'row',

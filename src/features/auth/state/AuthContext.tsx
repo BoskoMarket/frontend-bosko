@@ -25,7 +25,6 @@ import axios from 'axios';
 import { API_URL } from '@/core/config/env';
 import { socketService } from '@/features/chat/services/socket.service';
 import { useChatStore } from '@/stores/chat.store';
-import { useFavoritesStore } from '@/stores/favorites.store';
 import { QUERY_KEYS } from '@/core/query/queryKeys';
 import { useThemeColors } from '@/stores/theme.store';
 import { useQueryClient } from '@tanstack/react-query';
@@ -92,7 +91,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const purgeAccountData = useCallback(() => {
     if (purgeTimer.current) { clearTimeout(purgeTimer.current); purgeTimer.current = null; }
     useChatStore.getState().reset();
-    void useFavoritesStore.getState().setAccount(null);
     void qc.cancelQueries();
     qc.clear();
   }, [qc]);
@@ -157,9 +155,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (authState.token) socketService.connect(authState.token);
   }, [authState.token]);
-  useEffect(() => {
-    void useFavoritesStore.getState().setAccount(authState.user?.id ?? null);
-  }, [authState.user?.id]);
 
   // ── Login ──────────────────────────────────────────────────────────────
   const login = useCallback(async (credentials: Credentials): Promise<AuthResponse> => {

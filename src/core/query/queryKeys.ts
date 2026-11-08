@@ -18,6 +18,9 @@ export const QUERY_KEYS = {
   worksFeedAll:     ['works', 'feed']                                    as const,
   worksFeed:        (categoryId: string | null) => ['works', 'feed', categoryId ?? 'all'] as const,
 
+  favorites:        ['favorites', 'list']                                as const,
+  favoriteIds:      ['favorites', 'ids']                                 as const,
+
   clientOrders:     ['orders', 'client']                                 as const,
   providerOrders:   ['orders', 'provider']                               as const,
   myPlan:           ['plans', 'my']                                      as const,
