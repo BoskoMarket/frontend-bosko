@@ -4,6 +4,7 @@ import AuthModalLayout from '../app/auth/_layout';
 
 const mockUseAuth = jest.fn();
 jest.mock('@/features/auth/state/AuthContext', () => ({ useAuth: () => mockUseAuth() }));
+const mockSegments = jest.fn(() => ['auth', 'verify-email']);
 jest.mock('expo-router', () => {
   const { Text } = require('react-native');
   const Stack = () => <Text>stack</Text>;
@@ -11,6 +12,7 @@ jest.mock('expo-router', () => {
   return {
     Redirect: ({ href }: { href: string }) => <Text>redirect:{href}</Text>,
     Stack,
+    useSegments: () => mockSegments(),
   };
 });
 
@@ -23,6 +25,12 @@ describe('/auth layout inverse guard', () => {
   it('redirects a user who arrives already authenticated to the tabs', () => {
     mockUseAuth.mockReturnValue({ authLoaded: true, isAuthenticated: true });
     expect(render(<AuthModalLayout />).getByText('redirect:/(tabs)')).toBeTruthy();
+  });
+
+  it('does not redirect an authenticated user sent to select-city (account without a city)', () => {
+    mockSegments.mockReturnValueOnce(['auth', 'select-city']);
+    mockUseAuth.mockReturnValue({ authLoaded: true, isAuthenticated: true });
+    expect(render(<AuthModalLayout />).getByText('stack')).toBeTruthy();
   });
 
   it('lets anonymous users through', () => {

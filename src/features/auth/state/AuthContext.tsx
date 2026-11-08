@@ -44,6 +44,7 @@ import type {
   AuthState,
   AuthUser,
   Credentials,
+  GoogleSignupExtras,
   RegisterResponse,
   RegisterUserPayload,
 } from '../types';
@@ -233,13 +234,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ── Login con Google ──────────────────────────────────────────────────
   // Recibe el idToken de Firebase (ya autenticado con Google en el cliente,
   // ver handleGoogleSignIn en LogInView) y lo intercambia por la sesión propia.
-  const loginWithGoogle = useCallback(async (firebaseIdToken: string): Promise<AuthResponse> => {
+  const loginWithGoogle = useCallback(async (firebaseIdToken: string, extras?: GoogleSignupExtras): Promise<AuthResponse> => {
     if (purgeTimer.current) purgeAccountData();
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await loginWithGoogleService(firebaseIdToken);
+      const response = await loginWithGoogleService(firebaseIdToken, extras);
 
       await tokenStorage.save(response.accessToken, response.refreshToken, response.user?.email);
 

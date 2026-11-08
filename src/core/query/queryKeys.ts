@@ -4,6 +4,7 @@ export const QUERY_KEYS = {
   publicUser:       (id: string) => ['users', id]                        as const,
 
   categories:       ['categories']                                       as const,
+  cities:           ['cities']                                           as const,
   services:         (categoryId: string, page = 1) =>
                       ['services', categoryId, page]                     as const,
   featuredServices: ['services', 'featured']                             as const,

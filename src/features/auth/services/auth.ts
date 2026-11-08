@@ -6,7 +6,7 @@
  */
 
 import api from '@/core/api/axiosinstance';
-import type { AuthResponse, Credentials, RegisterResponse, RegisterUserPayload } from '../types';
+import type { AuthResponse, Credentials, GoogleSignupExtras, RegisterResponse, RegisterUserPayload } from '../types';
 
 export async function loginService(credentials: Credentials): Promise<AuthResponse> {
   const { data } = await api.post<AuthResponse>('/auth/login', credentials);
@@ -37,8 +37,12 @@ export async function resendVerificationService(email: string): Promise<void> {
  * el idToken de Firebase (mismo patrón que verifyPhoneWithFirebase). Ajustar
  * ruta/body/shape de la respuesta en cuanto el backend lo publique.
  */
-export async function loginWithGoogleService(firebaseIdToken: string): Promise<AuthResponse> {
-  const { data } = await api.post<AuthResponse>('/auth/google', { idToken: firebaseIdToken });
+export async function loginWithGoogleService(
+  firebaseIdToken: string,
+  extras?: GoogleSignupExtras,
+): Promise<AuthResponse> {
+  // A NEW Google user must send city + terms (else 422 CITY_REQUIRED / 400 TERMS_NOT_ACCEPTED).
+  const { data } = await api.post<AuthResponse>('/auth/google', { idToken: firebaseIdToken, ...extras });
   return data;
 }
 

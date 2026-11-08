@@ -9,13 +9,21 @@
 
 import { useCallback, useState } from 'react';
 import { useAuth } from '../state/AuthContext';
+import { router } from 'expo-router';
 import { GOOGLE_WEB_CLIENT_ID } from '@/core/config/env';
+import { extractApiError } from '@/lib/errors';
+import { pendingGoogleSignup } from '../state/pendingGoogleSignup';
+import { SELECT_CITY_HREF } from '../utils/cityGate';
 
 export function useGoogleSignIn() {
-  const { loginWithGoogle } = useAuth();
+  const { loginWithGoogle, clearError } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  /** Devuelve true si logueó, false si el usuario canceló. Tira si falla de verdad. */
+  /**
+   * Devuelve true si logueó, false si el usuario canceló o si es un usuario nuevo sin ciudad
+   * (CITY_REQUIRED): en ese caso guarda el token solo en memoria y navega a elegir ciudad.
+   * Tira si falla de verdad.
+   */
   const signInWithGoogle = useCallback(async (): Promise<boolean> => {
     if (!GOOGLE_WEB_CLIENT_ID) {
       throw new Error('Login con Google todavía no está configurado.');
@@ -41,12 +49,22 @@ export function useGoogleSignIn() {
       const userCredential = await auth().signInWithCredential(credential);
       const firebaseIdToken = await userCredential.user.getIdToken();
 
-      await loginWithGoogle(firebaseIdToken);
+      try {
+        await loginWithGoogle(firebaseIdToken);
+      } catch (err) {
+        if (extractApiError(err).code === 'CITY_REQUIRED') {
+          clearError();
+          pendingGoogleSignup.set(firebaseIdToken);
+          router.push(SELECT_CITY_HREF);
+          return false;
+        }
+        throw err;
+      }
       return true;
     } finally {
       setLoading(false);
     }
-  }, [loginWithGoogle]);
+  }, [loginWithGoogle, clearError]);
 
   return { loading, signInWithGoogle };
 }

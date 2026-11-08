@@ -1,5 +1,6 @@
 import api from "@/core/api/axiosinstance";
 import { extensionForMime } from "@/core/media/imageMime";
+import type { UserCity } from "@/features/markets/types";
 
 
 export interface UserProfile {
@@ -22,6 +23,8 @@ export interface UserProfile {
     role?: 'user' | 'admin';
     isProvider?: boolean;
     isAvailable?: boolean;
+    /** `null` = no city yet; `undefined` = old backend that does not send it. */
+    city?: UserCity | null;
     createdAt: string;
     updatedAt: string;
 }
@@ -106,4 +109,9 @@ export type DeleteAccountCredentials = { password: string } | { googleIdToken: s
 export async function deleteAccountService(credentials: DeleteAccountCredentials): Promise<DeleteAccountResult> {
     const { data } = await api.delete<DeleteAccountResult | undefined>('/users/me', { data: credentials });
     return data ?? {};
+}
+
+/** Set the city of an account that has none — PATCH /users/me/city (409 CITY_ALREADY_SET otherwise) */
+export async function setMyCity(cityId: string): Promise<void> {
+    await api.patch('/users/me/city', { cityId });
 }

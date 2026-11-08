@@ -24,6 +24,7 @@ import {
   AuthBackdrop,
   AuthCard,
   Button,
+  CheckboxRow,
   Divider,
   BRAND_RADIAL_FILL,
   Input,
@@ -38,6 +39,9 @@ import { useAuth } from '@/features/auth/state/AuthContext';
 import { useGoogleSignIn } from '@/features/auth/hooks/useGoogleSignIn';
 import { getFormErrors, getUserErrorMessage } from '@/lib/errors';
 import { BrandMark } from '@/components/BrandMark';
+import { CityPicker } from '@/features/auth/components/CityPicker';
+import { useCitiesQuery } from '@/hooks/queries/useCitiesQuery';
+import { TERMS_VERSION } from '@/core/config/terms';
 
 interface Step {
   label: string;
@@ -63,6 +67,8 @@ const STEPS: Step[] = [
 ];
 
 const REGISTER_FIELDS = STEPS.map(s => s.field);
+/** Text steps + the last "Tu ciudad" step (city + terms). */
+const TOTAL_STEPS = STEPS.length + 1;
 
 export default function RegisterView({ toRegister }: { toRegister?: () => void }) {
   const tc = useThemeColors();
@@ -72,9 +78,14 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({ firstName: '', lastName: '', email: '', password: '' });
   const [fieldError, setFieldError] = useState('');
+  const [cityId, setCityId] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [cityError, setCityError] = useState('');
+  const [termsError, setTermsError] = useState('');
+  const { isError: citiesFailed } = useCitiesQuery();
 
   const inputRef = useRef<TextInput>(null);
-  const progress = useRef(new Animated.Value(1 / STEPS.length)).current;
+  const progress = useRef(new Animated.Value(1 / TOTAL_STEPS)).current;
 
   React.useEffect(() => {
     // Evita mostrar un error que haya quedado pegado de otra pantalla
@@ -82,14 +93,21 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
     clearError();
   }, []);
 
-  const currentStep = STEPS[step];
-  const isLastStep = step === STEPS.length - 1;
+  const isCityStep = step === STEPS.length;
+  const currentStep = STEPS[Math.min(step, STEPS.length - 1)];
+  const isLastStep = isCityStep;
 
   const progressStyle = {
     width: progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }),
   };
 
   const validateCurrent = async (): Promise<boolean> => {
+    if (isCityStep) {
+      let valid = true;
+      if (!cityId) { setCityError('Elige tu ciudad'); valid = false; }
+      if (!acceptedTerms) { setTermsError('Debes aceptar los términos y la política de privacidad'); valid = false; }
+      return valid;
+    }
     const value = formData[currentStep.field].trim();
     if (!value) { setFieldError('Este campo es obligatorio'); return false; }
     if (currentStep.field === 'email') {
@@ -114,7 +132,7 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
       await handleFinish();
     } else {
       setStep(s => s + 1);
-      Animated.timing(progress, { toValue: (step + 2) / STEPS.length, duration: 300, useNativeDriver: false }).start();
+      Animated.timing(progress, { toValue: (step + 2) / TOTAL_STEPS, duration: 300, useNativeDriver: false }).start();
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   };
@@ -123,7 +141,7 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
     setFieldError('');
     if (step > 0) {
       setStep(s => s - 1);
-      Animated.timing(progress, { toValue: step / STEPS.length, duration: 300, useNativeDriver: false }).start();
+      Animated.timing(progress, { toValue: step / TOTAL_STEPS, duration: 300, useNativeDriver: false }).start();
     } else {
       toRegister?.();
     }
@@ -134,7 +152,10 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
     const firstName = formData.firstName.trim();
     const lastName = formData.lastName.trim();
     try {
-      await registerUser({ firstName, lastName, email, password: formData.password });
+      await registerUser({
+        firstName, lastName, email, password: formData.password,
+        cityId: cityId!, acceptedTerms: true, termsVersion: TERMS_VERSION,
+      });
       router.push({ pathname: '/auth/verify-email', params: { email } });
     } catch (err) {
       // VALIDATION_ERROR: volver al primer paso con error y mostrarlo en su input
@@ -144,7 +165,7 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
         clearError(); // el error ya se muestra en su campo; evita que reaparezca al cambiar de paso
         setStep(firstInvalid);
         setFieldError(fields[STEPS[firstInvalid].field]!);
-        Animated.timing(progress, { toValue: (firstInvalid + 1) / STEPS.length, duration: 300, useNativeDriver: false }).start();
+        Animated.timing(progress, { toValue: (firstInvalid + 1) / TOTAL_STEPS, duration: 300, useNativeDriver: false }).start();
       }
       if (general) dialog.fromAlert('Error', general);
     }
@@ -187,7 +208,7 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
                       <Ionicons name="arrow-back" size={22} color={tc.text} />
                     </Pressable>
                     <Text variant="bodySmall" color={tc.textSub} style={styles.stepCounter}>
-                      {step + 1} / {STEPS.length}
+                      {step + 1} / {TOTAL_STEPS}
                     </Text>
                   </View>
 
@@ -198,8 +219,37 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
                   </View>
 
                   <Text variant="h3" style={styles.cardTitle}>Crear cuenta</Text>
-                  <Text variant="subtitle" weight="400" color={tc.textSub} style={styles.stepLabel}>{currentStep.label}</Text>
+                  <Text variant="subtitle" weight="400" color={tc.textSub} style={styles.stepLabel}>{isCityStep ? 'Tu ciudad' : currentStep.label}</Text>
 
+                  {isCityStep ? (
+                    <View style={styles.fieldGap}>
+                      <CityPicker
+                        value={cityId}
+                        onChange={city => { setCityId(city.id); setCityError(''); clearError(); }}
+                        error={cityError}
+                      />
+                      <CheckboxRow
+                        checked={acceptedTerms}
+                        onToggle={next => { setAcceptedTerms(next); setTermsError(''); clearError(); }}
+                        error={termsError}
+                        accessibilityLabel="Acepto los términos y la política de privacidad"
+                        style={styles.termsRow}
+                      >
+                        <Text variant="bodySmall">
+                          {'Acepto los '}
+                          <Text
+                            variant="bodySmall"
+                            weight="600"
+                            color={TOKENS.color.signal}
+                            accessibilityRole="link"
+                            onPress={() => router.push('/terms')}
+                          >
+                            términos y la política de privacidad
+                          </Text>
+                        </Text>
+                      </CheckboxRow>
+                    </View>
+                  ) : (
                   <View style={styles.fieldGap}>
                     <Input
                       ref={inputRef}
@@ -216,6 +266,7 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
                       autoFocus
                     />
                   </View>
+                  )}
 
                   {!!displayError && (
                     <Text variant="bodySmall" color={TOKENS.color.error} style={styles.errorText}>{displayError}</Text>
@@ -225,24 +276,10 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
                     label={isLastStep ? 'Crear cuenta' : 'Siguiente'}
                     onPress={handleNext}
                     loading={isLoading}
+                    disabled={isCityStep && citiesFailed}
                     fullWidth
-                    style={isLastStep ? styles.ctaButtonTight : styles.ctaButton}
+                    style={styles.ctaButton}
                   />
-
-                  {isLastStep && (
-                    <Text variant="caption" color={tc.textSub} style={styles.legalText}>
-                      {'Al registrarte aceptas los '}
-                      <Text
-                        variant="caption"
-                        weight="600"
-                        color={TOKENS.color.signal}
-                        accessibilityRole="link"
-                        onPress={() => router.push('/terms')}
-                      >
-                        Términos y condiciones
-                      </Text>
-                    </Text>
-                  )}
 
                   {step === 0 && (
                     <>
@@ -295,8 +332,7 @@ const styles = StyleSheet.create({
   fieldGap: { marginBottom: 14 },
   errorText: { marginBottom: 14, marginLeft: SPACING.xs },
   ctaButton: { marginTop: 10, marginBottom: 26 },
-  ctaButtonTight: { marginTop: 10, marginBottom: SPACING.md },
-  legalText: { textAlign: 'center', marginBottom: SPACING.lg },
+  termsRow: { marginTop: SPACING.xs },
   dividerRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.xl },
   dividerLine: { flex: 1 },
   googleButton: { marginBottom: SPACING.xl },

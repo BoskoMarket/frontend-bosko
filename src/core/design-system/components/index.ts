@@ -76,3 +76,5 @@ export { CategoryPromoCard } from './CategoryPromoCard';
 export type { CategoryPromoCardProps } from './CategoryPromoCard';
 export { FeaturedPromoCard } from './FeaturedPromoCard';
 export type { FeaturedPromoCardProps } from './FeaturedPromoCard';
+export { CheckboxRow } from './CheckboxRow';
+export type { CheckboxRowProps } from './CheckboxRow';

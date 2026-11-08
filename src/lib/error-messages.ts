@@ -22,6 +22,16 @@ const REGISTER = {
   USERNAME_ALREADY_IN_USE: "Ese nombre de usuario ya está ocupado",
 } as const;
 
+const MARKET = {
+  CITY_NOT_FOUND: "La ciudad elegida no está disponible. Elige otra",
+  CITY_REQUIRED: "Elige tu ciudad para continuar",
+  CITY_ALREADY_SET: "Tu ciudad ya está definida. Para cambiarla, contacta a soporte",
+  TERMS_NOT_ACCEPTED:
+    "Debes aceptar los términos y la política de privacidad para continuar",
+  CITY_MISMATCH: "Este servicio no está disponible en tu ciudad.",
+  PHONE_COUNTRY_MISMATCH: "El teléfono no corresponde al país de tu ciudad",
+} as const;
+
 const VERIFICATION = {
   // Email OTP
   INVALID_VERIFICATION_CODE: "El código de verificación es incorrecto",
@@ -172,6 +182,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
   ...GENERIC,
   ...AUTH,
   ...REGISTER,
+  ...MARKET,
   ...VERIFICATION,
   ...PASSWORD,
   ...GENERAL_INPUT,

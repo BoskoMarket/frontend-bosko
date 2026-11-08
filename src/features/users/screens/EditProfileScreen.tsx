@@ -402,6 +402,15 @@ export default function EditProfileScreen() {
               />
             </View>
 
+            {/* Ciudad (solo lectura: cambiarla es una operación de soporte) */}
+            {profile.city ? (
+              <View style={styles.fieldGroup}>
+                <Text variant="label">Ciudad</Text>
+                <Text variant="body" accessibilityLabel={`Ciudad: ${profile.city.name}`}>{profile.city.name}</Text>
+                <Text variant="caption" color={tc.textSub}>Para cambiarla, contacta a soporte</Text>
+              </View>
+            ) : null}
+
             {/* Ubicación */}
             <View style={styles.fieldGroup}>
               <Text variant="label">Ubicación</Text>
