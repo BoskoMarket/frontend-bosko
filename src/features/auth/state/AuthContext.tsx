@@ -29,7 +29,8 @@ import { useFavoritesStore } from '@/stores/favorites.store';
 import { QUERY_KEYS } from '@/core/query/queryKeys';
 import { useThemeColors } from '@/stores/theme.store';
 import { useQueryClient } from '@tanstack/react-query';
-import { tokenStorage } from '@/core/auth/tokenStorage';
+import { router } from 'expo-router';
+import { tokenStorage, type ForceLogoutReason } from '@/core/auth/tokenStorage';
 import {
   loginService,
   loginWithGoogleService,
@@ -80,6 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authLoaded, setAuthLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [suspended, setSuspended] = useState(false);
 
   const tc = useThemeColors();
   const [sessionError, setSessionError] = useState<string | null>(null);
@@ -102,9 +104,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     purgeTimer.current = setTimeout(purgeAccountData, PURGE_DELAY_MS);
   }, [qc, purgeAccountData]);
   useEffect(() => () => { if (purgeTimer.current) clearTimeout(purgeTimer.current); }, []);
+  // Forced logout (revoked refresh, suspended account). A suspension also raises the flag and
+  // sends the user to /suspended; the session is cleared exactly as in the plain case.
+  const forceLogout = useCallback((reason?: ForceLogoutReason) => {
+    clearLocalState();
+    if (reason !== 'suspended') return;
+    setSuspended(true);
+    try { router.replace('/suspended'); } catch { /* router not mounted yet; the index gate redirects */ }
+  }, [clearLocalState]);
+  const clearSuspended = useCallback(() => setSuspended(false), []);
 
   useEffect(() => {
-    tokenStorage.setForceLogoutCallback(clearLocalState);
+    tokenStorage.setForceLogoutCallback(forceLogout);
     const unsubscribe = tokenStorage.subscribe(() => {
       const token = tokenStorage.getAccessToken();
       if (!token) { clearLocalState(); return; }
@@ -113,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } : current);
     });
     return () => { unsubscribe(); tokenStorage.setForceLogoutCallback(null); socketService.disconnect(); };
-  }, [clearLocalState]);
+  }, [clearLocalState, forceLogout]);
 
   // /users/me valida la sesión; Axios refresca el token si hace falta.
   useEffect(() => {
@@ -165,6 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials.email,
       );
 
+      setSuspended(false);
       setAuthState({
         token: response.accessToken,
         refreshToken: response.refreshToken,
@@ -217,6 +229,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       await tokenStorage.save(response.accessToken, response.refreshToken, email);
 
+      setSuspended(false);
       setAuthState({
         token: response.accessToken,
         refreshToken: response.refreshToken,
@@ -244,6 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       await tokenStorage.save(response.accessToken, response.refreshToken, response.user?.email);
 
+      setSuspended(false);
       setAuthState({
         token: response.accessToken,
         refreshToken: response.refreshToken,
@@ -296,6 +310,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         authState,
         authLoaded,
         isAuthenticated,
+        suspended,
+        clearSuspended,
         isLoading,
         error,
         login,

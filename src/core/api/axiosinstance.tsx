@@ -8,6 +8,12 @@ type SessionConfig = InternalAxiosRequestConfig & { _retry?: boolean; _sessionVe
 const api = axios.create({ baseURL: API_URL, timeout: TIMEOUT });
 let refreshing: { version: number; promise: Promise<string> } | null = null;
 
+/** Backend contract: a suspended account gets 403 + `code: ACCOUNT_SUSPENDED` on every request. */
+export function isAccountSuspendedError(error: unknown): boolean {
+  const response = (error as AxiosError<{ code?: string }> | undefined)?.response;
+  return response?.status === 403 && response.data?.code === 'ACCOUNT_SUSPENDED';
+}
+
 export function unwrapResponse<T>(response: AxiosResponse<T>): AxiosResponse<T> {
   const body = response.data;
   if (body && typeof body === 'object' && 'success' in body && 'data' in body) {
@@ -37,6 +43,13 @@ export async function refreshSession(): Promise<string> {
       return refreshed.accessToken;
     } catch (error) {
       const status = (error as AxiosError).response?.status;
+      if (isAccountSuspendedError(error)) {
+        if (version === tokenStorage.getSessionVersion()) {
+          tokenStorage.triggerForceLogout('suspended');
+          await tokenStorage.clear();
+        }
+        throw error;
+      }
       if (version === tokenStorage.getSessionVersion() && (status === 401 || status === 403)) {
         // La UI se cierra inmediatamente, aunque falle el almacenamiento del dispositivo.
         tokenStorage.triggerForceLogout();
@@ -70,6 +83,12 @@ api.interceptors.response.use(response => {
   return unwrapResponse(response);
 }, async (error: AxiosError) => {
   const original = error.config as SessionConfig | undefined;
+  // Also covers /auth/login and /auth/refresh-token (they skip the 401 refresh path below).
+  if (isAccountSuspendedError(error)) {
+    tokenStorage.triggerForceLogout('suspended');
+    await tokenStorage.clear();
+    throw error;
+  }
   if (!original || original.url?.startsWith('/auth/') || error.response?.status !== 401 || original._retry) throw error;
   if (original._sessionVersion !== tokenStorage.getSessionVersion()) throw new axios.CanceledError('La sesión cambió.');
   original._retry = true;

@@ -92,14 +92,14 @@ function handleNotificationResponse(response: Notifications.NotificationResponse
 }
 
 function RootLayoutNav() {
-  const { authLoaded, isAuthenticated } = useAuth();
+  const { authLoaded, isAuthenticated, suspended } = useAuth();
   const tc = useThemeColors();
   const segments = useSegments();
   const navigation = useRootNavigationState();
   useEffect(() => {
-    if (!navigation?.key || !authLoaded || isAuthenticated) return;
+    if (!navigation?.key || !authLoaded || isAuthenticated || suspended) return;
     if (['(tabs)', 'orders', 'chat', 'admin', 'service-form', 'search', 'upload-reel', 'work'].includes(segments[0] ?? '')) router.replace('/login');
-  }, [authLoaded, isAuthenticated, segments, navigation?.key]);
+  }, [authLoaded, isAuthenticated, suspended, segments, navigation?.key]);
   useChatSync();
   useNotificationNavigation(authLoaded && !!navigation?.key);
   usePushNotificationSetup();
@@ -114,6 +114,7 @@ function RootLayoutNav() {
       <Stack.Screen name="login" />
       <Stack.Screen name="welcome-video" />
       <Stack.Screen name="terms" />
+      <Stack.Screen name="suspended" options={{ gestureEnabled: false }} />
       <Stack.Screen name="auth" options={{ headerShown: false }} />
       <Stack.Screen name="chat" options={{ headerShown: false }} />
       <Stack.Screen name="orders" options={{ headerShown: false }} />

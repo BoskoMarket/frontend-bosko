@@ -15,6 +15,7 @@ const AUTH = {
   AUTHENTICATION_FAILED: "No pudimos autenticarte. Vuelve a intentarlo",
   INVALID_FIREBASE_TOKEN: "Error al verificar con Firebase. Reintenta",
   MISSING_PHONE_NUMBER: "No se pudo obtener tu número de teléfono",
+  ACCOUNT_SUSPENDED: "Tu cuenta está suspendida. Contacta a soporte",
 } as const;
 
 const REGISTER = {

@@ -17,7 +17,7 @@ import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { needsCity, SELECT_CITY_HREF } from '@/features/auth/utils/cityGate';
 
 export default function IndexScreen() {
-  const { authLoaded, isAuthenticated, authState } = useAuth();
+  const { authLoaded, isAuthenticated, authState, suspended } = useAuth();
   const { data: profile } = useProfile();
 
   if (!authLoaded) return null;
@@ -29,6 +29,9 @@ export default function IndexScreen() {
     if (needsCity(city)) return <Redirect href={SELECT_CITY_HREF} />;
     return <Redirect href="/(tabs)" />;
   }
+
+  // Suspended account: no session, and the only screen it can see is the suspension one.
+  if (suspended) return <Redirect href="/suspended" />;
 
   // Sin sesión → OnBoarding (maneja internamente si ya fue visto)
   return (

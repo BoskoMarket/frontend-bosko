@@ -72,6 +72,9 @@ export interface AuthContextType {
   authState:                   AuthState;
   authLoaded:                  boolean;
   isAuthenticated:             boolean;
+  /** True after a forced logout caused by a suspended account (routing state). */
+  suspended:                   boolean;
+  clearSuspended:              () => void;
   isLoading:                   boolean;
   error:                       string | null;
   login:                       (credentials: Credentials) => Promise<AuthResponse>;

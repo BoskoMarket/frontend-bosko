@@ -44,6 +44,7 @@ import {
 } from '@/core/design-system';
 import type { TimelineStep } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { DisputeSupportNotice } from '../components/DisputeSupportNotice';
 
 // Pasos del timeline en orden
 const TIMELINE_STEPS: { status: OrderStatus; label: string; icon: TimelineStep['icon'] }[] = [
@@ -305,6 +306,8 @@ export default function OrderDetailScreen() {
             </View>
           </View>
         )}
+
+        <DisputeSupportNotice orderId={order.id} status={order.status} />
 
         {/* Acciones según rol y estado (matriz en getOrderActions) */}
         <Animated.View style={[styles.actionsContainer, enter(3)]}>
