@@ -18,8 +18,7 @@ import { safeBack } from '@/core/navigation/safeBack';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Service, ServicePayload } from "@/features/servicesUser/services/service";
 import { uploadServiceImages } from "@/features/servicesUser/services/service";
-import { useCategories, useMyServices, useUpdateService } from "@/hooks/queries/useMarketplaceQuery";
-import { useAddServiceWithPlanLimit } from "@/features/servicesUser/hooks/useAddServiceWithPlanLimit";
+import { useCategories, useCreateService, useMyServices, useUpdateService } from "@/hooks/queries/useMarketplaceQuery";
 import { fetchServiceById } from "../services/services";
 import { Button, Card, Chip, Input, ScreenHeader, SPACING, Text, TOKENS, useIsDark, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
@@ -78,7 +77,8 @@ export default function ServiceFormScreen() {
     () => myServicesQuery.data?.pages.flatMap(page => page.data) ?? [],
     [myServicesQuery.data],
   );
-  const addServiceM = useAddServiceWithPlanLimit();
+  // The server enforces the plan limit (422 SERVICE_LIMIT_REACHED, handled in handleSubmit).
+  const addServiceM = useCreateService();
   const updateServiceM = useUpdateService();
   const categoriesQuery = useCategories();
   const categories = categoriesQuery.data ?? [];
@@ -201,34 +201,42 @@ export default function ServiceFormScreen() {
         const { categoryId: _cat, title, ...rest } = payload;
         const editPayload = titleUnchanged ? rest : { ...rest, title };
         await updateServiceM.mutateAsync({ id: selectedService.id, payload: editPayload });
+        // The service is already saved; a failed photo upload must not read as a full success.
+        let photoFailed = false;
         if (imageUri?.startsWith("file")) {
           try {
             await uploadServiceImages(selectedService.id, [imageUri]);
           } catch {
-            // Upload fallback — la edición ya fue guardada, el proveedor puede reintentar la foto después
+            photoFailed = true;
           }
         }
-        toast.success("Servicio actualizado", "Los cambios fueron guardados.");
+        if (photoFailed) {
+          toast.warning("Cambios guardados", "No se pudo subir la foto. Editá el servicio para reintentar.");
+        } else {
+          toast.success("Servicio actualizado", "Los cambios fueron guardados.");
+        }
       } else {
         const service = await addServiceM.mutateAsync(payload);
-        // Upload main photo if selected
+        let photoFailed = false;
         if (service.id && imageUri) {
           try {
-            const imageUris = [imageUri];
-            await uploadServiceImages(service.id, imageUris);
+            await uploadServiceImages(service.id, [imageUri]);
           } catch {
-            // Upload fallback — el servicio ya fue creado, el proveedor puede subir la foto después
+            photoFailed = true;
           }
         }
-        // Upload gallery if any
         if (service.id && galleryImages.length > 0) {
           try {
             await uploadServiceImages(service.id, galleryImages);
           } catch {
-            // Ídem — galería no es bloqueante para la creación del servicio
+            photoFailed = true;
           }
         }
-        toast.success("¡Publicado!", "Tu servicio ya está disponible.");
+        if (photoFailed) {
+          toast.warning("Servicio publicado", "No se pudieron subir algunas fotos. Editá el servicio para reintentar.");
+        } else {
+          toast.success("¡Publicado!", "Tu servicio ya está disponible.");
+        }
       }
       safeBack(router, '/(tabs)/profile');
     } catch (err: any) {
