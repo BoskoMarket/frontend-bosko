@@ -51,12 +51,12 @@ describe.each(['dark', 'light'] as const)('ReelsAutoplayRow (%s)', (mode) => {
 
   it('shows the current value and toggles it', () => {
     const { getByText, getByLabelText } = render(<ReelsAutoplayRow />);
-    expect(getByText('Reproducción automática de reels')).toBeTruthy();
+    expect(getByText('Reproducción automatica de reels')).toBeTruthy();
     expect(getByText('Siempre')).toBeTruthy();
-    fireEvent(getByLabelText('Reproducir reels automáticamente solo con Wi-Fi'), 'valueChange', true);
+    fireEvent(getByLabelText('Reproducir reels automaticamente solo con Wi-Fi'), 'valueChange', true);
     expect(getByText('Solo con Wi-Fi')).toBeTruthy();
     expect(usePreferencesStore.getState().reelsAutoplay).toBe('wifi');
-    fireEvent(getByLabelText('Reproducir reels automáticamente solo con Wi-Fi'), 'valueChange', false);
+    fireEvent(getByLabelText('Reproducir reels automaticamente solo con Wi-Fi'), 'valueChange', false);
     expect(getByText('Siempre')).toBeTruthy();
   });
 });

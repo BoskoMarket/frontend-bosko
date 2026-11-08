@@ -280,7 +280,7 @@ export default function OrderDetailScreen() {
               <Text variant="bodySmall" color={tc.textSub}>
                 {isProvider
                   ? 'El trabajo fue marcado como finalizado.'
-                   : order.review ? 'El servicio fue completado.' : 'El servicio fue completado. Podés calificarlo.'}
+                   : order.review ? 'El servicio fue completado.' : 'El servicio fue completado. Puedes calificarlo.'}
               </Text>
             </View>
           </View>
@@ -306,7 +306,7 @@ export default function OrderDetailScreen() {
                 loading={actionLoading === 'Rechazar'}
                 onPress={() => promptAndRun(
                   'Rechazar orden',
-                  'Ingresá el motivo del rechazo',
+                  'Ingresa el motivo del rechazo',
                   reason => rejectOrder(order.id, { reason }),
                 )}
               />
@@ -345,7 +345,7 @@ export default function OrderDetailScreen() {
               loading={actionLoading === 'Cancelar orden'}
               onPress={() => promptAndRun(
                 'Cancelar orden',
-                'Ingresá el motivo de la cancelación',
+                'Ingresa el motivo de la cancelación',
                 reason => cancelOrder(order.id, { reason }),
               )}
             />
@@ -401,7 +401,7 @@ export default function OrderDetailScreen() {
               loading={actionLoading === 'Abrir disputa'}
               onPress={() => promptAndRun(
                 'Abrir disputa',
-                `Describí el problema para que el equipo de ${BRAND_NAME} pueda ayudarte`,
+                `Describe el problema para que el equipo de ${BRAND_NAME} pueda ayudarte`,
                 reason => disputeOrder(order.id, { reason }),
               )}
             />

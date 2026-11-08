@@ -280,7 +280,7 @@ export const SearchPage = () => {
           <EmptyState
             icon="search-outline"
             title="¿Qué estás buscando?"
-            subtitle="Buscá servicios, profesionales o categorías"
+            subtitle="Busca servicios, profesionales o categorías"
           />
         )}
 

@@ -51,7 +51,7 @@ export default function WorkDetailScreen() {
         <EmptyState
           icon="image-outline"
           title="Esta foto ya no está disponible"
-          subtitle="Volvé a Trabajos para ver los más recientes."
+          subtitle="Vuelve a Trabajos para ver los más recientes."
           cta={{ label: 'Volver', onPress: () => safeBack(router, WORKS_TAB_ROUTE) }}
         />
       </View>
@@ -141,7 +141,7 @@ export default function WorkDetailScreen() {
       <ReportFlow
         visible={reportOpen}
         title="Reportar foto"
-        message="Contanos por qué querés reportar este contenido."
+        message="Cuéntanos por qué quieres reportar este contenido."
         onClose={closeReport}
         submit={submitReport}
       />

@@ -37,5 +37,5 @@ export function formatDeletionDate(iso?: string | null): string | null {
 export function deactivationMessage(deletionScheduledAt?: string | null): string {
   const date = formatDeletionDate(deletionScheduledAt);
   const when = date ? `el ${date}` : `en ${DELETION_GRACE_DAYS} días`;
-  return `Tu cuenta se desactivó. Se eliminará definitivamente ${when}. Si volvés a iniciar sesión antes, se reactiva.`;
+  return `Tu cuenta se desactivó. Se eliminará definitivamente ${when}. Si vuelves a iniciar sesión antes, se reactiva.`;
 }

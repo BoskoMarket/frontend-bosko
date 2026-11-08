@@ -82,7 +82,7 @@ describe('WorksFeedScreen', () => {
   it('invites providers to upload and opens Mis trabajos', () => {
     mockIsProvider = true;
     const { getByText } = render(<WorksFeedScreen />);
-    expect(getByText('Subí tus primeros trabajos')).toBeTruthy();
+    expect(getByText('Sube tus primeros trabajos')).toBeTruthy();
     fireEvent.press(getByText('Mis trabajos'));
     expect(mockPush).toHaveBeenCalledWith('/(tabs)/profile/my-works');
   });

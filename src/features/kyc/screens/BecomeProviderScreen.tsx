@@ -133,8 +133,8 @@ function ProviderActiveCard() {
           <Ionicons name="briefcase" size={28} color={TOKENS.color.onPrimary} />
         </View>
         <View style={s.activeText}>
-          <Text variant="h3" color={TOKENS.color.onPrimary}>¡Ya sos prestador!</Text>
-          <Text variant="bodySmall" color={TOKENS.onMedia.textSub}>Podés publicar servicios y recibir órdenes</Text>
+          <Text variant="h3" color={TOKENS.color.onPrimary}>¡Ya eres prestador!</Text>
+          <Text variant="bodySmall" color={TOKENS.onMedia.textSub}>Puedes publicar servicios y recibir órdenes</Text>
         </View>
       </LinearGradient>
     </View>
@@ -142,9 +142,9 @@ function ProviderActiveCard() {
 }
 
 const BENEFITS: { icon: React.ComponentProps<typeof Ionicons>['name']; text: string }[] = [
-  { icon: 'cash-outline',             text: 'Recibí pagos seguros por tus servicios' },
-  { icon: 'people-outline',           text: `Accedé a miles de clientes en ${BRAND_NAME}` },
-  { icon: 'star-outline',             text: 'Construí tu reputación con reseñas' },
+  { icon: 'cash-outline',             text: 'Recibe pagos seguros por tus servicios' },
+  { icon: 'people-outline',           text: `Accede a miles de clientes en ${BRAND_NAME}` },
+  { icon: 'star-outline',             text: 'Construye tu reputación con reseñas' },
   { icon: 'shield-checkmark-outline', text: 'Badge de prestador verificado en tu perfil' },
 ];
 
@@ -258,8 +258,8 @@ export function BecomeProviderScreen() {
         : kycStatus === 'in_progress' || kycStatus === 'pending'
           ? 'Estamos revisando tu documentación. Puede tardar hasta 24 horas.'
           : kycStatus === 'rejected' || kycStatus === 'declined'
-            ? 'Hubo un problema con tus documentos. Podés reintentar.'
-            : 'Subí tu DNI o pasaporte para confirmar tu identidad.',
+            ? 'Hubo un problema con tus documentos. Puedes reintentar.'
+            : 'Sube tu DNI o pasaporte para confirmar tu identidad.',
       state: kycStepState(),
       badge: KYC_STATUS[kycStatus].badge,
       action: kycStepState() !== 'done' && kycStepState() !== 'in_progress'
@@ -277,8 +277,8 @@ export function BecomeProviderScreen() {
         : bgStatus === 'UNDER_REVIEW'
           ? `Tu documento está siendo revisado por el equipo de ${BRAND_NAME}.`
           : bgStatus === 'REJECTED'
-            ? bgCheck?.notes ?? 'El documento fue rechazado. Cargá uno válido.'
-            : 'Cargá tu certificado de antecedentes penales para continuar.',
+            ? bgCheck?.notes ?? 'El documento fue rechazado. Carga uno válido.'
+            : 'Carga tu certificado de antecedentes penales para continuar.',
       state: bgStepState(),
       badge: bgStatus === 'NOT_SUBMITTED' ? undefined : BACKGROUND_CHECK_STATUS[bgStatus].label,
       action: bgStepState() !== 'locked' && bgStepState() !== 'done'
@@ -288,9 +288,9 @@ export function BecomeProviderScreen() {
     },
     {
       id: 'publish',
-      title: 'Publicá tu primer servicio',
+      title: 'Publica tu primer servicio',
       description: isProvider
-        ? 'Tu cuenta está activa. Creá tu primer servicio y empezá a recibir clientes.'
+        ? 'Tu cuenta está activa. Crea tu primer servicio y empieza a recibir clientes.'
         : 'Una vez aprobados ambos pasos, podrás publicar servicios.',
       state: publishStepState(),
       action: isProvider ? () => router.push('/service-form') : undefined,

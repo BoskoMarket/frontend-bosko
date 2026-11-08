@@ -107,7 +107,7 @@ export default function EditProfileScreen() {
       const asset = result.assets[0];
       const mimeType = resolveImageMime(asset);
       if (mimeType !== 'image/jpeg' && mimeType !== 'image/png' && mimeType !== 'image/webp') {
-        toast.error('Formato no válido', 'Elegí una foto JPG, PNG o WebP.');
+        toast.error('Formato no válido', 'Elige una foto JPG, PNG o WebP.');
         return;
       }
       const bannerSize = resolveFileSize({ uri: asset.uri, fileSize: asset.fileSize });
@@ -134,7 +134,7 @@ export default function EditProfileScreen() {
 
   const confirmRemoveBanner = useCallback(() => {
     if (bannerBusy.current) return;
-    dialog.fromAlert('Quitar portada', '¿Querés quitar tu portada? Se va a mostrar la imagen por defecto.', [
+    dialog.fromAlert('Quitar portada', '¿Quieres quitar tu portada? Se va a mostrar la imagen por defecto.', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Quitar',
@@ -215,7 +215,7 @@ export default function EditProfileScreen() {
       safeBack(router, '/(tabs)/profile');
       return;
     }
-    dialog.fromAlert('Descartar cambios', 'Tenés cambios sin guardar. ¿Querés salir igual?', [
+    dialog.fromAlert('Descartar cambios', 'Tienes cambios sin guardar. ¿Quieres salir igual?', [
       { text: 'Seguir editando', style: 'cancel' },
       { text: 'Descartar', style: 'destructive', onPress: () => safeBack(router, '/(tabs)/profile') },
     ]);
@@ -225,7 +225,7 @@ export default function EditProfileScreen() {
     setLocating(true);
     try {
       const permission = await Location.requestForegroundPermissionsAsync();
-      if (permission.status !== 'granted') throw new Error('Permití el acceso a tu ubicación en los ajustes del dispositivo.');
+      if (permission.status !== 'granted') throw new Error('Permite el acceso a tu ubicación en los ajustes del dispositivo.');
       const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       setCoordinates({ lat: position.coords.latitude, lng: position.coords.longitude });
     } catch (err) {
@@ -253,7 +253,7 @@ export default function EditProfileScreen() {
             <EmptyState
               icon="cloud-offline-outline"
               title="No pudimos cargar tu perfil"
-              subtitle={profileError ?? 'Revisá tu conexión e intentá de nuevo.'}
+              subtitle={profileError ?? 'Revisa tu conexión e intenta de nuevo.'}
               cta={{ label: 'Reintentar', onPress: () => { refreshProfile(); } }}
             />
           )}
@@ -349,7 +349,7 @@ export default function EditProfileScreen() {
               <MaterialIcons name="camera-alt" size={16} color={TOKENS.color.onPrimary} />
             </View>
           </Pressable>
-          <Text variant="caption" color={tc.textSub}>Tocá para cambiar foto</Text>
+          <Text variant="caption" color={tc.textSub}>Toca para cambiar foto</Text>
         </MotiView>
 
         {/* Form */}
@@ -406,7 +406,7 @@ export default function EditProfileScreen() {
             <View style={styles.fieldGroup}>
               <Text variant="label">Ubicación</Text>
               <Text variant="bodySmall" color={tc.textSub}>
-                {coordinates ? 'Ubicación seleccionada. Guardá el perfil para confirmarla.' : profile?.location || 'Usá tu ubicación actual para ubicar tu perfil.'}
+                {coordinates ? 'Ubicación seleccionada. Guarda el perfil para confirmarla.' : profile?.location || 'Usa tu ubicación actual para ubicar tu perfil.'}
               </Text>
               <Button
                 label={locating ? 'Buscando ubicación…' : 'Usar mi ubicación actual'}
@@ -422,7 +422,7 @@ export default function EditProfileScreen() {
                 label="Bio"
                 value={bio}
                 onChangeText={setBio}
-                placeholder="Contanos sobre vos..."
+                placeholder="Cuéntanos sobre ti..."
                 multiline
                 maxLength={BIO_MAX}
                 textAlignVertical="top"

@@ -189,7 +189,7 @@ export default function PlansScreen() {
             <View style={[s.freeNote, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
               <MaterialIcons name="info" size={18} color={TOKENS.color.signal} />
               <Text style={[s.freeNoteText, { color: tc.text }]}>
-                Estás en el plan Free. Actualizá para acceder a más beneficios.
+                Estás en el plan Free. Actualiza para acceder a más beneficios.
               </Text>
             </View>
           )}

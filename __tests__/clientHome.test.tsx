@@ -42,12 +42,12 @@ beforeEach(() => {
 describe('ClientHome', () => {
   it('shows the headline and routes the main actions', () => {
     const { getByText, getAllByText, getByLabelText } = render(<ClientHome />);
-    expect(getByText('Encontrá quien lo haga.')).toBeTruthy();
-    expect(getByText('O hacelo vos.')).toBeTruthy();
+    expect(getByText('Encuentra quien lo haga.')).toBeTruthy();
+    expect(getByText('O hazlo tú.')).toBeTruthy();
     expect(getByText('Cómo funciona')).toBeTruthy();
     expect(getByText('Identidad verificada')).toBeTruthy();
 
-    fireEvent.press(getByLabelText('¿Qué necesitás? Electricista, pintor…'));
+    fireEvent.press(getByLabelText('¿Qué necesitas? Electricista, pintor…'));
     expect(router.push).toHaveBeenCalledWith('/search');
 
     fireEvent.press(getByText('Buscar ahora'));

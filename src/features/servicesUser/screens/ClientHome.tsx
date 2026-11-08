@@ -50,9 +50,9 @@ const CATEGORY_TINT_OFFSET = 2;
 const SERVICE_COLUMNS = 2;
 
 const STEPS = [
-  { number: '01', title: 'Buscá', caption: 'Por rubro o zona' },
-  { number: '02', title: 'Pedí presupuesto', caption: 'Por chat, sin cargo' },
-  { number: '03', title: 'Coordiná y calificá', caption: 'Todo en la orden' },
+  { number: '01', title: 'Busca', caption: 'Por rubro o zona' },
+  { number: '02', title: 'Pide presupuesto', caption: 'Por chat, sin cargo' },
+  { number: '03', title: 'Coordina y califica', caption: 'Todo en la orden' },
 ] as const;
 
 const TRUST: { icon: IconName; title: string; caption: string }[] = [
@@ -193,11 +193,11 @@ export default function ClientHome() {
         <HomeTopBar />
 
         <View style={styles.headline}>
-          <Text variant="h1" color={tc.text}>Encontrá quien lo haga.</Text>
-          <Text variant="h1" color={tc.signal}>O hacelo vos.</Text>
+          <Text variant="h1" color={tc.text}>Encuentra quien lo haga.</Text>
+          <Text variant="h1" color={tc.signal}>O hazlo tú.</Text>
         </View>
 
-        <SearchTrigger placeholder="¿Qué necesitás? Electricista, pintor…" onPress={goSearch} />
+        <SearchTrigger placeholder="¿Qué necesitas? Electricista, pintor…" onPress={goSearch} />
 
         {categoriesQuery.isLoading && !categories.length ? (
           <ChipSkeletons />
@@ -215,7 +215,7 @@ export default function ClientHome() {
 
         <FeaturedPromoCard
           eyebrow="Rápido y seguro"
-          title="Contratá profesionales verificados"
+          title="Contrata profesionales verificados"
           badge="Verificados"
           ctaLabel="Buscar ahora"
           tintIndex={1}
@@ -267,7 +267,7 @@ export default function ClientHome() {
             <EmptyState
               icon="search-outline"
               title="Todavía no hay servicios"
-              subtitle="Cuando se publiquen, los vas a ver acá."
+              subtitle="Cuando se publiquen, los vas a ver aquí."
               cta={{ label: 'Explorar categorías', onPress: goServices }}
             />
           ) : (
@@ -301,9 +301,9 @@ export default function ClientHome() {
 
         <View style={[styles.cta, { backgroundColor: tc.card, borderColor: tc.cardBorder }]}>
           <View style={styles.ctaText}>
-            <Text variant="meta" color={tc.signal}>¿Sabés hacer algo?</Text>
-            <Text variant="title">Ganá con tu oficio</Text>
-            <Text variant="caption" color={tc.textSub}>Publicá tu servicio en minutos</Text>
+            <Text variant="meta" color={tc.signal}>¿Sabes hacer algo?</Text>
+            <Text variant="title">Gana con tu oficio</Text>
+            <Text variant="caption" color={tc.textSub}>Publica tu servicio en minutos</Text>
           </View>
           <Button label="Ofrecer" size="sm" onPress={goBecomeProvider} />
         </View>

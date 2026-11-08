@@ -16,7 +16,7 @@ type PickerAsset = {
 const UNSUPPORTED: WorkImageCheck = {
   ok: false,
   title: 'Formato no compatible',
-  message: 'Elegí una foto JPG, PNG o WebP.',
+  message: 'Elige una foto JPG, PNG o WebP.',
 };
 
 export type WorkImageCheck =

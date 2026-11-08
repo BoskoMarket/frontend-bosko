@@ -60,7 +60,7 @@ export default function ReviewScreen() {
   const handleSubmit = async () => {
     if (inFlight.current) return;
     if (rating === 0) {
-      toast.warning('Calificación requerida', 'Seleccioná una cantidad de estrellas.');
+      toast.warning('Calificación requerida', 'Selecciona una cantidad de estrellas.');
       return;
     }
 
@@ -126,7 +126,7 @@ export default function ReviewScreen() {
           transition={{ type: 'timing', duration: 400, delay: 100 }}
           style={styles.titleSection}
         >
-          <Text variant="h3" color={tc.text}>Calificá el servicio</Text>
+          <Text variant="h3" color={tc.text}>Califica el servicio</Text>
           {serviceName && <Text variant="subtitle" color={tc.textSub}>{serviceName}</Text>}
           {providerName && (
             <Text variant="body" color={tc.textSub}>por {providerName}</Text>
@@ -180,7 +180,7 @@ export default function ReviewScreen() {
         >
           <Card radius="lg" padding="xl" contentStyle={styles.commentBody}>
             <Input
-              label="Contanos tu experiencia"
+              label="Cuéntanos tu experiencia"
               value={comment}
               onChangeText={setComment}
               placeholder="¿Qué te pareció el servicio? ¿Recomendarías al profesional?"

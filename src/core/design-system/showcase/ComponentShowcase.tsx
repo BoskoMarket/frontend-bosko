@@ -502,23 +502,23 @@ function HomeSection() {
       <Section name="ValueHero">
         <ValueHero
           eyebrow="Servicios en red · ARG"
-          title="Encontrá quien lo haga. O hacelo vos."
+          title="Encuentra quien lo haga. O hazlo tú."
           body={`${BRAND_NAME} conecta a quienes necesitan un trabajo con quienes saben hacerlo, cerca tuyo.`}
-          searchPlaceholder="¿Qué necesitás? Electricista, pintor…"
+          searchPlaceholder="¿Qué necesitas? Electricista, pintor…"
           onSearchPress={() => {}}
         />
       </Section>
       <Section name="PathCard">
         <Row style={styles.cardRow}>
           <PathCard icon="search-outline" title="Contratar" description="Profesionales verificados con reseñas reales." linkLabel="Buscar servicios →" onPress={() => {}} />
-          <PathCard icon="construct-outline" title="Ofrecer" description="Publicá tus servicios y conseguí clientes." linkLabel="Empezar a ofrecer →" onPress={() => {}} />
+          <PathCard icon="construct-outline" title="Ofrecer" description="Publica tus servicios y consigue clientes." linkLabel="Empezar a ofrecer →" onPress={() => {}} />
         </Row>
       </Section>
       <Section name="StepCard">
         <Row style={styles.cardRow}>
-          <StepCard number="01" title="Buscá" caption="Por rubro o zona" />
-          <StepCard number="02" title="Pedí presupuesto" caption="Por chat, sin cargo" />
-          <StepCard number="03" title="Coordiná y calificá" caption="Todo en la orden" />
+          <StepCard number="01" title="Busca" caption="Por rubro o zona" />
+          <StepCard number="02" title="Pide presupuesto" caption="Por chat, sin cargo" />
+          <StepCard number="03" title="Coordina y califica" caption="Todo en la orden" />
         </Row>
       </Section>
       <Section name="TrustRow">
@@ -534,7 +534,7 @@ function HomeSection() {
         </Row>
       </Section>
       <Section name="SummaryCard">
-        <SummaryCard eyebrow="Hola, Martín" title="Tenés 2 solicitudes nuevas" actionLabel="Ver solicitudes" onAction={() => {}} />
+        <SummaryCard eyebrow="Hola, Martín" title="Tienes 2 solicitudes nuevas" actionLabel="Ver solicitudes" onAction={() => {}} />
       </Section>
       <Section name="RequestRow">
         <RequestRow name="Laura P." title="Laura P. · Instalación de tomas" subtitle="Palermo · Sábado por la mañana" badge="Nueva" onPress={() => {}} />

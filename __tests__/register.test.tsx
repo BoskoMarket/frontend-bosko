@@ -102,7 +102,7 @@ describe("RegisterView", () => {
       });
     }
 
-    expect(getByText(/Al registrarte aceptás los/)).toBeTruthy();
+    expect(getByText(/Al registrarte aceptas los/)).toBeTruthy();
     fireEvent.press(getByText("Términos y condiciones"));
     expect(router.push).toHaveBeenCalledWith("/terms");
   });

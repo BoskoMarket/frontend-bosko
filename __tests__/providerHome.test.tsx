@@ -51,7 +51,7 @@ describe('ProviderHome', () => {
   it('summarizes pending requests, lists them newest first and links to the provider orders tab', () => {
     const { getByText, queryByText } = render(<ProviderHome />);
     expect(getByText('Hola, Martín')).toBeTruthy();
-    expect(getByText('Tenés 2 solicitudes nuevas')).toBeTruthy();
+    expect(getByText('Tienes 2 solicitudes nuevas')).toBeTruthy();
     expect(queryByText(/Ana/)).toBeNull();
 
     fireEvent.press(getByText('Ver solicitudes'));
@@ -95,7 +95,7 @@ describe('ProviderHome', () => {
   it('shows the empty state without pending requests', () => {
     mockOrders.mockReturnValue(ok([order('3', 'completed', 'Ana', '2026-10-02T10:00:00Z')]));
     const { getByText } = render(<ProviderHome />);
-    expect(getByText('No tenés solicitudes nuevas')).toBeTruthy();
+    expect(getByText('No tienes solicitudes nuevas')).toBeTruthy();
     expect(getByText('Sin solicitudes nuevas')).toBeTruthy();
   });
 

@@ -28,10 +28,10 @@ import { SupportContactButton } from '@/features/appConfig/components/SupportCon
 const MAX_ATTEMPTS = 3;
 
 const REJECTION_TIPS = [
-  'Asegurate de que el documento no esté cortado ni borroso.',
-  'Tomá la foto con buena iluminación, sin reflejos.',
+  'Asegúrate de que el documento no esté cortado ni borroso.',
+  'Toma la foto con buena iluminación, sin reflejos.',
   'La selfie debe mostrar claramente tu rostro y el documento.',
-  'Usá el documento vigente, no vencido.',
+  'Usa el documento vigente, no vencido.',
 ];
 
 function FadeSlide({ delay, children }: { delay: number; children: React.ReactNode }) {
@@ -87,7 +87,7 @@ export default function KYCRejectedScreen() {
           <IconCircle name="close-circle" variant="danger" size={84} iconSize={52} />
           <Text variant="h3" color={TOKENS.color.error} center>Verificación rechazada</Text>
           <Text variant="body" color={tc.textSub} center>
-            Tu verificación de identidad no fue aprobada. Revisá el motivo y volvé a intentarlo.
+            Tu verificación de identidad no fue aprobada. Revisa el motivo y vuelve a intentarlo.
           </Text>
         </Animated.View>
 

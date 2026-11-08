@@ -22,7 +22,7 @@ export async function refreshSession(): Promise<string> {
   const refreshToken = tokenStorage.getRefreshToken();
   if (!refreshToken) {
     tokenStorage.triggerForceLogout();
-    throw new Error('La sesión expiró. Iniciá sesión nuevamente.');
+    throw new Error('La sesión expiró. Inicia sesión nuevamente.');
   }
   const promise = (async () => {
     try {

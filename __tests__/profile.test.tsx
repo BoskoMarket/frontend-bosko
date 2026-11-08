@@ -54,13 +54,13 @@ describe.each(['dark', 'light'] as const)('profile screens (%s)', (mode) => {
       const { getByPlaceholderText, getByText } = render(<VerifyPhoneScreen />);
       fireEvent.changeText(getByPlaceholderText('+54 9 11 1234-5678'), '12ab');
       fireEvent.press(getByText('Enviar código'));
-      expect(getByText(/Ingresá el número con código de país/)).toBeTruthy();
+      expect(getByText(/Ingresa el número con código de país/)).toBeTruthy();
     });
 
     it('asks for a number when the field is empty', () => {
       const { getByText } = render(<VerifyPhoneScreen />);
       fireEvent.press(getByText('Enviar código'));
-      expect(getByText('Ingresá un número de teléfono')).toBeTruthy();
+      expect(getByText('Ingresa un número de teléfono')).toBeTruthy();
     });
   });
 

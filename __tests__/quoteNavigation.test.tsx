@@ -61,7 +61,7 @@ describe('OptionSheet', () => {
     const { getByLabelText, getByText } = render(
       <OptionSheet
         visible
-        title="Elegí"
+        title="Elige"
         options={[{ id: 'a', label: 'Uno', description: 'Desc' }, { id: 'b', label: 'Dos' }]}
         onSelect={onSelect}
         onCancel={onCancel}

@@ -162,7 +162,7 @@ export default function MyWorksScreen() {
     if (!editing) return;
     const ok = await dialog.confirm({
       title: 'Eliminar foto',
-      message: '¿Seguro que querés eliminarla? No se puede deshacer.',
+      message: '¿Seguro que quieres eliminarla? No se puede deshacer.',
       confirmLabel: 'Eliminar',
       destructive: true,
     });
@@ -187,7 +187,7 @@ export default function MyWorksScreen() {
       <ScreenHeader
         variant="large"
         title="Mis trabajos"
-        subtitle="Mostrá tus trabajos terminados"
+        subtitle="Muestra tus trabajos terminados"
         onBack={() => safeBack(router, '/(tabs)/profile')}
         style={styles.header}
       />
@@ -196,13 +196,13 @@ export default function MyWorksScreen() {
         <EmptyState
           icon="cloud-offline-outline"
           title="No pudimos cargar tus servicios"
-          subtitle="Revisá tu conexión e intentá de nuevo."
+          subtitle="Revisa tu conexión e intenta de nuevo."
           cta={{ label: 'Reintentar', onPress: () => servicesQuery.refetch() }}
         />
       ) : !servicesQuery.isPending && services.length === 0 ? (
         <EmptyState
           icon="construct-outline"
-          title="Primero publicá un servicio"
+          title="Primero publica un servicio"
           subtitle="Las fotos se suben a uno de tus servicios."
           cta={{ label: 'Publicar servicio', onPress: () => router.push('/service-form') }}
         />
@@ -246,7 +246,7 @@ export default function MyWorksScreen() {
               <EmptyState
                 icon="cloud-offline-outline"
                 title="No pudimos cargar tus fotos"
-                subtitle="Revisá tu conexión e intentá de nuevo."
+                subtitle="Revisa tu conexión e intenta de nuevo."
                 cta={{ label: 'Reintentar', onPress: () => failedStates.forEach((q) => q?.refetch()) }}
               />
             ) : loading ? (
@@ -258,7 +258,7 @@ export default function MyWorksScreen() {
               <EmptyState
                 icon="images-outline"
                 title="Todavía no subiste fotos"
-                subtitle={'Tocá "Subir foto" y sumá tus trabajos terminados para que los clientes confíen en vos.'}
+                subtitle={'Toca "Subir foto" y suma tus trabajos terminados para que los clientes confíen en ti.'}
               />
             ) : (
               <WorksMasonry
@@ -273,7 +273,7 @@ export default function MyWorksScreen() {
 
       <OptionSheet
         visible={chooserOpen}
-        title="¿En qué servicio la subís?"
+        title="¿En qué servicio la subes?"
         options={services.map((s) => ({
           id: s.id,
           label: s.title,

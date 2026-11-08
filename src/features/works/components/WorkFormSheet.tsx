@@ -66,7 +66,7 @@ export function WorkFormSheet({
 
         <Input
           label="Descripción (opcional)"
-          placeholder="Contá qué trabajo hiciste"
+          placeholder="Cuenta qué trabajo hiciste"
           value={description}
           onChangeText={setDescription}
           multiline

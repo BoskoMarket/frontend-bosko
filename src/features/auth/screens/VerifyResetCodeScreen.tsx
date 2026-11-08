@@ -88,7 +88,7 @@ export default function VerifyResetCodeScreen() {
 
   const handleContinue = () => {
     if (code.length < CODE_LENGTH) {
-      setError('Ingresá los 6 dígitos del código.');
+      setError('Ingresa los 6 dígitos del código.');
       return;
     }
     setError('');
@@ -112,7 +112,7 @@ export default function VerifyResetCodeScreen() {
       await forgotPasswordService(String(email).toLowerCase());
       setCooldown(RESEND_COOLDOWN);
     } catch {
-      setError('No pudimos reenviar el código. Intentá de nuevo.');
+      setError('No pudimos reenviar el código. Intenta de nuevo.');
     } finally {
       setResending(false);
     }
@@ -131,7 +131,7 @@ export default function VerifyResetCodeScreen() {
                 <IconCircle name="key-outline" size={72} iconSize={32} />
               </Animated.View>
               <Animated.View style={fadeUpStyle(titleAnim)}>
-                <Text variant="h3" center style={styles.title}>Ingresá el código</Text>
+                <Text variant="h3" center style={styles.title}>Ingresa el código</Text>
               </Animated.View>
               <Animated.View style={fadeUpStyle(titleAnim)}>
                 <Text variant="body" center color={tc.textSub}>

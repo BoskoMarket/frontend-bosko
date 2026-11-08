@@ -52,8 +52,8 @@ const getQuickActions = (): { id: string; label: string; icon: IconName; go: () 
 ];
 
 function requestsTitle(count: number): string {
-  if (count === 0) return 'No tenés solicitudes nuevas';
-  return count === 1 ? 'Tenés 1 solicitud nueva' : `Tenés ${count} solicitudes nuevas`;
+  if (count === 0) return 'No tienes solicitudes nuevas';
+  return count === 1 ? 'Tienes 1 solicitud nueva' : `Tienes ${count} solicitudes nuevas`;
 }
 
 function requestTitle(order: Order): string {
@@ -161,7 +161,7 @@ export default function ProviderHome() {
             <EmptyState
               icon="briefcase-outline"
               title="Sin solicitudes nuevas"
-              subtitle="Cuando un cliente te escriba, vas a verlo acá."
+              subtitle="Cuando un cliente te escriba, vas a verlo aquí."
               cta={{ label: 'Publicar un servicio', onPress: goPublish }}
             />
           ) : (

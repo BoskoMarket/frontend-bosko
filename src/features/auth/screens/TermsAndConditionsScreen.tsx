@@ -17,7 +17,7 @@ import { AnimatedBackground } from '@/components/AnimatedBackground';
 const SECTIONS = [
   {
     title: '1. Uso de la plataforma',
-    body: `Al continuar, confirmás que aceptás el uso responsable de ${BRAND_NAME} como espacio de intermediación entre clientes y proveedores de servicios.`,
+    body: `Al continuar, confirmas que aceptas el uso responsable de ${BRAND_NAME} como espacio de intermediación entre clientes y proveedores de servicios.`,
   },
   {
     title: '2. Tratamiento de datos',
@@ -25,7 +25,7 @@ const SECTIONS = [
   },
   {
     title: '3. Veracidad de la información',
-    body: 'Declarás que tu información de contacto y perfil es verídica y te comprometés a mantenerla actualizada.',
+    body: 'Declaras que tu información de contacto y perfil es verídica y te comprometes a mantenerla actualizada.',
   },
 ];
 

@@ -140,14 +140,14 @@ export default function OrdersListScreen() {
       <EmptyState
         icon="receipt-outline"
         title="Todavía no pediste nada"
-        subtitle="Explorá servicios, cotizá con profesionales y hacé tu primer pedido."
+        subtitle="Explora servicios, cotiza con profesionales y haz tu primer pedido."
         cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)') }}
       />
     ) : (
       <EmptyState
         icon="briefcase-outline"
         title="Sin solicitudes todavía"
-        subtitle="Asegurate de tener tu perfil verificado y al menos un servicio publicado."
+        subtitle="Asegúrate de tener tu perfil verificado y al menos un servicio publicado."
         cta={{ label: 'Ver mi perfil', onPress: () => router.push('/(tabs)/profile') }}
         secondaryCta={{ label: 'Publicar un servicio', onPress: () => router.push('/service-form') }}
       />

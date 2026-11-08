@@ -10,7 +10,7 @@ import { tokenStorage } from '@/core/auth/tokenStorage';
 import { readCollection } from '@/core/api/collections';
 const storageKey = () => {
   const email = tokenStorage.getUserEmail();
-  if (!email || !tokenStorage.getAccessToken()) throw new Error('Iniciá sesión para simular una suscripción.');
+  if (!email || !tokenStorage.getAccessToken()) throw new Error('Inicia sesión para simular una suscripción.');
   return `${STORAGE_PREFIX}_MOCK_SUBSCRIPTIONS_v1:${encodeURIComponent(email.toLowerCase())}`;
 };
 async function readSubscriptions(): Promise<Subscription[]> {

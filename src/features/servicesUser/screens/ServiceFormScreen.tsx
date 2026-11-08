@@ -176,7 +176,7 @@ export default function ServiceFormScreen() {
     }
     // Category cannot change after publishing, so it is only required when creating.
     if (!isEditing && !form.categoryId) {
-      setError("Seleccioná una categoría.");
+      setError("Selecciona una categoría.");
       return false;
     }
     setError(null);
@@ -212,7 +212,7 @@ export default function ServiceFormScreen() {
           }
         }
         if (photoFailed) {
-          toast.warning("Cambios guardados", "No se pudo subir la foto. Editá el servicio para reintentar.");
+          toast.warning("Cambios guardados", "No se pudo subir la foto. Edita el servicio para reintentar.");
         } else {
           toast.success("Servicio actualizado", "Los cambios fueron guardados.");
         }
@@ -234,7 +234,7 @@ export default function ServiceFormScreen() {
           }
         }
         if (photoFailed) {
-          toast.warning("Servicio publicado", "No se pudieron subir algunas fotos. Editá el servicio para reintentar.");
+          toast.warning("Servicio publicado", "No se pudieron subir algunas fotos. Edita el servicio para reintentar.");
         } else {
           toast.success("¡Publicado!", "Tu servicio ya está disponible.");
         }
@@ -242,7 +242,7 @@ export default function ServiceFormScreen() {
       safeBack(router, '/(tabs)/profile');
     } catch (err: any) {
       if (err?.code === "SERVICE_LIMIT_REACHED" || err?.response?.data?.code === "SERVICE_LIMIT_REACHED") {
-        toast.warning("Límite de tu plan", "Actualizá a plan Plus para publicar más servicios.");
+        toast.warning("Límite de tu plan", "Actualiza a plan Plus para publicar más servicios.");
       } else {
         toast.error("Error", getUserErrorMessage(err));
       }
@@ -286,7 +286,7 @@ export default function ServiceFormScreen() {
 
           <Input
             label="Descripción *"
-            placeholder="Contá qué incluye tu servicio, cuánto tardás, qué materiales usás…"
+            placeholder="Cuenta qué incluye tu servicio, cuánto tardas, qué materiales usas…"
             value={form.description}
             multiline
             numberOfLines={5}
@@ -355,7 +355,7 @@ export default function ServiceFormScreen() {
         </FormCard>
 
         {/* Galería */}
-        <FormCard title="Galería de trabajos" subtitle="Subí hasta 5 fotos mostrando tus trabajos anteriores.">
+        <FormCard title="Galería de trabajos" subtitle="Sube hasta 5 fotos mostrando tus trabajos anteriores.">
           <View style={styles.galleryGrid}>
             {galleryImages.map((uri, i) => (
               <View key={i} style={styles.galleryThumbWrap}>

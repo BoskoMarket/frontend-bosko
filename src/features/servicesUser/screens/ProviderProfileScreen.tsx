@@ -274,7 +274,7 @@ export default function ProviderProfileScreen() {
           {loadError ? 'No se pudo cargar el perfil' : 'Perfil no encontrado'}
         </Text>
         <Text style={[s.errorSub, { color: c.sub }]}>
-          {loadError ? 'Revisá tu conexión e intentá de nuevo.' : 'Volvé y elegí otro profesional.'}
+          {loadError ? 'Revisa tu conexión e intenta de nuevo.' : 'Vuelve y elige otro profesional.'}
         </Text>
         {loadError && (
           <Button label="Reintentar" onPress={() => setLoadKey(k => k + 1)} style={s.retryBtn} />
@@ -518,7 +518,7 @@ export default function ProviderProfileScreen() {
 
       <OptionSheet
         visible={servicePickerVisible}
-        title="¿Qué servicio querés cotizar?"
+        title="¿Qué servicio quieres cotizar?"
         options={services.map(item => ({ id: item.id, label: item.title, description: item.summary }))}
         onSelect={handlePickService}
         onCancel={() => setServicePickerVisible(false)}
@@ -533,7 +533,7 @@ export default function ProviderProfileScreen() {
       <ReportFlow
         visible={reportTarget !== null}
         title={reportTarget?.kind === 'review' ? 'Reportar reseña' : 'Reportar perfil'}
-        message="Contanos por qué querés reportar esto."
+        message="Cuéntanos por qué quieres reportar esto."
         onClose={closeReport}
         submit={submitReport}
       />

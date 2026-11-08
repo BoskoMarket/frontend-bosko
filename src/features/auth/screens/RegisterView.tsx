@@ -94,7 +94,7 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
     if (!value) { setFieldError('Este campo es obligatorio'); return false; }
     if (currentStep.field === 'email') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value)) { setFieldError('Ingresá un email válido'); return false; }
+      if (!emailRegex.test(value)) { setFieldError('Ingresa un email válido'); return false; }
     }
     if (currentStep.field === 'password') {
       if (value.length < 8) { setFieldError('La contraseña debe tener al menos 8 caracteres'); return false; }
@@ -231,7 +231,7 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
 
                   {isLastStep && (
                     <Text variant="caption" color={tc.textSub} style={styles.legalText}>
-                      {'Al registrarte aceptás los '}
+                      {'Al registrarte aceptas los '}
                       <Text
                         variant="caption"
                         weight="600"
@@ -264,7 +264,7 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
                       />
 
                       <View style={styles.loginRow}>
-                        <Text variant="body" color={tc.textSub}>¿Ya tenés cuenta? </Text>
+                        <Text variant="body" color={tc.textSub}>¿Ya tienes cuenta? </Text>
                         <Pressable onPress={toRegister}>
                           <Text variant="body" weight="600" color={TOKENS.color.signal}>Ingresar</Text>
                         </Pressable>

@@ -101,7 +101,7 @@ export function getUserErrorMessage(error: unknown): string {
   }
 
   if (code === "NETWORK_ERROR") {
-    return "No hay conexión con el servidor. Verificá tu internet e intentá de nuevo";
+    return "No hay conexión con el servidor. Verifica tu internet e intenta de nuevo";
   }
 
   if (code === "UNKNOWN_ERROR") {

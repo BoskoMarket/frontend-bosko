@@ -72,7 +72,7 @@ export default function KYCIntroScreen() {
         <FadeSlide delay={100}>
           <View style={s.hero}>
             <IconCircle name="shield-checkmark" size={100} iconSize={56} />
-            <Text variant="h3" center>Verificá tu identidad</Text>
+            <Text variant="h3" center>Verifica tu identidad</Text>
             <Text variant="body" color={tc.textSub} center>
               El proceso toma menos de 5 minutos y solo se realiza una vez.
             </Text>

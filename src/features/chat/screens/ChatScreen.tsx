@@ -665,7 +665,7 @@ export default function ChatScreen() {
       }, 1000);
     } catch (err) {
       console.error('Error starting recording:', err);
-      toast.error('No se pudo iniciar la grabación', 'Intentá de nuevo');
+      toast.error('No se pudo iniciar la grabación', 'Intenta de nuevo');
     }
   }, [recorder]);
 
@@ -682,7 +682,7 @@ export default function ChatScreen() {
       await recorder.stop();
       await setAudioModeAsync({ allowsRecording: false });
       if (duration < 1) {
-        toast.warning('Mensaje muy corto', 'Mantené presionado el micrófono para grabar');
+        toast.warning('Mensaje muy corto', 'Mantén presionado el micrófono para grabar');
         return;
       }
       const uri = recorder.uri;
@@ -697,7 +697,7 @@ export default function ChatScreen() {
     } catch (err) {
       console.error('Error sending audio:', err);
       if (closedHandlerRef.current(err)) return;
-      toast.error('No se pudo enviar el audio', 'Intentá de nuevo');
+      toast.error('No se pudo enviar el audio', 'Intenta de nuevo');
     } finally {
       setSendingAudio(false);
       recordingDurationRef.current = 0;
@@ -763,7 +763,7 @@ export default function ChatScreen() {
     } catch (err) {
       console.error('Error sending media:', err);
       if (handleClosedOrderError(err)) return;
-      toast.error('No se pudo enviar el archivo', 'Revisá tu conexión e intentá de nuevo');
+      toast.error('No se pudo enviar el archivo', 'Revisa tu conexión e intenta de nuevo');
     } finally {
       busyRef.current = false;
       setSending(false);
@@ -800,7 +800,7 @@ export default function ChatScreen() {
     } catch (err) {
       console.error('Error sending camera media:', err);
       if (handleClosedOrderError(err)) return;
-      toast.error('No se pudo enviar el archivo', 'Revisá tu conexión e intentá de nuevo');
+      toast.error('No se pudo enviar el archivo', 'Revisa tu conexión e intenta de nuevo');
     } finally {
       busyRef.current = false;
       setSending(false);
@@ -836,7 +836,7 @@ export default function ChatScreen() {
     } catch (err) {
       console.error('Error sending document:', err);
       if (handleClosedOrderError(err)) return;
-      toast.error('No se pudo enviar el documento', 'Revisá tu conexión e intentá de nuevo');
+      toast.error('No se pudo enviar el documento', 'Revisa tu conexión e intenta de nuevo');
     } finally {
       busyRef.current = false;
       setSending(false);
@@ -848,7 +848,7 @@ export default function ChatScreen() {
     const text = input.trim();
     if (!text || busyRef.current || readOnlyRef.current) return;
     if (!conversation) {
-      toast.error('El chat todavía no está disponible', 'Esperá un momento o reintentá cargarlo');
+      toast.error('El chat todavía no está disponible', 'Espera un momento o reintenta cargarlo');
       return;
     }
     busyRef.current = true;
@@ -862,7 +862,7 @@ export default function ChatScreen() {
     } catch (err) {
       setInput(text);
       if (handleClosedOrderError(err)) return;
-      toast.error('No se pudo enviar', 'Revisá tu conexión e intentá de nuevo');
+      toast.error('No se pudo enviar', 'Revisa tu conexión e intenta de nuevo');
     } finally {
       busyRef.current = false;
       setSending(false);
@@ -996,7 +996,7 @@ export default function ChatScreen() {
       <ReportFlow
         visible={reportOpen}
         title="Reportar usuario"
-        message={`Contanos por qué querés reportar a esta persona. El equipo de ${BRAND_NAME} lo va a revisar.`}
+        message={`Cuéntanos por qué quieres reportar a esta persona. El equipo de ${BRAND_NAME} lo va a revisar.`}
         onClose={closeReport}
         submit={submitUserReport}
       />
@@ -1053,7 +1053,7 @@ export default function ChatScreen() {
                 <MaterialIcons name="cloud-off" size={34} color={TOKENS.color.signal} />
               </View>
               <Text style={[styles.emptyChatText, { color: tc.text }]}>No pudimos cargar el chat</Text>
-              <Text style={[styles.emptyChatSubtext, { color: tc.textSub }]}>Revisá tu conexión e intentá de nuevo</Text>
+              <Text style={[styles.emptyChatSubtext, { color: tc.textSub }]}>Revisa tu conexión e intenta de nuevo</Text>
               <Pressable
                 onPress={() => setReloadKey(k => k + 1)}
                 accessibilityRole="button"
@@ -1069,7 +1069,7 @@ export default function ChatScreen() {
               <MaterialIcons name="forum" size={34} color={TOKENS.color.signal} />
             </View>
             <Text style={[styles.emptyChatText, { color: tc.text }]}>Conversación iniciada</Text>
-            <Text style={[styles.emptyChatSubtext, { color: tc.textSub }]}>Enviá el primer mensaje para empezar</Text>
+            <Text style={[styles.emptyChatSubtext, { color: tc.textSub }]}>Envía el primer mensaje para empezar</Text>
             <View style={styles.quickRepliesRow}>
               {QUICK_REPLIES.map((reply) => (
                 <Pressable
@@ -1161,7 +1161,7 @@ export default function ChatScreen() {
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
               accessibilityLabel="Mensaje"
-              placeholder="Escribí un mensaje..."
+              placeholder="Escribe un mensaje..."
               placeholderTextColor={tc.textSub}
               multiline
               maxLength={1000}
@@ -1196,7 +1196,7 @@ export default function ChatScreen() {
               style={[styles.rightBtn, isRecording && styles.rightBtnRecording]}
               accessible
               accessibilityRole="button"
-              accessibilityLabel="Mantené presionado para grabar un mensaje de voz"
+              accessibilityLabel="Mantén presionado para grabar un mensaje de voz"
               onStartShouldSetResponder={() => true}
               onMoveShouldSetResponder={() => true}
               onResponderGrant={(e) => {

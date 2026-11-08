@@ -14,14 +14,14 @@ export interface ReelVideoAsset {
 /** Returns a Spanish error message, or null when the video is acceptable. Unknown values (missing or 0 duration, missing size) are not rejected. */
 export function validateReelVideo(asset: ReelVideoAsset): string | null {
   if (asset.mimeType && asset.mimeType !== 'video/mp4' && asset.mimeType !== 'video/quicktime') {
-    return 'Formato no válido. Usá un video MP4 o MOV.';
+    return 'Formato no válido. Usa un video MP4 o MOV.';
   }
   // A duration of 0 means "unknown" (some Android providers), not invalid: the server measures the real one.
   if (typeof asset.duration === 'number' && asset.duration > REEL_MAX_SECONDS * 1000) {
-    return `El video dura más de ${REEL_MAX_SECONDS} segundos. Elegí uno más corto.`;
+    return `El video dura más de ${REEL_MAX_SECONDS} segundos. Elige uno más corto.`;
   }
   if (typeof asset.fileSize === 'number' && asset.fileSize > REEL_MAX_BYTES) {
-    return `El video pesa más de ${REEL_MAX_BYTES / (1024 * 1024)} MB. Elegí uno más liviano.`;
+    return `El video pesa más de ${REEL_MAX_BYTES / (1024 * 1024)} MB. Elige uno más liviano.`;
   }
   return null;
 }

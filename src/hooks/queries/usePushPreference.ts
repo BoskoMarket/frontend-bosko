@@ -11,7 +11,7 @@ export function usePushPreference() {
   const query = useQuery({ queryKey, queryFn: () => readPushPreference(accountId!), enabled: isAuthenticated && !!accountId });
   const mutation = useMutation({
     mutationFn: async (enabled: boolean) => {
-      if (!accountId) throw new Error('Iniciá sesión para cambiar tus preferencias.');
+      if (!accountId) throw new Error('Inicia sesión para cambiar tus preferencias.');
       if (enabled) await registerDeviceForPush();
       else await deletePushToken();
       await savePushPreference(accountId, enabled);

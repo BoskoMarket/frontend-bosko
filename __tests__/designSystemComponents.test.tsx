@@ -67,7 +67,7 @@ describe('design system components', () => {
       <EmptyState
         icon="file-tray-outline"
         title="Sin órdenes"
-        subtitle="Todavía no tenés órdenes"
+        subtitle="Todavía no tienes órdenes"
         cta={{ label: 'Explorar', onPress: onCta }}
         secondaryCta={{ label: 'Más tarde', onPress: onSecondary }}
       />,

@@ -28,7 +28,7 @@ const IN_REVIEW: KYCStatusInfo = {
 
 const REJECTED: KYCStatusInfo = {
   title: 'Verificación rechazada',
-  description: 'Hubo un problema con tus documentos. Podés volver a intentarlo.',
+  description: 'Hubo un problema con tus documentos. Puedes volver a intentarlo.',
   icon: 'cancel',
   tone: 'cancelled',
   badge: 'Rechazado',
@@ -38,7 +38,7 @@ const REJECTED: KYCStatusInfo = {
 export const KYC_STATUS: Record<KYCStatus, KYCStatusInfo> = {
   not_started: {
     title: 'Verificación no iniciada',
-    description: 'Para publicar servicios y crear órdenes necesitás verificar tu identidad.',
+    description: 'Para publicar servicios y crear órdenes necesitas verificar tu identidad.',
     icon: 'shield',
     tone: 'brand',
   },
@@ -46,7 +46,7 @@ export const KYC_STATUS: Record<KYCStatus, KYCStatusInfo> = {
   pending: IN_REVIEW,
   approved: {
     title: '¡Verificado!',
-    description: 'Tu identidad fue verificada exitosamente. Podés publicar servicios y crear órdenes.',
+    description: 'Tu identidad fue verificada exitosamente. Puedes publicar servicios y crear órdenes.',
     icon: 'verified',
     tone: 'done',
     badge: 'Verificado',
@@ -55,14 +55,14 @@ export const KYC_STATUS: Record<KYCStatus, KYCStatusInfo> = {
   declined: REJECTED,
   failed: {
     title: 'Error en verificación',
-    description: 'Hubo un error técnico. Podés volver a intentarlo.',
+    description: 'Hubo un error técnico. Puedes volver a intentarlo.',
     icon: 'error-outline',
     tone: 'cancelled',
     badge: 'Error',
   },
   expired: {
     title: 'Verificación vencida',
-    description: 'Tu verificación expiró. Necesitás iniciar el proceso nuevamente.',
+    description: 'Tu verificación expiró. Necesitas iniciar el proceso nuevamente.',
     icon: 'timer-off',
     tone: 'pending',
     badge: 'Vencido',

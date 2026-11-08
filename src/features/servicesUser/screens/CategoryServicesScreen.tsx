@@ -302,7 +302,7 @@ export default function CategoryServicesScreen() {
           <Text style={[s.sectionTitle, { color: c.text }]}>
             {`${services.length} profesional${services.length !== 1 ? 'es' : ''}`}
           </Text>
-          <Text style={[s.sectionSub, { color: c.sub }]}>Tocá uno para ver su perfil completo</Text>
+          <Text style={[s.sectionSub, { color: c.sub }]}>Toca uno para ver su perfil completo</Text>
         </View>
       )}
     </>

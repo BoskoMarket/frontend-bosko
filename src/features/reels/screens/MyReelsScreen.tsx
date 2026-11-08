@@ -115,7 +115,7 @@ function EditReelSheet({
   };
 
   const handleDelete = () => {
-    dialog.fromAlert('Eliminar reel', '¿Seguro que querés eliminarlo? No se puede deshacer.', [
+    dialog.fromAlert('Eliminar reel', '¿Seguro que quieres eliminarlo? No se puede deshacer.', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Eliminar',
@@ -147,7 +147,7 @@ function EditReelSheet({
           <Text style={[styles.fieldLabel, { color: tc.textSub }]}>Descripción</Text>
           <TextInput
             style={[styles.textarea, { backgroundColor: tc.surface2, borderColor: tc.border, color: tc.text }]}
-            placeholder="Contá qué muestra este reel..."
+            placeholder="Cuenta qué muestra este reel..."
             placeholderTextColor={tc.textMuted}
             multiline
             maxLength={300}
@@ -176,7 +176,7 @@ function EditReelSheet({
           {tags.length < MAX_TAGS && (
             <TextInput
               style={[styles.tagInput, { backgroundColor: tc.surface2, borderColor: tc.border, color: tc.text }]}
-              placeholder="Agregá un tag y presioná espacio"
+              placeholder="Agrega un tag y presiona espacio"
               placeholderTextColor={tc.textMuted}
               value={tagInput}
               onChangeText={setTagInput}
@@ -251,14 +251,14 @@ export default function MyReelsScreen() {
         <EmptyState
           icon="cloud-offline-outline"
           title="No pudimos cargar tus reels"
-          subtitle="Hubo un problema de conexión. Probá de nuevo en unos segundos."
+          subtitle="Hubo un problema de conexión. Prueba de nuevo en unos segundos."
           cta={{ label: 'Reintentar', onPress: () => { refetch(); } }}
         />
       ) : reels.length === 0 ? (
         <EmptyState
           icon="film-outline"
           title="Todavía no subiste reels"
-          subtitle="Mostrá tu trabajo en video y llegá a más clientes."
+          subtitle="Muestra tu trabajo en video y llega a más clientes."
           cta={{ label: 'Publicar un reel', onPress: () => router.push(REEL_UPLOAD_ROUTE) }}
         />
       ) : (

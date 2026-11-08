@@ -37,11 +37,11 @@ const CONFIRM_WORD = 'ELIMINAR';
 
 const WARNINGS = [
   'Tu cuenta se desactiva y tu perfil, servicios y reels dejan de verse.',
-  `Tenés ${DELETION_GRACE_DAYS} días para cambiar de idea: si volvés a iniciar sesión en ese plazo, tu cuenta se reactiva.`,
+  `Tienes ${DELETION_GRACE_DAYS} días para cambiar de idea: si vuelves a iniciar sesión en ese plazo, tu cuenta se reactiva.`,
   `Pasados los ${DELETION_GRACE_DAYS} días, tu cuenta y tus datos se eliminan definitivamente.`,
 ];
 const PREMIUM_WARNING = 'Vas a perder tu plan Premium sin reembolso del período restante.';
-const BLOCKED_MESSAGE = 'No podés eliminar tu cuenta mientras tengas órdenes activas.';
+const BLOCKED_MESSAGE = 'No puedes eliminar tu cuenta mientras tengas órdenes activas.';
 
 function FadeSlide({ delay, children }: { delay: number; children: React.ReactNode }) {
   const opacity = useRef(new Animated.Value(0)).current;
@@ -136,7 +136,7 @@ export default function DeleteAccountScreen() {
     if (!canDelete || loading || googleLoading) return;
     dialog.fromAlert(
       'Última confirmación',
-      `Tu cuenta se desactivará y se eliminará definitivamente en ${DELETION_GRACE_DAYS} días. Si volvés a iniciar sesión antes, se reactiva.`,
+      `Tu cuenta se desactivará y se eliminará definitivamente en ${DELETION_GRACE_DAYS} días. Si vuelves a iniciar sesión antes, se reactiva.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -152,7 +152,7 @@ export default function DeleteAccountScreen() {
                 try {
                   googleIdToken = await getGoogleIdToken();
                 } catch {
-                  toast.error('No pudimos confirmar con Google', 'Intentá de nuevo.');
+                  toast.error('No pudimos confirmar con Google', 'Intenta de nuevo.');
                   return;
                 }
                 if (!googleIdToken) return; // user cancelled the Google prompt
@@ -171,13 +171,13 @@ export default function DeleteAccountScreen() {
                 setStep(1);
                 void clientOrders.refetch();
                 void providerOrders.refetch();
-              } else if (!err?.response) setError('Sin conexión. Revisá tu internet e intentá de nuevo.');
+              } else if (!err?.response) setError('Sin conexión. Revisa tu internet e intenta de nuevo.');
               else if (code === 'NOT_FOUND') setError('Usuario no encontrado.');
               else if (code === 'REAUTH_FAILED')
-                setError('No pudimos verificar tu cuenta de Google. Intentá de nuevo.');
+                setError('No pudimos verificar tu cuenta de Google. Intenta de nuevo.');
               else if (code === 'INVALID_PASSWORD' || err?.response?.status === 401)
-                setError(isGoogle ? 'No pudimos verificar tu cuenta de Google. Intentá de nuevo.' : 'Contraseña incorrecta. Verificá e intentá de nuevo.');
-              else setError('Error al eliminar la cuenta. Intentá más tarde.');
+                setError(isGoogle ? 'No pudimos verificar tu cuenta de Google. Intenta de nuevo.' : 'Contraseña incorrecta. Verifica e intenta de nuevo.');
+              else setError('Error al eliminar la cuenta. Intenta más tarde.');
             } finally {
               setLoading(false);
             }
@@ -205,21 +205,21 @@ export default function DeleteAccountScreen() {
         <Animated.View style={[s.warningIconWrap, { opacity: iconOpacity, transform: [{ scale: iconScale }] }]}>
           <IconCircle name={step === 1 ? 'warning' : 'lock-closed'} variant="danger" size={84} />
           <Text variant="h3" color={TOKENS.color.error} center>
-            {isBlocked ? 'No se puede eliminar todavía' : step === 1 ? 'Zona de peligro' : 'Verificá tu identidad'}
+            {isBlocked ? 'No se puede eliminar todavía' : step === 1 ? 'Zona de peligro' : 'Verifica tu identidad'}
           </Text>
           <Text variant="bodySmall" color={tc.textSub} center>
             {step === 1
               ? `Tu cuenta se desactiva y se elimina definitivamente en ${DELETION_GRACE_DAYS} días.`
               : isGoogle
-                ? 'Confirmá con tu cuenta de Google para continuar.'
-                : 'Ingresá tu contraseña para confirmar la eliminación.'}
+                ? 'Confirma con tu cuenta de Google para continuar.'
+                : 'Ingresa tu contraseña para confirmar la eliminación.'}
           </Text>
         </Animated.View>
 
         {checkingOrders && !isBlocked && (
           <NoticeBanner variant="pending">
             {clientOrders.isError || providerOrders.isError
-              ? 'No pudimos verificar todas tus órdenes. Reintentá para continuar.'
+              ? 'No pudimos verificar todas tus órdenes. Reintenta para continuar.'
               : 'Estamos verificando tus órdenes antes de continuar.'}
           </NoticeBanner>
         )}
@@ -255,7 +255,7 @@ export default function DeleteAccountScreen() {
             {/* Consequences */}
             <FadeSlide delay={100}>
               <Card padding="xl" radius="lg" contentStyle={s.cardContent}>
-                <Text variant="subtitle">Si eliminás tu cuenta:</Text>
+                <Text variant="subtitle">Si eliminas tu cuenta:</Text>
                 {WARNINGS.map((w, i) => (
                   <View key={i} style={s.warningItem}>
                     <MaterialIcons name="close" size={16} color={TOKENS.color.error} style={s.warningIcon} />
@@ -275,7 +275,7 @@ export default function DeleteAccountScreen() {
             <FadeSlide delay={200}>
               <Card padding="xl" radius="lg" contentStyle={s.cardContent}>
                 <Text variant="body" color={tc.textSub}>
-                  Escribí{' '}
+                  Escribe{' '}
                   <Text variant="body" weight="800" color={TOKENS.color.error}>{CONFIRM_WORD}</Text>
                   {' '}para continuar:
                 </Text>
@@ -285,7 +285,7 @@ export default function DeleteAccountScreen() {
                   placeholder={CONFIRM_WORD}
                   autoCapitalize="characters"
                   autoCorrect={false}
-                  accessibilityLabel={`Escribí ${CONFIRM_WORD} para continuar`}
+                  accessibilityLabel={`Escribe ${CONFIRM_WORD} para continuar`}
                 />
               </Card>
             </FadeSlide>
@@ -316,7 +316,7 @@ export default function DeleteAccountScreen() {
             ) : (
             <Card padding="xl" radius="lg" contentStyle={s.cardContent}>
               <Input
-                label="Ingresá tu contraseña actual"
+                label="Ingresa tu contraseña actual"
                 value={password}
                 onChangeText={setPassword}
                 placeholder="••••••••"

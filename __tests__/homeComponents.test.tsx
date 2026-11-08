@@ -124,12 +124,12 @@ describe.each(['dark', 'light'] as const)('home components (%s theme)', (mode) =
   it('StepCard, TrustRow and StatTile render their copy', () => {
     const { getByText } = render(
       <>
-        <StepCard number="01" title="Buscá" caption="Por rubro" />
+        <StepCard number="01" title="Busca" caption="Por rubro" />
         <TrustRow icon="shield-checkmark-outline" title="Verificada" caption="Identidad" />
         <StatTile value="4.8" label="Rating" />
       </>,
     );
-    ['01', 'Buscá', 'Por rubro', 'Verificada', 'Identidad', '4.8', 'Rating'].forEach((t) => expect(getByText(t)).toBeTruthy());
+    ['01', 'Busca', 'Por rubro', 'Verificada', 'Identidad', '4.8', 'Rating'].forEach((t) => expect(getByText(t)).toBeTruthy());
   });
 });
 
@@ -146,7 +146,7 @@ describe('SummaryCard and RequestRow', () => {
   it('SummaryCard fires its action; hides it without a handler', () => {
     const onAction = jest.fn();
     const { getByText, rerender, queryByText } = render(
-      <SummaryCard eyebrow="Hola" title="Tenés 2 solicitudes nuevas" actionLabel="Ver solicitudes" onAction={onAction} />,
+      <SummaryCard eyebrow="Hola" title="Tienes 2 solicitudes nuevas" actionLabel="Ver solicitudes" onAction={onAction} />,
     );
     fireEvent.press(getByText('Ver solicitudes'));
     expect(onAction).toHaveBeenCalledTimes(1);

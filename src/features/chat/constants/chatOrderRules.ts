@@ -54,7 +54,7 @@ export function chatNoticeFor(
   }
 }
 
-export const CHAT_ORDER_CLOSED_TOAST = 'No podés enviar mensajes en una orden finalizada.';
+export const CHAT_ORDER_CLOSED_TOAST = 'No puedes enviar mensajes en una orden finalizada.';
 
 /**
  * Only the backend's explicit error code denotes a closed order. Other 409s

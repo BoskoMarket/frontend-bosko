@@ -52,7 +52,7 @@ export default function VerifyPhoneScreen() {
     if (loading) return;
     const trimmed = phone.trim();
     if (!trimmed) {
-      setError('Ingresá un número de teléfono');
+      setError('Ingresa un número de teléfono');
       return;
     }
 
@@ -60,7 +60,7 @@ export default function VerifyPhoneScreen() {
     const compact = trimmed.replace(/[\s\-().]/g, '');
     const normalized = compact.startsWith('+') ? compact : `+${compact}`;
     if (!E164.test(normalized)) {
-      setError('Ingresá el número con código de país, por ejemplo +54 9 11 1234-5678');
+      setError('Ingresa el número con código de país, por ejemplo +54 9 11 1234-5678');
       return;
     }
 
@@ -77,7 +77,7 @@ export default function VerifyPhoneScreen() {
       setError(
         missingNative
           ? 'La verificación por SMS no está disponible en esta versión de la app.'
-          : err?.message || 'No se pudo enviar el SMS. Verificá el número.',
+          : err?.message || 'No se pudo enviar el SMS. Verifica el número.',
       );
     } finally {
       setLoading(false);
@@ -104,7 +104,7 @@ export default function VerifyPhoneScreen() {
       ]);
     } catch (err: any) {
       if (err?.code === 'auth/invalid-verification-code') {
-        setError('Código incorrecto. Intentá de nuevo.');
+        setError('Código incorrecto. Intenta de nuevo.');
       } else if (err?.isAxiosError) {
         setError(getUserErrorMessage(err));
       } else {
@@ -140,7 +140,7 @@ export default function VerifyPhoneScreen() {
               <IconCircle name={step === 'phone' ? 'call-outline' : 'chatbubble-ellipses-outline'} size={68} />
 
               <Text variant="h3" center>
-                {step === 'phone' ? 'Ingresá tu número' : 'Ingresá el código'}
+                {step === 'phone' ? 'Ingresa tu número' : 'Ingresa el código'}
               </Text>
               <Text variant="body" color={tc.textSub} center>
                 {step === 'phone'

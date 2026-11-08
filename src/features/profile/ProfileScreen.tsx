@@ -212,7 +212,7 @@ export const ProfileScreen: React.FC = () => {
   const openEditProfile = useCallback(() => router.push('/(tabs)/profile/EditProfile'), []);
 
   const handleLogout = () => {
-    dialog.fromAlert('Cerrar sesión', '¿Querés cerrar sesión en este dispositivo?', [
+    dialog.fromAlert('Cerrar sesión', '¿Quieres cerrar sesión en este dispositivo?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Cerrar sesión',
@@ -265,7 +265,7 @@ export const ProfileScreen: React.FC = () => {
         <EmptyState
           icon="cloud-offline-outline"
           title="No pudimos cargar tu perfil"
-          subtitle={profileError ?? 'Revisá tu conexión e intentá de nuevo.'}
+          subtitle={profileError ?? 'Revisa tu conexión e intenta de nuevo.'}
           cta={{ label: 'Reintentar', onPress: () => { refreshProfile(); } }}
         />
       </View>
@@ -388,7 +388,7 @@ export const ProfileScreen: React.FC = () => {
                 accessibilityLabel="No se pudieron cargar tus estadísticas. Reintentar"
               >
                 <Ionicons name="refresh-outline" size={16} color={TOKENS.color.signal} />
-                <Text variant="bodySmall" color={tc.textSub}>No se pudieron cargar tus estadísticas. Tocá para reintentar.</Text>
+                <Text variant="bodySmall" color={tc.textSub}>No se pudieron cargar tus estadísticas. Toca para reintentar.</Text>
               </Pressable>
             ) : stats === null ? (
               <StatsSkeleton cells={isProvider ? 4 : 2} />
@@ -434,10 +434,10 @@ export const ProfileScreen: React.FC = () => {
                 <Text variant="subtitle" color={kycColors.fg}>Estás camino a ser prestador</Text>
                 <Text variant="caption" color={tc.textSub}>
                   {kycStatus === 'rejected' || kycStatus === 'declined' || kycStatus === 'failed'
-                    ? 'Hubo un problema con tu verificación — tocá para reintentar.'
+                    ? 'Hubo un problema con tu verificación — toca para reintentar.'
                     : kycStatus === 'expired'
-                      ? 'Tu verificación venció — tocá para reintentar.'
-                      : 'Estamos revisando tu verificación. Tocá para ver el progreso.'}
+                      ? 'Tu verificación venció — toca para reintentar.'
+                      : 'Estamos revisando tu verificación. Toca para ver el progreso.'}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={kycColors.fg} />

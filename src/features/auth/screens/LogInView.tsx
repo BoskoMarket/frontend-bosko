@@ -208,7 +208,7 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
                 />
 
                 <View style={styles.registerRow}>
-                  <Text variant="body" color={tc.textSub}>¿No tenés cuenta? </Text>
+                  <Text variant="body" color={tc.textSub}>¿No tienes cuenta? </Text>
                   <Pressable onPress={toRegister}>
                     <Text variant="body" weight="600" color={TOKENS.color.signal}>Registrarse</Text>
                   </Pressable>

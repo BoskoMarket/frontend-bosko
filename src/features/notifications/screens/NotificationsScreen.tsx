@@ -88,7 +88,7 @@ function NotificationItem({ item, onPress, onDelete }: { item: Notification; onP
   const cfg = TYPE_ICON[item.type.toLowerCase()] ?? TYPE_ICON.default;
 
   const onLongPress = () => {
-    dialog.fromAlert('Eliminar', '¿Eliminás esta notificación?', [
+    dialog.fromAlert('Eliminar', '¿Eliminas esta notificación?', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Eliminar', style: 'destructive', onPress: onDelete },
     ]);
@@ -161,7 +161,7 @@ export default function NotificationsScreen() {
   };
 
   const handleClearAll = () => {
-    dialog.fromAlert('Limpiar notificaciones', '¿Eliminás todas las notificaciones?', [
+    dialog.fromAlert('Limpiar notificaciones', '¿Eliminas todas las notificaciones?', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Limpiar todo', style: 'destructive', onPress: clearAll },
     ]);

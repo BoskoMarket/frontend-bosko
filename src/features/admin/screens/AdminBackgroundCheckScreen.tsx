@@ -123,7 +123,7 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
       <ReasonDialog
         visible={rejectOpen}
         title="Rechazar antecedentes"
-        message={`Indicá el motivo del rechazo para ${item.firstName}.`}
+        message={`Indica el motivo del rechazo para ${item.firstName}.`}
         placeholder="Ej.: el certificado está vencido"
         confirmLabel="Rechazar"
         submitting={rejecting}

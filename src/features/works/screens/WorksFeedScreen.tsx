@@ -112,7 +112,7 @@ export default function WorksFeedScreen() {
   return (
     <View style={[styles.root, { backgroundColor: tc.bg }]}>
       <View style={[styles.header, { paddingTop: insets.top + SPACING.xl }]}>
-        <ScreenHeader variant="large" title="Trabajos" subtitle="Mirá trabajos reales y pedí tu cotización" />
+        <ScreenHeader variant="large" title="Trabajos" subtitle="Mira trabajos reales y pide tu cotización" />
       </View>
 
       <View>
@@ -147,7 +147,7 @@ export default function WorksFeedScreen() {
           <EmptyState
             icon="cloud-offline-outline"
             title="No pudimos cargar los trabajos"
-            subtitle="Revisá tu conexión e intentá de nuevo."
+            subtitle="Revisa tu conexión e intenta de nuevo."
             cta={{ label: 'Reintentar', onPress: () => refetch() }}
           />
         ) : null}
@@ -156,11 +156,11 @@ export default function WorksFeedScreen() {
           isProvider ? (
             <EmptyState
               icon="images-outline"
-              title={category ? `Sin trabajos en ${category.name}` : 'Subí tus primeros trabajos'}
+              title={category ? `Sin trabajos en ${category.name}` : 'Sube tus primeros trabajos'}
               subtitle={
                 category
-                  ? 'Todavía nadie publicó fotos en esta categoría. Mostrá lo que sabés hacer.'
-                  : `Mostrá tus trabajos terminados en ${BRAND_NAME} y conseguí más cotizaciones.`
+                  ? 'Todavía nadie publicó fotos en esta categoría. Muestra lo que sabes hacer.'
+                  : `Muestra tus trabajos terminados en ${BRAND_NAME} y consigue más cotizaciones.`
               }
               cta={{ label: 'Mis trabajos', onPress: () => router.push(MY_WORKS_ROUTE) }}
               secondaryCta={category ? { label: 'Ver todas', onPress: () => setCategoryId(null) } : undefined}
@@ -171,8 +171,8 @@ export default function WorksFeedScreen() {
               title={category ? `Sin trabajos en ${category.name}` : 'Todavía no hay trabajos'}
               subtitle={
                 category
-                  ? 'Todavía no hay fotos en esta categoría. Probá con otra.'
-                  : `Pronto vas a ver acá fotos de trabajos terminados por profesionales de ${BRAND_NAME}.`
+                  ? 'Todavía no hay fotos en esta categoría. Prueba con otra.'
+                  : `Pronto verás aquí fotos de trabajos terminados por profesionales de ${BRAND_NAME}.`
               }
               secondaryCta={category ? { label: 'Ver todas', onPress: () => setCategoryId(null) } : undefined}
             />

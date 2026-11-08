@@ -71,7 +71,7 @@ const ProviderProfile: React.FC<ProviderProfileProps> = ({
         ) : null}
         <Text style={styles.emptyTitle}>No encontramos este profesional</Text>
         <Text style={styles.emptySubtitle}>
-          Volvé a la lista y elegí otro servicio disponible.
+          Vuelve a la lista y elige otro servicio disponible.
         </Text>
       </View>
     );

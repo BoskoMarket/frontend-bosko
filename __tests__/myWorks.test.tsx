@@ -117,7 +117,7 @@ describe('MyWorksScreen', () => {
     await act(async () => {
       fireEvent.press(getByText('Subir foto'));
     });
-    expect(await findByText('¿En qué servicio la subís?')).toBeTruthy();
+    expect(await findByText('¿En qué servicio la subes?')).toBeTruthy();
   });
 
   it('rejects images the device cannot convert before uploading', async () => {
@@ -205,6 +205,6 @@ describe('MyWorksScreen', () => {
   it('invites to publish a service when the provider has none', () => {
     mockServices = [];
     const { getByText } = render(<MyWorksScreen />);
-    expect(getByText('Primero publicá un servicio')).toBeTruthy();
+    expect(getByText('Primero publica un servicio')).toBeTruthy();
   });
 });
