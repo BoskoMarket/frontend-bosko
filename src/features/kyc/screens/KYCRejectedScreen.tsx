@@ -23,6 +23,7 @@ import {
   useThemeColors,
 } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { SupportContactButton } from '@/features/appConfig/components/SupportContactButton';
 
 const MAX_ATTEMPTS = 3;
 
@@ -137,7 +138,7 @@ export default function KYCRejectedScreen() {
             <Text variant="label" color={canRetry ? TOKENS.color.signal : TOKENS.color.error}>
               {canRetry
                 ? `Intentos disponibles: ${maxAttempts - attemptCount} de ${maxAttempts}`
-                : `Agotaste los ${maxAttempts} intentos. Contactá a soporte.`
+                : `Agotaste los ${maxAttempts} intentos. Contacta a soporte.`
               }
             </Text>
           </View>
@@ -157,15 +158,18 @@ export default function KYCRejectedScreen() {
             />
           </FadeSlide>
         ) : (
-          <Card padding="lg" radius="md" contentStyle={s.supportContent}>
-            <MaterialIcons name="support-agent" size={24} color={TOKENS.color.signal} />
-            <View style={s.supportText}>
-              <Text variant="label">¿Necesitás ayuda?</Text>
-              <Text variant="bodySmall" color={tc.textSub}>
-                Contactá a nuestro equipo de soporte con tu problema de verificación.
-              </Text>
-            </View>
-          </Card>
+          <>
+            <Card padding="lg" radius="md" contentStyle={s.supportContent}>
+              <MaterialIcons name="support-agent" size={24} color={TOKENS.color.signal} />
+              <View style={s.supportText}>
+                <Text variant="label">¿Necesitas ayuda?</Text>
+                <Text variant="bodySmall" color={tc.textSub}>
+                  Contacta a nuestro equipo de soporte con tu problema de verificación.
+                </Text>
+              </View>
+            </Card>
+            <SupportContactButton message="Hola, necesito ayuda con la verificación de mi identidad." />
+          </>
         )}
 
         <Button
