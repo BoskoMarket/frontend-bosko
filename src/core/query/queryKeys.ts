@@ -2,6 +2,7 @@ export const QUERY_KEYS = {
   profile:          ['profile']                                          as const,
   profileStats:     ['profile', 'stats']                                 as const,
   publicUser:       (id: string) => ['users', id]                        as const,
+  blockedUsers:     ['blocks', 'me']                                    as const,
 
   categories:       ['categories']                                       as const,
   cities:           ['cities']                                           as const,

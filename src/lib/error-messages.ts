@@ -163,6 +163,8 @@ const SOCIAL = {
   ALREADY_REVIEWED: "Ya dejaste una reseña para este pedido",
   REVIEW_ALREADY_HAS_REPLY: "Esta reseña ya tiene una respuesta",
   CANNOT_REPORT_OWN_REVIEW: "No puedes reportar tu propia reseña",
+  USER_BLOCKED: "No puedes enviar mensajes ni solicitudes a este usuario",
+  CANNOT_BLOCK_SELF: "No puedes bloquearte a ti mismo",
 } as const;
 
 /** Códigos genéricos que agrupan errores no clasificados por status HTTP. */

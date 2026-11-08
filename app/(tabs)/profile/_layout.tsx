@@ -18,6 +18,7 @@ export default function ProfileLayout() {
       <Stack.Screen name="plans" />
       <Stack.Screen name="background-check" />
       <Stack.Screen name="verify-phone" />
+      <Stack.Screen name="blocked-users" />
       <Stack.Screen name="delete-account" />
     </Stack>
   );

@@ -48,6 +48,7 @@ describe('getRoleSection', () => {
       'Mis reseñas',
       'Verificación de identidad',
       'Antecedentes (opcional)',
+      'Usuarios bloqueados',
     ]);
     expect(section.rows.map((r) => r.id)).not.toContain('publish-service');
     expect(section.rows.find((r) => r.id === 'my-services')?.href).toBe('/(tabs)/profile/Services');
@@ -55,7 +56,14 @@ describe('getRoleSection', () => {
 
   it('gives clients favorites and the become-provider entry', () => {
     const section = getRoleSection('client')!;
-    expect(section.rows.map((r) => r.label)).toEqual(['Favoritos', 'Convertirme en proveedor']);
+    expect(section.rows.map((r) => r.label)).toEqual(['Favoritos', 'Convertirme en proveedor', 'Usuarios bloqueados']);
+  });
+
+  it('gives both roles the blocked-users entry', () => {
+    for (const status of ['provider', 'client'] as const) {
+      const row = getRoleSection(status)!.rows.find((r) => r.id === 'blocked-users');
+      expect(row).toMatchObject({ icon: 'ban-outline', label: 'Usuarios bloqueados', href: '/(tabs)/profile/blocked-users' });
+    }
   });
 
   it('leaves users mid-verification to the pending card', () => {

@@ -34,11 +34,13 @@ const PROVIDER_ROWS: ProfileRow[] = [
   { id: 'kyc', icon: 'shield-checkmark-outline', label: 'Verificación de identidad', href: '/(tabs)/profile/kyc', badge: 'kyc' },
   { id: 'background-check', icon: 'document-text-outline', label: 'Antecedentes (opcional)', href: '/(tabs)/profile/background-check' },
   { id: 'plan', icon: 'diamond-outline', label: 'Plan', href: '/(tabs)/profile/plans', badge: 'plans' },
+  { id: 'blocked-users', icon: 'ban-outline', label: 'Usuarios bloqueados', href: '/(tabs)/profile/blocked-users' },
 ];
 
 const CLIENT_ROWS: ProfileRow[] = [
   { id: 'favorites', icon: 'heart-outline', label: 'Favoritos', href: '/(tabs)/profile/favorites', badge: 'favorites' },
   { id: 'become-provider', icon: 'briefcase-outline', label: 'Convertirme en proveedor', href: '/(tabs)/profile/become-provider' },
+  { id: 'blocked-users', icon: 'ban-outline', label: 'Usuarios bloqueados', href: '/(tabs)/profile/blocked-users' },
 ];
 
 /**
