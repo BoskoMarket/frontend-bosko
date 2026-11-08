@@ -1,5 +1,7 @@
 # Bosko — Mapa de flujos (retroactivo)
 
+> **Desactualizado respecto del producto objetivo.** Describe lo que había en el código antes de la v1 (incluye Reels como tab, pagos simulados y planes). El producto acordado y sus flujos con manejo de errores están en `docs/PRD.md`; la sección 6 de ese documento lista la distancia con el código.
+
 Generado a partir del código real (`app/`, `src/features/`), no de un intake previo — la app ya está construida. Sirve como referencia para no romper flujos existentes al agregar features nuevas, y como base para futuras auditorías de estados faltantes (error/vacío/confirmación).
 
 Roles: **client** (usuario común) · **pending** (inició KYC, no aprobado aún) · **provider** (KYC aprobado) — derivados en `useProviderStatus()`, nunca un flag suelto. Un usuario puede pasar de client → pending → provider, nunca al revés automáticamente (hay ruta de rechazo, ver KYC).
