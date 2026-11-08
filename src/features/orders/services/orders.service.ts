@@ -70,9 +70,15 @@ export async function startOrder(id: string): Promise<Order> {
   return normalizeOrder(data);
 }
 
-/** Proveedor marca el trabajo como completado */
-export async function completeOrder(id: string): Promise<Order> {
-  const { data } = await api.patch<any>(`/orders/${id}/complete`);
+/** Proveedor marca el trabajo como terminado: IN_PROGRESS -> AWAITING_CONFIRMATION */
+export async function markOrderDone(id: string): Promise<Order> {
+  const { data } = await api.patch<any>(`/orders/${id}/mark-done`);
+  return normalizeOrder(data);
+}
+
+/** Cliente confirma el trabajo: AWAITING_CONFIRMATION -> COMPLETED */
+export async function confirmOrder(id: string): Promise<Order> {
+  const { data } = await api.patch<any>(`/orders/${id}/confirm`);
   return normalizeOrder(data);
 }
 

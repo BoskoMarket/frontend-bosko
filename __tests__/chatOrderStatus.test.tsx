@@ -21,6 +21,7 @@ describe('chat order rules (G68)', () => {
     ['pending', false, null],
     ['accepted', false, null],
     ['in_progress', false, null],
+    ['awaiting_confirmation', false, null],
     ['completed', true, 'Orden finalizada. El chat queda en modo lectura.'],
     ['cancelled', true, 'Orden cancelada. El chat queda en modo lectura.'],
     ['disputed', false, `Orden en disputa: el equipo de ${BRAND_NAME} está revisando.`],
@@ -45,6 +46,7 @@ describe('chat order rules (G68)', () => {
     expect(chatStatusBadge('cancelled')?.label).toBe('Cancelada');
     expect(chatStatusBadge('disputed')?.label).toBe('En disputa');
     expect(chatStatusBadge('in_progress')).toBeNull();
+    expect(chatStatusBadge('awaiting_confirmation')).toBeNull();
     expect(chatStatusBadge(undefined)).toBeNull();
   });
 

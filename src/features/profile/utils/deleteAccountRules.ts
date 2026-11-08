@@ -4,7 +4,7 @@ import type { Order, OrderStatus } from '@/features/orders/types/orders.types';
 export const DELETION_GRACE_DAYS = 30;
 
 /** Order statuses that block account deletion (an open dispute must be resolved first). */
-export const BLOCKING_ORDER_STATUSES: readonly OrderStatus[] = ['pending', 'accepted', 'in_progress', 'disputed'];
+export const BLOCKING_ORDER_STATUSES: readonly OrderStatus[] = ['pending', 'accepted', 'in_progress', 'awaiting_confirmation', 'disputed'];
 
 /** Orders that stop the user from deleting the account; completed/cancelled never block. */
 export function blockingOrders(orders: readonly Order[]): Order[] {

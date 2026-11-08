@@ -87,6 +87,7 @@ const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   pending: 'Pendiente',
   accepted: 'Aceptada',
   in_progress: 'En progreso',
+  awaiting_confirmation: 'Esperando confirmación',
   completed: 'Completada',
   cancelled: 'Cancelada',
   disputed: 'En disputa',

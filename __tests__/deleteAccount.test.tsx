@@ -49,10 +49,10 @@ const order = (id: string, status: Order['status'], title = `Orden ${id}`): Orde
   ({ id, status, title, clientId: 'c', providerId: 'p', serviceId: 's' }) as Order;
 
 describe('deleteAccountRules', () => {
-  it('blocks on pending, accepted, in_progress and disputed only', () => {
-    const all: Order['status'][] = ['pending', 'accepted', 'in_progress', 'completed', 'cancelled', 'disputed'];
+  it('blocks on pending, accepted, in_progress, awaiting_confirmation and disputed only', () => {
+    const all: Order['status'][] = ['pending', 'accepted', 'in_progress', 'awaiting_confirmation', 'completed', 'cancelled', 'disputed'];
     const blocked = blockingOrders(all.map((s) => order(s, s))).map((o) => o.status);
-    expect(blocked).toEqual(['pending', 'accepted', 'in_progress', 'disputed']);
+    expect(blocked).toEqual(['pending', 'accepted', 'in_progress', 'awaiting_confirmation', 'disputed']);
     expect([...BLOCKING_ORDER_STATUSES]).toEqual(blocked);
     expect(blockingOrders([order('1', 'completed'), order('2', 'cancelled')])).toEqual([]);
   });

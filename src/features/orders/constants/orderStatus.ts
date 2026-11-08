@@ -20,6 +20,7 @@ export const ORDER_STATUS: Record<OrderStatus, OrderStatusInfo> = {
   pending:     { label: 'Pendiente',   desc: 'Esperando respuesta del proveedor', icon: 'hourglass-empty', tone: 'pending' },
   accepted:    { label: 'Aceptada',    desc: 'El proveedor confirmó el servicio', icon: 'check-circle',    tone: 'accepted' },
   in_progress: { label: 'En progreso', desc: 'El proveedor está trabajando',      icon: 'build',           tone: 'progress' },
+  awaiting_confirmation: { label: 'Esperando confirmación', desc: 'El proveedor terminó; falta la confirmación del cliente', icon: 'hourglass-top', tone: 'progress' },
   completed:   { label: 'Completada',  desc: 'Trabajo terminado exitosamente',    icon: 'verified',        tone: 'done' },
   cancelled:   { label: 'Cancelada',   desc: 'La orden fue cancelada',            icon: 'cancel',          tone: 'cancelled' },
   disputed:    { label: 'En disputa',  desc: `Equipo ${BRAND_NAME} está revisando`,       icon: 'gavel',           tone: 'pending' },

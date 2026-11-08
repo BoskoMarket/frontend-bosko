@@ -122,6 +122,7 @@ const ORDER = {
     "La orden debe ser aceptada por el proveedor antes de pagar",
   ORDER_DISPUTED: "No se puede liberar el pago de una orden en disputa",
   INVALID_ORDER_STATUS_TRANSITION: "Ese cambio de estado no está permitido",
+  INVALID_ORDER_TRANSITION: "La orden cambió de estado. Actualizamos la vista.",
   ORDER_STATUS_STALE:
     "La orden cambió mientras se procesaba. Actualiza y vuelve a intentar",
 } as const;

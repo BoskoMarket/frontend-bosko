@@ -1,7 +1,7 @@
 /**
  * OrderDetailScreen — Detalle completo de una orden.
  * Muestra el estado, timeline, y acciones disponibles según rol y estado.
- * Acciones: aceptar, rechazar, iniciar, completar, cancelar, disputar.
+ * Las acciones por estado y rol salen de `getOrderActions` (utils/orderActions.ts).
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -13,9 +13,6 @@ import {
   Pressable,
   ActivityIndicator,
   RefreshControl,
-  Modal,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,10 +25,13 @@ import { OrderStatus } from '../types/orders.types';
 import { ORDER_STATUS } from '../constants/orderStatus';
 import { getUserErrorMessage } from '@/lib/errors';
 import { FEATURES } from '@/core/config/features';
+import { getOrderActions, getOrderInfoText, isSystemCancelled } from '../utils/orderActions';
+import type { OrderActionId, OrderRole } from '../utils/orderActions';
 import {
   Button,
   Card,
-  Input,
+  NoticeBanner,
+  ReasonDialog,
   ScreenHeader,
   StepTimeline,
   Text,
@@ -50,16 +50,21 @@ const TIMELINE_STEPS: { status: OrderStatus; label: string; icon: TimelineStep['
   { status: 'pending',     label: 'Solicitud enviada', icon: 'send' },
   { status: 'accepted',    label: 'Aceptada',          icon: 'checkmark-circle' },
   { status: 'in_progress', label: 'En progreso',       icon: 'construct' },
+  { status: 'awaiting_confirmation', label: 'Esperando confirmación', icon: 'hourglass' },
   { status: 'completed',   label: 'Completada',        icon: 'shield-checkmark' },
 ];
 
-const STATUS_ORDER: OrderStatus[] = ['pending', 'accepted', 'in_progress', 'completed'];
+const STATUS_ORDER: OrderStatus[] = TIMELINE_STEPS.map(step => step.status);
+
+/** Reason bounds enforced by the backend for cancel / reject. */
+const REASON_MIN = 5;
+const REASON_MAX = 500;
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(amount);
 }
 
-function Timeline({ currentStatus }: { currentStatus: OrderStatus }) {
+function Timeline({ currentStatus, systemCancelled }: { currentStatus: OrderStatus; systemCancelled: boolean }) {
   // Si está cancelada o en disputa, no mostramos el timeline normal
   if (currentStatus === 'cancelled' || currentStatus === 'disputed') {
     const info = ORDER_STATUS[currentStatus];
@@ -68,7 +73,9 @@ function Timeline({ currentStatus }: { currentStatus: OrderStatus }) {
       <View style={[styles.cancelledBanner, { backgroundColor: palette.bg }]}>
         <MaterialIcons name={info.icon} size={20} color={palette.fg} />
         <Text variant="label" color={palette.fg}>
-          {currentStatus === 'cancelled' ? 'Orden cancelada' : 'En disputa — equipo revisando'}
+          {currentStatus === 'cancelled'
+            ? (systemCancelled ? 'Orden vencida' : 'Orden cancelada')
+            : 'En disputa — equipo revisando'}
         </Text>
       </View>
     );
@@ -91,7 +98,7 @@ export default function OrderDetailScreen() {
   const pc = usePremiumColors();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id: string }>();
-  const { acceptOrder, rejectOrder, startOrder, completeOrder, cancelOrder, disputeOrder } = useOrders();
+  const { acceptOrder, rejectOrder, startOrder, markOrderDone, confirmOrder, cancelOrder, disputeOrder } = useOrders();
   const { profile } = useProfile();
 
   const { data: order, isLoading: loading, refetch: refetchOrder } = useOrder(params.id);
@@ -106,13 +113,14 @@ export default function OrderDetailScreen() {
   }, [params.id, refetchOrder]));
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // Modal de motivo (reemplaza Alert.prompt que no funciona en Android)
-  const [reasonModal, setReasonModal] = useState<{
+  // Diálogo de motivo (cancelar / rechazar / disputar)
+  const [reasonDialog, setReasonDialog] = useState<{
     title: string;
-    placeholder: string;
+    message: string;
+    confirmLabel: string;
+    destructive?: boolean;
     onConfirm: (reason: string) => void;
   } | null>(null);
-  const [reasonText, setReasonText] = useState('');
 
   const anims = useRef(
     Array.from({ length: 4 }, () => new Animated.Value(0))
@@ -147,19 +155,27 @@ export default function OrderDetailScreen() {
       await action();
       await refetchOrder(); // Refresca los datos
     } catch (err) {
+      // A stale view (409 transition error): resync before showing the message.
+      void refetchOrder();
       dialog.fromAlert(`Error al ${label.toLowerCase()}`, getUserErrorMessage(err));
     } finally {
       setActionLoading(null);
     }
   };
 
-  const promptAndRun = (label: string, placeholder: string, action: (reason: string) => Promise<void>) => {
-    setReasonText('');
-    setReasonModal({
+  const promptAndRun = (
+    label: string,
+    message: string,
+    action: (reason: string) => Promise<void>,
+    options: { confirmLabel?: string; destructive?: boolean } = {},
+  ) => {
+    setReasonDialog({
       title: label,
-      placeholder,
+      message,
+      confirmLabel: options.confirmLabel ?? 'Confirmar',
+      destructive: options.destructive,
       onConfirm: (reason: string) => {
-        setReasonModal(null);
+        setReasonDialog(null);
         runAction(label, () => action(reason));
       },
     });
@@ -195,7 +211,11 @@ export default function OrderDetailScreen() {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
 
-  const confirmDisabled = !reasonText.trim();
+  const role: OrderRole | null = isClient ? 'client' : isProvider ? 'provider' : null;
+  const plan = getOrderActions(order, role);
+  const infoText = getOrderInfoText(plan.info, order);
+  const systemCancelled = isSystemCancelled(order);
+  const has = (id: OrderActionId) => plan.actions.includes(id);
 
   return (
     <View style={[styles.background, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
@@ -234,7 +254,7 @@ export default function OrderDetailScreen() {
         <Animated.View style={enter(1)}>
           <Card padding="lg" radius="lg" contentStyle={styles.card}>
             <Text variant="label" color={tc.text}>Estado de la orden</Text>
-            <Timeline currentStatus={order.status} />
+            <Timeline currentStatus={order.status} systemCancelled={systemCancelled} />
           </Card>
         </Animated.View>
 
@@ -286,35 +306,39 @@ export default function OrderDetailScreen() {
           </View>
         )}
 
-        {/* Acciones según rol y estado */}
+        {/* Acciones según rol y estado (matriz en getOrderActions) */}
         <Animated.View style={[styles.actionsContainer, enter(3)]}>
-          {/* PROVEEDOR: puede aceptar o rechazar si pending */}
-          {isProvider && order.status === 'pending' && (
-            <>
-              <ActionButton
-                label="Aceptar"
-                icon="check"
-                color={TOKENS.status.done.fg}
-                loading={actionLoading === 'Aceptar'}
-                onPress={() => runAction('Aceptar', () => acceptOrder(order.id))}
-              />
-              <ActionButton
-                label="Rechazar"
-                icon="close"
-                color={TOKENS.status.cancelled.fg}
-                secondary
-                loading={actionLoading === 'Rechazar'}
-                onPress={() => promptAndRun(
-                  'Rechazar orden',
-                  'Ingresa el motivo del rechazo',
-                  reason => rejectOrder(order.id, { reason }),
-                )}
-              />
-            </>
+          {infoText && (
+            <NoticeBanner variant={plan.info === 'clientSystemCancelled' || plan.info === 'providerExpired' ? 'error' : 'pending'}>
+              {infoText}
+            </NoticeBanner>
           )}
 
-          {/* PROVEEDOR: puede iniciar si accepted */}
-          {isProvider && order.status === 'accepted' && (
+          {has('accept') && (
+            <ActionButton
+              label="Aceptar"
+              icon="check"
+              color={TOKENS.status.done.fg}
+              loading={actionLoading === 'Aceptar'}
+              onPress={() => runAction('Aceptar', () => acceptOrder(order.id))}
+            />
+          )}
+          {has('reject') && (
+            <ActionButton
+              label="Rechazar"
+              icon="close"
+              color={TOKENS.status.cancelled.fg}
+              secondary
+              loading={actionLoading === 'Rechazar orden'}
+              onPress={() => promptAndRun(
+                'Rechazar orden',
+                'Cuéntale al cliente por qué rechazas la solicitud.',
+                reason => rejectOrder(order.id, { reason }),
+                { confirmLabel: 'Rechazar' },
+              )}
+            />
+          )}
+          {has('start') && (
             <ActionButton
               label="Iniciar trabajo"
               icon="play-arrow"
@@ -323,35 +347,35 @@ export default function OrderDetailScreen() {
               onPress={() => runAction('Iniciar trabajo', () => startOrder(order.id))}
             />
           )}
-
-          {/* PROVEEDOR: puede completar si in_progress */}
-          {isProvider && order.status === 'in_progress' && (
+          {has('markDone') && (
             <ActionButton
-              label="Marcar como completado"
+              label="Marcar como terminado"
               icon="check-circle"
               color={TOKENS.status.done.fg}
-              loading={actionLoading === 'Marcar como completado'}
-              onPress={() => runAction('Marcar como completado', () => completeOrder(order.id))}
+              loading={actionLoading === 'Marcar como terminado'}
+              onPress={() => runAction('Marcar como terminado', () => markOrderDone(order.id))}
             />
           )}
-
-          {/* CLIENTE: puede cancelar si pending o accepted */}
-          {isClient && ['pending', 'accepted'].includes(order.status) && (
+          {has('confirm') && (
             <ActionButton
-              label="Cancelar orden"
-              icon="cancel"
-              color={TOKENS.status.cancelled.fg}
-              secondary
-              loading={actionLoading === 'Cancelar orden'}
-              onPress={() => promptAndRun(
-                'Cancelar orden',
-                'Ingresa el motivo de la cancelación',
-                reason => cancelOrder(order.id, { reason }),
-              )}
+              label="Confirmar trabajo"
+              icon="check-circle"
+              color={TOKENS.status.done.fg}
+              loading={actionLoading === 'Confirmar trabajo'}
+              onPress={() => runAction('Confirmar trabajo', () => confirmOrder(order.id))}
+            />
+          )}
+          {has('quoteOther') && (
+            <ActionButton
+              label="Cotizar a otro proveedor"
+              icon="search"
+              color={TOKENS.color.signal}
+              loading={false}
+              onPress={() => router.push('/search')}
             />
           )}
 
-          {/* CLIENTE: pagar si hay saldo pendiente */}
+          {/* Pagar: solo con FEATURES.payments */}
           {needsPayment && (
             <ActionButton
               label="Pagar orden"
@@ -362,8 +386,7 @@ export default function OrderDetailScreen() {
             />
           )}
 
-          {/* CLIENTE: calificar si completado y todavía no calificó */}
-          {isClient && order.status === 'completed' && !order.review && (
+          {has('review') && (
             <ActionButton
               label="Calificar servicio"
               icon="star"
@@ -391,63 +414,52 @@ export default function OrderDetailScreen() {
             </View>
           )}
 
-          {/* CLIENTE o PROVEEDOR: puede disputar si in_progress; solo cliente si completed */}
-          {((isProvider && order.status === 'in_progress') || (isClient && ['in_progress', 'completed'].includes(order.status))) && (
+          {(has('dispute') || has('reportProblem')) && (
             <ActionButton
-              label="Abrir disputa"
+              label={has('reportProblem') ? 'Reportar un problema' : 'Abrir disputa'}
               icon="gavel"
               color={TOKENS.color.warning}
               secondary
               loading={actionLoading === 'Abrir disputa'}
               onPress={() => promptAndRun(
                 'Abrir disputa',
-                `Describe el problema para que el equipo de ${BRAND_NAME} pueda ayudarte`,
+                `Describe el problema para que el equipo de ${BRAND_NAME} pueda ayudarte.`,
                 reason => disputeOrder(order.id, { reason }),
+                { confirmLabel: 'Abrir disputa' },
+              )}
+            />
+          )}
+
+          {has('cancel') && (
+            <ActionButton
+              label="Cancelar orden"
+              icon="cancel"
+              color={TOKENS.status.cancelled.fg}
+              secondary
+              loading={actionLoading === 'Cancelar orden'}
+              onPress={() => promptAndRun(
+                'Cancelar orden',
+                'Cuéntanos el motivo de la cancelación.',
+                reason => cancelOrder(order.id, { reason }),
+                { confirmLabel: 'Cancelar orden' },
               )}
             />
           )}
         </Animated.View>
       </ScrollView>
 
-      {/* Modal de motivo */}
-      <Modal
-        visible={!!reasonModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setReasonModal(null)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={[styles.modalOverlay, { backgroundColor: TOKENS.scrim.medium }]}
-        >
-          <View style={[styles.modalBox, { backgroundColor: tc.surface }]}>
-            <Text variant="subtitle" color={tc.text}>{reasonModal?.title}</Text>
-            <Input
-              placeholder={reasonModal?.placeholder}
-              value={reasonText}
-              onChangeText={setReasonText}
-              multiline
-              autoFocus
-            />
-            <View style={styles.modalActions}>
-              <View style={styles.flex}>
-                <Button label="Cancelar" variant="secondary" fullWidth onPress={() => setReasonModal(null)} />
-              </View>
-              <View style={styles.flex}>
-                <Button
-                  label="Confirmar"
-                  fullWidth
-                  disabled={confirmDisabled}
-                  onPress={() => {
-                    if (confirmDisabled) return;
-                    reasonModal?.onConfirm(reasonText.trim());
-                  }}
-                />
-              </View>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      <ReasonDialog
+        visible={!!reasonDialog}
+        title={reasonDialog?.title ?? ''}
+        message={`${reasonDialog?.message ?? ''} Mínimo ${REASON_MIN} caracteres.`}
+        confirmLabel={reasonDialog?.confirmLabel ?? 'Confirmar'}
+        cancelLabel="Volver"
+        destructive={reasonDialog?.destructive ?? true}
+        minLength={REASON_MIN}
+        maxLength={REASON_MAX}
+        onCancel={() => setReasonDialog(null)}
+        onConfirm={reason => reasonDialog?.onConfirm(reason)}
+      />
     </View>
   );
 }
@@ -549,18 +561,4 @@ const styles = StyleSheet.create({
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.98 }] },
   notFoundText: { marginBottom: SPACING.lg },
   backLink: { padding: SPACING.sm },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: SPACING.xxl,
-  },
-  modalBox: {
-    borderRadius: TOKENS.radius.lg,
-    padding: SPACING.xl,
-    gap: 14,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
 });

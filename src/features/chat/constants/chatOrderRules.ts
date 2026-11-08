@@ -6,7 +6,7 @@ import { ORDER_STATUS, type OrderStatusTone } from '@/features/orders/constants/
  * Single source of truth for how an order status affects its chat (G68).
  * - completed / cancelled: chat is read-only (composer hidden, banner shown).
  * - disputed: chat stays open, with an informative banner.
- * - pending / accepted / in_progress (or unknown while loading): unchanged.
+ * - pending / accepted / in_progress / awaiting_confirmation (or unknown while loading): writable.
  */
 export type ChatNoticeKind = 'readOnly' | 'info';
 
