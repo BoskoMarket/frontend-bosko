@@ -10,4 +10,6 @@ export interface KYCVerification {
   submittedAt: string | null;
   completedAt: string | null;
   rejectionReason?: string;
+  /** Per-city document types (B10). Absent on older backends => default list. */
+  allowedDocumentTypes?: string[];
 }

@@ -23,6 +23,8 @@ import {
   useThemeColors,
 } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { getKycCopy } from '../utils/kycCopy';
+import type { KYCStatus } from '../types/kyc.types';
 import { SupportContactButton } from '@/features/appConfig/components/SupportContactButton';
 
 const MAX_ATTEMPTS = 3;
@@ -58,8 +60,12 @@ export default function KYCRejectedScreen() {
 
   const attemptCount = verification?.attemptCount ?? 0;
   const maxAttempts = verification?.maxAttempts ?? MAX_ATTEMPTS;
-  const canRetry = attemptCount < maxAttempts;
-  const rejectionReason = verification?.rejectionReason;
+  const status = (verification?.status?.toLowerCase() ?? 'rejected') as KYCStatus;
+  // This screen only handles non-success outcomes: anything else reads as a rejection.
+  const copy = getKycCopy(status === 'failed' || status === 'expired' ? status : 'rejected', verification);
+  const consumesAttempt = copy.retryConsumesAttempt;
+  const canRetry = copy.retryLabel !== null;
+  const rejectionReason = copy.showReason ? verification?.rejectionReason : undefined;
 
   const handleRetry = async () => {
     clearError();
@@ -80,15 +86,14 @@ export default function KYCRejectedScreen() {
     >
       <AnimatedBackground variant="minimal" />
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-        <ScreenHeader title="Verificación rechazada" onBack={() => safeBack(router, '/(tabs)/profile/kyc')} />
+        <ScreenHeader title={copy.title} onBack={() => safeBack(router, '/(tabs)/profile/kyc')} />
 
         {/* Icon */}
         <Animated.View style={[s.iconWrap, { opacity: 1 }]}>
           <IconCircle name="close-circle" variant="danger" size={84} iconSize={52} />
-          <Text variant="h3" color={TOKENS.color.error} center>Verificación rechazada</Text>
-          <Text variant="body" color={tc.textSub} center>
-            Tu verificación de identidad no fue aprobada. Revisa el motivo y vuelve a intentarlo.
-          </Text>
+          <Text variant="h3" color={TOKENS.color.error} center>{copy.title}</Text>
+          <Text variant="body" color={tc.textSub} center>{copy.description}</Text>
+          {!!copy.note && <Text variant="label" color={TOKENS.color.signal} center>{copy.note}</Text>}
         </Animated.View>
 
         {/* Rejection reason */}
@@ -113,6 +118,7 @@ export default function KYCRejectedScreen() {
         )}
 
         {/* Tips */}
+        {(consumesAttempt || copy.showSupport) && (
         <FadeSlide delay={150}>
           <Card padding="xl" radius="lg" contentStyle={s.cardContent}>
             <Text variant="subtitle">Consejos para el reintento</Text>
@@ -126,8 +132,10 @@ export default function KYCRejectedScreen() {
             ))}
           </Card>
         </FadeSlide>
+        )}
 
         {/* Attempts counter */}
+        {(consumesAttempt || copy.showSupport) && (
         <FadeSlide delay={200}>
           <View style={[s.attemptsCard, { backgroundColor: tc.surface, borderColor: tc.border }]}>
             <MaterialIcons
@@ -143,13 +151,14 @@ export default function KYCRejectedScreen() {
             </Text>
           </View>
         </FadeSlide>
+        )}
 
         {!!error && <NoticeBanner variant="error">{error}</NoticeBanner>}
 
         {canRetry ? (
           <FadeSlide delay={250}>
             <Button
-              label="Reintentar verificación"
+              label={copy.retryLabel ?? 'Reintentar'}
               size="lg"
               fullWidth
               loading={loading}

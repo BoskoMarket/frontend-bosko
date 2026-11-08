@@ -25,6 +25,7 @@ import { quoteHref, resolveQuoteTarget } from '../utils/quoteRoute';
 import type { ServiceSummary } from '@/types/services';
 import { Button, ScreenLoader, formatServicePrice, GRADIENTS, BRAND_RADIAL_FILL, TOKENS, useIsDark, useThemeColors, withAlpha, type ReportSheetSubmit, OptionSheet, dialog, FONT_FAMILY, SPACING } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { BackgroundCheckBadge } from '@/features/kyc/components/BackgroundCheckBadge';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { ReportFlow } from '@/features/reports/components/ReportFlow';
 import { canReport } from '@/features/reports/canReport';
@@ -67,6 +68,8 @@ interface PublicProvider {
   bannerUrl: string | null;
   isVerified: boolean;
   kycApproved?: boolean;
+  /** Optional public field: an approved background check shows a trust badge. */
+  backgroundCheckStatus?: string;
   rating: number | null;
   reviewsCount: number;
   location?: string;
@@ -184,6 +187,7 @@ export default function ProviderProfileScreen() {
           bannerUrl: providerData.bannerUrl ?? null,
           isVerified: providerData.isVerified ?? false,
           kycApproved: providerData.kycApproved ?? providerData.isVerified ?? false,
+          backgroundCheckStatus: providerData.backgroundCheckStatus ?? undefined,
           rating: providerData.rating != null ? Number(providerData.rating) : null,
           reviewsCount: providerData.reviewsCount ?? 0,
           location: providerData.location ?? '',
@@ -396,6 +400,8 @@ export default function ProviderProfileScreen() {
                 <Text style={[s.badgeText, { color: TOKENS.status.done.fg }]}>Profesional aprobado</Text>
               </View>
             )}
+
+            <BackgroundCheckBadge status={provider.backgroundCheckStatus} />
 
             <View style={[s.badge, { backgroundColor: withAlpha(TOKENS.color.rating, 0.12) }]}>
               <Ionicons name="star" size={15} color={TOKENS.color.rating} />

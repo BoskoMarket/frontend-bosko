@@ -47,7 +47,7 @@ describe('getRoleSection', () => {
       'Mis trabajos',
       'Mis reseñas',
       'Verificación de identidad',
-      'Antecedentes penales',
+      'Antecedentes (opcional)',
     ]);
     expect(section.rows.map((r) => r.id)).not.toContain('publish-service');
     expect(section.rows.find((r) => r.id === 'my-services')?.href).toBe('/(tabs)/profile/Services');

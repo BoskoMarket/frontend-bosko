@@ -32,7 +32,7 @@ const PROVIDER_ROWS: ProfileRow[] = [
   { id: 'my-reels', icon: 'film-outline', label: 'Mis reels', href: '/(tabs)/profile/my-reels' },
   { id: 'my-reviews', icon: 'star-outline', label: 'Mis reseñas', href: '/(tabs)/profile/my-reviews' },
   { id: 'kyc', icon: 'shield-checkmark-outline', label: 'Verificación de identidad', href: '/(tabs)/profile/kyc', badge: 'kyc' },
-  { id: 'background-check', icon: 'document-text-outline', label: 'Antecedentes penales', href: '/(tabs)/profile/background-check' },
+  { id: 'background-check', icon: 'document-text-outline', label: 'Antecedentes (opcional)', href: '/(tabs)/profile/background-check' },
   { id: 'plan', icon: 'diamond-outline', label: 'Plan', href: '/(tabs)/profile/plans', badge: 'plans' },
 ];
 

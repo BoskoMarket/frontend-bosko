@@ -58,6 +58,7 @@ const VERIFICATION = {
     "La verificación de antecedentes ya fue aprobada",
   IDENTITY_NOT_VERIFIED:
     "Necesitas verificar tu identidad para realizar esta acción",
+  PHONE_NOT_VERIFIED: "Verifica tu teléfono para publicar tu servicio.",
 } as const;
 
 const PASSWORD = {

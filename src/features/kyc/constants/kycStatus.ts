@@ -4,6 +4,7 @@ import { TOKENS } from '@/core/design-system';
 import type { BadgeTone, ThemeColors } from '@/core/design-system';
 import type { KYCStatus } from '../types/kyc.types';
 import type { BackgroundCheckStatus } from '../services/background-check.service';
+import { getKycCopy } from '../utils/kycCopy';
 
 type MaterialIconName = ComponentProps<typeof MaterialIcons>['name'];
 type IoniconName = ComponentProps<typeof Ionicons>['name'];
@@ -46,7 +47,7 @@ export const KYC_STATUS: Record<KYCStatus, KYCStatusInfo> = {
   pending: IN_REVIEW,
   approved: {
     title: '¡Verificado!',
-    description: 'Tu identidad fue verificada exitosamente. Puedes publicar servicios y crear órdenes.',
+    description: getKycCopy('approved').description,
     icon: 'verified',
     tone: 'done',
     badge: 'Verificado',
@@ -54,15 +55,15 @@ export const KYC_STATUS: Record<KYCStatus, KYCStatusInfo> = {
   rejected: REJECTED,
   declined: REJECTED,
   failed: {
-    title: 'Error en verificación',
-    description: 'Hubo un error técnico. Puedes volver a intentarlo.',
+    title: getKycCopy('failed').title,
+    description: getKycCopy('failed').description,
     icon: 'error-outline',
     tone: 'cancelled',
     badge: 'Error',
   },
   expired: {
-    title: 'Verificación vencida',
-    description: 'Tu verificación expiró. Necesitas iniciar el proceso nuevamente.',
+    title: getKycCopy('expired').title,
+    description: getKycCopy('expired').description,
     icon: 'timer-off',
     tone: 'pending',
     badge: 'Vencido',

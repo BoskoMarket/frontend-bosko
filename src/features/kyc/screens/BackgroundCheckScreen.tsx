@@ -148,7 +148,7 @@ export default function BackgroundCheckScreen() {
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={tc.bg} />
 
       <View style={s.header}>
-        <ScreenHeader title="Antecedentes penales" onBack={() => safeBack(router, '/(tabs)/profile')} />
+        <ScreenHeader title="Antecedentes (opcional)" onBack={() => safeBack(router, '/(tabs)/profile')} />
       </View>
 
       <ScrollView contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 40 }]} showsVerticalScrollIndicator={false}>
@@ -161,7 +161,7 @@ export default function BackgroundCheckScreen() {
             </View>
             <Text variant="h3" color={TOKENS.color.onPrimary}>Certificado de antecedentes</Text>
             <Text variant="bodySmall" color={TOKENS.onMedia.textSub}>
-              Sube tu certificado del Registro Nacional de Reincidencia para generar confianza con tus clientes.
+              Es opcional y no es necesario para publicar tu servicio. Si lo subes y se aprueba, tu perfil muestra la insignia «Antecedentes verificados» y genera más confianza en tus clientes.
             </Text>
           </LinearGradient>
 

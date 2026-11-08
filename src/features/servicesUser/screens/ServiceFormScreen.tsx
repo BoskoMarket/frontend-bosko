@@ -24,6 +24,7 @@ import { Button, Card, Chip, Input, ScreenHeader, SPACING, Text, TOKENS, useIsDa
 import { getUserErrorMessage } from '@/lib/errors';
 import { toast } from '@/core/components/Toast';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
+import { getPublishBlock } from '@/features/kyc/utils/publishErrors';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 import { DESCRIPTION_MIN as MIN_DESCRIPTION, TITLE_MAX, TITLE_MIN, validateServiceFields } from '@/features/servicesUser/utils/serviceFormRules';
@@ -65,7 +66,7 @@ function extractPrice(price: any): string {
 }
 
 export default function ServiceFormScreen() {
-  useRequireProviderStatus('provider');
+  useRequireProviderStatus('provider', { requirePublish: true });
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();
@@ -241,6 +242,17 @@ export default function ServiceFormScreen() {
       }
       safeBack(router, '/(tabs)/profile');
     } catch (err: any) {
+      const block = getPublishBlock(err);
+      if (block) {
+        const goFix = await dialog.confirm({
+          title: "Antes de publicar",
+          message: block.message,
+          confirmLabel: block.ctaLabel,
+          cancelLabel: "Ahora no",
+        });
+        if (goFix) router.push(block.route as never);
+        return;
+      }
       if (err?.code === "SERVICE_LIMIT_REACHED" || err?.response?.data?.code === "SERVICE_LIMIT_REACHED") {
         toast.warning("Límite de tu plan", "Actualiza a plan Plus para publicar más servicios.");
       } else {
