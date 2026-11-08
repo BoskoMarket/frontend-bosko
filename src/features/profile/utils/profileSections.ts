@@ -48,7 +48,12 @@ const CLIENT_ROWS: ProfileRow[] = [
  */
 export function getRoleSection(status: ProviderStatus): ProfileSection | null {
   if (status === 'provider') {
-    return { title: 'Mi negocio', rows: PROVIDER_ROWS.filter((row) => FEATURES.reels || row.id !== 'my-reels') };
+    return {
+      title: 'Mi negocio',
+      rows: PROVIDER_ROWS.filter(
+        (row) => (FEATURES.reels || row.id !== 'my-reels') && (FEATURES.payments || row.id !== 'plan'),
+      ),
+    };
   }
   if (status === 'client') return { title: 'Mi actividad', rows: CLIENT_ROWS };
   return null;

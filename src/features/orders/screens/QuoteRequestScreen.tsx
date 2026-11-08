@@ -211,7 +211,7 @@ export default function QuoteRequestScreen() {
               {/* Aviso */}
               <NoticeBanner style={styles.notice}>
                 El proveedor verá tu solicitud y podrá aceptarla o rechazarla.
-                El precio final se acuerda entre ambas partes.
+                El precio final y el pago se acuerdan directamente con el proveedor, fuera de la app.
               </NoticeBanner>
 
               {/* Botón enviar */}

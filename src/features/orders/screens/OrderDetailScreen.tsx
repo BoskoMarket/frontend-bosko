@@ -27,6 +27,7 @@ import { useProfile } from '@/features/profile/state/ProfileContext';
 import { OrderStatus } from '../types/orders.types';
 import { ORDER_STATUS } from '../constants/orderStatus';
 import { getUserErrorMessage } from '@/lib/errors';
+import { FEATURES } from '@/core/config/features';
 import {
   Button,
   Card,
@@ -129,7 +130,8 @@ export default function OrderDetailScreen() {
 
 
   const paymentPending = order?.paymentStatus === 'pending' || order?.paymentStatus === undefined;
-  const needsPayment = isClient && paymentPending && ['accepted', 'in_progress', 'completed'].includes(order?.status || '');
+  // In-app payment is postponed (FEATURES.payments): in v1 the client pays the provider directly.
+  const needsPayment = FEATURES.payments && isClient && paymentPending && ['accepted', 'in_progress', 'completed'].includes(order?.status || '');
 
   const handlePay = () => {
     if (!order?.id) return;

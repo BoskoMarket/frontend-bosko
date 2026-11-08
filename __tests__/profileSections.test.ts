@@ -3,7 +3,13 @@ import * as path from 'path';
 import { getRoleSection, INFO_SECTION } from '@/features/profile/utils/profileSections';
 
 let mockReels = false;
-jest.mock('@/core/config/features', () => ({ FEATURES: { get reels() { return mockReels; } } }));
+let mockPayments = false;
+jest.mock('@/core/config/features', () => ({
+  FEATURES: {
+    get reels() { return mockReels; },
+    get payments() { return mockPayments; },
+  },
+}));
 
 const repo = path.resolve(__dirname, '..');
 
@@ -16,6 +22,13 @@ function routeExists(href: string): boolean {
 describe('getRoleSection', () => {
   beforeEach(() => {
     mockReels = false;
+    mockPayments = false;
+  });
+
+  it('shows the Plan row only when payments are enabled', () => {
+    expect(getRoleSection('provider')!.rows.map((r) => r.id)).not.toContain('plan');
+    mockPayments = true;
+    expect(getRoleSection('provider')!.rows.find((r) => r.id === 'plan')?.href).toBe('/(tabs)/profile/plans');
   });
 
   it('adds Mis reels for providers only when the reels flag is on', () => {
@@ -36,7 +49,6 @@ describe('getRoleSection', () => {
       'Mis reseñas',
       'Verificación de identidad',
       'Antecedentes penales',
-      'Plan',
     ]);
     expect(section.rows.find((r) => r.id === 'publish-service')?.href).toBe('/service-form');
   });
@@ -59,6 +71,7 @@ describe('getRoleSection', () => {
 
   it('only points to routes that exist in app/', () => {
     mockReels = true;
+    mockPayments = true;
     const rows = [...getRoleSection('provider')!.rows, ...getRoleSection('client')!.rows];
     rows.forEach((row) => expect({ href: row.href, exists: routeExists(row.href) }).toEqual({ href: row.href, exists: true }));
   });
