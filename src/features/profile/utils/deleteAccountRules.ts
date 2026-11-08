@@ -33,9 +33,13 @@ export function formatDeletionDate(iso?: string | null): string | null {
   return d.toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-/** Final message once the account was deactivated; falls back to "en 30 días" for an old backend. */
+/** What happens to shared history; reused by every piece of delete-account copy. */
+export const SHARED_HISTORY_NOTE =
+  'Las órdenes, los chats y las reseñas compartidos con otras personas se conservan sin tu identidad.';
+
+/** Final message once the account was deactivated; falls back to "30 días" for an old backend. */
 export function deactivationMessage(deletionScheduledAt?: string | null): string {
   const date = formatDeletionDate(deletionScheduledAt);
-  const when = date ? `el ${date}` : `en ${DELETION_GRACE_DAYS} días`;
-  return `Tu cuenta se desactivó. Se eliminará definitivamente ${when}. Si vuelves a iniciar sesión antes, se reactiva.`;
+  const until = date ? `hasta el ${date}` : `durante ${DELETION_GRACE_DAYS} días`;
+  return `Tu cuenta se desactivó. Puedes recuperarla iniciando sesión ${until}. Después, los datos de tu cuenta se anonimizan y se eliminan.`;
 }

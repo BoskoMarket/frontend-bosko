@@ -66,10 +66,10 @@ describe('deleteAccountRules', () => {
     expect(formatDeletionDate('not a date')).toBeNull();
     expect(formatDeletionDate(undefined)).toBeNull();
     const withDate = deactivationMessage('2026-11-13T12:00:00Z');
-    expect(withDate).toMatch(/^Tu cuenta se desactivó\. Se eliminará definitivamente el .*2026\./);
-    expect(withDate).toContain('Si vuelves a iniciar sesión antes, se reactiva.');
+    expect(withDate).toMatch(/^Tu cuenta se desactivó\. Puedes recuperarla iniciando sesión hasta el .*2026\./);
+    expect(withDate).toContain('se anonimizan y se eliminan');
     expect(deactivationMessage()).toBe(
-      'Tu cuenta se desactivó. Se eliminará definitivamente en 30 días. Si vuelves a iniciar sesión antes, se reactiva.',
+      'Tu cuenta se desactivó. Puedes recuperarla iniciando sesión durante 30 días. Después, los datos de tu cuenta se anonimizan y se eliminan.',
     );
   });
 });
@@ -109,8 +109,17 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
   it('explains the 30-day grace period before confirming', () => {
     const { getByText } = render(<DeleteAccountScreen />);
     expect(getByText('Si eliminas tu cuenta:')).toBeTruthy();
-    expect(getByText(/Tienes 30 días para cambiar de idea/)).toBeTruthy();
-    expect(getByText(/Pasados los 30 días, tu cuenta y tus datos se eliminan definitivamente/)).toBeTruthy();
+    expect(getByText(/Durante 30 días puedes recuperarla iniciando sesión/)).toBeTruthy();
+    expect(getByText(/Pasados los 30 días, los datos de tu cuenta se anonimizan y se eliminan/)).toBeTruthy();
+    expect(getByText(/se conservan sin tu identidad/)).toBeTruthy();
+  });
+
+  it('does not promise that everything disappears', () => {
+    const { toJSON } = render(<DeleteAccountScreen />);
+    const text = JSON.stringify(toJSON());
+    expect(text).not.toMatch(/todos tus datos|para siempre|definitivamente/i);
+    expect(text).toMatch(/30 días/);
+    expect(text).toMatch(/anonimizan/);
   });
 
   it('keeps Continue disabled until the confirmation word is typed', () => {
@@ -193,7 +202,7 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
     await waitFor(() => expect(mockLogout).toHaveBeenCalledTimes(1));
     expect(mockReplace).not.toHaveBeenCalled(); // redirect is owned by RootLayoutNav
     expect(mockLogout).toHaveBeenCalledTimes(1);
-    expect(successSpy).toHaveBeenCalledWith('Cuenta desactivada', expect.stringMatching(/definitivamente el .*2026/));
+    expect(successSpy).toHaveBeenCalledWith('Cuenta desactivada', expect.stringMatching(/hasta el .*2026/));
   });
 
   it('falls back to "en 30 días" when the backend sends no date', async () => {
@@ -204,7 +213,7 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
     fireEvent.changeText(utils.getByPlaceholderText('••••••••'), 'secret1');
     fireEvent.press(utils.getByText('Eliminar mi cuenta'));
     await waitFor(() => expect(successSpy).toHaveBeenCalled());
-    expect(successSpy).toHaveBeenCalledWith('Cuenta desactivada', expect.stringContaining('definitivamente en 30 días'));
+    expect(successSpy).toHaveBeenCalledWith('Cuenta desactivada', expect.stringContaining('durante 30 días'));
   });
 
   describe('Google accounts', () => {

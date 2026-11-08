@@ -22,6 +22,7 @@ import { useCategories, useCreateService, useMyServices, useUpdateService } from
 import { fetchServiceById } from "../services/services";
 import { Button, Card, Chip, Input, ScreenHeader, SPACING, Text, TOKENS, useIsDark, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
+import { runWithRetry } from '@/lib/runWithRetry';
 import { toast } from '@/core/components/Toast';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { getPublishBlock } from '@/features/kyc/utils/publishErrors';
@@ -194,6 +195,14 @@ export default function ServiceFormScreen() {
     };
   };
 
+  // Network failures offer "Reintentar" with the same payload (the form keeps its state);
+  // any other error is rethrown so the catch below keeps handling publish blocks and limits.
+  const saveWithRetry = <T,>(action: () => Promise<T>) =>
+    runWithRetry(action, {
+      title: "No se pudo guardar el servicio",
+      onError: (e) => { throw e; },
+    });
+
   const handleSubmit = async () => {
     if (!validateForm()) return;
     setSubmitting(true);
@@ -202,7 +211,10 @@ export default function ServiceFormScreen() {
       if (isEditing && selectedService?.id) {
         const { categoryId: _cat, title, ...rest } = payload;
         const editPayload = titleUnchanged ? rest : { ...rest, title };
-        await updateServiceM.mutateAsync({ id: selectedService.id, payload: editPayload });
+        const saved = await saveWithRetry(() =>
+          updateServiceM.mutateAsync({ id: selectedService.id!, payload: editPayload }),
+        );
+        if (!saved.ok) return;
         // The service is already saved; a failed photo upload must not read as a full success.
         let photoFailed = false;
         if (imageUri?.startsWith("file")) {
@@ -218,7 +230,9 @@ export default function ServiceFormScreen() {
           toast.success("Servicio actualizado", "Los cambios fueron guardados.");
         }
       } else {
-        const service = await addServiceM.mutateAsync(payload);
+        const created = await saveWithRetry(() => addServiceM.mutateAsync(payload));
+        if (!created.ok) return;
+        const service = created.value;
         let photoFailed = false;
         if (service.id && imageUri) {
           try {

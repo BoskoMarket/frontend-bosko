@@ -74,7 +74,7 @@ import {
   type ChatBlockState,
 } from '../constants/chatBlockRules';
 import { useBlockUser, useUnblockUser } from '@/hooks/mutations/useBlockMutations';
-import { getUserErrorMessage } from '@/lib/errors';
+import { NETWORK_ERROR_MESSAGE, getUserErrorMessage, isNetworkError } from '@/lib/errors';
 import { isVideoUrl } from '../utils/mediaUrl';
 import {
   Avatar,
@@ -89,6 +89,7 @@ import {
   type ReportSheetSubmit,
   ConfirmDialog,
   BRAND_NAME,
+  dialog,
 } from '@/core/design-system';
 import { ReportFlow } from '@/features/reports/components/ReportFlow';
 import { canReport } from '@/features/reports/canReport';
@@ -553,13 +554,27 @@ export default function ChatScreen() {
     const userId = conversationRef.current?.otherParty?.id;
     setConfirmBlockOpen(false);
     if (!userId) return;
-    setBlockedByMe(true);
-    blockMutation.mutate(userId, {
-      onError: err => {
-        setBlockedByMe(false);
-        toast.error('No se pudo bloquear', getUserErrorMessage(err));
-      },
-    });
+    const attempt = () => {
+      setBlockedByMe(true);
+      blockMutation.mutate(userId, {
+        onError: err => {
+          setBlockedByMe(false);
+          if (!isNetworkError(err)) {
+            toast.error('No se pudo bloquear', getUserErrorMessage(err));
+            return;
+          }
+          void dialog
+            .confirm({
+              title: 'No se pudo bloquear',
+              message: NETWORK_ERROR_MESSAGE,
+              confirmLabel: 'Reintentar',
+              cancelLabel: 'Cancelar',
+            })
+            .then(retry => { if (retry) attempt(); });
+        },
+      });
+    };
+    attempt();
   }, [blockMutation, setBlockedByMe]);
   const doUnblock = useCallback(() => {
     const userId = conversationRef.current?.otherParty?.id;

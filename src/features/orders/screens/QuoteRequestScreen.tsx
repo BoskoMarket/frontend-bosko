@@ -30,6 +30,7 @@ import {
   useThemeColors,
   dialog, FONT_FAMILY } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
+import { runWithRetry } from '@/lib/runWithRetry';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { availableSlots, buildDayOptions, isSlotStillAvailable, toScheduledIso, DEFAULT_SLOT_HOUR } from '../utils/scheduledDate';
 
@@ -86,23 +87,24 @@ export default function QuoteRequestScreen() {
     }
 
     setIsLoading(true);
-    try {
-      await addOrder({
-        serviceId: params.serviceId,
-        message: message.trim(),
-        address: address.trim() || undefined,
-        scheduledDate: selectedDay ? toScheduledIso(selectedDay.date, slotHour) : undefined,
-      });
-
+    const payload = {
+      serviceId: params.serviceId,
+      message: message.trim(),
+      address: address.trim() || undefined,
+      scheduledDate: selectedDay ? toScheduledIso(selectedDay.date, slotHour) : undefined,
+    };
+    // A network failure offers "Reintentar" with the same payload; the form keeps what was typed.
+    const result = await runWithRetry(() => addOrder(payload), {
+      title: 'No se pudo enviar la solicitud',
+      onError: (err) => dialog.fromAlert('Error', getUserErrorMessage(err)),
+    });
+    setIsLoading(false);
+    if (result.ok) {
       dialog.fromAlert(
         '¡Solicitud enviada!',
         'El proveedor recibirá tu solicitud y te responderá pronto.',
         [{ text: 'Ver mis órdenes', onPress: () => router.replace('/(tabs)/orders') }],
       );
-    } catch (err: any) {
-      dialog.fromAlert('Error', getUserErrorMessage(err));
-    } finally {
-      setIsLoading(false);
     }
   };
 

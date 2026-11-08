@@ -18,6 +18,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useCreateReview } from '@/hooks/mutations/useReviewMutations';
 import { extractApiError, getUserErrorMessage } from '@/lib/errors';
+import { runWithRetry } from '@/lib/runWithRetry';
 import {
   TOKENS,
   GRADIENTS,
@@ -65,21 +66,23 @@ export default function ReviewScreen() {
     }
 
     inFlight.current = true;
-    try {
-      await createReview({ orderId: orderId!, rating, comment: comment.trim() });
+    const input = { orderId: orderId!, rating, comment: comment.trim() };
+    const result = await runWithRetry(() => createReview(input), {
+      title: 'No pudimos enviar tu reseña',
+      onError: (err) => {
+        if (extractApiError(err).code === 'ALREADY_REVIEWED') {
+          dialog.fromAlert('Ya calificaste esta orden', getUserErrorMessage(err), [
+            { text: 'OK', onPress: () => safeBack(router, '/(tabs)/orders') },
+          ]);
+          return;
+        }
+        toast.error('No pudimos enviar tu reseña', getUserErrorMessage(err));
+      },
+    });
+    inFlight.current = false;
+    if (result.ok) {
       toast.success('¡Gracias!', 'Tu reseña ayuda a la comunidad.');
       safeBack(router, '/(tabs)/orders');
-    } catch (err) {
-      const { code } = extractApiError(err);
-      if (code === 'ALREADY_REVIEWED') {
-        dialog.fromAlert('Ya calificaste esta orden', getUserErrorMessage(err), [
-          { text: 'OK', onPress: () => safeBack(router, '/(tabs)/orders') },
-        ]);
-        return;
-      }
-      toast.error('No pudimos enviar tu reseña', getUserErrorMessage(err));
-    } finally {
-      inFlight.current = false;
     }
   };
 

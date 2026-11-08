@@ -15,6 +15,7 @@ import {
   blockingOrders,
   deactivationMessage,
   mergeOrders,
+  SHARED_HISTORY_NOTE,
 } from '@/features/profile/utils/deleteAccountRules';
 import {
   TOKENS,
@@ -36,9 +37,10 @@ import { AnimatedBackground } from '@/components/AnimatedBackground';
 const CONFIRM_WORD = 'ELIMINAR';
 
 const WARNINGS = [
-  'Tu cuenta se desactiva y tu perfil, servicios y reels dejan de verse.',
-  `Tienes ${DELETION_GRACE_DAYS} días para cambiar de idea: si vuelves a iniciar sesión en ese plazo, tu cuenta se reactiva.`,
-  `Pasados los ${DELETION_GRACE_DAYS} días, tu cuenta y tus datos se eliminan definitivamente.`,
+  'Tu cuenta se oculta: tu perfil, servicios y reels dejan de verse.',
+  `Durante ${DELETION_GRACE_DAYS} días puedes recuperarla iniciando sesión de nuevo.`,
+  `Pasados los ${DELETION_GRACE_DAYS} días, los datos de tu cuenta se anonimizan y se eliminan.`,
+  SHARED_HISTORY_NOTE,
 ];
 const PREMIUM_WARNING = 'Vas a perder tu plan Premium sin reembolso del período restante.';
 const BLOCKED_MESSAGE = 'No puedes eliminar tu cuenta mientras tengas órdenes activas.';
@@ -136,7 +138,7 @@ export default function DeleteAccountScreen() {
     if (!canDelete || loading || googleLoading) return;
     dialog.fromAlert(
       'Última confirmación',
-      `Tu cuenta se desactivará y se eliminará definitivamente en ${DELETION_GRACE_DAYS} días. Si vuelves a iniciar sesión antes, se reactiva.`,
+      `Tu cuenta se ocultará. Puedes recuperarla iniciando sesión durante ${DELETION_GRACE_DAYS} días; después, sus datos se anonimizan y se eliminan.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -209,10 +211,10 @@ export default function DeleteAccountScreen() {
           </Text>
           <Text variant="bodySmall" color={tc.textSub} center>
             {step === 1
-              ? `Tu cuenta se desactiva y se elimina definitivamente en ${DELETION_GRACE_DAYS} días.`
+              ? `Tu cuenta se oculta y puedes recuperarla durante ${DELETION_GRACE_DAYS} días.`
               : isGoogle
                 ? 'Confirma con tu cuenta de Google para continuar.'
-                : 'Ingresa tu contraseña para confirmar la eliminación.'}
+                : 'Ingresa tu contraseña para confirmar.'}
           </Text>
         </Animated.View>
 

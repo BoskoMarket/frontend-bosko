@@ -54,7 +54,7 @@ jest.mock('@/hooks/queries/useWorksQuery', () => ({
   useDeleteWork: () => ({ mutateAsync: jest.fn(), isPending: false }),
 }));
 
-import { toast } from '@/core/design-system';
+import { dialog, toast } from '@/core/design-system';
 import MyWorksScreen from '@/features/works/screens/MyWorksScreen';
 
 const photos = (n: number, prefix = "p") =>
@@ -184,7 +184,8 @@ describe('MyWorksScreen', () => {
     expect(await findByText('Publicar')).toBeTruthy();
   });
 
-  it('maps a dropped connection to the upload-specific copy', async () => {
+  it('maps a dropped connection to the upload-specific copy and offers to retry', async () => {
+    const confirm = jest.spyOn(dialog, 'confirm').mockResolvedValue(false);
     mockCreate.mockRejectedValueOnce({ isAxiosError: true, message: 'timeout of 120000ms exceeded' });
     const { getByText, findByText } = render(<MyWorksScreen />);
     await act(async () => {
@@ -192,8 +193,15 @@ describe('MyWorksScreen', () => {
     });
     fireEvent.press(await findByText('Publicar'));
     await waitFor(() =>
-      expect(errorSpy).toHaveBeenCalledWith('No se pudo subir la foto', expect.stringMatching(/Se cortó la subida/)),
+      expect(confirm).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'No se pudo subir la foto',
+          message: expect.stringMatching(/Se cortó la subida/),
+          confirmLabel: 'Reintentar',
+        }),
+      ),
     );
+    confirm.mockRestore();
   });
 
   it('shows an error state with retry when a service photos query fails', () => {

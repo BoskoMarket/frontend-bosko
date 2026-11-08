@@ -31,6 +31,7 @@ import { WorksMasonry } from '../components/WorksMasonry';
 import { WORKS_LIMIT_PER_PROVIDER } from '../constants';
 import type { WorkImageFile, WorkPhoto } from '../types';
 import { WORK_LIMIT_MESSAGE, getWorkErrorMessage } from '../utils/workErrors';
+import { runWithRetry } from '@/lib/runWithRetry';
 import { prepareWorkImage } from '../utils/workImage';
 import { WORK_HIDDEN_LABEL, isWorkHidden, workLabel } from '../utils/workStatus';
 
@@ -111,12 +112,17 @@ export default function MyWorksScreen() {
   const publish = useCallback(
     async (description: string) => {
       if (!draft) return;
-      try {
-        await create({ serviceId: draft.service.id, file: draft.file, description });
+      const result = await runWithRetry(
+        () => create({ serviceId: draft.service.id, file: draft.file, description }),
+        {
+          title: 'No se pudo subir la foto',
+          networkMessage: (err) => getWorkErrorMessage(err, { upload: true }),
+          onError: (err) => toast.error('No se pudo subir la foto', getWorkErrorMessage(err, { upload: true })),
+        },
+      );
+      if (result.ok) {
         toast.success('Foto publicada');
         setDraft(null);
-      } catch (err) {
-        toast.error('No se pudo subir la foto', getWorkErrorMessage(err, { upload: true }));
       }
     },
     [draft, create],
@@ -125,12 +131,13 @@ export default function MyWorksScreen() {
   const saveEdit = useCallback(
     async (description: string) => {
       if (!editing) return;
-      try {
-        await update({ postId: editing.id, description });
+      const result = await runWithRetry(() => update({ postId: editing.id, description }), {
+        title: 'No se pudo guardar',
+        onError: (err) => toast.error('No se pudo guardar', getWorkErrorMessage(err)),
+      });
+      if (result.ok) {
         toast.success('Descripción actualizada');
         setEditing(null);
-      } catch (err) {
-        toast.error('No se pudo guardar', getWorkErrorMessage(err));
       }
     },
     [editing, update],
@@ -145,12 +152,13 @@ export default function MyWorksScreen() {
         destructive: true,
       });
       if (!ok) return;
-      try {
-        await remove(photo.id);
+      const result = await runWithRetry(() => remove(photo.id), {
+        title: 'No se pudo eliminar',
+        onError: (err) => toast.error('No se pudo eliminar', getWorkErrorMessage(err)),
+      });
+      if (result.ok) {
         toast.success('Foto eliminada');
         setEditing(null);
-      } catch (err) {
-        toast.error('No se pudo eliminar', getWorkErrorMessage(err));
       }
     },
     [remove],

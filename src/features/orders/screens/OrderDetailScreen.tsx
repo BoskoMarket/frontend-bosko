@@ -24,6 +24,7 @@ import { useProfile } from '@/features/profile/state/ProfileContext';
 import { OrderStatus } from '../types/orders.types';
 import { ORDER_STATUS } from '../constants/orderStatus';
 import { getUserErrorMessage } from '@/lib/errors';
+import { runWithRetry } from '@/lib/runWithRetry';
 import { FEATURES } from '@/core/config/features';
 import { getOrderActions, getOrderInfoText, isSystemCancelled } from '../utils/orderActions';
 import type { OrderActionId, OrderRole } from '../utils/orderActions';
@@ -152,16 +153,16 @@ export default function OrderDetailScreen() {
 
   const runAction = async (label: string, action: () => Promise<void>) => {
     setActionLoading(label);
-    try {
-      await action();
-      await refetchOrder(); // Refresca los datos
-    } catch (err) {
-      // A stale view (409 transition error): resync before showing the message.
-      void refetchOrder();
-      dialog.fromAlert(`Error al ${label.toLowerCase()}`, getUserErrorMessage(err));
-    } finally {
-      setActionLoading(null);
-    }
+    const result = await runWithRetry(action, {
+      title: `No se pudo completar: ${label.toLowerCase()}`,
+      onError: (err) => {
+        // A stale view (409 transition error): resync before showing the message.
+        void refetchOrder();
+        dialog.fromAlert(`Error al ${label.toLowerCase()}`, getUserErrorMessage(err));
+      },
+    });
+    if (result.ok) await refetchOrder(); // Refresca los datos
+    setActionLoading(null);
   };
 
   const promptAndRun = (
