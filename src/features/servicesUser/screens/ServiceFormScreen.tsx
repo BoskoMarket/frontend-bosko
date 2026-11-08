@@ -154,14 +154,15 @@ export default function ServiceFormScreen() {
 
   // A title already published (possibly shorter than today's minimum) is kept and not re-sent.
   const titleUnchanged = isEditing && form.title.trim() === (selectedService?.title ?? '').trim();
-  const fieldErrors = validateServiceFields({ title: form.title, description: form.description });
+  const fieldErrors = validateServiceFields({ title: form.title, description: form.description, hasPhoto: !!imageUri });
   if (titleUnchanged) delete fieldErrors.title;
+  const photoError = submitAttempted ? fieldErrors.photo : undefined;
   const titleError = (submitAttempted || form.title.length > 0) ? fieldErrors.title : undefined;
   const descriptionError = (submitAttempted || form.description.length > 0) ? fieldErrors.description : undefined;
 
   const validateForm = () => {
     setSubmitAttempted(true);
-    const firstFieldError = fieldErrors.title ?? fieldErrors.description;
+    const firstFieldError = fieldErrors.title ?? fieldErrors.description ?? fieldErrors.photo;
     if (firstFieldError) {
       setError(firstFieldError);
       return false;
@@ -300,8 +301,8 @@ export default function ServiceFormScreen() {
 
         {/* Precio */}
         <FormCard
-          title="Precio"
-          subtitle="Podés dejar el precio en blanco si preferís cotizar por chat."
+          title="Precio de referencia"
+          subtitle="Se muestra como «Desde $X». Puedes dejarlo en blanco y cotizar por chat: aparecerá como «A cotizar»."
         >
           <Input
             placeholder="Ej: 5000 (opcional)"
@@ -334,7 +335,7 @@ export default function ServiceFormScreen() {
         </FormCard>
 
         {/* Imagen principal */}
-        <FormCard title="Foto principal" subtitle="Una imagen que represente tu servicio.">
+        <FormCard title="Foto principal" subtitle="Obligatoria. Una imagen que represente tu servicio.">
           <Pressable style={[styles.imagePicker, { backgroundColor: tc.surface2 }]} onPress={handlePickImage}>
             {imageUri ? (
               <>
@@ -346,10 +347,11 @@ export default function ServiceFormScreen() {
             ) : (
               <View style={[styles.imagePlaceholder, { borderColor: tc.border }]}>
                 <Text style={styles.imagePlaceholderIcon}>📷</Text>
-                <Text variant="body" weight="500" color={tc.textMuted}>Tocá para agregar una foto</Text>
+                <Text variant="body" weight="500" color={tc.textMuted}>Toca para agregar una foto</Text>
               </View>
             )}
           </Pressable>
+          {photoError ? <Text variant="caption" color={TOKENS.status.cancelled.fg}>{photoError}</Text> : null}
         </FormCard>
 
         {/* Galería */}

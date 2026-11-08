@@ -60,13 +60,6 @@ const sk = StyleSheet.create({
   card: { flexDirection: 'row', gap: 12, alignItems: 'center', borderRadius: 18, padding: 16 },
 });
 
-// ── Price formatter ───────────────────────────────────────────────────────────
-function formatRate(rate?: ServiceSummary['rate']) {
-  if (!rate) return 'Consultar';
-  const sym = rate.currency === 'ARS' ? '$' : rate.currency === 'USD' ? 'US$' : `${rate.currency} `;
-  return `${sym}${rate.amount.toLocaleString('es-AR')} / ${rate.unit}`;
-}
-
 // ── Service card ──────────────────────────────────────────────────────────────
 const ServiceCard = memo(function ServiceCard({
   item,

@@ -24,18 +24,12 @@ import {
   Card,
   ScreenHeader,
   Text,
+  formatServicePrice,
   useIsDark,
   useThemeColors,
 } from '@/core/design-system';
 
 const UNDO_MS = 5000;
-
-function formatRate(rate?: ServiceSummary['rate']) {
-  if (!rate?.amount) return null;
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency', currency: rate.currency ?? 'ARS', maximumFractionDigits: 0,
-  }).format(rate.amount);
-}
 
 function FavoriteCard({ item, onRemove }: { item: ServiceSummary; onRemove: () => void }) {
   const tc = useThemeColors();
@@ -98,9 +92,7 @@ function FavoriteCard({ item, onRemove }: { item: ServiceSummary; onRemove: () =
             ) : null}
           </View>
 
-          {formatRate(item.rate) && (
-            <Text variant="bodySmall" weight="700" color={tc.signal} style={s.price}>Desde {formatRate(item.rate)}</Text>
-          )}
+          <Text variant="bodySmall" weight="700" color={tc.signal} style={s.price}>{formatServicePrice(item.rate)}</Text>
         </View>
 
         {/* Actions */}

@@ -79,9 +79,8 @@ describe('ProviderHome', () => {
   it('routes the quick actions', () => {
     mockReels = false;
     const { getByText, queryByText } = render(<ProviderHome />);
-    fireEvent.press(getByText('Publicar servicio'));
-    expect(router.push).toHaveBeenLastCalledWith('/service-form');
-    fireEvent.press(getByText('Mis servicios'));
+    expect(queryByText('Publicar servicio')).toBeNull();
+    fireEvent.press(getByText('Mi servicio'));
     expect(router.push).toHaveBeenLastCalledWith('/(tabs)/profile/Services');
     expect(queryByText('Subir reel')).toBeNull();
   });

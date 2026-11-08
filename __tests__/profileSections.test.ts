@@ -43,14 +43,14 @@ describe('getRoleSection', () => {
     const section = getRoleSection('provider')!;
     expect(section.title).toBe('Mi negocio');
     expect(section.rows.map((r) => r.label)).toEqual([
-      'Mis servicios',
-      'Publicar servicio',
+      'Mi servicio',
       'Mis trabajos',
       'Mis reseñas',
       'Verificación de identidad',
       'Antecedentes penales',
     ]);
-    expect(section.rows.find((r) => r.id === 'publish-service')?.href).toBe('/service-form');
+    expect(section.rows.map((r) => r.id)).not.toContain('publish-service');
+    expect(section.rows.find((r) => r.id === 'my-services')?.href).toBe('/(tabs)/profile/Services');
   });
 
   it('gives clients favorites and the become-provider entry', () => {

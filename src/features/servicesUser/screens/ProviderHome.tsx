@@ -45,8 +45,7 @@ const goOrder = (id: string) => router.push({ pathname: '/orders/[id]', params: 
 const goPublish = () => router.push('/service-form');
 
 const getQuickActions = (): { id: string; label: string; icon: IconName; go: () => void }[] => [
-  { id: 'post', label: 'Publicar servicio', icon: 'add-circle-outline', go: goPublish },
-  { id: 'services', label: 'Mis servicios', icon: 'list-outline', go: () => router.push('/(tabs)/profile/Services') },
+  { id: 'services', label: 'Mi servicio', icon: 'construct-outline', go: () => router.push('/(tabs)/profile/Services') },
   ...(FEATURES.reels
     ? [{ id: 'reel', label: 'Subir reel', icon: 'videocam-outline' as IconName, go: () => router.push(REEL_UPLOAD_ROUTE) }]
     : []),

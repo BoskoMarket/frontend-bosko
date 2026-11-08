@@ -23,7 +23,7 @@ import { safeBack } from '@/core/navigation/safeBack';
 import { ServiceDetailModal } from '../components/ServiceDetailModal';
 import { quoteHref, resolveQuoteTarget } from '../utils/quoteRoute';
 import type { ServiceSummary } from '@/types/services';
-import { Button, ScreenLoader, GRADIENTS, BRAND_RADIAL_FILL, TOKENS, useIsDark, useThemeColors, withAlpha, type ReportSheetSubmit, OptionSheet, dialog, FONT_FAMILY, SPACING } from '@/core/design-system';
+import { Button, ScreenLoader, formatServicePrice, GRADIENTS, BRAND_RADIAL_FILL, TOKENS, useIsDark, useThemeColors, withAlpha, type ReportSheetSubmit, OptionSheet, dialog, FONT_FAMILY, SPACING } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { ReportFlow } from '@/features/reports/components/ReportFlow';
@@ -73,12 +73,6 @@ interface PublicProvider {
   bio?: string;
 }
 
-function formatRate(rate?: ServiceSummary['rate']) {
-  if (!rate || !rate.amount) return 'Consultar';
-  const sym = rate.currency === 'ARS' ? '$' : rate.currency === 'USD' ? 'US$' : rate.currency;
-  const price = `${sym}${Number(rate.amount).toLocaleString('es-AR')}`;
-  return rate.unit ? `${price} / ${rate.unit}` : price;
-}
 
 function ServiceRow({ item, onPress }: { item: ServiceSummary; onPress: () => void }) {
   const c = useC();
@@ -101,7 +95,7 @@ function ServiceRow({ item, onPress }: { item: ServiceSummary; onPress: () => vo
           <Text style={[s.serviceTitle, { color: c.text }]} numberOfLines={1}>{item.title}</Text>
           <Text style={[s.serviceSummary, { color: c.sub }]} numberOfLines={2}>{item.summary}</Text>
           {item.rate?.amount ? (
-            <Text style={[s.servicePrice, { color: c.sub }]}>{formatRate(item.rate)}</Text>
+            <Text style={[s.servicePrice, { color: c.sub }]}>{formatServicePrice(item.rate)}</Text>
           ) : null}
         </View>
         <Ionicons name="chevron-forward" size={16} color={c.muted} />

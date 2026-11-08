@@ -88,7 +88,7 @@ describe('ClientHome', () => {
   it('shows popular services, keeping the provider route params', () => {
     const { getByText } = render(<ClientHome />);
     expect(getByText('Disponible hoy')).toBeTruthy();
-    expect(getByText('$18.500')).toBeTruthy();
+    expect(getByText('Desde $18.500 ARS')).toBeTruthy();
     fireEvent.press(getByText('Instalación de tomas'));
     expect(router.push).toHaveBeenLastCalledWith({ pathname: '/(tabs)/services/provider/[id]', params: { id: 'p1', from: 'home' } });
   });

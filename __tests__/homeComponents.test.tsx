@@ -16,13 +16,13 @@ import { useThemeStore } from '@/stores/theme.store';
 
 describe('formatServicePrice', () => {
   it('formats ARS and USD amounts', () => {
-    expect(formatServicePrice({ amount: 18500, currency: 'ARS' })).toBe('$18.500');
-    expect(formatServicePrice({ amount: 40, currency: 'USD' })).toBe('US$40');
+    expect(formatServicePrice({ amount: 18500, currency: 'ARS' })).toBe('Desde $18.500 ARS');
+    expect(formatServicePrice({ amount: 40, currency: 'USD' })).toBe('Desde US$40 USD');
   });
 
-  it('falls back to "Consultar" without a usable amount', () => {
-    expect(formatServicePrice(undefined)).toBe('Consultar');
-    expect(formatServicePrice({ amount: 0, currency: 'ARS' })).toBe('Consultar');
+  it('falls back to "A cotizar" without a usable amount', () => {
+    expect(formatServicePrice(undefined)).toBe('A cotizar');
+    expect(formatServicePrice({ amount: 0, currency: 'ARS' })).toBe('A cotizar');
   });
 });
 
