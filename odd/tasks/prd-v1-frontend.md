@@ -2,9 +2,9 @@
 
 Fuente: `docs/PRD.md`. El lado backend está en `docs/backend-prd-v1-contracts.md` (tareas `B1`–`B13`); aquí se referencia como `B#`.
 
-Estado (2026-11-08): **F1 a F15 implementadas en la rama `feat/prd-v1`**; F16 parcial (documentación hecha; falta regenerar el OpenAPI cuando exista B13). Un solo escritor, un commit por tarea (Conventional Commits). Verificado con `tsc`, `eslint`, `lint:ds` y jest (los tests mockean la API: **nada se probó contra un backend real**, porque `B1`–`B13` no están construidas).
+Estado (2026-11-09): **F1 a F16 implementadas en la rama `feat/prd-v1` (PR #69, apilado sobre #63–#68)**. El backend B1–B13 está mergeado a `main` de `bosko-backend` (PRs #36, #37, #38) y el OpenAPI está regenerado (`contracts:check` pasa). Un solo escritor, un commit por tarea (Conventional Commits). Verificado con `tsc`, `eslint`, `lint:ds` y jest (los tests mockean la API: **falta la prueba manual en dispositivo contra el backend real**).
 
-> **Orden de merge:** esta rama usa los contratos de `docs/backend-prd-v1-contracts.md`. Contra el backend actual, registrarse (`cityId` y términos), cerrar una orden (`/mark-done`, `/confirm`) y los favoritos de cuenta fallarían. Hay que desplegar el backend antes de mergear, o probar contra uno local.
+> **Orden de merge:** el backend ya está en `main`; el frontend se mergea después, en orden #63 → #69. Sin el backend desplegado, registrarse (`cityId` y términos), cerrar una orden (`/mark-done`, `/confirm`) y los favoritos de cuenta fallan.
 
 | Tarea | Estado | Commit | Depende de |
 |---|---|---|---|
@@ -23,7 +23,7 @@ Estado (2026-11-08): **F1 a F15 implementadas en la rama `feat/prd-v1`**; F16 pa
 | F13 Trabajos acotado a v1 | ✅ | `da0790b` | B5, B9 |
 | F14 Errores de red y reintento | ✅ (`runWithRetry`; sin `ErrorState` porque ninguna pantalla mostraba un error pelado) | ver `git log` | — |
 | F15 Copy de baja de cuenta | ✅ | ver `git log` | — |
-| F16 Contratos y documentación | parcial: docs hechas; falta regenerar OpenAPI | — | B13 |
+| F16 Contratos y documentación | ✅ docs y OpenAPI regenerado | `6e99722` | B13 |
 
 Desvíos respecto del plan original:
 - `formatMoney` no se creó: `formatServicePrice` (design system) cubre el formato de precios con el código de moneda.
