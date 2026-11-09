@@ -21,6 +21,7 @@ const mockServicesQuery = {
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
+jest.mock('@/components/AnimatedBackground', () => ({ AnimatedBackground: () => null }));
 jest.mock('@/core/navigation/safeBack', () => ({ safeBack: jest.fn() }));
 jest.mock('expo-router', () => ({
   Stack: { Screen: () => null },
