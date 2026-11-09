@@ -190,28 +190,30 @@ cancelled           cancelled             disputed                          disp
 
 ## 6. Distancia entre el PRD y el código
 
-Estado al 2026-11-08, rama `feat/prd-v1`. **Frontend** = implementado y probado con la API simulada; **Backend** = pendiente (`docs/backend-prd-v1-contracts.md`). Nada se probó todavía contra un backend real.
+Estado al 2026-11-09. **Frontend** = implementado en la rama `feat/prd-v1` (PR #69, apilado sobre #63–#68) y probado con la API simulada. **Backend** = implementado y mergeado a `main` en `bosko-backend` (PRs #36, #37 y #38; CI completo en verde, incluidos los tests de integración con PostgreSQL). **Nada se probó todavía en un dispositivo contra el backend real**: esa prueba manual sigue pendiente.
+
+El frontend ya usa el OpenAPI real del backend (`docs/backend-openapi.json` y `src/core/api/generated/schema.ts` regenerados; `contracts:check` pasa). Desvíos del backend respecto del contrato: `docs/backend-prd-v1-contracts.md`, sección «Implementación».
 
 | Tema | Frontend | Backend |
 |---|---|---|
 | Pagos y planes fuera de v1 | ✅ detrás de `FEATURES.payments` | — |
-| Foto principal obligatoria | ✅ en `ServiceFormScreen` | B9: un servicio sin foto no aparece en el catálogo |
-| Un servicio por proveedor | ✅ «Mi servicio» | B9: constante en lugar del límite por plan |
-| Ciudad, mercados y términos | ✅ registro, Google y perfil de solo lectura | B1, B2 |
-| Estado `awaiting_confirmation`, cierre automático y vencimiento de 48 h | ✅ | B3 (estado, rutas y dos jobs) |
-| Ocultamiento automático por 3 denuncias | ✅ insignia en Mis trabajos | B5 |
-| Bloqueo de usuarios | ✅ menú del chat y lista de bloqueados | B6 |
-| Suspensión total | ✅ pantalla `/suspended` | B7 |
-| Resolución de disputas por soporte | ✅ bloque con WhatsApp | B7 (API de admin para resolver) |
-| Favoritos en la cuenta | ✅ (los locales no se migran) | B8 |
-| KYC + teléfono para publicar; antecedentes opcionales | ✅ | B10 |
-| Avisos nuevos | ✅ rutas e iconos | B4 |
+| Foto principal obligatoria | ✅ en `ServiceFormScreen` | ✅ B9: un servicio sin foto no aparece en el catálogo |
+| Un servicio por proveedor | ✅ «Mi servicio» | ✅ B9: constante en lugar del límite por plan |
+| Ciudad, mercados y términos | ✅ registro, Google y perfil de solo lectura | ✅ B1, B2 |
+| Estado `awaiting_confirmation`, cierre automático y vencimiento de 48 h | ✅ | ✅ B3 (estado, rutas y dos jobs) |
+| Ocultamiento automático por 3 denuncias | ✅ insignia en Mis trabajos | ✅ B5 |
+| Bloqueo de usuarios | ✅ menú del chat y lista de bloqueados | ✅ B6 |
+| Suspensión total | ✅ pantalla `/suspended` | ✅ B7 |
+| Resolución de disputas por soporte | ✅ bloque con WhatsApp | ✅ B7 (API de admin para resolver) |
+| Favoritos en la cuenta | ✅ (los locales no se migran) | ✅ B8 |
+| KYC + teléfono para publicar; antecedentes opcionales | ✅ | ✅ B10 |
+| Avisos nuevos | ✅ rutas e iconos | ✅ B4 |
 | Copy en español neutro | ✅ con test que impide volver al voseo | — |
-| Soporte por WhatsApp | ✅ `SupportContactButton` | B12 (falta definir el número) |
+| Soporte por WhatsApp | ✅ `SupportContactButton` | ✅ B12 (falta cargar `APP_SUPPORT_WHATSAPP` en el servidor) |
 | Errores de red con reintento | ✅ `runWithRetry` | — |
 | Copy de baja de cuenta | ✅ | — |
-| Búsqueda por calificación, verificados primero | sin cambios de UI | B11 |
-| Contrato OpenAPI real | pendiente (F16) | B13 |
+| Búsqueda por calificación, verificados primero | sin cambios de UI | ✅ B11 |
+| Contrato OpenAPI real | ✅ regenerado (F16) | ✅ B13 |
 | Barra «Sin conexión», interruptor de push, denuncia desde el chat | ya existían | — |
 | Panel admin de antecedentes | fuera de v1 (los antecedentes son opcionales) | — |
 
@@ -226,3 +228,18 @@ Detalle por tarea: `odd/tasks/prd-v1-frontend.md` (F1–F16) y `docs/backend-prd
 5. Si se puede abrir una disputa antes del cierre automático.
 6. Revisión legal de términos y privacidad para Argentina y Colombia, y de la edad mínima.
 7. Idioma y formato de moneda en pantallas (`$` ARS y `$` COP se parecen: conviene mostrar el código de moneda).
+
+### Estado de las decisiones abiertas (2026-11-09)
+
+| # | Estado |
+|---|---|
+| 1 | Pendiente de producto: cargar el número en `APP_SUPPORT_WHATSAPP` (backend). Sin él, el botón de soporte no tiene destino. |
+| 2 | Resuelta técnicamente: `POST /admin/notifications/broadcast` (solo rol ADMIN) encola `PLATFORM_NEWS`, por ciudad opcional. Si no se quiere en v1, se deja sin uso. |
+| 3 | Resuelta: soporte usa la API de admin (`GET /admin/orders?status=disputed`, `POST /admin/orders/:id/resolve`, `PATCH /admin/users/:id/suspension`). No hay panel; queda para la próxima versión. |
+| 4 | Sin cambio: el cliente ve la orden en `awaiting_confirmation` con «Confirmar» y la fecha de cierre automático. |
+| 5 | Resuelta con la propuesta: abre la disputa el cliente desde `awaiting_confirmation`; el proveedor no. |
+| 6 | Pendiente: revisión legal de términos y privacidad (AR y CO) y de la edad mínima. |
+| 7 | Pendiente de diseño: mostrar el código de moneda en pantallas. |
+| Nueva | La migración de B1 asigna **todos** los usuarios y servicios existentes a `tandil`; confirmar antes de desplegar. |
+| Nueva | El tipo de documento `CC` (Colombia) ya tiene etiqueta en el frontend («Cédula de ciudadanía»). Falta confirmar con Didit qué documentos acepta cada país. |
+| Nueva | Diferido: recordatorio 24 h antes del cierre automático; vista de fotos propias cuando el KYC se revoca; limpieza del esquema de Prisma (tabla `payments` sigue en la base). |

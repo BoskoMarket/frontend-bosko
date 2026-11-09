@@ -272,3 +272,20 @@ Cierra el hallazgo C24 de la auditoría. Exportar `openapi.json` desde el backen
 3. Disputa desde `AWAITING_CONFIRMATION`: ¿también la puede abrir el proveedor?
 4. Qué pasa con las órdenes abiertas cuando una parte bloquea a la otra.
 5. Si la difusión de novedades entra en v1.
+
+## Implementación (2026-11-09)
+
+B1–B13 están implementadas y mergeadas a `main` de `bosko-backend` (PRs #36 Trabajos, #38 dependencias y #37 PRD v1). Seguimiento por tarea, evidencia y desvíos: `odd/tasks/prd-v1-backend.md` en ese repositorio. CI completo en verde, con los tests de integración contra PostgreSQL.
+
+Desvíos respecto del contrato de arriba (el frontend ya los contempla):
+
+- El error de transición sigue siendo `INVALID_ORDER_STATUS_TRANSITION` (422), con `details.currentStatus`.
+- `POST /auth/google` acepta `cityId` opcional; un usuario nuevo sin ciudad recibe 422 `CITY_REQUIRED` y no se crea nada.
+- `GET /notifications` devuelve el tipo detallado (`ORDER_CANCELLED`, `NEW_MESSAGE`, …) en lugar de las categorías gruesas.
+- El proveedor no puede abrir una disputa desde `awaiting_confirmation`. `reason` de 5 a 500 caracteres también en disputas.
+- `SERVICE_LIMIT_REACHED` pasó a 422 (antes 403). `price` se devuelve como `{amount|null, currency}`; `null` se guarda como 0 y significa «a cotizar».
+- `actioned` se acepta como alias del estado guardado `reviewed` en `PATCH /admin/reports/:id`.
+- Los administradores no se pueden suspender (422 `CANNOT_SUSPEND_ADMIN`); las órdenes abiertas no se tocan al suspender.
+- `content_reports` necesitó una migración extra para aceptar `post` como `target_type` (`20261103000100`).
+
+Diferido: recordatorio 24 h antes del cierre automático (necesita columna «recordatorio enviado»), difusión idempotente ante reintentos, esquema de Prisma desalineado con la base (tabla `payments`).
