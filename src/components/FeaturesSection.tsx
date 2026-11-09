@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Dimensions, Animated } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { PREMIUM_SHADOWS, usePremiumColors, FONT_FAMILY } from '@/core/design-system';
+import { BRAND_NAME, PREMIUM_SHADOWS, usePremiumColors, FONT_FAMILY } from '@/core/design-system';
 import type { PremiumColors } from '@/core/design-system';
 
 
@@ -60,7 +60,7 @@ export const FeaturesSection = () => {
     const styles = useMemo(() => createStyles(pc), [pc]);
     return (
         <View style={styles.container}>
-            <Text style={styles.sectionTitle}>La Experiencia Bosko</Text>
+            <Text style={styles.sectionTitle}>{`La Experiencia ${BRAND_NAME}`}</Text>
             <View style={styles.grid}>
                 {features.map((item, index) => (
                     <FeatureCard key={item.id} item={item} index={index} />

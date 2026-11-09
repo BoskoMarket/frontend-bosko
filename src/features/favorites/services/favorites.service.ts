@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_PREFIX } from '@/core/config/storage';
 import type { ServiceSummary } from '@/types/services';
 
-const KEY = 'BOSKO_FAVORITES_v1';
+const KEY = `${STORAGE_PREFIX}_FAVORITES_v1`;
 
 export async function loadFavorites(): Promise<ServiceSummary[]> {
   try {

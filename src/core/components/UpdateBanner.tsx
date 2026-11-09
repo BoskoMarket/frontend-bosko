@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, FONT_FAMILY } from '@/core/design-system';
+import { BRAND_NAME, Text, FONT_FAMILY } from '@/core/design-system';
 import { TOKENS } from '@/core/design-system/tokens';
 import { useAppUpdates } from '@/core/updates/useAppUpdates';
 
@@ -17,7 +17,7 @@ export function UpdateBanner() {
     <View style={[styles.banner, { paddingBottom: insets.bottom + 12 }]}>
       <Ionicons name="sparkles" size={16} color={TOKENS.color.onPrimary} />
       <Text variant="caption" style={styles.text}>
-        Hay una versión nueva de Bosko
+        Hay una versión nueva de {BRAND_NAME}
       </Text>
       <Pressable onPress={applyUpdate} hitSlop={8}>
         <Text variant="caption" style={styles.action}>

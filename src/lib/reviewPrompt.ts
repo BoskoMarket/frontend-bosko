@@ -6,8 +6,9 @@
  */
 import * as StoreReview from 'expo-store-review';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_PREFIX } from '@/core/config/storage';
 
-const STORAGE_KEY = 'BOSKO_LAST_REVIEW_PROMPT_v1';
+const STORAGE_KEY = `${STORAGE_PREFIX}_LAST_REVIEW_PROMPT_v1`;
 const MIN_INTERVAL_MS = 90 * 24 * 60 * 60 * 1000;
 
 export async function maybePromptReview(): Promise<void> {

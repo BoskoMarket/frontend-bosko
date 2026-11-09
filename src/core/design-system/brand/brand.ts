@@ -114,3 +114,6 @@ export const BRAND = {
     bodyMedium: 'Archivo_500Medium',
   },
 } as const;
+
+// Display name for user-facing copy. Screens read it through the DS barrel.
+export const BRAND_NAME = BRAND.name;

@@ -57,6 +57,7 @@ import {
   usePremiumColors,
   ValueHero,
   useThemeColors,
+  BRAND_NAME,
 } from '@/core/design-system';
 
 const BUTTON_VARIANTS: ButtonVariant[] = ['primary', 'secondary', 'outline', 'ghost', 'danger', 'dangerOutline'];
@@ -146,7 +147,7 @@ function TextSection() {
       {TYPE_KEYS.map((k) => (
         <View key={k} style={styles.gap}>
           <Label>{k}</Label>
-          <Text variant={k}>Servicio profesional Bosko</Text>
+          <Text variant={k}>{`Servicio profesional ${BRAND_NAME}`}</Text>
         </View>
       ))}
       <Text color={tc.textSub}>color=textSub</Text>
@@ -502,7 +503,7 @@ function HomeSection() {
         <ValueHero
           eyebrow="Servicios en red · ARG"
           title="Encontrá quien lo haga. O hacelo vos."
-          body="Bosko conecta a quienes necesitan un trabajo con quienes saben hacerlo, cerca tuyo."
+          body={`${BRAND_NAME} conecta a quienes necesitan un trabajo con quienes saben hacerlo, cerca tuyo.`}
           searchPlaceholder="¿Qué necesitás? Electricista, pintor…"
           onSearchPress={() => {}}
         />

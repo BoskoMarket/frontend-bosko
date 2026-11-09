@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_PREFIX } from '@/core/config/storage';
 import type { ServiceSummary } from '@/types/services';
 import { toast } from '@/core/components/Toast';
 
@@ -13,7 +14,7 @@ interface FavoritesState {
 }
 let writes: Promise<unknown> = Promise.resolve();
 let generation = 0;
-const key = (id: string) => `BOSKO_FAVORITES_v3:${encodeURIComponent(id)}`;
+const key = (id: string) => `${STORAGE_PREFIX}_FAVORITES_v3:${encodeURIComponent(id)}`;
 export const useFavoritesStore = create<FavoritesState>((set, get) => ({
   accountId: null, favorites: [], ready: false,
   setAccount: async accountId => {

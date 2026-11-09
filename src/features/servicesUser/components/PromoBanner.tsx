@@ -1,12 +1,12 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { PremiumButton } from "@/components/PremiumButton";
-import { PREMIUM_SHADOWS, TOKENS, withAlpha } from "@/core/design-system";
+import { BRAND_NAME, PREMIUM_SHADOWS, TOKENS, withAlpha } from "@/core/design-system";
 import { FONT_FAMILY } from '@/core/design-system';
 
 export function PromoBanner() {
   return (
     <View style={styles.wrap}>
-      <Text style={styles.title}>Bosko Pro</Text>
+      <Text style={styles.title}>{`${BRAND_NAME} Pro`}</Text>
       <Text style={styles.desc}>
         Más visibilidad, más trabajos. Activalo hoy.
       </Text>

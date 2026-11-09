@@ -114,7 +114,7 @@ Cambios al DS existente en esta tarea: sacados todos los literales de `Button`, 
 | T9 | Migrar `features/profile` + `features/users` (+ registro de faltantes UX `odd/ux-gaps.md`) | delegada | ✅ `a5d10d7` `34e36a7` `3bc12a0` `6e6599f` `4d4b69a` `253ca7b` |
 | T10 | Migrar `features/chat` + `features/reels` (media: tokens `onMedia`/`scrim`) | delegada | ✅ `55a83b4` `a255c83` `e0347d0` `8ec52a1` `4bfbd12` |
 | T11 | Migrar resto: reviews, notifications, search, favorites, appConfig, `serviceCategories.ts` | delegada | ✅ `d9f2b37` `27baaec` `6521802` `2e43e10` |
-| T12 | Nombre de marca: `BRAND.name` en copy, `STORAGE_PREFIX` estable, `app.json` → `app.config.ts` desde brand | delegada | ⬜ |
+| T12 | Nombre de marca: `BRAND.name` en copy, `STORAGE_PREFIX` estable, `app.json` → `app.config.ts` desde brand | delegada | ✅ `5b2ab0b` `d2b7448` `b0b7ff1` |
 | T13 | ESLint a `error`, violaciones = 0, simulacro de rebrand, actualizar `CLAUDE.md`; cerrar `nav-map.md` (pantallas huérfanas) | inline | ⬜ |
 | T14 | Diagrama navegable del flujo (estilo prototipo Figma) generado desde `odd/nav-map.md` + tareas para los enlaces rotos | delegada | ⬜ |
 
@@ -175,6 +175,8 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 
 - 2026-10-05 T4 ✅ `f778e7e` `e9b7e49`: las 12 pantallas de `features/auth/screens` + `OnBoardingSlide` migradas (0 violaciones en auth). Nuevo en el DS: `AuthBackdrop` (root con gradiente bg→vino + glow pulsante; `forceDark`), `BackButton`, `GRADIENTS.glow/glowFaint/backdrop(tc)`, `PALETTE.*.bgWine` (+ `BRAND.colors.*.wine`), `Button.iconPosition`; tests en `designSystemComponents`/`designSystemBrand`. Cambios de uso: tarjetas → `AuthCard`, OTP → `OtpInput` (arregla pegar el código en VerifyEmail/VerifyResetCode), inputs de ChangePassword → `Input`, CTAs → `Button` (Google = `variant="secondary"`), heroes → `IconCircle`, banner de Términos → `NoticeBanner`. **Decisión de tema**: Login/Register/Forgot/Verify*/Reset/Terms/ChangePassword ahora siguen el tema (`tc.*`; antes fijos `#0A0910`+blur dark, y el `Input` ya era theme-aware → en light se veía mal); Splash/Onboarding/WelcomeVideo son intencionalmente siempre-dark (`PALETTE.dark` / `TOKENS.onMedia`). Diferencias visuales menores (a verificar en dispositivo): wordmark de login `#EDEAF5` en vez de `#fff`; Splash `#07060C`→`#0A0910` y glow con la misma curva que login; botón Google 56px y con opacidad al cargar; divisor "o" más tenue (`tc.divider`); VerifyResetCode ya no anima caja por caja (fade del bloque OTP); éxito de Reset usa `IconCircle` success (gradiente) en vez del check plano; onboarding: CTA es `Button` (gradiente 2 stops, sin spring propio) y título con Archivo; ChangePassword usa `ScreenHeader` + `Card` y pierde el borde de foco propio (lo da `Input`). Checks: `tsc` limpio, `lint` 0 errores, `npm test` 10 suites / 73 tests (+6 en DS respecto a T3: 67), `lint:ds` **835** (−232, auth = 0). Nav-map: 34 salidas mapeadas, 0 rotas, 5 dudosas (`odd/nav-map.md`).
 
+- 2026-11-02 T12 ✅ `5b2ab0b` `d2b7448` `b0b7ff1` (rama `feat/ds-t12-brand-name`): copy de usuario usa `BRAND_NAME` (export del barrel; 20 archivos); `STORAGE_PREFIX = 'BOSKO'` en `src/core/config/storage.ts` (estable, NO deriva de `BRAND.name`; mismas claves, test `__tests__/storageKeys.test.ts`; incluye claves de push, mock payments/plans y favorites v3); `app.json` → `app.config.ts` (name y colores desde `BRAND`; slug/owner/scheme/bundle ids/EAS projectId intactos; `npx expo config` idéntico al `app.json` anterior en los campos clave; import con extensión `.ts` + `allowImportingTsExtensions`). Se dejó: mensaje de error de `env.ts` y strings `NS*UsageDescription`/permisos de `app.config.ts` con "Bosko" literal (carga temprana / config nativa idéntica). Checks: 53 suites / 638 tests, `tsc` 0, `lint:ds` 0.
+
 ## Conteo de violaciones (`npm run lint:ds`)
 
 | Después de | Total | Archivos |
@@ -228,7 +230,7 @@ Al migrar cada pantalla ya se lee el archivo entero, así que anotar problemas s
 0. **Usuario probando en dispositivo (dark + light) T4–T11.** Con su feedback: corregir lo que aparezca y armar PRs encadenados de las ramas apiladas (`feat/ds-t3-components` … `feat/ds-t11-rest`).
 1. Implementar decisiones T11 (G101, G102, G107, G97) + BR que hagan falta (editar reseña, reseña del prestador al cliente).
 2. G37 (cambio de teléfono verificado) pendiente de respuesta; ❔ restantes de `odd/ux-gaps.md`.
-1. T12: nombre de marca (`BRAND.name` en copy, `STORAGE_PREFIX` estable, `app.json` → `app.config.ts` desde brand).
+1. T13: ESLint a `error`, violaciones = 0, simulacro de rebrand (cambiar solo `brand.ts`), actualizar `CLAUDE.md`; cerrar `nav-map.md`.
 2. Antes de T13: verificar en dispositivo (dark + light) T4–T11 y armar PRs encadenados de las ramas apiladas.
 1. Responder las preguntas ❔ de `odd/ux-gaps.md` (de a una) e implementar las que queden definidas.
 2. T10: migrar `features/chat` + `features/reels` (ReelsScreen 67, ChatScreen 33, MyReels 10, ConversationsList 5) aplicando también el registro de faltantes UX. Antes: verificar en dispositivo (dark + light) T4–T9.
