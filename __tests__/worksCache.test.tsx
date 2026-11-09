@@ -26,7 +26,7 @@ const work = (id: string, description: string | null = null) =>
   ({ id, description, imageUrl: 'u', thumbnailUrl: null, width: null, height: null }) as any;
 
 function setup() {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity }, mutations: { retry: false } } });
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={qc}>{children}</QueryClientProvider>
   );
