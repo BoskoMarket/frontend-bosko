@@ -1,13 +1,15 @@
-// BRAND — the ONLY file to edit for a rebrand.
+import core from './brand.core.json';
+
+// BRAND — edit this folder for a rebrand: brand.core.json (name + primary color, also read by app.config.ts) and this file.
 // Every raw color / font family name lives here. Everything else in the design
 // system (palette, tokens, gradients, premium, typography) derives from it.
 // Screens never import this directly: they consume semantic tokens/components.
 export const BRAND = {
-  name: 'Bosko',
+  name: core.name,
 
   colors: {
     // Brand
-    primary: '#850021',
+    primary: core.primary,
     primaryDark: '#3C0014',
     primaryMid: '#A0032A',
     signal: '#FF2D6F',

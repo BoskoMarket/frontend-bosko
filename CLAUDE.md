@@ -255,7 +255,7 @@ All of it lives under `src/core/design-system/` — the one folder to check befo
 
 #### Capa de marca (rebrand)
 
-- **`brand/brand.ts`** → `BRAND` es el **único archivo a editar** para un rebrand: `name`, todos los colores crudos y las familias tipográficas. `palette`, `tokens`, `gradients`, `premium` y `typography` derivan de acá. Las pantallas no importan `BRAND` directo.
+- **`brand/brand.ts`** → `BRAND` es el archivo a editar para un rebrand: `name`, todos los colores crudos y las familias tipográficas. **Excepción:** `name` y `primary` viven en `brand/brand.core.json` (JSON plano), que `brand.ts` y `app.config.ts` leen: EAS lee `app.config.ts` con Node 20, que no puede importar un `.ts` (falla sin mensaje), así que `app.config.ts` solo puede importar JSON o JS. `palette`, `tokens`, `gradients`, `premium` y `typography` derivan de acá. Las pantallas no importan `BRAND` directo.
 - **Nombre de la marca en copy**: `BRAND_NAME` desde el barrel (`import { BRAND_NAME } from '@/core/design-system'`). Nunca escribir "Bosko" a mano en textos de UI, toasts, alertas ni tests de copy.
 - **`STORAGE_PREFIX`** (`src/core/config/storage.ts`, `'BOSKO'`) es **estable y NUNCA se deriva de la marca**: cambiarlo borraría los datos persistidos del usuario (claves de AsyncStorage / SecureStore).
 - **`app.config.ts`** (ya no existe `app.json`) lee `BRAND` para `name`, color del splash, color de notificaciones y los textos de permisos (`NS*UsageDescription`, plugins). La identidad de store (`slug`, `owner`, `scheme`, `package`/`bundleIdentifier`, `projectId`, URL de updates) queda **fija a propósito**: un rebrand no la cambia. Imports en este archivo con extensión `.ts` explícita (el loader de Expo no resuelve imports sin extensión).
