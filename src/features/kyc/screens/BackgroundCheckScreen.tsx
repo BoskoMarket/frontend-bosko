@@ -40,10 +40,10 @@ import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const CERTIFICATE_STEPS = [
-  'Ingresá a www.argentina.gob.ar/reincidencia',
-  'Iniciá sesión con tu CUIL y clave fiscal',
-  'Solicitá el certificado de antecedentes penales',
-  'Descargá el PDF y subilo acá',
+  'Ingresa a www.argentina.gob.ar/reincidencia',
+  'Inicia sesión con tu CUIL y clave fiscal',
+  'Solicita el certificado de antecedentes penales',
+  'Descarga el PDF y súbelo aquí',
 ];
 
 export default function BackgroundCheckScreen() {
@@ -129,7 +129,7 @@ export default function BackgroundCheckScreen() {
   };
 
   const showPickerOptions = () => {
-    dialog.fromAlert('Subir documento', 'Elegí cómo querés adjuntar tu certificado', [
+    dialog.fromAlert('Subir documento', 'Elige cómo quieres adjuntar tu certificado', [
       { text: 'PDF o imagen desde archivos', onPress: () => handlePickAndUpload('document') },
       { text: 'Tomar foto', onPress: () => handlePickAndUpload('camera') },
       { text: 'Elegir de galería', onPress: () => handlePickAndUpload('gallery') },
@@ -148,7 +148,7 @@ export default function BackgroundCheckScreen() {
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={tc.bg} />
 
       <View style={s.header}>
-        <ScreenHeader title="Antecedentes penales" onBack={() => safeBack(router, '/(tabs)/profile')} />
+        <ScreenHeader title="Antecedentes (opcional)" onBack={() => safeBack(router, '/(tabs)/profile')} />
       </View>
 
       <ScrollView contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 40 }]} showsVerticalScrollIndicator={false}>
@@ -161,7 +161,7 @@ export default function BackgroundCheckScreen() {
             </View>
             <Text variant="h3" color={TOKENS.color.onPrimary}>Certificado de antecedentes</Text>
             <Text variant="bodySmall" color={TOKENS.onMedia.textSub}>
-              Subí tu certificado del Registro Nacional de Reincidencia para generar confianza con tus clientes.
+              Es opcional y no es necesario para publicar tu servicio. Si lo subes y se aprueba, tu perfil muestra la insignia «Antecedentes verificados» y genera más confianza en tus clientes.
             </Text>
           </LinearGradient>
 

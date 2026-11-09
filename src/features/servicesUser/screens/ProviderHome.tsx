@@ -45,16 +45,15 @@ const goOrder = (id: string) => router.push({ pathname: '/orders/[id]', params: 
 const goPublish = () => router.push('/service-form');
 
 const getQuickActions = (): { id: string; label: string; icon: IconName; go: () => void }[] => [
-  { id: 'post', label: 'Publicar servicio', icon: 'add-circle-outline', go: goPublish },
-  { id: 'services', label: 'Mis servicios', icon: 'list-outline', go: () => router.push('/(tabs)/profile/Services') },
+  { id: 'services', label: 'Mi servicio', icon: 'construct-outline', go: () => router.push('/(tabs)/profile/Services') },
   ...(FEATURES.reels
     ? [{ id: 'reel', label: 'Subir reel', icon: 'videocam-outline' as IconName, go: () => router.push(REEL_UPLOAD_ROUTE) }]
     : []),
 ];
 
 function requestsTitle(count: number): string {
-  if (count === 0) return 'No tenés solicitudes nuevas';
-  return count === 1 ? 'Tenés 1 solicitud nueva' : `Tenés ${count} solicitudes nuevas`;
+  if (count === 0) return 'No tienes solicitudes nuevas';
+  return count === 1 ? 'Tienes 1 solicitud nueva' : `Tienes ${count} solicitudes nuevas`;
 }
 
 function requestTitle(order: Order): string {
@@ -162,7 +161,7 @@ export default function ProviderHome() {
             <EmptyState
               icon="briefcase-outline"
               title="Sin solicitudes nuevas"
-              subtitle="Cuando un cliente te escriba, vas a verlo acá."
+              subtitle="Cuando un cliente te escriba, vas a verlo aquí."
               cta={{ label: 'Publicar un servicio', onPress: goPublish }}
             />
           ) : (

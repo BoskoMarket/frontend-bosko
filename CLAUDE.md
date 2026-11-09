@@ -54,12 +54,20 @@ npx jest __tests__/login.test.tsx
 ```
 app/index.tsx          → Gate: authenticated → /(tabs), else → OnBoarding
 app/login/             → Login / Register flow
-app/(tabs)/            → Authenticated tab navigator: 4 visible labeled tabs (Inicio · Pedidos/Órdenes · Mensajes · Perfil); the Reels tab is hidden (`href: null`) behind `FEATURES.reels`
+app/(tabs)/            → Authenticated tab navigator: 5 visible labeled tabs (Inicio · Trabajos · Pedidos/Órdenes · Mensajes · Perfil); the Reels tab is hidden (`href: null`) behind `FEATURES.reels`
 app/(tabs)/services/   → Catalog + category/[id] + provider/[id] stack. NOT a tab: hidden with `href: null`, still routable at /(tabs)/services/...
-app/chat/[id].tsx      → Individual chat screen (outside tabs, id = orderId)
+app/(tabs)/works.tsx   → Trabajos tab: public masonry feed of finished-job photos (`features/works`)
+app/work/[id].tsx      → Photo detail (root stack): provider, Cotizar CTA, report
+app/(tabs)/profile/my-works.tsx → Mis trabajos (providers): one list for the provider's single service, global 30-photo counter, hidden photos shown with a badge
+app/(tabs)/profile/blocked-users.tsx → Usuarios bloqueados (unblock)
+app/chat/[id].tsx      → Individual chat screen (outside tabs, id = orderId); the ⋯ menu reports or blocks the other user
+app/auth/select-city.tsx → City (and terms) for new Google users or accounts without a city
+app/suspended.tsx      → Suspended-account screen (root stack); reached by a 403 ACCOUNT_SUSPENDED
 app/search.tsx         → Search screen
 app/upload-reel.tsx    → Publish a reel (providers), root stack
 ```
+
+**Product v1** (`docs/PRD.md`, tasks in `odd/tasks/prd-v1-frontend.md`): the client pays the provider outside the app; two separated markets (Tandil/ARS and Barranquilla/COP, the user's city is chosen at registration); one service per provider with a required main photo; order flow `pending → accepted → in_progress → awaiting_confirmation → completed` (pending expires in 48 h, auto-close 3 days after "terminado"); disputes are resolved by support over WhatsApp (`SupportContactButton`, number from `GET /app/config`); copy in neutral Spanish (`__tests__/neutralCopy.test.ts` fails on voseo). Backend contracts: `docs/backend-prd-v1-contracts.md`.
 
 Auth guards:
 - `app/index.tsx` — primary gate
@@ -69,7 +77,8 @@ Auth guards:
 Tab bar rules (`src/components/CustomTabBar.tsx`, map in `odd/nav-map.md`):
 - Visible tabs = routes with an entry in `TABS` and without `href: null`; the bubble/notch math uses only those. Adding a tab means adding a `Tabs.Screen` (order = bar order) and a `TABS` entry.
 - The bar renders only on the 4 tab roots: `shouldShowTabBar(state, descriptors)` is false (bar returns `null`) when the focused route is hidden (`services`, `href: null`) or its nested stack is past the root (`route.state.index > 0`, e.g. `profile/kyc`). Nested screens use their back button as the exit and must not reserve bottom space for the bar.
-- Reels are postponed to the next version: `FEATURES.reels` (`src/core/config/features.ts`, `false`) hides the `reels` tab (`href: null`), the Perfil "Mis reels" row and autoplay row, and the ProviderHome "Subir reel" action; `/(tabs)/reels`, `/(tabs)/profile/my-reels` and `/upload-reel` redirect to `/(tabs)`. All reels code is kept: flip the flag to re-enable (then also bump the tab count above). A "Trabajos" tab (gallery of finished work) is planned to take the slot later; not built yet.
+- Payments and plans are postponed to the next version: `FEATURES.payments` (`false`) makes `/orders/checkout`, `/orders/payment-success` and `/(tabs)/profile/plans` redirect, and hides the Perfil "Plan" row and the "Pagar" action. All payment code is kept: flip the flag to re-enable.
+- Reels are postponed to the next version: `FEATURES.reels` (`src/core/config/features.ts`, `false`) hides the `reels` tab (`href: null`), the Perfil "Mis reels" row and autoplay row, and the ProviderHome "Subir reel" action; `/(tabs)/reels`, `/(tabs)/profile/my-reels` and `/upload-reel` redirect to `/(tabs)`. All reels code is kept: flip the flag to re-enable (the bar then has 6 tabs: reels sits next to Trabajos). The **Trabajos** tab took reels' slot: `works` is a `TABS` entry + `Tabs.Screen` right after `reels`/before `orders`.
 - Labels are always visible; Pedidos reads "Órdenes" for providers. Each tab exposes `accessibilityRole="tab"`, label and selected state.
 - Badges: Mensajes = `useUnreadTotal()`; Pedidos/Órdenes (providers only) = `usePendingProviderRequestsCount()` (pending provider orders, shares the `providerOrders` query cache).
 - Orders opens on the provider segment for providers; an explicit `?tab=client|provider` always wins (`resolveOrdersSegment`).
@@ -148,7 +157,6 @@ Los demás "providers" (`ProfileProvider`, `OrdersProvider`, etc.) son **shims**
 src/
   stores/                    ← Zustand (UI state)
     chat.store.ts            ← conversaciones, unread, socket, typing
-    favorites.store.ts       ← favoritos con persist AsyncStorage
     preferences.store.ts     ← preferencias de usuario con persist (reelsAutoplay)
     marketplace.store.ts     ← categoría seleccionada, filtros, search query
   hooks/queries/             ← TanStack Query (server state)
@@ -160,6 +168,7 @@ src/
     useNotificationsQuery.ts
     useChatQuery.ts
     useReelsQuery.ts
+    useFavoritesQuery.ts     ← favoritos de la cuenta (lista infinita + ids con update optimista)
     useSearchQuery.ts
   hooks/mutations/           ← TanStack Query mutations
     useReviewMutations.ts
@@ -177,14 +186,18 @@ src/
 | `servicesUser` | Marketplace: categories, services, provider profiles, reviews, posts | `ServicesProvider` (reducer + fetchQuery) |
 | `users` | User lookup by ID, edit profile | TanStack Query (`usePublicUser`) |
 | `orders` | Order creation, history, status tracking, quote requests | TanStack Query (`useOrdersQuery`) |
-| `payments` | Payment processing | TanStack Query (`usePaymentsQuery`) |
+| `payments` | Payment processing (simulated, hidden in v1 behind `FEATURES.payments`) | TanStack Query (`usePaymentsQuery`) |
+| `markets` | Cities (Tandil, Barranquilla): list, phone prefix per city | TanStack Query (`useCitiesQuery`) |
+| `favorites` | Favorites stored in the account | TanStack Query (`useFavoritesQuery`) |
+| `appConfig` | Remote gate (min version, maintenance) and support contact (`SupportContactButton`) | TanStack Query (`APP_CONFIG_QUERY`) |
 | `chat` | Real-time messaging (socket.io + REST fallback) | Zustand (`chat.store`) + TanStack Query |
 | `kyc` | KYC / background check flow | TanStack Query (`useKYCQuery`) |
 | `reviews` | Reviews and ratings | TanStack Query hooks |
 | `reels` | Video reels feed | TanStack Query (`useReelsQuery`) |
+| `works` | Trabajos: photo feed (cursor, masonry), detail, Mis trabajos (multipart upload, PATCH, DELETE), report via `ReportFlow` | TanStack Query (`useWorksQuery`); detail reads the item from the cached feed pages (no single-post endpoint); errors in `works/utils/workErrors.ts` |
 | `search` | Search services/providers | TanStack Query + Zustand (query state) |
 | `notifications` | Push notifications (expo-notifications, dev build only) | TanStack Query + `usePushNotificationSetup` hook |
-| `plans` | Subscription plan management | — |
+| `plans` | Subscription plan management (hidden in v1 behind `FEATURES.payments`) | — |
 
 ### API layer
 

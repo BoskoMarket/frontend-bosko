@@ -12,12 +12,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { BRAND_NAME, Button, Card, GRADIENTS, SPACING, Text, TOKENS, useThemeColors } from '@/core/design-system';
 import { safeBack } from '@/core/navigation/safeBack';
+import { TERMS_VERSION } from '@/core/config/terms';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const SECTIONS = [
   {
     title: '1. Uso de la plataforma',
-    body: `Al continuar, confirmás que aceptás el uso responsable de ${BRAND_NAME} como espacio de intermediación entre clientes y proveedores de servicios.`,
+    body: `Al continuar, confirmas que aceptas el uso responsable de ${BRAND_NAME} como espacio de intermediación entre clientes y proveedores de servicios.`,
   },
   {
     title: '2. Tratamiento de datos',
@@ -25,8 +26,18 @@ const SECTIONS = [
   },
   {
     title: '3. Veracidad de la información',
-    body: 'Declarás que tu información de contacto y perfil es verídica y te comprometés a mantenerla actualizada.',
+    body: 'Declaras que tu información de contacto y perfil es verídica y te comprometes a mantenerla actualizada.',
   },
+];
+
+// DRAFT pending legal review (single document for Argentina and Colombia, see docs/PRD.md section 4).
+// Keep it factual: it only lists the data the app already handles. Bump TERMS_VERSION when it changes.
+const PRIVACY_ITEMS = [
+  'Datos de la cuenta: nombre, email, teléfono, ciudad y foto de perfil.',
+  'Verificación de identidad (KYC): se realiza a través de un proveedor de verificación externo, que recibe los documentos y las imágenes necesarios para validar tu identidad.',
+  'Fotos: las que subes a tu perfil, a tus servicios y a Trabajos.',
+  'Mensajes de chat: los que intercambias con otros usuarios sobre una orden.',
+  'Token de notificaciones: se guarda para enviarte avisos push si los activas.',
 ];
 
 export default function TermsAndConditionsScreen() {
@@ -44,7 +55,7 @@ export default function TermsAndConditionsScreen() {
         <View style={styles.headerText}>
           <Text variant="title" color={TOKENS.onMedia.text}>Términos y condiciones</Text>
           <Text variant="caption" color={TOKENS.onMedia.textSub} style={styles.headerSubtitle}>
-            Última actualización: 1 de agosto de 2026
+            {`Versión ${TERMS_VERSION}`}
           </Text>
         </View>
       </LinearGradient>
@@ -56,6 +67,16 @@ export default function TermsAndConditionsScreen() {
             <Text variant="bodySmall" color={tc.textSub} style={styles.cardBody}>{s.body}</Text>
           </Card>
         ))}
+
+        <Card>
+          <Text variant="bodySmall" weight="700" style={styles.cardTitle}>4. Política de privacidad</Text>
+          <Text variant="bodySmall" color={tc.textSub} style={styles.cardBody}>
+            {`Estos son los datos que ${BRAND_NAME} trata para que el servicio funcione:`}
+          </Text>
+          {PRIVACY_ITEMS.map(item => (
+            <Text key={item} variant="bodySmall" color={tc.textSub} style={styles.cardItem}>{`• ${item}`}</Text>
+          ))}
+        </Card>
 
         <View style={styles.btnGap}>
           <Button label="Entendido" onPress={goBack} fullWidth />
@@ -81,5 +102,6 @@ const styles = StyleSheet.create({
   body: { padding: SPACING.xl, gap: 14, paddingBottom: SPACING.huge },
   cardTitle: { marginBottom: SPACING.sm },
   cardBody: { lineHeight: 20 },
+  cardItem: { lineHeight: 20, marginTop: SPACING.xs },
   btnGap: { marginTop: SPACING.xs },
 });

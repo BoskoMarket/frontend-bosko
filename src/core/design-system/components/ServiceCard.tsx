@@ -12,16 +12,22 @@ import { useThemeColors } from '@/stores/theme.store';
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 export interface ServiceCardRate {
-  amount?: number | null;
+  amount?: number | string | null;
   currency?: string | null;
+  unit?: string | null;
 }
 
-/** "$18.500" / "US$40" / "Consultar" when there is no usable amount. */
+/**
+ * "Desde $18.500 ARS" / "Desde $45.000 COP" / "A cotizar" when there is no usable amount.
+ * The currency code is always shown: ARS and COP share the "$" symbol.
+ */
 export function formatServicePrice(rate?: ServiceCardRate | null): string {
-  if (!rate || !rate.amount) return 'Consultar';
+  const amount = Number(rate?.amount);
+  if (!rate || !Number.isFinite(amount) || amount <= 0) return 'A cotizar';
   const currency = rate.currency ?? 'ARS';
-  const symbol = currency === 'ARS' ? '$' : currency === 'USD' ? 'US$' : `${currency} `;
-  return `${symbol}${Number(rate.amount).toLocaleString('es-AR')}`;
+  const symbol = currency === 'USD' ? 'US$' : '$';
+  const price = `Desde ${symbol}${amount.toLocaleString('es-AR')} ${currency}`;
+  return rate.unit ? `${price} / ${rate.unit}` : price;
 }
 
 export interface ServiceCardProps {

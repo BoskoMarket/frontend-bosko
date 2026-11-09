@@ -12,15 +12,16 @@ Estados: ✅ ok · ❌ roto · ⚠️ dudoso (ruta dinámica armada con string, 
 
 ## Estructura de tabs (2026-10-16)
 
-4 tabs visibles con label, en este orden (Reels está oculto tras `FEATURES.reels`, pospuesto a la próxima versión) (el orden sale de los `Tabs.Screen` de `app/(tabs)/_layout.tsx`):. Planned: una tab "Trabajos" (galería de trabajos terminados) ocupará ese lugar más adelante.
+5 tabs visibles con label, en este orden (Reels está oculto tras `FEATURES.reels`, pospuesto a la próxima versión; **Trabajos** ocupa su lugar) (el orden sale de los `Tabs.Screen` de `app/(tabs)/_layout.tsx`):
 
 | # | Tab | Ruta | Notas por rol |
 |---|---|---|---|
 | 1 | Inicio | `/(tabs)` | Cliente: explorar (`ClientHome`). Proveedor: trabajo (`ProviderHome`). |
 | - | ~~Reels~~ (oculto) | `/(tabs)/reels` | `href: null` mientras `FEATURES.reels` es `false`; la ruta redirige a `/(tabs)`. Sin slot en la barra. |
-| 2 | Pedidos / Órdenes | `/(tabs)/orders` | Label "Órdenes" para proveedores. Abre en el segmento "Como proveedor" si es proveedor (un `?tab=` explícito gana). Badge = órdenes recibidas con status `pending`. |
-| 3 | Mensajes | `/(tabs)/chat` | Badge = no leídos (`useUnreadTotal`). |
-| 4 | Perfil | `/(tabs)/profile` | Grupo por rol: proveedor "Mi negocio", cliente "Mi actividad" (`profileSections.ts`). |
+| 2 | Trabajos | `/(tabs)/works` | Feed público tipo mosaico de fotos de trabajos terminados (todos los roles), filtro por categoría. Tocar una foto abre `/work/[id]`. Vacío: cliente mensaje amable; proveedor "Subí tus primeros trabajos" → Mis trabajos. |
+| 3 | Pedidos / Órdenes | `/(tabs)/orders` | Label "Órdenes" para proveedores. Abre en el segmento "Como proveedor" si es proveedor (un `?tab=` explícito gana). Badge = órdenes recibidas con status `pending`. |
+| 4 | Mensajes | `/(tabs)/chat` | Badge = no leídos (`useUnreadTotal`). |
+| 5 | Perfil | `/(tabs)/profile` | Grupo por rol: proveedor "Mi negocio", cliente "Mi actividad" (`profileSections.ts`). |
 
 **La barra solo se ve en las 4 raíces de tab** (`shouldShowTabBar` en `CustomTabBar`): se oculta en pantallas anidadas del stack de Perfil y en el stack oculto `services`; la salida es el botón volver.
 
@@ -34,7 +35,7 @@ Cambios de destino de esta reestructura:
 | Home cliente: "Ver todas" (categorías), "Servicios populares", "Explorar categorías" | `/(tabs)/services` | `/(tabs)/services` (catálogo oculto, sin cambio) |
 | Empty state "Explorar servicios" en Mensajes, Favoritos y Pedidos | `/(tabs)/services` | `/(tabs)` (Inicio) |
 | Home proveedor: resumen de órdenes | `/(tabs)/orders?tab=provider` | sin cambio |
-| Perfil proveedor: "Servicios", "Órdenes", "Reseñas" (acceso rápido; "Mis reels" oculto por `FEATURES.reels`) | `/(tabs)/profile/Services`, `/(tabs)/orders`, `/(tabs)/profile/my-reviews`, `/(tabs)/profile/my-reels` | grupo "Mi negocio": Mis servicios, Publicar servicio (`/service-form`), (Mis reels oculto), Mis reseñas, Verificación (`/(tabs)/profile/kyc`), Antecedentes, Plan (`/(tabs)/profile/plans`). "Órdenes" se quitó (es un tab). |
+| Perfil proveedor: "Servicios", "Órdenes", "Reseñas" (acceso rápido; "Mis reels" oculto por `FEATURES.reels`) | `/(tabs)/profile/Services`, `/(tabs)/orders`, `/(tabs)/profile/my-reviews`, `/(tabs)/profile/my-reels` | grupo "Mi negocio": Mis servicios, Publicar servicio (`/service-form`), Mis trabajos (`/(tabs)/profile/my-works`), (Mis reels oculto), Mis reseñas, Verificación (`/(tabs)/profile/kyc`), Antecedentes, Plan (`/(tabs)/profile/plans`). "Órdenes" se quitó (es un tab). |
 | Perfil cliente: "Mis pedidos", "Mensajes" (acceso rápido) + CTA "¿Querés ofrecer servicios?" | `/(tabs)/orders`, `/(tabs)/chat`, `/(tabs)/profile/become-provider` | grupo "Mi actividad": Favoritos (`/(tabs)/profile/favorites`), Convertirme en proveedor (`/(tabs)/profile/become-provider`) |
 | Perfil: "Cambiar Contraseña" | grupo "Preferencias" | grupo "Seguridad" |
 
@@ -59,9 +60,12 @@ Generado con `npm run routes:generate` (`scripts/generate-routes.cjs` → `.expo
 | `/(tabs)/profile/kyc/intro` | `app/(tabs)/profile/kyc/intro.tsx` |
 | `/(tabs)/profile/my-reels` | `app/(tabs)/profile/my-reels.tsx` |
 | `/(tabs)/profile/my-reviews` | `app/(tabs)/profile/my-reviews.tsx` |
+| `/(tabs)/profile/my-works` | `app/(tabs)/profile/my-works.tsx` |
 | `/(tabs)/profile/plans` | `app/(tabs)/profile/plans.tsx` |
 | `/(tabs)/profile/verify-phone` | `app/(tabs)/profile/verify-phone.tsx` |
 | `/(tabs)/reels` | `app/(tabs)/reels.tsx` |
+| `/(tabs)/works` | `app/(tabs)/works.tsx` |
+| `/work/[id]` | `app/work/[id].tsx` |
 | `/(tabs)/services/category/[id]` | `app/(tabs)/services/category/[id].tsx` |
 | `/(tabs)/services` | `app/(tabs)/services/index.tsx` |
 | `/(tabs)/services/provider/[id]` | `app/(tabs)/services/provider/[id].tsx` |
@@ -175,6 +179,9 @@ Derivadas de `rg` sobre `router.*` / `<Redirect>` / hrefs en `src/` y `app/` par
 
 | Pantalla (ruta) | Archivo | Disparador | Destino | Estado |
 |---|---|---|---|---|
+| Trabajos (`/(tabs)/works`) | `WorksFeedScreen.tsx` | Tocar foto / vacío proveedor: "Mis trabajos" | `/work/[id]`, `/(tabs)/profile/my-works` | ✅ |
+| Trabajo (`/work/[id]`) | `WorkDetailScreen.tsx` | Fila del proveedor / "Cotizar" / reportar (oculto en fotos propias) | `/(tabs)/services/provider/[id]`, `/orders/quote` (`quoteHref`), `ReportFlow` | ✅ |
+| Mis trabajos (`/(tabs)/profile/my-works`) | `MyWorksScreen.tsx` | Subir / editar / borrar foto; sin servicios: "Publicar servicio" | `WorkFormSheet`, `OptionSheet`, `/service-form` | ✅ |
 | (oculto, `FEATURES.reels`) Reels (`/(tabs)/reels`) | `ReelsScreen.tsx:488`, `ReelsTopBar.tsx:35,:55` | Ir al proveedor (`from=reels`) / "Publicar reel" / lupa | `/(tabs)/services/provider/[id]`, `/upload-reel`, `/search` | ✅ |
 | Buscar (`/search`) | `SearchPage.tsx:107,:127,:162` | Resultado categoría / profesional (`from=search`) | `/(tabs)/services/category/[id]`, `/(tabs)/services/provider/[id]` | ✅ |
 | Pedidos (`/(tabs)/orders`) | `OrdersListScreen.tsx:144,:151,:152,:198` | Tap en orden / vacío: Explorar, Ver mi perfil, Publicar | `/orders/[id]`, `/(tabs)`, `/(tabs)/profile`, `/service-form` | ✅ |
@@ -227,4 +234,27 @@ Cruce de "Rutas existentes" contra los destinos de `router.*` / `<Redirect>` / `
 
 Borradas por decisión de producto (2026-11-02): `/(tabs)/profile/Payments` (N9, pagos aún no conectados), `/(tabs)/profile/edit/[type]` (N10, reemplazada por `EditProfile`), `/(tabs)/profile/kyc/document` (N11, Didit reemplazó la subida manual), `/orders/status` (N12, el detalle `/orders/[id]` ya tiene el timeline).
 
-Confirmadas con entrada: `dev/components` (Perfil > Preferencias, solo `__DEV__`), `kyc`, `kyc/intro`, `my-reels`, `my-reviews`, `favorites`, `plans`, `become-provider`, `verify-phone`, `delete-account`, `ChangePassword`, `EditProfile`, `Services`, `background-check`, `upload-reel`, `orders/{[id],checkout,quote,review,payment-success}`, `chat/[id]`, `auth/*`, `terms`, `login/forgot-password`, `search`, `service-form`.
+Confirmadas con entrada: `works`, `work/[id]`, `my-works`, `dev/components` (Perfil > Preferencias, solo `__DEV__`), `kyc`, `kyc/intro`, `my-reels`, `my-reviews`, `favorites`, `plans`, `become-provider`, `verify-phone`, `delete-account`, `ChangePassword`, `EditProfile`, `Services`, `background-check`, `upload-reel`, `orders/{[id],checkout,quote,review,payment-success}`, `chat/[id]`, `auth/*`, `terms`, `login/forgot-password`, `search`, `service-form`.
+
+## Cambios de navegación del PRD v1 (2026-11-08, rama `feat/prd-v1`)
+
+`odd/nav-flow.html` no se regeneró en este cambio: este archivo es la fuente de verdad.
+
+| Ruta / disparador | Cambio | Estado |
+|---|---|---|
+| `/orders/checkout`, `/orders/payment-success` | Redirigen a `/(tabs)/orders` mientras `FEATURES.payments` es `false`. Sin botón «Pagar» en `/orders/[id]` | ✅ |
+| `/(tabs)/profile/plans` | Redirige a `/(tabs)/profile` mientras `FEATURES.payments` es `false`; sin fila «Plan» en Perfil | ✅ |
+| Perfil proveedor «Mi negocio» | Mi servicio, Mis trabajos, Mis reseñas, Verificación de identidad, Antecedentes (opcional), Usuarios bloqueados. Se quitan «Publicar servicio» y «Plan» | ✅ |
+| Perfil cliente «Mi actividad» | Favoritos, Convertirme en proveedor, Usuarios bloqueados | ✅ |
+| Inicio proveedor: acciones rápidas | «Mi servicio» → `/(tabs)/profile/Services` (se quita «Publicar servicio»; el alta se hace desde ahí) | ✅ |
+| `/(tabs)/profile/Services` | Muestra el servicio único; «Publicar» solo si todavía no tiene uno | ✅ |
+| `/service-form` | Sin `canPublish` (KYC aprobado y teléfono verificado) redirige a `/(tabs)/profile/become-provider` o a `/(tabs)/profile/verify-phone` | ✅ |
+| `/(tabs)/profile/become-provider` | Lista de pasos: Identidad → Teléfono → Tu servicio | ✅ |
+| `/login/RegisterView` | Paso «Tu ciudad» y aceptación de términos | ✅ |
+| `/auth/select-city` (nueva) | Alta con Google sin ciudad (`422 CITY_REQUIRED`) o cuenta con `city === null`; `app/index.tsx` redirige si `city === null` | ✅ |
+| `/suspended` (nueva) | Destino de `403 ACCOUNT_SUSPENDED` (logout forzado con motivo); «Volver al inicio de sesión» → `/login` | ✅ |
+| `/chat/[id]` ⋯ | Menú: denunciar (flujo existente) y bloquear/desbloquear | ✅ |
+| `/(tabs)/profile/blocked-users` (nueva) | Lista de bloqueados con «Desbloquear» | ✅ |
+| `/orders/[id]` | Acciones por estado y rol (matriz `getOrderActions`); en `disputed`, bloque de soporte por WhatsApp (URL externa `wa.me`) | ✅ |
+| Notificaciones | `ORDER_*` → `/orders/[id]`; `POST_HIDDEN` → `/(tabs)/profile/my-works`; `REVIEW_REPLIED` → `/(tabs)/profile/my-reviews`; `PLATFORM_NEWS` sin destino | ✅ |
+| Orden cancelada por el sistema (cliente) | «Cotizar a otro proveedor» → `/search` | ✅ |

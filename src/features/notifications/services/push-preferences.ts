@@ -23,7 +23,7 @@ export async function registerDeviceForPush() {
   });
   let { status } = await Notifications.getPermissionsAsync();
   if (status !== 'granted') ({ status } = await Notifications.requestPermissionsAsync());
-  if (status !== 'granted') throw new Error(`Activá el permiso de notificaciones de ${BRAND_NAME} en los ajustes del dispositivo.`);
+  if (status !== 'granted') throw new Error(`Activa el permiso de notificaciones de ${BRAND_NAME} en los ajustes del dispositivo.`);
   const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
   if (!projectId) throw new Error('No se pudo configurar este dispositivo para notificaciones.');
   const { data } = await Notifications.getExpoPushTokenAsync({ projectId });

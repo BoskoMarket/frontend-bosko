@@ -12,7 +12,6 @@ jest.mock('expo-secure-store', () => ({ getItemAsync: jest.fn(), setItemAsync: j
 jest.mock('@/core/api/axiosinstance', () => ({ __esModule: true, default: { get: jest.fn() } }));
 jest.mock('@/features/chat/services/socket.service', () => ({ socketService: { connect: jest.fn(), disconnect: jest.fn() } }));
 jest.mock('@/stores/theme.store', () => ({ useThemeColors: () => ({ bg: '#fff', text: '#000' }) }));
-jest.mock('@/stores/favorites.store', () => ({ useFavoritesStore: { getState: () => ({ setAccount: jest.fn(async () => {}) }) } }));
 function State() {
   const auth = useAuth();
   return <Text>{auth.isAuthenticated ? `Cuenta:${auth.authState.user?.id}` : 'Sin sesión'}</Text>;

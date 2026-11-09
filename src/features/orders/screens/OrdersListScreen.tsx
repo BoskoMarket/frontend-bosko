@@ -24,6 +24,7 @@ import { useOrders } from '../state/OrdersContext';
 import { useIsProvider } from '@/hooks/queries/useProfileQuery';
 import { Order, OrderStatus } from '../types/orders.types';
 import { ORDER_STATUS } from '../constants/orderStatus';
+import { countAwaitingConfirmation } from '../utils/orderActions';
 import { Badge, Button, EmptyState, ScreenHeader, SkeletonList, TOKENS, useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -128,6 +129,9 @@ export default function OrdersListScreen() {
     setRefreshing(false);
   }, [loadClientOrders, loadProviderOrders]);
 
+  // Client orders waiting for the client's own confirmation.
+  const awaitingCount = countAwaitingConfirmation(clientOrders);
+
   const orders = activeTab === 'client' ? clientOrders : providerOrders;
   const hasMore = activeTab === 'client' ? clientHasMore : providerHasMore;
   const loadingMore = activeTab === 'client' ? clientLoadingMore : providerLoadingMore;
@@ -140,14 +144,14 @@ export default function OrdersListScreen() {
       <EmptyState
         icon="receipt-outline"
         title="Todavía no pediste nada"
-        subtitle="Explorá servicios, cotizá con profesionales y hacé tu primer pedido."
+        subtitle="Explora servicios, cotiza con profesionales y haz tu primer pedido."
         cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)') }}
       />
     ) : (
       <EmptyState
         icon="briefcase-outline"
         title="Sin solicitudes todavía"
-        subtitle="Asegurate de tener tu perfil verificado y al menos un servicio publicado."
+        subtitle="Asegúrate de tener tu perfil verificado y al menos un servicio publicado."
         cta={{ label: 'Ver mi perfil', onPress: () => router.push('/(tabs)/profile') }}
         secondaryCta={{ label: 'Publicar un servicio', onPress: () => router.push('/service-form') }}
       />
@@ -177,6 +181,13 @@ export default function OrdersListScreen() {
             <Text style={[styles.tabText, { color: activeTab === tab ? TOKENS.color.signal : tc.textSub }, activeTab === tab && styles.tabTextActive]}>
               {tab === 'client' ? 'Como cliente' : 'Como proveedor'}
             </Text>
+            {tab === 'client' && awaitingCount > 0 && (
+              <Badge
+                label={String(awaitingCount)}
+                tone={ORDER_STATUS.awaiting_confirmation.tone}
+                size="sm"
+              />
+            )}
           </Pressable>
         ))}
       </View>

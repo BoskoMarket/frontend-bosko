@@ -16,16 +16,14 @@ import { useMyServices, useDeleteService } from "@/hooks/queries/useMarketplaceQ
 import type { Service } from "@/features/servicesUser/services/service";
 import { EmptyState } from '@/core/components/EmptyState';
 import { getUserErrorMessage } from '@/lib/errors';
-import { BRAND_RADIAL_FILL, Button, ScreenHeader, SkeletonList, TOKENS, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
+import { BRAND_RADIAL_FILL, Button, ScreenHeader, SkeletonList, TOKENS, formatServicePrice, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const SIGNAL = TOKENS.color.signal;
 
 function formatPrice(price?: number | null | any): string {
-  const n = typeof price === 'object' && price !== null ? price?.amount : price;
-  if (!n) return 'A cotizar';
-  return `$${new Intl.NumberFormat('es-AR').format(Number(n))}`;
+  return formatServicePrice(typeof price === 'object' && price !== null ? price : { amount: price });
 }
 
 function getCategoryLabel(category: Service['category']): string {
@@ -132,8 +130,8 @@ export default function MyServiceScreen() {
 
   const planMessage =
     services.length === 0
-      ? "Crea tu primer servicio para comenzar a recibir solicitudes."
-      : "Administra y actualiza tus servicios publicados.";
+      ? "Crea tu servicio para comenzar a recibir solicitudes."
+      : "Administra y actualiza tu servicio publicado. Cada proveedor tiene un solo servicio.";
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: tc.bg }]}>
@@ -142,10 +140,10 @@ export default function MyServiceScreen() {
       {/* Header con back */}
       <ScreenHeader
         variant="large"
-        title="Mis servicios"
+        title="Mi servicio"
         onBack={() => safeBack(router, '/(tabs)/profile')}
         style={styles.headerRow}
-        right={(
+        right={services.length === 0 ? (
             <Pressable
               onPress={() => router.push('/service-form')}
               hitSlop={8}
@@ -155,7 +153,7 @@ export default function MyServiceScreen() {
                 <Text style={styles.addBtnText}>Publicar</Text>
               </View>
             </Pressable>
-        )}
+        ) : undefined}
       />
       <Text style={[styles.planMessage, { color: tc.textSub }]}>{planMessage}</Text>
 
@@ -164,10 +162,10 @@ export default function MyServiceScreen() {
       {services.length === 0 && !loading ? (
         <EmptyState
           icon="construct-outline"
-          title="Todavía no publicaste servicios"
-          subtitle="Creá tu primer servicio para que los clientes puedan encontrarte y contratarte."
+          title="Todavía no publicas tu servicio"
+          subtitle="Crea tu servicio para que los clientes puedan encontrarte y contratarte."
           cta={{
-            label: 'Publicar primer servicio',
+            label: 'Publicar servicio',
             onPress: () => router.push("/service-form"),
           }}
         />

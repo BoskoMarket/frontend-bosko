@@ -78,7 +78,7 @@ export default function VerifyEmailScreen() {
     // devuelve INVALID_VERIFICATION_CODE aunque la cuenta ya haya quedado verificada.
     if (loading) return;
     if (code.length < CODE_LENGTH) {
-      setError('Ingresá los 6 dígitos del código.');
+      setError('Ingresa los 6 dígitos del código.');
       return;
     }
     setError('');
@@ -92,7 +92,7 @@ export default function VerifyEmailScreen() {
       // Decidir por `code`, nunca por el texto de `message` (frontend-error-contract.md)
       const { code: errorCode } = extractApiError(err);
       if (errorCode === 'INVALID_VERIFICATION_CODE') {
-        setError('Código incorrecto o expirado. Verificá y volvé a intentar.');
+        setError('Código incorrecto o expirado. Verifica y vuelve a intentar.');
       } else if (errorCode === 'NOT_FOUND') {
         setError('Usuario no encontrado.');
       } else {
@@ -113,12 +113,12 @@ export default function VerifyEmailScreen() {
     setResendMessage('');
     try {
       await resendVerificationService(email);
-      setResendMessage('Si la cuenta necesita verificación, te enviamos un código nuevo. Revisá también el correo no deseado.');
+      setResendMessage('Si la cuenta necesita verificación, te enviamos un código nuevo. Revisa también el correo no deseado.');
     } catch (err) {
       const { statusCode } = extractApiError(err);
       setError(statusCode === 429
-        ? 'Hiciste demasiados intentos. Esperá antes de volver a solicitar el código.'
-        : 'No pudimos solicitar el código. Revisá tu conexión e intentá de nuevo al terminar la espera.');
+        ? 'Hiciste demasiados intentos. Espera antes de volver a solicitar el código.'
+        : 'No pudimos solicitar el código. Revisa tu conexión e intenta de nuevo al terminar la espera.');
     } finally {
       resendPending.current = false;
       setResending(false);
@@ -135,7 +135,7 @@ export default function VerifyEmailScreen() {
               <IconCircle name="mail-open" variant="success" size={88} iconSize={40} />
               <Text variant="h3" center>¡Email verificado!</Text>
               <Text variant="body" center color={tc.textSub} style={styles.successText}>
-                Tu cuenta fue activada correctamente. Ya podés iniciar sesión.
+                Tu cuenta fue activada correctamente. Ya puedes iniciar sesión.
               </Text>
               <Button
                 label="Ir a iniciar sesión"
@@ -163,7 +163,7 @@ export default function VerifyEmailScreen() {
           <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY }] }}>
             <View style={styles.titleRow}>
               <IconCircle name="mail-outline" size={72} iconSize={32} style={styles.hero} />
-              <Text variant="h3" center style={styles.title}>Verificá tu email</Text>
+              <Text variant="h3" center style={styles.title}>Verifica tu email</Text>
               <Text variant="body" center color={tc.textSub}>
                 Enviamos un código de 6 dígitos a{'\n'}
                 <Text variant="body" weight="700" color={TOKENS.color.signal}>{email}</Text>
@@ -171,7 +171,7 @@ export default function VerifyEmailScreen() {
             </View>
 
             <AuthCard padding={22}>
-              <OtpInput value={code} onChange={setCode} length={CODE_LENGTH} label="Ingresá el código" />
+              <OtpInput value={code} onChange={setCode} length={CODE_LENGTH} label="Ingresa el código" />
             </AuthCard>
 
             {!!error && (

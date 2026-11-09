@@ -105,10 +105,10 @@ describe.each(['dark', 'light'] as const)('ReportSheet (%s)', (mode) => {
     fireEvent.press(getByLabelText('Otro'));
     fireEvent.press(getByText('Enviar reporte'));
     expect(onSubmit).not.toHaveBeenCalled();
-    fireEvent.changeText(getByPlaceholderText('Describí el problema'), '   ');
+    fireEvent.changeText(getByPlaceholderText('Describe el problema'), '   ');
     fireEvent.press(getByText('Enviar reporte'));
     expect(onSubmit).not.toHaveBeenCalled();
-    fireEvent.changeText(getByPlaceholderText('Describí el problema'), '  me insultó  ');
+    fireEvent.changeText(getByPlaceholderText('Describe el problema'), '  me insultó  ');
     fireEvent.press(getByText('Enviar reporte'));
     expect(onSubmit).toHaveBeenCalledWith({ reason: 'other', details: 'me insultó' });
   });
@@ -116,7 +116,7 @@ describe.each(['dark', 'light'] as const)('ReportSheet (%s)', (mode) => {
   it('allows optional details for any other reason', () => {
     const { getByLabelText, getByText, getByPlaceholderText, onSubmit } = setup();
     fireEvent.press(getByLabelText('Acoso o lenguaje ofensivo'));
-    fireEvent.changeText(getByPlaceholderText('Describí el problema'), '  mensaje ofensivo  ');
+    fireEvent.changeText(getByPlaceholderText('Describe el problema'), '  mensaje ofensivo  ');
     fireEvent.press(getByText('Enviar reporte'));
     expect(onSubmit).toHaveBeenCalledWith({ reason: 'harassment', details: 'mensaje ofensivo' });
   });
@@ -134,14 +134,14 @@ describe('reportErrorFeedback', () => {
     expect(reportErrorFeedback(httpError(404))).toEqual({ title: 'Este contenido ya no está disponible.', close: true });
   });
   it.each([405, 501])('maps %s to a retryable server error', (status) => {
-    expect(reportErrorFeedback(httpError(status))).toEqual({ title: 'No pudimos enviar el reporte. Intentá de nuevo más tarde.', close: false });
+    expect(reportErrorFeedback(httpError(status))).toEqual({ title: 'No pudimos enviar el reporte. Intenta de nuevo más tarde.', close: false });
   });
   it('maps 409 ALREADY_REPORTED', () => {
     expect(reportErrorFeedback(httpError(409, 'ALREADY_REPORTED')).title).toBe('Ya reportaste esto.');
     expect(reportErrorFeedback(httpError(409))).not.toHaveProperty('title', 'Ya reportaste esto.');
   });
   it('maps generic FORBIDDEN to a permission message, not the order-participation one', () => {
-    expect(reportErrorFeedback(httpError(403, 'FORBIDDEN')).title).toBe('No tenés permiso para hacer esto.');
+    expect(reportErrorFeedback(httpError(403, 'FORBIDDEN')).title).toBe('No tienes permiso para hacer esto.');
     expect(reportErrorFeedback(httpError(403, 'NOT_ORDER_PARTICIPANT')).title).toBe('No pudimos verificar tu participación en la orden.');
   });
   it.each([

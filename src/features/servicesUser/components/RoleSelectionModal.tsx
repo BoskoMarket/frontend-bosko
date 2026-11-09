@@ -59,7 +59,7 @@ export function RoleSelectionModal({ visible, onSelectClient, onSelectProvider }
 
             <Text style={[styles.title, { color: tc.text }]}>¡Bienvenido a {BRAND_NAME}!</Text>
             <Text style={[styles.subtitle, { color: tc.textSub }]}>
-              Contanos qué te trae por acá para armarte la mejor experiencia.
+              Cuéntanos qué te trae por aquí para armarte la mejor experiencia.
             </Text>
 
             <Pressable onPress={onSelectProvider} style={styles.optionShadow}>
@@ -69,7 +69,7 @@ export function RoleSelectionModal({ visible, onSelectClient, onSelectProvider }
                 </View>
                 <View style={styles.optionText}>
                   <Text style={styles.optionTitle}>Quiero ofrecer servicios</Text>
-                  <Text style={styles.optionSub}>Publicá lo que sabés hacer y recibí clientes</Text>
+                  <Text style={styles.optionSub}>Publica lo que sabes hacer y recibe clientes</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={TOKENS.onMedia.textSub} />
               </View>

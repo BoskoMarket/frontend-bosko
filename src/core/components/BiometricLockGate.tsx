@@ -47,7 +47,7 @@ export function BiometricLockGate({ children }: { children: React.ReactNode }) {
 
   const promptUnlock = useCallback(async () => {
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: `Desbloqueá ${BRAND_NAME}`,
+      promptMessage: `Desbloquea ${BRAND_NAME}`,
       cancelLabel: 'Cancelar',
     });
     if (result.success) setLocked(false);
@@ -93,7 +93,7 @@ export function BiometricLockGate({ children }: { children: React.ReactNode }) {
           App bloqueada
         </Text>
         <Text variant="body" color={tc.textSub} style={{ marginTop: SPACING.sm, textAlign: 'center' }}>
-          Desbloqueá con tu biometría para continuar
+          Desbloquea con tu biometría para continuar
         </Text>
         <Button label="Desbloquear" onPress={promptUnlock} style={{ marginTop: SPACING.xxl }} />
       </View>

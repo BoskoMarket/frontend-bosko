@@ -111,7 +111,7 @@ describe('reels upload service', () => {
     expect(service.classifyReelUploadError({ response: { status: 403, data: { code: 'PROVIDER_REQUIRED' } } })).toBe('providerRequired');
     expect(service.classifyReelUploadError({ response: { status: 400, data: { code: 'INVALID_MEDIA' } } })).toBe('format');
     expect(service.classifyReelUploadError({ response: { status: 413, data: { code: 'PAYLOAD_TOO_LARGE' } } })).toBe('tooLarge');
-    expect(service.REEL_UPLOAD_ERROR_MESSAGES.unavailable).toBe('No pudimos subir el video. Intentá de nuevo más tarde.');
+    expect(service.REEL_UPLOAD_ERROR_MESSAGES.unavailable).toBe('No pudimos subir el video. Intenta de nuevo más tarde.');
   });
 });
 
@@ -199,7 +199,7 @@ describe('ReelUploadScreen', () => {
     const { getByText, findByText } = render(<ReelUploadScreen />);
     await act(async () => { fireEvent.press(getByText('Elegir de la galería')); });
     await act(async () => { fireEvent.press(getByText('Publicar reel')); });
-    expect(await findByText('No pudimos subir el video. Intentá de nuevo más tarde.')).toBeTruthy();
+    expect(await findByText('No pudimos subir el video. Intenta de nuevo más tarde.')).toBeTruthy();
   });
 
   it('caches an upload that finishes after cancel and does not re-upload on the next publish', async () => {

@@ -236,7 +236,7 @@ export default function ConversationsListScreen() {
           ListHeaderComponent={
             loadError && conversations.length > 0 ? (
               <NoticeBanner variant="error" style={styles.errorBanner}>
-                No pudimos actualizar tus mensajes. Deslizá hacia abajo para reintentar.
+                No pudimos actualizar tus mensajes. Desliza hacia abajo para reintentar.
               </NoticeBanner>
             ) : null
           }
@@ -245,14 +245,14 @@ export default function ConversationsListScreen() {
               <EmptyState
                 icon="cloud-offline-outline"
                 title="No pudimos cargar tus mensajes"
-                subtitle="Hubo un problema de conexión. Probá de nuevo en unos segundos."
+                subtitle="Hubo un problema de conexión. Prueba de nuevo en unos segundos."
                 cta={{ label: 'Reintentar', onPress: load }}
               />
             ) : (
               <EmptyState
                 icon="chatbubbles-outline"
                 title="Sin mensajes todavía"
-                subtitle="Las conversaciones aparecen cuando cotizás un servicio o te contratan como prestador."
+                subtitle="Las conversaciones aparecen cuando cotizas un servicio o te contratan como prestador."
                 cta={{ label: 'Explorar servicios', onPress: () => router.push('/(tabs)') }}
               />
             )

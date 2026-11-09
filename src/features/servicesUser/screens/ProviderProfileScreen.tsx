@@ -23,8 +23,9 @@ import { safeBack } from '@/core/navigation/safeBack';
 import { ServiceDetailModal } from '../components/ServiceDetailModal';
 import { quoteHref, resolveQuoteTarget } from '../utils/quoteRoute';
 import type { ServiceSummary } from '@/types/services';
-import { Button, ScreenLoader, GRADIENTS, BRAND_RADIAL_FILL, TOKENS, useIsDark, useThemeColors, withAlpha, type ReportSheetSubmit, OptionSheet, dialog, FONT_FAMILY, SPACING } from '@/core/design-system';
+import { Button, ScreenLoader, formatServicePrice, GRADIENTS, BRAND_RADIAL_FILL, TOKENS, useIsDark, useThemeColors, withAlpha, type ReportSheetSubmit, OptionSheet, dialog, FONT_FAMILY, SPACING } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { BackgroundCheckBadge } from '@/features/kyc/components/BackgroundCheckBadge';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { ReportFlow } from '@/features/reports/components/ReportFlow';
 import { canReport } from '@/features/reports/canReport';
@@ -67,18 +68,14 @@ interface PublicProvider {
   bannerUrl: string | null;
   isVerified: boolean;
   kycApproved?: boolean;
+  /** Optional public field: an approved background check shows a trust badge. */
+  backgroundCheckStatus?: string;
   rating: number | null;
   reviewsCount: number;
   location?: string;
   bio?: string;
 }
 
-function formatRate(rate?: ServiceSummary['rate']) {
-  if (!rate || !rate.amount) return 'Consultar';
-  const sym = rate.currency === 'ARS' ? '$' : rate.currency === 'USD' ? 'US$' : rate.currency;
-  const price = `${sym}${Number(rate.amount).toLocaleString('es-AR')}`;
-  return rate.unit ? `${price} / ${rate.unit}` : price;
-}
 
 function ServiceRow({ item, onPress }: { item: ServiceSummary; onPress: () => void }) {
   const c = useC();
@@ -101,7 +98,7 @@ function ServiceRow({ item, onPress }: { item: ServiceSummary; onPress: () => vo
           <Text style={[s.serviceTitle, { color: c.text }]} numberOfLines={1}>{item.title}</Text>
           <Text style={[s.serviceSummary, { color: c.sub }]} numberOfLines={2}>{item.summary}</Text>
           {item.rate?.amount ? (
-            <Text style={[s.servicePrice, { color: c.sub }]}>{formatRate(item.rate)}</Text>
+            <Text style={[s.servicePrice, { color: c.sub }]}>{formatServicePrice(item.rate)}</Text>
           ) : null}
         </View>
         <Ionicons name="chevron-forward" size={16} color={c.muted} />
@@ -190,6 +187,7 @@ export default function ProviderProfileScreen() {
           bannerUrl: providerData.bannerUrl ?? null,
           isVerified: providerData.isVerified ?? false,
           kycApproved: providerData.kycApproved ?? providerData.isVerified ?? false,
+          backgroundCheckStatus: providerData.backgroundCheckStatus ?? undefined,
           rating: providerData.rating != null ? Number(providerData.rating) : null,
           reviewsCount: providerData.reviewsCount ?? 0,
           location: providerData.location ?? '',
@@ -280,7 +278,7 @@ export default function ProviderProfileScreen() {
           {loadError ? 'No se pudo cargar el perfil' : 'Perfil no encontrado'}
         </Text>
         <Text style={[s.errorSub, { color: c.sub }]}>
-          {loadError ? 'Revisá tu conexión e intentá de nuevo.' : 'Volvé y elegí otro profesional.'}
+          {loadError ? 'Revisa tu conexión e intenta de nuevo.' : 'Vuelve y elige otro profesional.'}
         </Text>
         {loadError && (
           <Button label="Reintentar" onPress={() => setLoadKey(k => k + 1)} style={s.retryBtn} />
@@ -403,6 +401,8 @@ export default function ProviderProfileScreen() {
               </View>
             )}
 
+            <BackgroundCheckBadge status={provider.backgroundCheckStatus} />
+
             <View style={[s.badge, { backgroundColor: withAlpha(TOKENS.color.rating, 0.12) }]}>
               <Ionicons name="star" size={15} color={TOKENS.color.rating} />
               <Text style={[s.badgeText, { color: TOKENS.color.rating }]}>
@@ -524,7 +524,7 @@ export default function ProviderProfileScreen() {
 
       <OptionSheet
         visible={servicePickerVisible}
-        title="¿Qué servicio querés cotizar?"
+        title="¿Qué servicio quieres cotizar?"
         options={services.map(item => ({ id: item.id, label: item.title, description: item.summary }))}
         onSelect={handlePickService}
         onCancel={() => setServicePickerVisible(false)}
@@ -539,7 +539,7 @@ export default function ProviderProfileScreen() {
       <ReportFlow
         visible={reportTarget !== null}
         title={reportTarget?.kind === 'review' ? 'Reportar reseña' : 'Reportar perfil'}
-        message="Contanos por qué querés reportar esto."
+        message="Cuéntanos por qué quieres reportar esto."
         onClose={closeReport}
         submit={submitReport}
       />

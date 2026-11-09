@@ -69,7 +69,7 @@ export default function ReelUploadScreen() {
   };
 
   const retryAfterUncertain = () => {
-    dialog.fromAlert('Reintentar publicación', 'Si el reel ya se publicó, se va a duplicar. Revisá "Mis reels" antes de continuar.', [
+    dialog.fromAlert('Reintentar publicación', 'Si el reel ya se publicó, se va a duplicar. Revisa "Mis reels" antes de continuar.', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Reintentar', onPress: () => { setPublicationUncertain(false); setError(null); } },
     ]);
@@ -89,7 +89,7 @@ export default function ReelUploadScreen() {
     const asset = result.assets[0];
     const mimeType = resolveImageMime(asset);
     if (mimeType !== 'image/jpeg' && mimeType !== 'image/png') {
-      toast.warning('Miniatura no válida', 'Elegí una foto JPG o PNG.');
+      toast.warning('Miniatura no válida', 'Elige una foto JPG o PNG.');
       return;
     }
     const fileSize = resolveFileSize({ uri: asset.uri, fileSize: asset.fileSize });
@@ -120,10 +120,10 @@ export default function ReelUploadScreen() {
   const publish = async () => {
     if (busyRef.current || publicationUncertain) return;
     const link = videoUrl.trim();
-    if (useLink && !/^https:\/\/[^\s]+$/.test(link)) { dialog.fromAlert('Video', 'Ingresá un enlace HTTPS público al archivo de video.'); return; }
-    if (!useLink && !video) { dialog.fromAlert('Video', 'Elegí o grabá un video para publicar.'); return; }
+    if (useLink && !/^https:\/\/[^\s]+$/.test(link)) { dialog.fromAlert('Video', 'Ingresa un enlace HTTPS público al archivo de video.'); return; }
+    if (!useLink && !video) { dialog.fromAlert('Video', 'Elige o graba un video para publicar.'); return; }
     const tags = [...new Set(tagsText.split(',').map(tag => tag.trim().replace(/^#/, '')).filter(Boolean))];
-    if (tags.length > 8) { dialog.fromAlert('Etiquetas', 'Agregá hasta 8 etiquetas.'); return; }
+    if (tags.length > 8) { dialog.fromAlert('Etiquetas', 'Agrega hasta 8 etiquetas.'); return; }
     busyRef.current = true;
     setSaving(true);
     setProgress(0);
@@ -162,7 +162,7 @@ export default function ReelUploadScreen() {
         const status = (err as { response?: { status?: number } } | null)?.response?.status;
         if (kind === 'network' || !status || status === 408 || status >= 500) {
           setPublicationUncertain(true);
-          setError('No pudimos confirmar si el reel se publicó. Revisá Mis reels antes de intentar de nuevo.');
+          setError('No pudimos confirmar si el reel se publicó. Revisa Mis reels antes de intentar de nuevo.');
           return;
         }
         setError(kind === 'invalidUpload' || kind === 'providerRequired' || kind === 'busy'
@@ -199,7 +199,7 @@ export default function ReelUploadScreen() {
 
         {!useLink && (
           <>
-            <Text color={tc.textSub}>Elegí un video de tu galería o grabá uno nuevo. Máximo {REEL_MAX_SECONDS} segundos y 100 MB.</Text>
+            <Text color={tc.textSub}>Elige un video de tu galería o graba uno nuevo. Máximo {REEL_MAX_SECONDS} segundos y 100 MB.</Text>
             {video && <ReelVideoPreview uri={video.uri} />}
             {video && (
               <View style={styles.thumbnailRow}>

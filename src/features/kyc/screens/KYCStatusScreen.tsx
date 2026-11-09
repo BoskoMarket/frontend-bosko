@@ -12,9 +12,11 @@ import { safeBack } from '@/core/navigation/safeBack';
 import { useKYC } from '../state/KYCContext';
 import { KYCStatus } from '../types/kyc.types';
 import { KYC_STATUS, toneColors } from '../constants/kycStatus';
-import { TOKENS, Button, Card, ScreenHeader, Text, useThemeColors } from '@/core/design-system';
+import { TOKENS, Button, Card, NoticeBanner, ScreenHeader, Text, useThemeColors } from '@/core/design-system';
 import { MotiView } from '@/core/components/MotiView';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { SupportContactButton } from '@/features/appConfig/components/SupportContactButton';
+import { getKycCopy } from '../utils/kycCopy';
 
 const BENEFITS: { icon: React.ComponentProps<typeof MaterialIcons>['name']; text: string }[] = [
   { icon: 'work', text: 'Publicar servicios en el marketplace' },
@@ -53,14 +55,14 @@ export default function KYCStatusScreen() {
   const ui = KYC_STATUS[status] ?? KYC_STATUS.not_started;
   const tone = toneColors(ui.tone, tc);
 
-  const canRetry = (status === 'rejected' || status === 'declined') && !!verification && verification.attemptCount < verification.maxAttempts;
+  const copy = getKycCopy(status, verification);
   const cta =
-    status === 'not_started' || status === 'expired' || status === 'failed'
+    status === 'not_started'
       ? { label: 'Iniciar verificación', icon: 'arrow-forward' as const }
       : status === 'in_progress' || status === 'pending'
         ? { label: 'Continuar verificación', icon: 'arrow-forward' as const }
-        : canRetry
-          ? { label: 'Reintentar verificación', icon: 'refresh' as const }
+        : copy.retryLabel
+          ? { label: copy.retryLabel, icon: 'refresh' as const }
           : null;
 
   return (
@@ -74,8 +76,9 @@ export default function KYCStatusScreen() {
           <View style={[s.iconCircle, { backgroundColor: tone.bg }]}>
             <MaterialIcons name={ui.icon} size={48} color={tone.fg} />
           </View>
-          <Text variant="h3" color={tone.fg} center>{ui.title}</Text>
-          <Text variant="body" color={tc.textSub} center style={s.statusDescription}>{ui.description}</Text>
+          <Text variant="h3" color={tone.fg} center>{copy.title}</Text>
+          <Text variant="body" color={tc.textSub} center style={s.statusDescription}>{copy.description}</Text>
+          {!!copy.note && <Text variant="label" color={tone.fg} center>{copy.note}</Text>}
         </Animated.View>
 
         {/* Beneficios (solo si no está aprobado) */}
@@ -97,6 +100,10 @@ export default function KYCStatusScreen() {
               ))}
             </Card>
           </MotiView>
+        )}
+
+        {copy.showReason && !!verification?.rejectionReason && (
+          <NoticeBanner variant="error">Motivo: {verification.rejectionReason}</NoticeBanner>
         )}
 
         {/* Attempts remaining */}
@@ -125,6 +132,10 @@ export default function KYCStatusScreen() {
               icon={<MaterialIcons name={cta.icon} size={18} color={TOKENS.color.onPrimary} />}
               onPress={() => router.push('/(tabs)/profile/kyc/intro')}
             />
+          )}
+
+          {copy.showSupport && (
+            <SupportContactButton message="Hola, necesito ayuda con la verificación de mi identidad." />
           )}
 
           {status === 'approved' && (

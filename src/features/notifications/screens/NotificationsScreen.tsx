@@ -37,6 +37,9 @@ import {
 } from '@/core/design-system';
 import { useNotificationsOpen, closeNotifications } from '@/stores/notificationsUI.store';
 
+const NOTIFICATION_FALLBACK_TITLE = 'Tienes una novedad';
+const NOTIFICATION_FALLBACK_BODY = 'Toca para ver más detalles.';
+
 type TypeIcon = { name: React.ComponentProps<typeof MaterialIcons>['name']; color?: string; bg?: string };
 
 /** `color`/`bg` ausentes = neutro del tema (`tc.textSub` / `tc.surface2`). */
@@ -49,6 +52,13 @@ const TYPE_ICON: Record<string, TypeIcon> = {
   payment_received: { name: 'attach-money', color: TOKENS.status.done.fg, bg: TOKENS.status.done.bg },
   kyc_approved: { name: 'verified-user', color: TOKENS.color.signal, bg: withAlpha(TOKENS.color.signal, 0.14) },
   kyc_rejected: { name: 'gpp-bad', color: TOKENS.status.cancelled.fg, bg: TOKENS.status.cancelled.bg },
+  order_awaiting_confirmation: { name: 'hourglass-top', color: TOKENS.status.pending.fg, bg: TOKENS.status.pending.bg },
+  order_expired: { name: 'timer-off', color: TOKENS.status.cancelled.fg, bg: TOKENS.status.cancelled.bg },
+  order_auto_closed: { name: 'lock-clock', color: TOKENS.status.done.fg, bg: TOKENS.status.done.bg },
+  order_disputed: { name: 'report-problem', color: TOKENS.status.pending.fg, bg: TOKENS.status.pending.bg },
+  post_hidden: { name: 'visibility-off', color: TOKENS.status.pending.fg, bg: TOKENS.status.pending.bg },
+  review_replied: { name: 'rate-review', color: TOKENS.status.progress.fg, bg: TOKENS.status.progress.bg },
+  platform_news: { name: 'campaign' },
   message: { name: 'chat-bubble', color: TOKENS.status.progress.fg, bg: TOKENS.status.progress.bg },
   default: { name: 'notifications' },
 };
@@ -85,10 +95,10 @@ function AnimatedItem({ index, children }: { index: number; children: React.Reac
 
 function NotificationItem({ item, onPress, onDelete }: { item: Notification; onPress: () => void; onDelete: () => void }) {
   const tc = useThemeColors();
-  const cfg = TYPE_ICON[item.type.toLowerCase()] ?? TYPE_ICON.default;
+  const cfg = TYPE_ICON[String(item.type ?? '').toLowerCase()] ?? TYPE_ICON.default;
 
   const onLongPress = () => {
-    dialog.fromAlert('Eliminar', '¿Eliminás esta notificación?', [
+    dialog.fromAlert('Eliminar', '¿Eliminas esta notificación?', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Eliminar', style: 'destructive', onPress: onDelete },
     ]);
@@ -100,7 +110,7 @@ function NotificationItem({ item, onPress, onDelete }: { item: Notification; onP
         onPress={onPress}
         onLongPress={onLongPress}
         accessibilityRole="button"
-        accessibilityLabel={`${item.read ? '' : 'No leída. '}${item.title}. ${item.body}`}
+        accessibilityLabel={`${item.read ? '' : 'No leída. '}${item.title || NOTIFICATION_FALLBACK_TITLE}. ${item.body || NOTIFICATION_FALLBACK_BODY}`}
         style={({ pressed }) => [
           s.itemWrap,
           pressed && s.itemPressed,
@@ -119,9 +129,9 @@ function NotificationItem({ item, onPress, onDelete }: { item: Notification; onP
               numberOfLines={1}
               style={s.itemTitle}
             >
-              {item.title}
+              {item.title || NOTIFICATION_FALLBACK_TITLE}
             </Text>
-            <Text variant="bodySmall" color={tc.textSub} numberOfLines={2} style={s.itemBody}>{item.body}</Text>
+            <Text variant="bodySmall" color={tc.textSub} numberOfLines={2} style={s.itemBody}>{item.body || NOTIFICATION_FALLBACK_BODY}</Text>
             <Text variant="caption" color={tc.textMuted} style={s.itemTime}>{timeAgo(item.createdAt)}</Text>
           </View>
           <Pressable
@@ -161,7 +171,7 @@ export default function NotificationsScreen() {
   };
 
   const handleClearAll = () => {
-    dialog.fromAlert('Limpiar notificaciones', '¿Eliminás todas las notificaciones?', [
+    dialog.fromAlert('Limpiar notificaciones', '¿Eliminas todas las notificaciones?', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Limpiar todo', style: 'destructive', onPress: clearAll },
     ]);

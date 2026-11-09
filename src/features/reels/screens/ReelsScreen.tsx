@@ -268,8 +268,8 @@ function CommentsSheet({
           <View style={[s.commentsInputRow, { borderTopColor: tc.divider }]}>
             <TextInput
               style={[s.commentsInput, { backgroundColor: tc.surface2, color: tc.text }]}
-              accessibilityLabel="Escribí un comentario"
-              placeholder="Escribí un comentario..."
+              accessibilityLabel="Escribe un comentario"
+              placeholder="Escribe un comentario..."
               placeholderTextColor={tc.textMuted}
               value={text}
               onChangeText={setText}
@@ -506,7 +506,7 @@ const ReelItem = React.memo(function ReelItem({
   const handleShare = useCallback(async () => {
     try {
       await Share.share({
-        message: `Mirá el trabajo de @${reel.user.username} en ${BRAND_NAME}`,
+        message: `Mira el trabajo de @${reel.user.username} en ${BRAND_NAME}`,
         url: `https://boskoapp.site/provider/${reel.user.id}`,
       });
     } catch {}
@@ -529,7 +529,7 @@ const ReelItem = React.memo(function ReelItem({
         text: 'Eliminar reel',
         style: 'destructive',
         onPress: () =>
-          dialog.fromAlert('Eliminar reel', '¿Seguro que querés eliminarlo?', [
+          dialog.fromAlert('Eliminar reel', '¿Seguro que quieres eliminarlo?', [
             { text: 'Cancelar', style: 'cancel' },
             {
               text: 'Eliminar',
@@ -618,11 +618,11 @@ const ReelItem = React.memo(function ReelItem({
           style={s.pauseIcon}
           onPress={handleRetryVideo}
           accessibilityRole="button"
-          accessibilityLabel="No se pudo cargar el video. Tocá para reintentar"
+          accessibilityLabel="No se pudo cargar el video. Toca para reintentar"
         >
           <Ionicons name="refresh" size={44} color={TOKENS.onMedia.textSub} />
           <Text style={s.errorTitle}>No se pudo cargar el video</Text>
-          <Text style={s.errorSub}>Tocá para reintentar</Text>
+          <Text style={s.errorSub}>Toca para reintentar</Text>
         </Pressable>
       )}
       {!isBeforeAfter && (
@@ -712,7 +712,7 @@ const ReelItem = React.memo(function ReelItem({
         {isBeforeAfter && (
           <View style={s.beforeAfterBadge}>
             <Ionicons name="swap-horizontal" size={12} color={TOKENS.onMedia.icon} />
-            <Text style={s.beforeAfterBadgeText}>Arrastrá para comparar</Text>
+            <Text style={s.beforeAfterBadgeText}>Arrastra para comparar</Text>
           </View>
         )}
 
@@ -733,7 +733,7 @@ const ReelItem = React.memo(function ReelItem({
       <ReportFlow
         visible={reportOpen}
         title="Reportar reel"
-        message="Contanos por qué querés reportar este contenido."
+        message="Cuéntanos por qué quieres reportar este contenido."
         onClose={closeReport}
         submit={submitReelReport}
       />
@@ -842,7 +842,7 @@ export default function ReelsScreen() {
         <StatusBar hidden />
         <Ionicons name="cloud-offline-outline" size={56} color={TOKENS.onMedia.textMuted} />
         <Text style={s.emptyTitle}>No pudimos cargar los reels</Text>
-        <Text style={s.emptySubtitle}>Revisá tu conexión e intentá de nuevo.</Text>
+        <Text style={s.emptySubtitle}>Revisa tu conexión e intenta de nuevo.</Text>
         <Button label="Reintentar" onPress={() => refetch()} style={s.retryBtn} />
         <ReelsTopBar insetTop={insets.top} tab={feedTab} setTab={handleTabChange} canUpload={isProvider} />
       </View>
@@ -895,12 +895,12 @@ export default function ReelsScreen() {
               color={TOKENS.onMedia.textMuted}
             />
             <Text style={s.emptyTitle}>
-              {isFollowingFeed ? 'Nada nuevo de quienes seguís' : 'Sin reels todavía'}
+              {isFollowingFeed ? 'Nada nuevo de quienes sigues' : 'Sin reels todavía'}
             </Text>
             <Text style={s.emptySubtitle}>
               {isFollowingFeed
-                ? 'Seguí a proveedores para ver sus reels acá.'
-                : 'Los proveedores aún no han publicado videos. Volvé pronto.'}
+                ? 'Sigue a proveedores para ver sus reels aquí.'
+                : 'Los proveedores aún no han publicado videos. Vuelve pronto.'}
             </Text>
           </View>
         }

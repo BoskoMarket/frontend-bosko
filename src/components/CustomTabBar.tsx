@@ -27,6 +27,7 @@ type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const TABS: Record<string, { icon: IconName; active: IconName; label: string }> = {
   index:    { icon: 'home-outline',                active: 'home',                label: 'Inicio'    },
+  works:    { icon: 'images-outline',              active: 'images',              label: 'Trabajos'  },
   orders:   { icon: 'receipt-outline',             active: 'receipt',             label: 'Pedidos'   },
   reels:    { icon: 'play-circle-outline',         active: 'play-circle',         label: 'Reels'     },
   chat:     { icon: 'chatbubble-ellipses-outline', active: 'chatbubble-ellipses', label: 'Mensajes'  },

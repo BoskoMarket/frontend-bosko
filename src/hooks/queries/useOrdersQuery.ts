@@ -9,7 +9,8 @@ import {
   acceptOrder,
   rejectOrder,
   startOrder,
-  completeOrder,
+  markOrderDone,
+  confirmOrder,
   cancelOrder,
   disputeOrder,
 } from '@/features/orders/services/orders.service';
@@ -190,17 +191,49 @@ export function useStartOrder() {
   });
 }
 
-export function useCompleteOrder() {
+export function useMarkOrderDone() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => completeOrder(id),
+    mutationFn: (id: string) => markOrderDone(id),
     onMutate: async (id) => {
       await qc.cancelQueries({ queryKey: QUERY_KEYS.clientOrders });
       await qc.cancelQueries({ queryKey: QUERY_KEYS.providerOrders });
       await qc.cancelQueries({ queryKey: QUERY_KEYS.orderById(id) });
-      const prevClient  = qc.getQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.clientOrders);
+      const prevClient   = qc.getQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.clientOrders);
       const prevProvider = qc.getQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders);
-      const prevOrder   = qc.getQueryData<Order>(QUERY_KEYS.orderById(id));
+      const prevOrder    = qc.getQueryData<Order>(QUERY_KEYS.orderById(id));
+      qc.setQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.clientOrders, old => patchOrders(old, id, 'awaiting_confirmation'));
+      qc.setQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders, old => patchOrders(old, id, 'awaiting_confirmation'));
+      if (prevOrder) {
+        qc.setQueryData<Order>(QUERY_KEYS.orderById(id), { ...prevOrder, status: 'awaiting_confirmation' });
+      }
+      return { prevClient, prevProvider, prevOrder };
+    },
+    onError: (err, id, ctx) => {
+      if (ctx?.prevClient)   qc.setQueryData(QUERY_KEYS.clientOrders, ctx.prevClient);
+      if (ctx?.prevProvider) qc.setQueryData(QUERY_KEYS.providerOrders, ctx.prevProvider);
+      if (ctx?.prevOrder)    qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
+      toast.error('No se pudo marcar como terminado', getUserErrorMessage(err));
+    },
+    onSettled: (_data, _err, id) => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.clientOrders });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.providerOrders });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.orderById(id) });
+    },
+  });
+}
+
+export function useConfirmOrder() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => confirmOrder(id),
+    onMutate: async (id) => {
+      await qc.cancelQueries({ queryKey: QUERY_KEYS.clientOrders });
+      await qc.cancelQueries({ queryKey: QUERY_KEYS.providerOrders });
+      await qc.cancelQueries({ queryKey: QUERY_KEYS.orderById(id) });
+      const prevClient   = qc.getQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.clientOrders);
+      const prevProvider = qc.getQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders);
+      const prevOrder    = qc.getQueryData<Order>(QUERY_KEYS.orderById(id));
       qc.setQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.clientOrders, old => patchOrders(old, id, 'completed'));
       qc.setQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders, old => patchOrders(old, id, 'completed'));
       if (prevOrder) {
@@ -212,7 +245,7 @@ export function useCompleteOrder() {
       if (ctx?.prevClient)   qc.setQueryData(QUERY_KEYS.clientOrders, ctx.prevClient);
       if (ctx?.prevProvider) qc.setQueryData(QUERY_KEYS.providerOrders, ctx.prevProvider);
       if (ctx?.prevOrder)    qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
-      toast.error('No se pudo completar la orden', getUserErrorMessage(err));
+      toast.error('No se pudo confirmar el trabajo', getUserErrorMessage(err));
     },
     onSettled: (_data, _err, id) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.clientOrders });

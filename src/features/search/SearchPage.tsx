@@ -180,10 +180,10 @@ export const SearchPage = () => {
               ) : null}
               {item.data.rate.amount > 0 ? (
                 <Text variant="bodySmall" weight="700" color={SIGNAL}>
-                  Desde {formatServicePrice(item.data.rate)}
+                  {formatServicePrice(item.data.rate)}
                 </Text>
               ) : (
-                <Text variant="bodySmall" color={tc.textSub}>Consultar precio</Text>
+                <Text variant="bodySmall" color={tc.textSub}>{formatServicePrice(null)}</Text>
               )}
             </View>
           </View>
@@ -280,7 +280,7 @@ export const SearchPage = () => {
           <EmptyState
             icon="search-outline"
             title="¿Qué estás buscando?"
-            subtitle="Buscá servicios, profesionales o categorías"
+            subtitle="Busca servicios, profesionales o categorías"
           />
         )}
 

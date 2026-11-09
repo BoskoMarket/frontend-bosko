@@ -21,12 +21,13 @@ import {
 } from '@/core/design-system';
 import { MotiView } from '@/core/components/MotiView';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { formatDocumentTypes, resolveDocumentTypes } from '../utils/documentTypes';
 
-const STEPS: { icon: React.ComponentProps<typeof MaterialIcons>['name']; title: string; description: string }[] = [
+const buildSteps = (documentTypes: string[]): { icon: React.ComponentProps<typeof MaterialIcons>['name']; title: string; description: string }[] => [
   {
     icon: 'badge',
     title: 'Foto de tu documento',
-    description: 'DNI, Cédula o Pasaporte — frente y dorso con buena iluminación.',
+    description: `${formatDocumentTypes(documentTypes)} — frente y dorso con buena iluminación.`,
   },
   {
     icon: 'face',
@@ -59,7 +60,8 @@ function FadeSlide({ delay, children }: { delay: number; children: React.ReactNo
 }
 
 export default function KYCIntroScreen() {
-  const { start, loading, error } = useKYC();
+  const { start, loading, error, verification } = useKYC();
+  const steps = buildSteps(resolveDocumentTypes(verification?.allowedDocumentTypes));
   const tc = useThemeColors();
 
   return (
@@ -72,7 +74,7 @@ export default function KYCIntroScreen() {
         <FadeSlide delay={100}>
           <View style={s.hero}>
             <IconCircle name="shield-checkmark" size={100} iconSize={56} />
-            <Text variant="h3" center>Verificá tu identidad</Text>
+            <Text variant="h3" center>Verifica tu identidad</Text>
             <Text variant="body" color={tc.textSub} center>
               El proceso toma menos de 5 minutos y solo se realiza una vez.
             </Text>
@@ -83,7 +85,7 @@ export default function KYCIntroScreen() {
         <FadeSlide delay={200}>
           <Card padding="xl" radius="lg" contentStyle={s.cardContent}>
             <Text variant="subtitle">¿Qué vas a necesitar?</Text>
-            {STEPS.map((step, idx) => (
+            {steps.map((step, idx) => (
               <View key={idx} style={s.stepRow}>
                 <View style={s.stepNumber}>
                   <Text variant="caption" weight="800" color={TOKENS.color.onPrimary}>{idx + 1}</Text>

@@ -3,7 +3,13 @@ import * as path from 'path';
 import { getRoleSection, INFO_SECTION } from '@/features/profile/utils/profileSections';
 
 let mockReels = false;
-jest.mock('@/core/config/features', () => ({ FEATURES: { get reels() { return mockReels; } } }));
+let mockPayments = false;
+jest.mock('@/core/config/features', () => ({
+  FEATURES: {
+    get reels() { return mockReels; },
+    get payments() { return mockPayments; },
+  },
+}));
 
 const repo = path.resolve(__dirname, '..');
 
@@ -16,6 +22,13 @@ function routeExists(href: string): boolean {
 describe('getRoleSection', () => {
   beforeEach(() => {
     mockReels = false;
+    mockPayments = false;
+  });
+
+  it('shows the Plan row only when payments are enabled', () => {
+    expect(getRoleSection('provider')!.rows.map((r) => r.id)).not.toContain('plan');
+    mockPayments = true;
+    expect(getRoleSection('provider')!.rows.find((r) => r.id === 'plan')?.href).toBe('/(tabs)/profile/plans');
   });
 
   it('adds Mis reels for providers only when the reels flag is on', () => {
@@ -30,19 +43,27 @@ describe('getRoleSection', () => {
     const section = getRoleSection('provider')!;
     expect(section.title).toBe('Mi negocio');
     expect(section.rows.map((r) => r.label)).toEqual([
-      'Mis servicios',
-      'Publicar servicio',
+      'Mi servicio',
+      'Mis trabajos',
       'Mis reseñas',
       'Verificación de identidad',
-      'Antecedentes penales',
-      'Plan',
+      'Antecedentes (opcional)',
+      'Usuarios bloqueados',
     ]);
-    expect(section.rows.find((r) => r.id === 'publish-service')?.href).toBe('/service-form');
+    expect(section.rows.map((r) => r.id)).not.toContain('publish-service');
+    expect(section.rows.find((r) => r.id === 'my-services')?.href).toBe('/(tabs)/profile/Services');
   });
 
   it('gives clients favorites and the become-provider entry', () => {
     const section = getRoleSection('client')!;
-    expect(section.rows.map((r) => r.label)).toEqual(['Favoritos', 'Convertirme en proveedor']);
+    expect(section.rows.map((r) => r.label)).toEqual(['Favoritos', 'Convertirme en proveedor', 'Usuarios bloqueados']);
+  });
+
+  it('gives both roles the blocked-users entry', () => {
+    for (const status of ['provider', 'client'] as const) {
+      const row = getRoleSection(status)!.rows.find((r) => r.id === 'blocked-users');
+      expect(row).toMatchObject({ icon: 'ban-outline', label: 'Usuarios bloqueados', href: '/(tabs)/profile/blocked-users' });
+    }
   });
 
   it('leaves users mid-verification to the pending card', () => {
@@ -58,6 +79,7 @@ describe('getRoleSection', () => {
 
   it('only points to routes that exist in app/', () => {
     mockReels = true;
+    mockPayments = true;
     const rows = [...getRoleSection('provider')!.rows, ...getRoleSection('client')!.rows];
     rows.forEach((row) => expect({ href: row.href, exists: routeExists(row.href) }).toEqual({ href: row.href, exists: true }));
   });

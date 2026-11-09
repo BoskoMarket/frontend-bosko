@@ -47,18 +47,6 @@ export const ServiceDetailModal: React.FC<ServiceDetailModalProps> = ({
 
     if (!service) return null;
 
-    const formatRate = (rate: ServiceSummary["rate"]) => {
-        if (!rate) return "Consultar";
-        const symbol =
-            rate.currency === "ARS"
-                ? "$"
-                : rate.currency === "USD"
-                    ? "US$"
-                    : `${rate.currency} `;
-        const price = `${symbol}${Number(rate.amount).toLocaleString('es-AR')}`;
-        return rate.unit ? `${price} / ${rate.unit}` : price;
-    };
-
     return (
         <Modal
             visible={visible}

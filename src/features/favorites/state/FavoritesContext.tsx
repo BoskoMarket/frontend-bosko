@@ -1,19 +1,21 @@
 import React from 'react';
 import type { ServiceSummary } from '@/types/services';
-import { useFavoritesStore } from '@/stores/favorites.store';
+import { useFavoriteIds, useToggleFavorite } from '@/hooks/queries/useFavoritesQuery';
 
+/** Shim kept so screens keep the same API; the data now comes from TanStack Query. */
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export function useFavorites() {
-  const store = useFavoritesStore();
+export { useIsFavorite } from '@/hooks/queries/useFavoritesQuery';
 
+export function useFavorites() {
+  const ids = useFavoriteIds();
+  const toggleFavorite = useToggleFavorite();
+  const idSet = React.useMemo(() => new Set(ids ?? []), [ids]);
   return {
-    favorites: store.favorites,
-    count: store.favorites.length,
-    isFavorite: (serviceId: string) => store.isFavorite(serviceId),
-    toggle: async (service: ServiceSummary) => { store.toggle(service); },
-    loading: false,
+    count: ids?.length ?? 0,
+    isFavorite: (serviceId: string) => idSet.has(serviceId),
+    toggle: async (service: ServiceSummary) => { toggleFavorite(service); },
   };
 }

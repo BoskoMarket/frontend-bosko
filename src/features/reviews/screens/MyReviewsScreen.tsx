@@ -141,7 +141,7 @@ export default function MyReviewsScreen() {
               <EmptyState
                 icon="star-outline"
                 title="Sin reseñas todavía"
-                subtitle="Cuando los clientes te califiquen, aparecerán acá."
+                subtitle="Cuando los clientes te califiquen, aparecerán aquí."
               />
             )
           }
@@ -181,7 +181,7 @@ export default function MyReviewsScreen() {
                     <Input
                       value={replyText}
                       onChangeText={setReplyText}
-                      placeholder="Escribí tu respuesta..."
+                      placeholder="Escribe tu respuesta..."
                       accessibilityLabel="Tu respuesta"
                       multiline
                       maxLength={500}

@@ -33,6 +33,11 @@ jest.mock('@/hooks/queries/useProfileQuery', () => ({
   useUploadBanner: () => ({ mutateAsync: jest.fn() }),
   useRemoveBanner: () => ({ mutateAsync: jest.fn() }),
 }));
+const mockCitiesData = [
+  { id: 'tandil', name: 'Tandil', countryCode: 'AR', currency: 'ARS', phonePrefix: '+54' },
+  { id: 'barranquilla', name: 'Barranquilla', countryCode: 'CO', currency: 'COP', phonePrefix: '+57' },
+];
+jest.mock('@/hooks/queries/useCitiesQuery', () => ({ useCitiesQuery: () => ({ data: mockCitiesData }) }));
 jest.mock('expo-image-picker', () => ({}));
 jest.mock('expo-location', () => ({}));
 
@@ -54,13 +59,28 @@ describe.each(['dark', 'light'] as const)('profile screens (%s)', (mode) => {
       const { getByPlaceholderText, getByText } = render(<VerifyPhoneScreen />);
       fireEvent.changeText(getByPlaceholderText('+54 9 11 1234-5678'), '12ab');
       fireEvent.press(getByText('Enviar código'));
-      expect(getByText(/Ingresá el número con código de país/)).toBeTruthy();
+      expect(getByText(/Ingresa el número con código de país/)).toBeTruthy();
+    });
+
+    it('shows the expected prefix of the user city as helper text', () => {
+      mockProfileState = { profile: { id: 'u1', firstName: 'Ana', city: { id: 'barranquilla', name: 'Barranquilla', currency: 'COP' } }, isLoading: false, error: null };
+      const { getByText, getByPlaceholderText } = render(<VerifyPhoneScreen />);
+      expect(getByText('Debe ser un número de Colombia (+57)')).toBeTruthy();
+      expect(getByPlaceholderText('+57 …')).toBeTruthy();
+    });
+
+    it('rejects a number from another country using the city prefix', () => {
+      mockProfileState = { profile: { id: 'u1', firstName: 'Ana', city: { id: 'tandil', name: 'Tandil', currency: 'ARS' } }, isLoading: false, error: null };
+      const { getByText, getByPlaceholderText } = render(<VerifyPhoneScreen />);
+      fireEvent.changeText(getByPlaceholderText('+54 …'), '+573001234567');
+      fireEvent.press(getByText('Enviar código'));
+      expect(getByText('El teléfono debe ser de Argentina (+54)')).toBeTruthy();
     });
 
     it('asks for a number when the field is empty', () => {
       const { getByText } = render(<VerifyPhoneScreen />);
       fireEvent.press(getByText('Enviar código'));
-      expect(getByText('Ingresá un número de teléfono')).toBeTruthy();
+      expect(getByText('Ingresa un número de teléfono')).toBeTruthy();
     });
   });
 
@@ -93,6 +113,19 @@ describe.each(['dark', 'light'] as const)('profile screens (%s)', (mode) => {
       expect(alertSpy).toHaveBeenCalledWith('Descartar cambios', expect.any(String), expect.any(Array));
       expect(mockBack).not.toHaveBeenCalled();
       alertSpy.mockRestore();
+    });
+
+    it('shows the city as read-only with the support note, only when the API sends it', () => {
+      mockProfileState = { profile: { ...profile, city: { id: 'tandil', name: 'Tandil', currency: 'ARS' } }, isLoading: false, error: null };
+      const withCity = render(<EditProfileScreen />);
+      expect(withCity.getByText('Ciudad')).toBeTruthy();
+      expect(withCity.getByText('Tandil')).toBeTruthy();
+      expect(withCity.getByText('Para cambiarla, contacta a soporte')).toBeTruthy();
+      withCity.unmount();
+
+      mockProfileState = { profile, isLoading: false, error: null };
+      const withoutCity = render(<EditProfileScreen />);
+      expect(withoutCity.queryByText('Para cambiarla, contacta a soporte')).toBeNull();
     });
 
     it('renders the Portada section; "Quitar" only when a banner exists', () => {

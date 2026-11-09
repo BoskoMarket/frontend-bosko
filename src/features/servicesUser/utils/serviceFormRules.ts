@@ -9,9 +9,18 @@ export const DESCRIPTION_MIN = 20;
 export type ServiceFormFieldErrors = {
   title?: string;
   description?: string;
+  photo?: string;
 };
 
-export function validateServiceFields(input: { title: string; description: string }): ServiceFormFieldErrors {
+/**
+ * `hasPhoto` is optional so callers that do not handle photos keep working; when it is
+ * `false` the main photo is reported as missing (a service without one is not listed).
+ */
+export function validateServiceFields(input: {
+  title: string;
+  description: string;
+  hasPhoto?: boolean;
+}): ServiceFormFieldErrors {
   const errors: ServiceFormFieldErrors = {};
   const title = input.title.trim();
   const description = input.description.trim();
@@ -26,6 +35,10 @@ export function validateServiceFields(input: { title: string; description: strin
 
   if (description.length < DESCRIPTION_MIN) {
     errors.description = `La descripción debe tener al menos ${DESCRIPTION_MIN} caracteres.`;
+  }
+
+  if (input.hasPhoto === false) {
+    errors.photo = 'Agrega una foto principal para que tu servicio aparezca en el catálogo.';
   }
 
   return errors;

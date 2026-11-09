@@ -49,10 +49,10 @@ const order = (id: string, status: Order['status'], title = `Orden ${id}`): Orde
   ({ id, status, title, clientId: 'c', providerId: 'p', serviceId: 's' }) as Order;
 
 describe('deleteAccountRules', () => {
-  it('blocks on pending, accepted, in_progress and disputed only', () => {
-    const all: Order['status'][] = ['pending', 'accepted', 'in_progress', 'completed', 'cancelled', 'disputed'];
+  it('blocks on pending, accepted, in_progress, awaiting_confirmation and disputed only', () => {
+    const all: Order['status'][] = ['pending', 'accepted', 'in_progress', 'awaiting_confirmation', 'completed', 'cancelled', 'disputed'];
     const blocked = blockingOrders(all.map((s) => order(s, s))).map((o) => o.status);
-    expect(blocked).toEqual(['pending', 'accepted', 'in_progress', 'disputed']);
+    expect(blocked).toEqual(['pending', 'accepted', 'in_progress', 'awaiting_confirmation', 'disputed']);
     expect([...BLOCKING_ORDER_STATUSES]).toEqual(blocked);
     expect(blockingOrders([order('1', 'completed'), order('2', 'cancelled')])).toEqual([]);
   });
@@ -66,10 +66,10 @@ describe('deleteAccountRules', () => {
     expect(formatDeletionDate('not a date')).toBeNull();
     expect(formatDeletionDate(undefined)).toBeNull();
     const withDate = deactivationMessage('2026-11-13T12:00:00Z');
-    expect(withDate).toMatch(/^Tu cuenta se desactivó\. Se eliminará definitivamente el .*2026\./);
-    expect(withDate).toContain('Si volvés a iniciar sesión antes, se reactiva.');
+    expect(withDate).toMatch(/^Tu cuenta se desactivó\. Puedes recuperarla iniciando sesión hasta el .*2026\./);
+    expect(withDate).toContain('se anonimizan y se eliminan');
     expect(deactivationMessage()).toBe(
-      'Tu cuenta se desactivó. Se eliminará definitivamente en 30 días. Si volvés a iniciar sesión antes, se reactiva.',
+      'Tu cuenta se desactivó. Puedes recuperarla iniciando sesión durante 30 días. Después, los datos de tu cuenta se anonimizan y se eliminan.',
     );
   });
 });
@@ -102,15 +102,24 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
   afterAll(() => setMode('dark'));
 
   const goToStep2 = (utils: ReturnType<typeof render>) => {
-    fireEvent.changeText(utils.getByLabelText('Escribí ELIMINAR para continuar'), 'ELIMINAR');
+    fireEvent.changeText(utils.getByLabelText('Escribe ELIMINAR para continuar'), 'ELIMINAR');
     fireEvent.press(utils.getByText('Continuar'));
   };
 
   it('explains the 30-day grace period before confirming', () => {
     const { getByText } = render(<DeleteAccountScreen />);
-    expect(getByText('Si eliminás tu cuenta:')).toBeTruthy();
-    expect(getByText(/Tenés 30 días para cambiar de idea/)).toBeTruthy();
-    expect(getByText(/Pasados los 30 días, tu cuenta y tus datos se eliminan definitivamente/)).toBeTruthy();
+    expect(getByText('Si eliminas tu cuenta:')).toBeTruthy();
+    expect(getByText(/Durante 30 días puedes recuperarla iniciando sesión/)).toBeTruthy();
+    expect(getByText(/Pasados los 30 días, los datos de tu cuenta se anonimizan y se eliminan/)).toBeTruthy();
+    expect(getByText(/se conservan sin tu identidad/)).toBeTruthy();
+  });
+
+  it('does not promise that everything disappears', () => {
+    const { toJSON } = render(<DeleteAccountScreen />);
+    const text = JSON.stringify(toJSON());
+    expect(text).not.toMatch(/todos tus datos|para siempre|definitivamente/i);
+    expect(text).toMatch(/30 días/);
+    expect(text).toMatch(/anonimizan/);
   });
 
   it('keeps Continue disabled until the confirmation word is typed', () => {
@@ -125,7 +134,7 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
     mockClientOrders = [order('o1', 'pending', 'Plomería'), order('o2', 'completed', 'Pintura')];
     mockProviderOrders = [order('o3', 'disputed', 'Electricidad'), order('o4', 'cancelled', 'Jardín')];
     const { getByText, queryByText } = render(<DeleteAccountScreen />);
-    expect(getByText('No podés eliminar tu cuenta mientras tengas órdenes activas.')).toBeTruthy();
+    expect(getByText('No puedes eliminar tu cuenta mientras tengas órdenes activas.')).toBeTruthy();
     expect(getByText('Plomería')).toBeTruthy();
     expect(getByText('Electricidad')).toBeTruthy();
     expect(getByText('Como cliente')).toBeTruthy();
@@ -142,7 +151,7 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
   it('does not block with only completed or cancelled orders', () => {
     mockClientOrders = [order('o1', 'completed'), order('o2', 'cancelled')];
     const { getByText, queryByText } = render(<DeleteAccountScreen />);
-    expect(queryByText('No podés eliminar tu cuenta mientras tengas órdenes activas.')).toBeNull();
+    expect(queryByText('No puedes eliminar tu cuenta mientras tengas órdenes activas.')).toBeNull();
     expect(getByText('Continuar')).toBeTruthy();
   });
 
@@ -164,7 +173,7 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
     fireEvent.changeText(utils.getByPlaceholderText('••••••••'), 'secret1');
     fireEvent.press(utils.getByText('Eliminar mi cuenta'));
     await waitFor(() =>
-      expect(utils.getByText('No podés eliminar tu cuenta mientras tengas órdenes activas.')).toBeTruthy(),
+      expect(utils.getByText('No puedes eliminar tu cuenta mientras tengas órdenes activas.')).toBeTruthy(),
     );
     expect(mockRefetchClient).toHaveBeenCalled();
     expect(mockRefetchProvider).toHaveBeenCalled();
@@ -178,7 +187,7 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
     goToStep2(utils);
     fireEvent.changeText(utils.getByPlaceholderText('••••••••'), 'secret1');
     fireEvent.press(utils.getByText('Eliminar mi cuenta'));
-    await waitFor(() => expect(utils.getByText('Contraseña incorrecta. Verificá e intentá de nuevo.')).toBeTruthy());
+    await waitFor(() => expect(utils.getByText('Contraseña incorrecta. Verifica e intenta de nuevo.')).toBeTruthy());
     expect(mockDeleteAccount).toHaveBeenCalledWith({ password: 'secret1' });
     expect(mockLogout).not.toHaveBeenCalled();
   });
@@ -193,7 +202,7 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
     await waitFor(() => expect(mockLogout).toHaveBeenCalledTimes(1));
     expect(mockReplace).not.toHaveBeenCalled(); // redirect is owned by RootLayoutNav
     expect(mockLogout).toHaveBeenCalledTimes(1);
-    expect(successSpy).toHaveBeenCalledWith('Cuenta desactivada', expect.stringMatching(/definitivamente el .*2026/));
+    expect(successSpy).toHaveBeenCalledWith('Cuenta desactivada', expect.stringMatching(/hasta el .*2026/));
   });
 
   it('falls back to "en 30 días" when the backend sends no date', async () => {
@@ -204,7 +213,7 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
     fireEvent.changeText(utils.getByPlaceholderText('••••••••'), 'secret1');
     fireEvent.press(utils.getByText('Eliminar mi cuenta'));
     await waitFor(() => expect(successSpy).toHaveBeenCalled());
-    expect(successSpy).toHaveBeenCalledWith('Cuenta desactivada', expect.stringContaining('definitivamente en 30 días'));
+    expect(successSpy).toHaveBeenCalledWith('Cuenta desactivada', expect.stringContaining('durante 30 días'));
   });
 
   describe('Google accounts', () => {
@@ -243,7 +252,7 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
       const utils = render(<DeleteAccountScreen />);
       goToStep2(utils);
       fireEvent.press(utils.getByText('Confirmar con Google'));
-      await waitFor(() => expect(errorSpy).toHaveBeenCalledWith('No pudimos confirmar con Google', 'Intentá de nuevo.'));
+      await waitFor(() => expect(errorSpy).toHaveBeenCalledWith('No pudimos confirmar con Google', 'Intenta de nuevo.'));
       expect(mockDeleteAccount).not.toHaveBeenCalled();
       expect(utils.getByText('Confirmar con Google')).toBeTruthy();
     });
@@ -255,7 +264,7 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
       const utils = render(<DeleteAccountScreen />);
       goToStep2(utils);
       fireEvent.press(utils.getByText('Confirmar con Google'));
-      await waitFor(() => expect(utils.getByText('No pudimos verificar tu cuenta de Google. Intentá de nuevo.')).toBeTruthy());
+      await waitFor(() => expect(utils.getByText('No pudimos verificar tu cuenta de Google. Intenta de nuevo.')).toBeTruthy());
     });
   });
 });

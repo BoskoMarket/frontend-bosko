@@ -201,11 +201,11 @@ export function classifyReelUploadError(error: unknown): ReelUploadErrorKind {
 }
 
 export const REEL_UPLOAD_ERROR_MESSAGES: Record<Exclude<ReelUploadErrorKind, 'cancelled' | 'other'>, string> = {
-  unavailable: 'No pudimos subir el video. Intentá de nuevo más tarde.',
+  unavailable: 'No pudimos subir el video. Intenta de nuevo más tarde.',
   tooLarge: 'Archivo demasiado grande. El video admite hasta 100 MB y la miniatura hasta 5 MB.',
-  format: 'No pudimos procesar los archivos. Usá un video MP4 o MOV de hasta 60 segundos y una miniatura JPG o PNG.',
-  network: 'Se cortó la conexión mientras subíamos el video. Revisá tu internet e intentá de nuevo.',
-  busy: 'Hay demasiadas subidas en curso. Esperá un momento e intentá de nuevo.',
-  invalidUpload: 'La subida ya no es válida para esta cuenta. Elegí el video y volvé a subirlo.',
+  format: 'No pudimos procesar los archivos. Usa un video MP4 o MOV de hasta 60 segundos y una miniatura JPG o PNG.',
+  network: 'Se cortó la conexión mientras subeamos el video. Revisa tu internet e intenta de nuevo.',
+  busy: 'Hay demasiadas subidas en curso. Espera un momento e intenta de nuevo.',
+  invalidUpload: 'La subida ya no es válida para esta cuenta. Elige el video y vuelve a subirlo.',
   providerRequired: 'Solo los prestadores pueden publicar reels.',
 };

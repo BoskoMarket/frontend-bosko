@@ -12,7 +12,7 @@ export function paymentBreakdown(subtotal: number) {
 }
 function accountKey() {
   const email = tokenStorage.getUserEmail();
-  if (!email || !tokenStorage.getAccessToken()) throw new Error('Iniciá sesión para consultar tus simulaciones.');
+  if (!email || !tokenStorage.getAccessToken()) throw new Error('Inicia sesión para consultar tus simulaciones.');
   return `${STORAGE_PREFIX}_MOCK_PAYMENTS_v1:${encodeURIComponent(email.toLowerCase())}`;
 }
 async function read(key: string): Promise<PaymentHistoryItem[]> {
@@ -31,7 +31,7 @@ export function simulatePayment(orderId: string): Promise<PaymentHistoryItem> {
     const existing = rows.find(row => row.orderId === orderId);
     if (existing) return existing;
     const order = await fetchOrderById(orderId);
-    if (version !== tokenStorage.getSessionVersion()) throw new Error('La sesión cambió. Volvé a intentarlo.');
+    if (version !== tokenStorage.getSessionVersion()) throw new Error('La sesión cambió. Vuelve a intentarlo.');
     if (order.status !== 'accepted') throw new Error('El proveedor debe aceptar la orden antes de simular el pago.');
     const breakdown = paymentBreakdown(order.agreedPrice ?? 0);
     const timestamp = new Date().toISOString();

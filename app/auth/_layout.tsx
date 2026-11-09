@@ -1,5 +1,5 @@
 /**
- * Layout del grupo /auth (verify-email, verify-reset-code, reset-password).
+ * Layout del grupo /auth (verify-email, verify-reset-code, reset-password, select-city).
  *
  * Guarda inversa SOLO en arranque en frío: si el usuario ya tenía sesión al
  * llegar acá (p.ej. deep link) lo redirige a las tabs. Una cuenta con sesión ya
@@ -12,7 +12,7 @@
  */
 
 import React, { useRef } from 'react';
-import { Redirect, Stack } from 'expo-router';
+import { Redirect, Stack, useSegments } from 'expo-router';
 import { useThemeColors } from '@/core/design-system';
 import { useAuth } from '@/features/auth/state/AuthContext';
 
@@ -20,19 +20,23 @@ export default function AuthModalLayout() {
   const tc = useThemeColors();
   const { authLoaded, isAuthenticated } = useAuth();
   const authenticatedOnArrival = useRef<boolean | null>(null);
+  const segments = useSegments() as string[];
+  // A signed-in account without a city is sent here on purpose (gate in app/index.tsx).
+  const isSelectCity = segments[segments.length - 1] === 'select-city';
 
   // Mientras carga no redirigir (evita flash); el BootSplash tapa la pantalla.
   if (!authLoaded) return null;
 
   if (authenticatedOnArrival.current === null) authenticatedOnArrival.current = isAuthenticated;
 
-  if (isAuthenticated && authenticatedOnArrival.current) return <Redirect href="/(tabs)" />;
+  if (isAuthenticated && authenticatedOnArrival.current && !isSelectCity) return <Redirect href="/(tabs)" />;
 
   return (
     <Stack screenOptions={{ headerShown: false, presentation: 'modal', contentStyle: { backgroundColor: tc.bg } }}>
       <Stack.Screen name="verify-email" />
       <Stack.Screen name="verify-reset-code" />
       <Stack.Screen name="reset-password" />
+      <Stack.Screen name="select-city" options={{ gestureEnabled: false }} />
     </Stack>
   );
 }

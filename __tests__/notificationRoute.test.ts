@@ -54,3 +54,49 @@ describe('isChatNotificationType', () => {
     expect(isChatNotificationType(undefined)).toBe(false);
   });
 });
+
+describe('v1 notification types (F12)', () => {
+  const base = { id: 'n', userId: 'u', title: 't', body: 'b', read: false, createdAt: '' };
+  const orderTypes = ['ORDER_AWAITING_CONFIRMATION', 'ORDER_CANCELLED', 'ORDER_EXPIRED', 'ORDER_AUTO_CLOSED', 'ORDER_DISPUTED'];
+
+  it.each(orderTypes)('%s opens the order when data.orderId is present', (type) => {
+    expect(getNotificationRoute({ ...base, type, data: { orderId: 'o1' } })).toEqual({ pathname: '/orders/[id]', params: { id: 'o1' } });
+  });
+  it.each(orderTypes)('%s falls back to the orders list without data', (type) => {
+    expect(getNotificationRoute({ ...base, type })).toBe('/(tabs)/orders');
+    expect(getNotificationRoute({ ...base, type, data: {} })).toBe('/(tabs)/orders');
+  });
+  it('never uses a conversation id as an order id', () => {
+    expect(getNotificationRoute({ ...base, type: 'ORDER_CANCELLED', data: { conversationId: 'c1' } })).toBe('/(tabs)/orders');
+  });
+  it('POST_HIDDEN goes to Mis trabajos, with or without data', () => {
+    expect(getNotificationRoute({ ...base, type: 'POST_HIDDEN' })).toBe('/(tabs)/profile/my-works');
+    expect(getNotificationRoute({ ...base, type: 'POST_HIDDEN', data: { postId: 'p1' } })).toBe('/(tabs)/profile/my-works');
+  });
+  it('REVIEW_REPLIED goes to Mis reseñas, with or without data', () => {
+    expect(getNotificationRoute({ ...base, type: 'REVIEW_REPLIED' })).toBe('/(tabs)/profile/my-reviews');
+    expect(getNotificationRoute({ ...base, type: 'REVIEW_REPLIED', data: { reviewId: 'r1' } })).toBe('/(tabs)/profile/my-reviews');
+  });
+  it('PLATFORM_NEWS has no navigation, even if it carries an orderId', () => {
+    expect(getNotificationRoute({ ...base, type: 'PLATFORM_NEWS' })).toBeNull();
+    expect(getNotificationRoute({ ...base, type: 'PLATFORM_NEWS', data: { orderId: 'o1' } })).toBeNull();
+  });
+  it('unknown or malformed types do not throw', () => {
+    expect(getNotificationRoute({ ...base, type: 'SOMETHING_NEW' })).toBeNull();
+    expect(getNotificationRoute({ ...base, type: undefined as any })).toBeNull();
+    expect(getNotificationRoute({ ...base, type: '' })).toBeNull();
+  });
+  it('resolveNotificationRoute passes the new types through without calling the lookup', async () => {
+    const lookup = jest.fn();
+    await expect(resolveNotificationRoute({ ...base, type: 'POST_HIDDEN' }, lookup)).resolves.toBe('/(tabs)/profile/my-works');
+    await expect(resolveNotificationRoute({ ...base, type: 'NOPE', data: { conversationId: 'c' } }, lookup)).resolves.toBeNull();
+    expect(lookup).not.toHaveBeenCalled();
+  });
+  it('isV1NotificationType flags only the new types', () => {
+    const { isV1NotificationType } = require('@/features/notifications/utils/notificationRoute');
+    expect(isV1NotificationType('order_expired')).toBe(true);
+    expect(isV1NotificationType('PLATFORM_NEWS')).toBe(true);
+    expect(isV1NotificationType('new_message')).toBe(false);
+    expect(isV1NotificationType(undefined)).toBe(false);
+  });
+});

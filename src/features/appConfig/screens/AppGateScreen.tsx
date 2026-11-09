@@ -35,8 +35,8 @@ export function AppGateScreen({ state }: { state: Extract<AppGateState, { blocke
       </Text>
       <Text variant="body" color={tc.textSub} style={styles.body}>
         {isMaintenance
-          ? state.message || `${BRAND_NAME} está en mantenimiento. Volvé a intentar en unos minutos.`
-          : `Esta versión de ${BRAND_NAME} ya no es compatible. Actualizá para seguir usando la app.`}
+          ? state.message || `${BRAND_NAME} está en mantenimiento. Vuelve a intentar en unos minutos.`
+          : `Esta versión de ${BRAND_NAME} ya no es compatible. Actualiza para seguir usando la app.`}
       </Text>
       {!isMaintenance && (
         <Button label="Actualizar ahora" onPress={openStore} style={{ marginTop: SPACING.xxl }} />

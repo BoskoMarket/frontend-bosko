@@ -80,6 +80,17 @@ export function extractApiError(error: unknown): ApiError {
   };
 }
 
+export const NETWORK_ERROR_MESSAGE =
+  "No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.";
+
+/** true cuando el request no llegó al servidor (sin respuesta: offline, timeout, DNS). */
+export function isNetworkError(error: unknown): boolean {
+  const e = error as AxiosError | undefined;
+  if (!e?.isAxiosError) return false;
+  if (e.code === "ERR_NETWORK" || e.code === "ECONNABORTED" || e.code === "ETIMEDOUT") return true;
+  return !e.response;
+}
+
 /**
  * Devuelve el mensaje en español listo para mostrar al usuario.
  *
@@ -101,7 +112,7 @@ export function getUserErrorMessage(error: unknown): string {
   }
 
   if (code === "NETWORK_ERROR") {
-    return "No hay conexión con el servidor. Verificá tu internet e intentá de nuevo";
+    return NETWORK_ERROR_MESSAGE;
   }
 
   if (code === "UNKNOWN_ERROR") {

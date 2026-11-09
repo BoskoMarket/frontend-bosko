@@ -30,6 +30,7 @@ import {
   useThemeColors,
   dialog, FONT_FAMILY } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
+import { runWithRetry } from '@/lib/runWithRetry';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { availableSlots, buildDayOptions, isSlotStillAvailable, toScheduledIso, DEFAULT_SLOT_HOUR } from '../utils/scheduledDate';
 
@@ -69,40 +70,41 @@ export default function QuoteRequestScreen() {
 
   const handleSubmit = async () => {
     if (!message.trim()) {
-      dialog.fromAlert('Campo requerido', 'Describí qué necesitás para que el proveedor pueda cotizar.');
+      dialog.fromAlert('Campo requerido', 'Describe qué necesitas para que el proveedor pueda cotizar.');
       return;
     }
 
     if (!params.serviceId) {
-      dialog.fromAlert('Error', 'No se encontró el servicio. Volvé e intentá nuevamente.');
+      dialog.fromAlert('Error', 'No se encontró el servicio. Vuelve e intenta nuevamente.');
       return;
     }
 
     if (selectedDay && !isSlotStillAvailable(selectedDay.date, slotHour, new Date())) {
       setNow(new Date());
       setSelectedDayKey(null);
-      dialog.fromAlert('Horario no disponible', 'El horario elegido ya pasó o está muy cerca. Elegí otro día u horario.');
+      dialog.fromAlert('Horario no disponible', 'El horario elegido ya pasó o está muy cerca. Elige otro día u horario.');
       return;
     }
 
     setIsLoading(true);
-    try {
-      await addOrder({
-        serviceId: params.serviceId,
-        message: message.trim(),
-        address: address.trim() || undefined,
-        scheduledDate: selectedDay ? toScheduledIso(selectedDay.date, slotHour) : undefined,
-      });
-
+    const payload = {
+      serviceId: params.serviceId,
+      message: message.trim(),
+      address: address.trim() || undefined,
+      scheduledDate: selectedDay ? toScheduledIso(selectedDay.date, slotHour) : undefined,
+    };
+    // A network failure offers "Reintentar" with the same payload; the form keeps what was typed.
+    const result = await runWithRetry(() => addOrder(payload), {
+      title: 'No se pudo enviar la solicitud',
+      onError: (err) => dialog.fromAlert('Error', getUserErrorMessage(err)),
+    });
+    setIsLoading(false);
+    if (result.ok) {
       dialog.fromAlert(
         '¡Solicitud enviada!',
         'El proveedor recibirá tu solicitud y te responderá pronto.',
         [{ text: 'Ver mis órdenes', onPress: () => router.replace('/(tabs)/orders') }],
       );
-    } catch (err: any) {
-      dialog.fromAlert('Error', getUserErrorMessage(err));
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -152,7 +154,7 @@ export default function QuoteRequestScreen() {
                   Mensaje al proveedor <Text style={{ color: TOKENS.color.error }}>*</Text>
                 </Text>
                 <Text style={[styles.fieldHint, { color: tc.textSub }]}>
-                  Describí qué necesitás, cuándo y cualquier detalle relevante.
+                  Describe qué necesitas, cuándo y cualquier detalle relevante.
                 </Text>
                 <Input
                   placeholder="Ej: Necesito una instalación eléctrica en 3 habitaciones. Tengo los materiales..."
@@ -182,7 +184,7 @@ export default function QuoteRequestScreen() {
               {/* Fecha deseada (opcional) */}
               <View style={styles.fieldContainer}>
                 <Text style={[styles.fieldLabel, { color: tc.text }]}>Fecha deseada</Text>
-                <Text style={[styles.fieldHint, { color: tc.textSub }]}>Opcional — cuándo preferís que se realice.</Text>
+                <Text style={[styles.fieldHint, { color: tc.textSub }]}>Opcional — cuándo prefieres que se realice.</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
                   {dayOptions.map((d) => (
                     <Chip
@@ -211,7 +213,7 @@ export default function QuoteRequestScreen() {
               {/* Aviso */}
               <NoticeBanner style={styles.notice}>
                 El proveedor verá tu solicitud y podrá aceptarla o rechazarla.
-                El precio final se acuerda entre ambas partes.
+                El precio final y el pago se acuerdan directamente con el proveedor, fuera de la app.
               </NoticeBanner>
 
               {/* Botón enviar */}

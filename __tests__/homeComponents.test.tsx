@@ -16,13 +16,13 @@ import { useThemeStore } from '@/stores/theme.store';
 
 describe('formatServicePrice', () => {
   it('formats ARS and USD amounts', () => {
-    expect(formatServicePrice({ amount: 18500, currency: 'ARS' })).toBe('$18.500');
-    expect(formatServicePrice({ amount: 40, currency: 'USD' })).toBe('US$40');
+    expect(formatServicePrice({ amount: 18500, currency: 'ARS' })).toBe('Desde $18.500 ARS');
+    expect(formatServicePrice({ amount: 40, currency: 'USD' })).toBe('Desde US$40 USD');
   });
 
-  it('falls back to "Consultar" without a usable amount', () => {
-    expect(formatServicePrice(undefined)).toBe('Consultar');
-    expect(formatServicePrice({ amount: 0, currency: 'ARS' })).toBe('Consultar');
+  it('falls back to "A cotizar" without a usable amount', () => {
+    expect(formatServicePrice(undefined)).toBe('A cotizar');
+    expect(formatServicePrice({ amount: 0, currency: 'ARS' })).toBe('A cotizar');
   });
 });
 
@@ -124,12 +124,12 @@ describe.each(['dark', 'light'] as const)('home components (%s theme)', (mode) =
   it('StepCard, TrustRow and StatTile render their copy', () => {
     const { getByText } = render(
       <>
-        <StepCard number="01" title="Buscá" caption="Por rubro" />
+        <StepCard number="01" title="Busca" caption="Por rubro" />
         <TrustRow icon="shield-checkmark-outline" title="Verificada" caption="Identidad" />
         <StatTile value="4.8" label="Rating" />
       </>,
     );
-    ['01', 'Buscá', 'Por rubro', 'Verificada', 'Identidad', '4.8', 'Rating'].forEach((t) => expect(getByText(t)).toBeTruthy());
+    ['01', 'Busca', 'Por rubro', 'Verificada', 'Identidad', '4.8', 'Rating'].forEach((t) => expect(getByText(t)).toBeTruthy());
   });
 });
 
@@ -146,7 +146,7 @@ describe('SummaryCard and RequestRow', () => {
   it('SummaryCard fires its action; hides it without a handler', () => {
     const onAction = jest.fn();
     const { getByText, rerender, queryByText } = render(
-      <SummaryCard eyebrow="Hola" title="Tenés 2 solicitudes nuevas" actionLabel="Ver solicitudes" onAction={onAction} />,
+      <SummaryCard eyebrow="Hola" title="Tienes 2 solicitudes nuevas" actionLabel="Ver solicitudes" onAction={onAction} />,
     );
     fireEvent.press(getByText('Ver solicitudes'));
     expect(onAction).toHaveBeenCalledTimes(1);

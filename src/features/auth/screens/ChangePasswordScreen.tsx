@@ -87,7 +87,7 @@ export default function ChangePasswordScreen() {
     Keyboard.dismiss();
     setError('');
     if (!currentPassword || !newPassword || !confirmPassword) {
-      setError('Completá todos los campos');
+      setError('Completa todos los campos');
       return;
     }
     if (newPassword.length < 8) {

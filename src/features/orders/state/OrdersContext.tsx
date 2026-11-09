@@ -8,7 +8,8 @@ import {
   useAcceptOrder,
   useRejectOrder,
   useStartOrder,
-  useCompleteOrder,
+  useMarkOrderDone,
+  useConfirmOrder,
   useCancelOrder,
   useDisputeOrder,
 } from '@/hooks/queries/useOrdersQuery';
@@ -25,7 +26,8 @@ export const useOrders = () => {
   const acceptM = useAcceptOrder();
   const rejectM = useRejectOrder();
   const startM = useStartOrder();
-  const completeM = useCompleteOrder();
+  const markDoneM = useMarkOrderDone();
+  const confirmM = useConfirmOrder();
   const cancelM = useCancelOrder();
   const disputeM = useDisputeOrder();
   const loadClientOrders = useCallback(async () => { await clientQ.refetch(); }, [clientQ.refetch]);
@@ -62,7 +64,8 @@ export const useOrders = () => {
     rejectOrder: (id: string, payload: RejectOrderPayload) =>
       rejectM.mutateAsync({ id, payload }).then(() => {}),
     startOrder: (id: string) => startM.mutateAsync(id).then(() => {}),
-    completeOrder: (id: string) => completeM.mutateAsync(id).then(() => {}),
+    markOrderDone: (id: string) => markDoneM.mutateAsync(id).then(() => {}),
+    confirmOrder: (id: string) => confirmM.mutateAsync(id).then(() => {}),
     cancelOrder: (id: string, payload: RejectOrderPayload) =>
       cancelM.mutateAsync({ id, payload }).then(() => {}),
     disputeOrder: (id: string, payload: DisputeOrderPayload) =>

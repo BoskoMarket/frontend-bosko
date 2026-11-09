@@ -2,8 +2,10 @@ export const QUERY_KEYS = {
   profile:          ['profile']                                          as const,
   profileStats:     ['profile', 'stats']                                 as const,
   publicUser:       (id: string) => ['users', id]                        as const,
+  blockedUsers:     ['blocks', 'me']                                    as const,
 
   categories:       ['categories']                                       as const,
+  cities:           ['cities']                                           as const,
   services:         (categoryId: string, page = 1) =>
                       ['services', categoryId, page]                     as const,
   featuredServices: ['services', 'featured']                             as const,
@@ -12,6 +14,12 @@ export const QUERY_KEYS = {
   providerProfile:  (id: string) => ['providers', id]                    as const,
   serviceReviews:   (id: string) => ['reviews', 'service', id]           as const,
   servicePosts:     (id: string) => ['posts', id]                        as const,
+  servicePostsAll:  ['posts']                                            as const,
+  worksFeedAll:     ['works', 'feed']                                    as const,
+  worksFeed:        (categoryId: string | null) => ['works', 'feed', categoryId ?? 'all'] as const,
+
+  favorites:        ['favorites', 'list']                                as const,
+  favoriteIds:      ['favorites', 'ids']                                 as const,
 
   clientOrders:     ['orders', 'client']                                 as const,
   providerOrders:   ['orders', 'provider']                               as const,

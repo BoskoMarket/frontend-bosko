@@ -96,10 +96,10 @@ export default function ResetPasswordScreen() {
       });
     } catch (err: any) {
       const errCode = err?.response?.data?.code;
-      if (errCode === 'INVALID_VERIFICATION_CODE') setError('Código incorrecto o expirado. Volvé a solicitarlo.');
+      if (errCode === 'INVALID_VERIFICATION_CODE') setError('Código incorrecto o expirado. Vuelve a solicitarlo.');
       else if (errCode === 'NOT_FOUND')      setError('Usuario no encontrado.');
       else if (errCode === 'BAD_REQUEST') setError('Código inválido, expirado o contraseña muy corta.');
-      else setError('Error al restablecer. Intentá de nuevo.');
+      else setError('Error al restablecer. Intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -121,7 +121,7 @@ export default function ResetPasswordScreen() {
                 <IconCircle name="checkmark" variant="success" size={80} iconSize={40} />
                 <Text variant="h3" center>¡Contraseña actualizada!</Text>
                 <Text variant="body" center color={tc.textSub}>
-                  Tu contraseña fue restablecida correctamente. Ya podés iniciar sesión.
+                  Tu contraseña fue restablecida correctamente. Ya puedes iniciar sesión.
                 </Text>
                 <Button label="Iniciar sesión" onPress={() => router.replace('/login')} fullWidth />
               </View>
@@ -149,7 +149,7 @@ export default function ResetPasswordScreen() {
               </Animated.View>
               <Animated.View style={fadeUpStyle(subtitleAnim)}>
                 <Text variant="body" center color={tc.textSub} style={styles.subtitle}>
-                  Elegí una contraseña segura de al menos 8 caracteres.
+                  Elige una contraseña segura de al menos 8 caracteres.
                 </Text>
               </Animated.View>
             </View>

@@ -43,7 +43,7 @@ import {
 } from 'expo-audio';
 import { BlurView } from '@/core/components/BlurView';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import {
@@ -64,6 +64,17 @@ import { useOrder } from '@/hooks/queries/useOrdersQuery';
 import type { OrderStatus } from '@/features/orders/types/orders.types';
 import { ChatOrderNotice } from '../components/ChatOrderNotice';
 import { CHAT_ORDER_CLOSED_TOAST, isChatReadOnly, isOrderClosedError, isOrderClosedSocketError, resolveChatOrderStatus } from '../constants/chatOrderRules';
+import { ChatBlockedNotice } from '../components/ChatBlockedNotice';
+import { ChatActionsSheet, type ChatAction } from '../components/ChatActionsSheet';
+import {
+  CHAT_BLOCKED_TOAST,
+  chatBlockState,
+  isUserBlockedError,
+  isUserBlockedSocketError,
+  type ChatBlockState,
+} from '../constants/chatBlockRules';
+import { useBlockUser, useUnblockUser } from '@/hooks/mutations/useBlockMutations';
+import { NETWORK_ERROR_MESSAGE, getUserErrorMessage, isNetworkError } from '@/lib/errors';
 import { isVideoUrl } from '../utils/mediaUrl';
 import {
   Avatar,
@@ -76,8 +87,9 @@ import {
   useThemeColors,
   withAlpha,
   type ReportSheetSubmit,
-  dialog,
+  ConfirmDialog,
   BRAND_NAME,
+  dialog,
 } from '@/core/design-system';
 import { ReportFlow } from '@/features/reports/components/ReportFlow';
 import { canReport } from '@/features/reports/canReport';
@@ -87,6 +99,7 @@ const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   pending: 'Pendiente',
   accepted: 'Aceptada',
   in_progress: 'En progreso',
+  awaiting_confirmation: 'Esperando confirmación',
   completed: 'Completada',
   cancelled: 'Cancelada',
   disputed: 'En disputa',
@@ -397,7 +410,7 @@ export default function ChatScreen() {
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const { data: order, refetch: refetchOrder } = useOrder(conversation?.orderId);
-  // G69: report the other participant (report only; blocking is postponed).
+  // G69: report the other participant.
   const [reportOpen, setReportOpen] = useState(false);
   const closeReport = useCallback(() => setReportOpen(false), []);
   const reportTargetId = conversation?.otherParty?.id;
@@ -410,17 +423,22 @@ export default function ChatScreen() {
     },
     [reportTargetId, reportOrderId],
   );
-  const openChatMenu = useCallback(() => {
-    dialog.fromAlert('Opciones', undefined, [
-      { text: 'Reportar usuario', style: 'destructive', onPress: () => setReportOpen(true) },
-      { text: 'Cancelar', style: 'cancel' },
-    ]);
-  }, []);
+  // F10: ⋯ menu (report / block / unblock). Blocking asks for confirmation first.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmBlockOpen, setConfirmBlockOpen] = useState(false);
+  const blockMutation = useBlockUser();
+  const unblockMutation = useUnblockUser();
+  const openChatMenu = useCallback(() => setMenuOpen(true), []);
+  const closeChatMenu = useCallback(() => setMenuOpen(false), []);
   // The conversation supplies a snapshot immediately; the order query may arrive later.
   // A rejected send takes precedence until this chat is reopened from another order.
   const [closedByServer, setClosedByServer] = useState(false);
+  // 403 USER_BLOCKED on a send: lock now, the refreshed conversation then names the direction.
+  const [blockedByServer, setBlockedByServer] = useState(false);
+  const blockState: ChatBlockState = chatBlockState(conversation) ?? (blockedByServer ? 'byOther' : null);
   const status = resolveChatOrderStatus(conversation?.orderStatus, order?.status);
-  const readOnly = closedByServer || isChatReadOnly(status);
+  const orderReadOnly = closedByServer || isChatReadOnly(status);
+  const readOnly = orderReadOnly || blockState !== null;
   const readOnlyRef = useRef(readOnly);
   readOnlyRef.current = readOnly;
   const refetchOrderRef = useRef(refetchOrder);
@@ -452,6 +470,13 @@ export default function ChatScreen() {
   refreshClosedOrderStateRef.current = refreshClosedOrderState;
   // The backend rejected our own send with ORDER_CLOSED: hard lock, tell the user and resync.
   const handleClosedOrderError = useCallback((err: unknown): boolean => {
+    if (isUserBlockedError(err)) {
+      readOnlyRef.current = true;
+      setBlockedByServer(true);
+      toast.error(CHAT_BLOCKED_TOAST);
+      refreshClosedOrderStateRef.current();
+      return true;
+    }
     if (!isOrderClosedError(err)) return false;
     readOnlyRef.current = true;
     setClosedByServer(true);
@@ -512,13 +537,63 @@ export default function ChatScreen() {
     }
   }, [params.id]);
 
-  useEffect(() => { setClosedByServer(false); }, [params.id]);
+  useEffect(() => { setClosedByServer(false); setBlockedByServer(false); }, [params.id]);
 
-  // Socket `error` carries no conversation id: only resync, let the real orderStatus decide.
+  // Socket `error` carries no conversation id: only resync, let the real orderStatus / block flags decide.
   useEffect(() => socketService.onError(error => {
-    if (!isOrderClosedSocketError(error)) return;
+    if (!isOrderClosedSocketError(error) && !isUserBlockedSocketError(error)) return;
+    if (isUserBlockedSocketError(error)) toast.error(CHAT_BLOCKED_TOAST);
     refreshClosedOrderStateRef.current();
   }), []);
+
+  // ── Block / unblock (optimistic on the local conversation, rolled back on failure) ──
+  const setBlockedByMe = useCallback((blockedByMe: boolean) => {
+    setConversation(prev => (prev ? { ...prev, blockedByMe } : prev));
+  }, []);
+  const confirmBlock = useCallback(() => {
+    const userId = conversationRef.current?.otherParty?.id;
+    setConfirmBlockOpen(false);
+    if (!userId) return;
+    const attempt = () => {
+      setBlockedByMe(true);
+      blockMutation.mutate(userId, {
+        onError: err => {
+          setBlockedByMe(false);
+          if (!isNetworkError(err)) {
+            toast.error('No se pudo bloquear', getUserErrorMessage(err));
+            return;
+          }
+          void dialog
+            .confirm({
+              title: 'No se pudo bloquear',
+              message: NETWORK_ERROR_MESSAGE,
+              confirmLabel: 'Reintentar',
+              cancelLabel: 'Cancelar',
+            })
+            .then(retry => { if (retry) attempt(); });
+        },
+      });
+    };
+    attempt();
+  }, [blockMutation, setBlockedByMe]);
+  const doUnblock = useCallback(() => {
+    const userId = conversationRef.current?.otherParty?.id;
+    if (!userId) return;
+    setBlockedByMe(false);
+    setBlockedByServer(false);
+    unblockMutation.mutate(userId, {
+      onError: err => {
+        setBlockedByMe(true);
+        toast.error('No se pudo desbloquear', getUserErrorMessage(err));
+      },
+    });
+  }, [unblockMutation, setBlockedByMe]);
+  const handleChatAction = useCallback((action: ChatAction) => {
+    setMenuOpen(false);
+    if (action === 'report') setReportOpen(true);
+    else if (action === 'block') setConfirmBlockOpen(true);
+    else doUnblock();
+  }, [doUnblock]);
 
   const busyRef = useRef(false);
   const pollBackoffRef = useRef(0);
@@ -665,7 +740,7 @@ export default function ChatScreen() {
       }, 1000);
     } catch (err) {
       console.error('Error starting recording:', err);
-      toast.error('No se pudo iniciar la grabación', 'Intentá de nuevo');
+      toast.error('No se pudo iniciar la grabación', 'Intenta de nuevo');
     }
   }, [recorder]);
 
@@ -682,7 +757,7 @@ export default function ChatScreen() {
       await recorder.stop();
       await setAudioModeAsync({ allowsRecording: false });
       if (duration < 1) {
-        toast.warning('Mensaje muy corto', 'Mantené presionado el micrófono para grabar');
+        toast.warning('Mensaje muy corto', 'Mantén presionado el micrófono para grabar');
         return;
       }
       const uri = recorder.uri;
@@ -697,7 +772,7 @@ export default function ChatScreen() {
     } catch (err) {
       console.error('Error sending audio:', err);
       if (closedHandlerRef.current(err)) return;
-      toast.error('No se pudo enviar el audio', 'Intentá de nuevo');
+      toast.error('No se pudo enviar el audio', 'Intenta de nuevo');
     } finally {
       setSendingAudio(false);
       recordingDurationRef.current = 0;
@@ -763,7 +838,7 @@ export default function ChatScreen() {
     } catch (err) {
       console.error('Error sending media:', err);
       if (handleClosedOrderError(err)) return;
-      toast.error('No se pudo enviar el archivo', 'Revisá tu conexión e intentá de nuevo');
+      toast.error('No se pudo enviar el archivo', 'Revisa tu conexión e intenta de nuevo');
     } finally {
       busyRef.current = false;
       setSending(false);
@@ -800,7 +875,7 @@ export default function ChatScreen() {
     } catch (err) {
       console.error('Error sending camera media:', err);
       if (handleClosedOrderError(err)) return;
-      toast.error('No se pudo enviar el archivo', 'Revisá tu conexión e intentá de nuevo');
+      toast.error('No se pudo enviar el archivo', 'Revisa tu conexión e intenta de nuevo');
     } finally {
       busyRef.current = false;
       setSending(false);
@@ -836,7 +911,7 @@ export default function ChatScreen() {
     } catch (err) {
       console.error('Error sending document:', err);
       if (handleClosedOrderError(err)) return;
-      toast.error('No se pudo enviar el documento', 'Revisá tu conexión e intentá de nuevo');
+      toast.error('No se pudo enviar el documento', 'Revisa tu conexión e intenta de nuevo');
     } finally {
       busyRef.current = false;
       setSending(false);
@@ -848,7 +923,7 @@ export default function ChatScreen() {
     const text = input.trim();
     if (!text || busyRef.current || readOnlyRef.current) return;
     if (!conversation) {
-      toast.error('El chat todavía no está disponible', 'Esperá un momento o reintentá cargarlo');
+      toast.error('El chat todavía no está disponible', 'Espera un momento o reintenta cargarlo');
       return;
     }
     busyRef.current = true;
@@ -862,7 +937,7 @@ export default function ChatScreen() {
     } catch (err) {
       setInput(text);
       if (handleClosedOrderError(err)) return;
-      toast.error('No se pudo enviar', 'Revisá tu conexión e intentá de nuevo');
+      toast.error('No se pudo enviar', 'Revisa tu conexión e intenta de nuevo');
     } finally {
       busyRef.current = false;
       setSending(false);
@@ -980,7 +1055,7 @@ export default function ChatScreen() {
             <MaterialIcons name="description" size={19} color={TOKENS.color.signal} />
           </Pressable>
         )}
-        {canReportOther && (
+        {!!reportTargetId && (
           <Pressable
             onPress={openChatMenu}
             hitSlop={8}
@@ -988,15 +1063,35 @@ export default function ChatScreen() {
             accessibilityLabel="Más opciones del chat"
             style={[styles.headerOrderBtn, { backgroundColor: tc.surface }]}
           >
-            <MaterialIcons name="more-vert" size={22} color={tc.text} />
+            <Ionicons name="ellipsis-horizontal" size={22} color={tc.text} />
           </Pressable>
         )}
       </BlurView>
 
+      <ChatActionsSheet
+        visible={menuOpen}
+        otherName={otherName}
+        canReport={canReportOther}
+        blockedByMe={!!conversation?.blockedByMe}
+        onSelect={handleChatAction}
+        onClose={closeChatMenu}
+      />
+
+      <ConfirmDialog
+        visible={confirmBlockOpen}
+        title={`¿Bloquear a ${otherName}?`}
+        message="Ya no podrán enviarse mensajes ni nuevas solicitudes entre ustedes. Puedes deshacerlo cuando quieras desde Perfil > Usuarios bloqueados."
+        onDismiss={() => setConfirmBlockOpen(false)}
+        actions={[
+          { label: 'Cancelar', style: 'cancel', onPress: () => setConfirmBlockOpen(false) },
+          { label: 'Bloquear', style: 'destructive', onPress: confirmBlock },
+        ]}
+      />
+
       <ReportFlow
         visible={reportOpen}
         title="Reportar usuario"
-        message={`Contanos por qué querés reportar a esta persona. El equipo de ${BRAND_NAME} lo va a revisar.`}
+        message={`Cuéntanos por qué quieres reportar a esta persona. El equipo de ${BRAND_NAME} lo va a revisar.`}
         onClose={closeReport}
         submit={submitUserReport}
       />
@@ -1053,7 +1148,7 @@ export default function ChatScreen() {
                 <MaterialIcons name="cloud-off" size={34} color={TOKENS.color.signal} />
               </View>
               <Text style={[styles.emptyChatText, { color: tc.text }]}>No pudimos cargar el chat</Text>
-              <Text style={[styles.emptyChatSubtext, { color: tc.textSub }]}>Revisá tu conexión e intentá de nuevo</Text>
+              <Text style={[styles.emptyChatSubtext, { color: tc.textSub }]}>Revisa tu conexión e intenta de nuevo</Text>
               <Pressable
                 onPress={() => setReloadKey(k => k + 1)}
                 accessibilityRole="button"
@@ -1069,7 +1164,7 @@ export default function ChatScreen() {
               <MaterialIcons name="forum" size={34} color={TOKENS.color.signal} />
             </View>
             <Text style={[styles.emptyChatText, { color: tc.text }]}>Conversación iniciada</Text>
-            <Text style={[styles.emptyChatSubtext, { color: tc.textSub }]}>Enviá el primer mensaje para empezar</Text>
+            <Text style={[styles.emptyChatSubtext, { color: tc.textSub }]}>Envía el primer mensaje para empezar</Text>
             <View style={styles.quickRepliesRow}>
               {QUICK_REPLIES.map((reply) => (
                 <Pressable
@@ -1124,7 +1219,11 @@ export default function ChatScreen() {
       {/* Input bar */}
        {!readOnly && status === 'disputed' && <ChatOrderNotice status={status} style={styles.orderNotice} />}
        {readOnly ? (
-         <ChatOrderNotice status={status} closedByServer={closedByServer} style={{ ...styles.orderNotice, marginBottom: Math.max(insets.bottom, 12) }} />
+         orderReadOnly ? (
+           <ChatOrderNotice status={status} closedByServer={closedByServer} style={{ ...styles.orderNotice, marginBottom: Math.max(insets.bottom, 12) }} />
+         ) : (
+           <ChatBlockedNotice state={blockState} style={{ ...styles.orderNotice, marginBottom: Math.max(insets.bottom, 12) }} />
+         )
       ) : (
       <BlurView intensity={25} tint={isDark ? 'dark' : 'light'} style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12), borderTopColor: tc.divider }]}>
         <View style={[
@@ -1161,7 +1260,7 @@ export default function ChatScreen() {
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
               accessibilityLabel="Mensaje"
-              placeholder="Escribí un mensaje..."
+              placeholder="Escribe un mensaje..."
               placeholderTextColor={tc.textSub}
               multiline
               maxLength={1000}
@@ -1196,7 +1295,7 @@ export default function ChatScreen() {
               style={[styles.rightBtn, isRecording && styles.rightBtnRecording]}
               accessible
               accessibilityRole="button"
-              accessibilityLabel="Mantené presionado para grabar un mensaje de voz"
+              accessibilityLabel="Mantén presionado para grabar un mensaje de voz"
               onStartShouldSetResponder={() => true}
               onMoveShouldSetResponder={() => true}
               onResponderGrant={(e) => {

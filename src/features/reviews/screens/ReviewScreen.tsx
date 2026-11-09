@@ -18,6 +18,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useCreateReview } from '@/hooks/mutations/useReviewMutations';
 import { extractApiError, getUserErrorMessage } from '@/lib/errors';
+import { runWithRetry } from '@/lib/runWithRetry';
 import {
   TOKENS,
   GRADIENTS,
@@ -60,26 +61,28 @@ export default function ReviewScreen() {
   const handleSubmit = async () => {
     if (inFlight.current) return;
     if (rating === 0) {
-      toast.warning('Calificación requerida', 'Seleccioná una cantidad de estrellas.');
+      toast.warning('Calificación requerida', 'Selecciona una cantidad de estrellas.');
       return;
     }
 
     inFlight.current = true;
-    try {
-      await createReview({ orderId: orderId!, rating, comment: comment.trim() });
+    const input = { orderId: orderId!, rating, comment: comment.trim() };
+    const result = await runWithRetry(() => createReview(input), {
+      title: 'No pudimos enviar tu reseña',
+      onError: (err) => {
+        if (extractApiError(err).code === 'ALREADY_REVIEWED') {
+          dialog.fromAlert('Ya calificaste esta orden', getUserErrorMessage(err), [
+            { text: 'OK', onPress: () => safeBack(router, '/(tabs)/orders') },
+          ]);
+          return;
+        }
+        toast.error('No pudimos enviar tu reseña', getUserErrorMessage(err));
+      },
+    });
+    inFlight.current = false;
+    if (result.ok) {
       toast.success('¡Gracias!', 'Tu reseña ayuda a la comunidad.');
       safeBack(router, '/(tabs)/orders');
-    } catch (err) {
-      const { code } = extractApiError(err);
-      if (code === 'ALREADY_REVIEWED') {
-        dialog.fromAlert('Ya calificaste esta orden', getUserErrorMessage(err), [
-          { text: 'OK', onPress: () => safeBack(router, '/(tabs)/orders') },
-        ]);
-        return;
-      }
-      toast.error('No pudimos enviar tu reseña', getUserErrorMessage(err));
-    } finally {
-      inFlight.current = false;
     }
   };
 
@@ -126,7 +129,7 @@ export default function ReviewScreen() {
           transition={{ type: 'timing', duration: 400, delay: 100 }}
           style={styles.titleSection}
         >
-          <Text variant="h3" color={tc.text}>Calificá el servicio</Text>
+          <Text variant="h3" color={tc.text}>Califica el servicio</Text>
           {serviceName && <Text variant="subtitle" color={tc.textSub}>{serviceName}</Text>}
           {providerName && (
             <Text variant="body" color={tc.textSub}>por {providerName}</Text>
@@ -180,7 +183,7 @@ export default function ReviewScreen() {
         >
           <Card radius="lg" padding="xl" contentStyle={styles.commentBody}>
             <Input
-              label="Contanos tu experiencia"
+              label="Cuéntanos tu experiencia"
               value={comment}
               onChangeText={setComment}
               placeholder="¿Qué te pareció el servicio? ¿Recomendarías al profesional?"

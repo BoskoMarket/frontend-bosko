@@ -37,7 +37,11 @@ let _cache: {
 
 // Callback registrado por AuthProvider para forzar el cierre de sesión
 // cuando el refresh token expira (invocado desde el interceptor de axios).
-let _onForceLogout: (() => void) | null = null;
+/** Why the session was closed by force. `suspended` = 403 ACCOUNT_SUSPENDED. */
+export type ForceLogoutReason = 'suspended';
+type ForceLogoutCallback = (reason?: ForceLogoutReason) => void;
+
+let _onForceLogout: ForceLogoutCallback | null = null;
 let sessionVersion = 0;
 const listeners = new Set<() => void>();
 let writes: Promise<unknown> = Promise.resolve();
@@ -121,12 +125,12 @@ export const tokenStorage = {
   // ── Comunicación con AuthContext (sin dependencia circular) ───────────────
 
   /** AuthProvider llama a esto en su montaje para registrar el logout forzado. */
-  setForceLogoutCallback(fn: (() => void) | null): void {
+  setForceLogoutCallback(fn: ForceLogoutCallback | null): void {
     _onForceLogout = fn;
   },
 
   /** Llamado por el interceptor de axios cuando el refresh token expira. */
-  triggerForceLogout(): void {
-    _onForceLogout?.();
+  triggerForceLogout(reason?: ForceLogoutReason): void {
+    _onForceLogout?.(reason);
   },
 };

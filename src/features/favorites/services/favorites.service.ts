@@ -1,33 +1,21 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { STORAGE_PREFIX } from '@/core/config/storage';
+import api from '@/core/api/axiosinstance';
+import { readPaginatedCollection, type PaginatedCollection } from '@/core/api/collections';
+import { mapService } from '@/features/servicesUser/services/catalog';
 import type { ServiceSummary } from '@/types/services';
 
-const KEY = `${STORAGE_PREFIX}_FAVORITES_v1`;
-
-export async function loadFavorites(): Promise<ServiceSummary[]> {
-  try {
-    const raw = await AsyncStorage.getItem(KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+/** GET /favorites?page&limit: the account's favorite services, newest first. */
+export async function fetchFavorites(page = 1, limit = 20): Promise<PaginatedCollection<ServiceSummary>> {
+  const { data } = await api.get<unknown>('/favorites', { params: { page, limit } });
+  const result = readPaginatedCollection<unknown>(data);
+  return { ...result, data: result.data.map(mapService) };
 }
 
-export async function saveFavorites(items: ServiceSummary[]): Promise<void> {
-  await AsyncStorage.setItem(KEY, JSON.stringify(items));
+/** PUT /favorites/:serviceId (204, idempotent). 404 SERVICE_NOT_FOUND when the service is gone. */
+export async function addFavorite(serviceId: string): Promise<void> {
+  await api.put(`/favorites/${encodeURIComponent(serviceId)}`);
 }
 
-export async function addFavorite(service: ServiceSummary): Promise<ServiceSummary[]> {
-  const current = await loadFavorites();
-  if (current.find(s => s.id === service.id)) return current;
-  const updated = [service, ...current];
-  await saveFavorites(updated);
-  return updated;
-}
-
-export async function removeFavorite(serviceId: string): Promise<ServiceSummary[]> {
-  const current = await loadFavorites();
-  const updated = current.filter(s => s.id !== serviceId);
-  await saveFavorites(updated);
-  return updated;
+/** DELETE /favorites/:serviceId (204, idempotent). */
+export async function removeFavorite(serviceId: string): Promise<void> {
+  await api.delete(`/favorites/${encodeURIComponent(serviceId)}`);
 }

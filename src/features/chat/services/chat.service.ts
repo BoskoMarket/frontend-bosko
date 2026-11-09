@@ -49,18 +49,27 @@ export interface Conversation {
   /** Snapshot from the conversation endpoint; null means status unavailable. */
   orderStatus?: OrderStatus | null;
   createdAt: string | Date;
+  /** B6: I blocked the other party. Absent on servers without blocking. */
+  blockedByMe?: boolean;
+  /** B6: the other party blocked me. */
+  blockedMe?: boolean;
+}
+
+/** The block flags are optional on the wire; the app always reads real booleans. */
+export function normalizeConversation(raw: Conversation): Conversation {
+  return { ...raw, blockedByMe: raw.blockedByMe === true, blockedMe: raw.blockedMe === true };
 }
 
 /** Listar todas las conversaciones del usuario autenticado */
 export async function fetchConversations(): Promise<Conversation[]> {
   const { data } = await api.get<Conversation[]>('/conversations');
-  return data;
+  return Array.isArray(data) ? data.map(normalizeConversation) : data;
 }
 
 /** Obtener la conversación asociada a una orden */
 export async function fetchConversationByOrder(orderId: string): Promise<Conversation> {
   const { data } = await api.get<Conversation>(`/conversations/${orderId}`);
-  return data;
+  return data && typeof data === 'object' ? normalizeConversation(data) : data;
 }
 
 /** Obtener mensajes de una conversación (paginados, orden DESC) */

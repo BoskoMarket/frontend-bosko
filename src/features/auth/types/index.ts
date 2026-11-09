@@ -1,11 +1,23 @@
 import type { components } from '@/core/api/generated/schema';
+import type { UserCity } from '@/features/markets/types';
 // ── Tipos del módulo de autenticación ───────────────────────────────────────
 
 /** Credenciales para iniciar sesión */
 export type Credentials = components['schemas']['LoginDto'];
 
 /** Payload para registrar un nuevo usuario */
-export type RegisterUserPayload = components['schemas']['RegisterDto'];
+export type RegisterUserPayload = components['schemas']['RegisterDto'] & {
+  cityId: string;
+  acceptedTerms: true;
+  termsVersion: string;
+};
+
+/** Extra fields the Google sign-in sends when the backend asked for them (CITY_REQUIRED). */
+export interface GoogleSignupExtras {
+  cityId: string;
+  acceptedTerms: true;
+  termsVersion: string;
+}
 
 /** Respuesta del endpoint POST /auth/register */
 export interface RegisterResponse {
@@ -21,6 +33,8 @@ export interface AuthUser {
   isProvider: boolean;
   isVerified: boolean;
   kycStatus:  string;
+  /** `null` = no city yet; `undefined` = the backend does not send it. */
+  city?:      UserCity | null;
 }
 
 /** Tokens + usuario devueltos por login, register o refresh */
@@ -58,12 +72,15 @@ export interface AuthContextType {
   authState:                   AuthState;
   authLoaded:                  boolean;
   isAuthenticated:             boolean;
+  /** True after a forced logout caused by a suspended account (routing state). */
+  suspended:                   boolean;
+  clearSuspended:              () => void;
   isLoading:                   boolean;
   error:                       string | null;
   login:                       (credentials: Credentials) => Promise<AuthResponse>;
   registerUser:                (data: RegisterUserPayload) => Promise<RegisterResponse>;
   verifyEmail:                 (email: string, code: string) => Promise<void>;
-  loginWithGoogle:             (firebaseIdToken: string) => Promise<AuthResponse>;
+  loginWithGoogle:             (firebaseIdToken: string, extras?: GoogleSignupExtras) => Promise<AuthResponse>;
   logout:                      () => Promise<void>;
   clearError:                  () => void;
 }

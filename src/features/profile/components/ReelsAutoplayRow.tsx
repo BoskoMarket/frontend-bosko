@@ -11,14 +11,14 @@ export function ReelsAutoplayRow() {
   return (
     <ListRow
       icon="play-circle-outline"
-      label="Reproducción automática de reels"
+      label="Reproducción automatica de reels"
       subtitle={value === 'wifi' ? 'Solo con Wi-Fi' : 'Siempre'}
       right={
         <Switch
           value={value === 'wifi'}
           onValueChange={(on) => setValue(on ? 'wifi' : 'always')}
           trackColor={{ true: TOKENS.color.signal, false: tc.switchTrack }}
-          accessibilityLabel="Reproducir reels automáticamente solo con Wi-Fi"
+          accessibilityLabel="Reproducir reels automaticamente solo con Wi-Fi"
         />
       }
     />

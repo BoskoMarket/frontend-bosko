@@ -1,10 +1,10 @@
 /**
  * appConfig.service.ts — Config remota para gate de versión mínima / mantenimiento.
  *
- * GET /app/config — este endpoint todavía no existe en el backend (Bosko).
- * Hasta que se implemente, cualquier error (404, red, timeout) hace fail-open:
- * la app nunca se bloquea por falta de este endpoint, solo cuando el backend
- * responde explícitamente con maintenanceMode o minVersion.
+ * GET /app/config — público, con la versión mínima, el modo mantenimiento y el contacto
+ * de soporte. Cualquier error (404, red, timeout) hace fail-open: la app nunca se bloquea
+ * por falta de este endpoint, solo cuando el backend responde explícitamente con
+ * maintenanceMode o minVersion.
  */
 import api from '@/core/api/axiosinstance';
 
@@ -13,6 +13,10 @@ export interface AppConfig {
   minVersion?: string;
   maintenanceMode?: boolean;
   maintenanceMessage?: string;
+  /** WhatsApp de soporte con prefijo de país, solo dígitos (ej. "5492494000000"). */
+  supportWhatsapp?: string;
+  /** Mensaje inicial sugerido para el chat de soporte. */
+  supportMessage?: string;
 }
 
 /**

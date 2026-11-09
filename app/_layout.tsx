@@ -18,7 +18,7 @@ import { ThemeProvider } from "@react-navigation/native";
 import { AppBackground } from "@/core/components/AppBackground";
 import { usePushNotificationSetup } from "@/hooks/usePushNotificationSetup";
 import { NotificationsModalRoot } from "@/features/notifications/screens/NotificationsScreen";
-import { isChatNotificationType, resolveNotificationRoute } from "@/features/notifications/utils/notificationRoute";
+import { getNotificationRoute, isChatNotificationType, isV1NotificationType, resolveNotificationRoute } from "@/features/notifications/utils/notificationRoute";
 import { lookupOrderIdByConversation } from "@/features/notifications/utils/conversationOrderLookup";
 import type { Notification } from "@/features/notifications/services/notifications.service";
 import { openNotifications } from "@/stores/notificationsUI.store";
@@ -92,14 +92,14 @@ function handleNotificationResponse(response: Notifications.NotificationResponse
 }
 
 function RootLayoutNav() {
-  const { authLoaded, isAuthenticated } = useAuth();
+  const { authLoaded, isAuthenticated, suspended } = useAuth();
   const tc = useThemeColors();
   const segments = useSegments();
   const navigation = useRootNavigationState();
   useEffect(() => {
-    if (!navigation?.key || !authLoaded || isAuthenticated) return;
-    if (['(tabs)', 'orders', 'chat', 'admin', 'service-form', 'search', 'upload-reel'].includes(segments[0] ?? '')) router.replace('/login');
-  }, [authLoaded, isAuthenticated, segments, navigation?.key]);
+    if (!navigation?.key || !authLoaded || isAuthenticated || suspended) return;
+    if (['(tabs)', 'orders', 'chat', 'admin', 'service-form', 'search', 'upload-reel', 'work'].includes(segments[0] ?? '')) router.replace('/login');
+  }, [authLoaded, isAuthenticated, suspended, segments, navigation?.key]);
   useChatSync();
   useNotificationNavigation(authLoaded && !!navigation?.key);
   usePushNotificationSetup();
@@ -114,11 +114,13 @@ function RootLayoutNav() {
       <Stack.Screen name="login" />
       <Stack.Screen name="welcome-video" />
       <Stack.Screen name="terms" />
+      <Stack.Screen name="suspended" options={{ gestureEnabled: false }} />
       <Stack.Screen name="auth" options={{ headerShown: false }} />
       <Stack.Screen name="chat" options={{ headerShown: false }} />
       <Stack.Screen name="orders" options={{ headerShown: false }} />
       <Stack.Screen name="service-form" options={{ presentation: 'modal', headerShown: false }} />
       <Stack.Screen name="upload-reel" options={{ headerShown: false }} />
+      <Stack.Screen name="work/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }

@@ -27,18 +27,20 @@ export interface ProfileSection {
 }
 
 const PROVIDER_ROWS: ProfileRow[] = [
-  { id: 'my-services', icon: 'construct-outline', label: 'Mis servicios', href: '/(tabs)/profile/Services' },
-  { id: 'publish-service', icon: 'add-circle-outline', label: 'Publicar servicio', href: '/service-form' },
+  { id: 'my-services', icon: 'construct-outline', label: 'Mi servicio', href: '/(tabs)/profile/Services' },
+  { id: 'my-works', icon: 'images-outline', label: 'Mis trabajos', href: '/(tabs)/profile/my-works' },
   { id: 'my-reels', icon: 'film-outline', label: 'Mis reels', href: '/(tabs)/profile/my-reels' },
   { id: 'my-reviews', icon: 'star-outline', label: 'Mis reseñas', href: '/(tabs)/profile/my-reviews' },
   { id: 'kyc', icon: 'shield-checkmark-outline', label: 'Verificación de identidad', href: '/(tabs)/profile/kyc', badge: 'kyc' },
-  { id: 'background-check', icon: 'document-text-outline', label: 'Antecedentes penales', href: '/(tabs)/profile/background-check' },
+  { id: 'background-check', icon: 'document-text-outline', label: 'Antecedentes (opcional)', href: '/(tabs)/profile/background-check' },
   { id: 'plan', icon: 'diamond-outline', label: 'Plan', href: '/(tabs)/profile/plans', badge: 'plans' },
+  { id: 'blocked-users', icon: 'ban-outline', label: 'Usuarios bloqueados', href: '/(tabs)/profile/blocked-users' },
 ];
 
 const CLIENT_ROWS: ProfileRow[] = [
   { id: 'favorites', icon: 'heart-outline', label: 'Favoritos', href: '/(tabs)/profile/favorites', badge: 'favorites' },
   { id: 'become-provider', icon: 'briefcase-outline', label: 'Convertirme en proveedor', href: '/(tabs)/profile/become-provider' },
+  { id: 'blocked-users', icon: 'ban-outline', label: 'Usuarios bloqueados', href: '/(tabs)/profile/blocked-users' },
 ];
 
 /**
@@ -47,7 +49,12 @@ const CLIENT_ROWS: ProfileRow[] = [
  */
 export function getRoleSection(status: ProviderStatus): ProfileSection | null {
   if (status === 'provider') {
-    return { title: 'Mi negocio', rows: PROVIDER_ROWS.filter((row) => FEATURES.reels || row.id !== 'my-reels') };
+    return {
+      title: 'Mi negocio',
+      rows: PROVIDER_ROWS.filter(
+        (row) => (FEATURES.reels || row.id !== 'my-reels') && (FEATURES.payments || row.id !== 'plan'),
+      ),
+    };
   }
   if (status === 'client') return { title: 'Mi actividad', rows: CLIENT_ROWS };
   return null;

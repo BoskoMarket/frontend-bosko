@@ -55,7 +55,7 @@ function ErrorFallback({ onRetry, retryLabel }: { onRetry: () => void; retryLabe
           Algo salió mal
         </Text>
         <Text variant="body" color={tc.textSub} style={{ textAlign: 'center', marginTop: SPACING.sm }}>
-          Ocurrió un error inesperado en esta pantalla. Podés intentar de nuevo.
+          Ocurrió un error inesperado en esta pantalla. Puedes intentar de nuevo.
         </Text>
         <Button
           label={retryLabel ?? 'Reintentar'}

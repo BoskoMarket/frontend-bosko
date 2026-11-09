@@ -52,7 +52,7 @@ describe('getBannerErrorMessage', () => {
   const err = (status: number) => ({ response: { status } });
 
   it.each([404, 405, 501])('maps %s to a retry message', (s) => {
-    expect(getBannerErrorMessage(err(s))).toMatch(/Intentá de nuevo/);
+    expect(getBannerErrorMessage(err(s))).toMatch(/Intenta de nuevo/);
   });
   it('maps 413 to a size message', () => {
     expect(getBannerErrorMessage(err(413))).toMatch(/5 MB/);

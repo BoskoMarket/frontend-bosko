@@ -96,7 +96,7 @@ function Header({ titleAnim }: { titleAnim: Animated.Value }) {
       <ScreenHeader
         variant="large"
         title="Explorar"
-        subtitle="Descubrí profesionales cerca tuyo"
+        subtitle="Descubre profesionales cerca tuyo"
         onBack={() => safeBack(router, '/(tabs)')}
         right={(
           <Pressable style={[s.searchIcon, { backgroundColor: tc.surface }]} onPress={() => router.push('/search')}>
@@ -171,7 +171,7 @@ export default function ServicesScreen() {
           <EmptyState
             icon="grid-outline"
             title="Categorías próximamente"
-            subtitle="Estamos cargando los servicios disponibles. Volvé en breve."
+            subtitle="Estamos cargando los servicios disponibles. Vuelve en breve."
             iconColor={tc.textSub}
             iconBg={tc.surface2}
           />

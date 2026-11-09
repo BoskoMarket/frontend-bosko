@@ -75,7 +75,7 @@ export default function ForgotPasswordScreen() {
     const trimmedEmail = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!trimmedEmail || !emailRegex.test(trimmedEmail)) {
-      setError('Ingresá un email válido');
+      setError('Ingresa un email válido');
       return;
     }
 
@@ -97,7 +97,7 @@ export default function ForgotPasswordScreen() {
     } catch (err: any) {
       const code = err?.response?.data?.code;
       if (code === 'NOT_FOUND') setError('Ese email no está registrado.');
-      else setError('Error al enviar el código. Intentá de nuevo.');
+      else setError('Error al enviar el código. Intenta de nuevo.');
       setIsLoading(false);
     }
   };
@@ -124,7 +124,7 @@ export default function ForgotPasswordScreen() {
               </Animated.View>
               <Animated.View style={fadeUpStyle(descAnim)}>
                 <Text variant="body" center color={tc.textSub} style={styles.description}>
-                  Ingresá tu email y te enviamos un código para restablecerla.
+                  Ingresa tu email y te enviamos un código para restablecerla.
                 </Text>
               </Animated.View>
 

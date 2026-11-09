@@ -18,13 +18,14 @@ import { safeBack } from '@/core/navigation/safeBack';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Service, ServicePayload } from "@/features/servicesUser/services/service";
 import { uploadServiceImages } from "@/features/servicesUser/services/service";
-import { useCategories, useMyServices, useUpdateService } from "@/hooks/queries/useMarketplaceQuery";
-import { useAddServiceWithPlanLimit } from "@/features/servicesUser/hooks/useAddServiceWithPlanLimit";
+import { useCategories, useCreateService, useMyServices, useUpdateService } from "@/hooks/queries/useMarketplaceQuery";
 import { fetchServiceById } from "../services/services";
 import { Button, Card, Chip, Input, ScreenHeader, SPACING, Text, TOKENS, useIsDark, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
 import { getUserErrorMessage } from '@/lib/errors';
+import { runWithRetry } from '@/lib/runWithRetry';
 import { toast } from '@/core/components/Toast';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
+import { getPublishBlock } from '@/features/kyc/utils/publishErrors';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 import { DESCRIPTION_MIN as MIN_DESCRIPTION, TITLE_MAX, TITLE_MIN, validateServiceFields } from '@/features/servicesUser/utils/serviceFormRules';
@@ -66,7 +67,7 @@ function extractPrice(price: any): string {
 }
 
 export default function ServiceFormScreen() {
-  useRequireProviderStatus('provider');
+  useRequireProviderStatus('provider', { requirePublish: true });
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const tc = useThemeColors();
@@ -78,7 +79,8 @@ export default function ServiceFormScreen() {
     () => myServicesQuery.data?.pages.flatMap(page => page.data) ?? [],
     [myServicesQuery.data],
   );
-  const addServiceM = useAddServiceWithPlanLimit();
+  // The server enforces the plan limit (422 SERVICE_LIMIT_REACHED, handled in handleSubmit).
+  const addServiceM = useCreateService();
   const updateServiceM = useUpdateService();
   const categoriesQuery = useCategories();
   const categories = categoriesQuery.data ?? [];
@@ -154,14 +156,15 @@ export default function ServiceFormScreen() {
 
   // A title already published (possibly shorter than today's minimum) is kept and not re-sent.
   const titleUnchanged = isEditing && form.title.trim() === (selectedService?.title ?? '').trim();
-  const fieldErrors = validateServiceFields({ title: form.title, description: form.description });
+  const fieldErrors = validateServiceFields({ title: form.title, description: form.description, hasPhoto: !!imageUri });
   if (titleUnchanged) delete fieldErrors.title;
+  const photoError = submitAttempted ? fieldErrors.photo : undefined;
   const titleError = (submitAttempted || form.title.length > 0) ? fieldErrors.title : undefined;
   const descriptionError = (submitAttempted || form.description.length > 0) ? fieldErrors.description : undefined;
 
   const validateForm = () => {
     setSubmitAttempted(true);
-    const firstFieldError = fieldErrors.title ?? fieldErrors.description;
+    const firstFieldError = fieldErrors.title ?? fieldErrors.description ?? fieldErrors.photo;
     if (firstFieldError) {
       setError(firstFieldError);
       return false;
@@ -175,7 +178,7 @@ export default function ServiceFormScreen() {
     }
     // Category cannot change after publishing, so it is only required when creating.
     if (!isEditing && !form.categoryId) {
-      setError("Seleccioná una categoría.");
+      setError("Selecciona una categoría.");
       return false;
     }
     setError(null);
@@ -192,6 +195,14 @@ export default function ServiceFormScreen() {
     };
   };
 
+  // Network failures offer "Reintentar" with the same payload (the form keeps its state);
+  // any other error is rethrown so the catch below keeps handling publish blocks and limits.
+  const saveWithRetry = <T,>(action: () => Promise<T>) =>
+    runWithRetry(action, {
+      title: "No se pudo guardar el servicio",
+      onError: (e) => { throw e; },
+    });
+
   const handleSubmit = async () => {
     if (!validateForm()) return;
     setSubmitting(true);
@@ -200,40 +211,64 @@ export default function ServiceFormScreen() {
       if (isEditing && selectedService?.id) {
         const { categoryId: _cat, title, ...rest } = payload;
         const editPayload = titleUnchanged ? rest : { ...rest, title };
-        await updateServiceM.mutateAsync({ id: selectedService.id, payload: editPayload });
+        const saved = await saveWithRetry(() =>
+          updateServiceM.mutateAsync({ id: selectedService.id!, payload: editPayload }),
+        );
+        if (!saved.ok) return;
+        // The service is already saved; a failed photo upload must not read as a full success.
+        let photoFailed = false;
         if (imageUri?.startsWith("file")) {
           try {
             await uploadServiceImages(selectedService.id, [imageUri]);
           } catch {
-            // Upload fallback — la edición ya fue guardada, el proveedor puede reintentar la foto después
+            photoFailed = true;
           }
         }
-        toast.success("Servicio actualizado", "Los cambios fueron guardados.");
+        if (photoFailed) {
+          toast.warning("Cambios guardados", "No se pudo subir la foto. Edita el servicio para reintentar.");
+        } else {
+          toast.success("Servicio actualizado", "Los cambios fueron guardados.");
+        }
       } else {
-        const service = await addServiceM.mutateAsync(payload);
-        // Upload main photo if selected
+        const created = await saveWithRetry(() => addServiceM.mutateAsync(payload));
+        if (!created.ok) return;
+        const service = created.value;
+        let photoFailed = false;
         if (service.id && imageUri) {
           try {
-            const imageUris = [imageUri];
-            await uploadServiceImages(service.id, imageUris);
+            await uploadServiceImages(service.id, [imageUri]);
           } catch {
-            // Upload fallback — el servicio ya fue creado, el proveedor puede subir la foto después
+            photoFailed = true;
           }
         }
-        // Upload gallery if any
         if (service.id && galleryImages.length > 0) {
           try {
             await uploadServiceImages(service.id, galleryImages);
           } catch {
-            // Ídem — galería no es bloqueante para la creación del servicio
+            photoFailed = true;
           }
         }
-        toast.success("¡Publicado!", "Tu servicio ya está disponible.");
+        if (photoFailed) {
+          toast.warning("Servicio publicado", "No se pudieron subir algunas fotos. Edita el servicio para reintentar.");
+        } else {
+          toast.success("¡Publicado!", "Tu servicio ya está disponible.");
+        }
       }
       safeBack(router, '/(tabs)/profile');
     } catch (err: any) {
+      const block = getPublishBlock(err);
+      if (block) {
+        const goFix = await dialog.confirm({
+          title: "Antes de publicar",
+          message: block.message,
+          confirmLabel: block.ctaLabel,
+          cancelLabel: "Ahora no",
+        });
+        if (goFix) router.push(block.route as never);
+        return;
+      }
       if (err?.code === "SERVICE_LIMIT_REACHED" || err?.response?.data?.code === "SERVICE_LIMIT_REACHED") {
-        toast.warning("Límite de tu plan", "Actualizá a plan Plus para publicar más servicios.");
+        toast.warning("Límite de tu plan", "Actualiza a plan Plus para publicar más servicios.");
       } else {
         toast.error("Error", getUserErrorMessage(err));
       }
@@ -277,7 +312,7 @@ export default function ServiceFormScreen() {
 
           <Input
             label="Descripción *"
-            placeholder="Contá qué incluye tu servicio, cuánto tardás, qué materiales usás…"
+            placeholder="Cuenta qué incluye tu servicio, cuánto tardas, qué materiales usas…"
             value={form.description}
             multiline
             numberOfLines={5}
@@ -292,8 +327,8 @@ export default function ServiceFormScreen() {
 
         {/* Precio */}
         <FormCard
-          title="Precio"
-          subtitle="Podés dejar el precio en blanco si preferís cotizar por chat."
+          title="Precio de referencia"
+          subtitle="Se muestra como «Desde $X». Puedes dejarlo en blanco y cotizar por chat: aparecerá como «A cotizar»."
         >
           <Input
             placeholder="Ej: 5000 (opcional)"
@@ -326,7 +361,7 @@ export default function ServiceFormScreen() {
         </FormCard>
 
         {/* Imagen principal */}
-        <FormCard title="Foto principal" subtitle="Una imagen que represente tu servicio.">
+        <FormCard title="Foto principal" subtitle="Obligatoria. Una imagen que represente tu servicio.">
           <Pressable style={[styles.imagePicker, { backgroundColor: tc.surface2 }]} onPress={handlePickImage}>
             {imageUri ? (
               <>
@@ -338,14 +373,15 @@ export default function ServiceFormScreen() {
             ) : (
               <View style={[styles.imagePlaceholder, { borderColor: tc.border }]}>
                 <Text style={styles.imagePlaceholderIcon}>📷</Text>
-                <Text variant="body" weight="500" color={tc.textMuted}>Tocá para agregar una foto</Text>
+                <Text variant="body" weight="500" color={tc.textMuted}>Toca para agregar una foto</Text>
               </View>
             )}
           </Pressable>
+          {photoError ? <Text variant="caption" color={TOKENS.status.cancelled.fg}>{photoError}</Text> : null}
         </FormCard>
 
         {/* Galería */}
-        <FormCard title="Galería de trabajos" subtitle="Subí hasta 5 fotos mostrando tus trabajos anteriores.">
+        <FormCard title="Galería de trabajos" subtitle="Sube hasta 5 fotos mostrando tus trabajos anteriores.">
           <View style={styles.galleryGrid}>
             {galleryImages.map((uri, i) => (
               <View key={i} style={styles.galleryThumbWrap}>

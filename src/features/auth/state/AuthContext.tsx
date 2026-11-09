@@ -25,11 +25,11 @@ import axios from 'axios';
 import { API_URL } from '@/core/config/env';
 import { socketService } from '@/features/chat/services/socket.service';
 import { useChatStore } from '@/stores/chat.store';
-import { useFavoritesStore } from '@/stores/favorites.store';
 import { QUERY_KEYS } from '@/core/query/queryKeys';
 import { useThemeColors } from '@/stores/theme.store';
 import { useQueryClient } from '@tanstack/react-query';
-import { tokenStorage } from '@/core/auth/tokenStorage';
+import { router } from 'expo-router';
+import { tokenStorage, type ForceLogoutReason } from '@/core/auth/tokenStorage';
 import {
   loginService,
   loginWithGoogleService,
@@ -44,6 +44,7 @@ import type {
   AuthState,
   AuthUser,
   Credentials,
+  GoogleSignupExtras,
   RegisterResponse,
   RegisterUserPayload,
 } from '../types';
@@ -79,6 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authLoaded, setAuthLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [suspended, setSuspended] = useState(false);
 
   const tc = useThemeColors();
   const [sessionError, setSessionError] = useState<string | null>(null);
@@ -89,7 +91,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const purgeAccountData = useCallback(() => {
     if (purgeTimer.current) { clearTimeout(purgeTimer.current); purgeTimer.current = null; }
     useChatStore.getState().reset();
-    void useFavoritesStore.getState().setAccount(null);
     void qc.cancelQueries();
     qc.clear();
   }, [qc]);
@@ -101,9 +102,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     purgeTimer.current = setTimeout(purgeAccountData, PURGE_DELAY_MS);
   }, [qc, purgeAccountData]);
   useEffect(() => () => { if (purgeTimer.current) clearTimeout(purgeTimer.current); }, []);
+  // Forced logout (revoked refresh, suspended account). A suspension also raises the flag and
+  // sends the user to /suspended; the session is cleared exactly as in the plain case.
+  const forceLogout = useCallback((reason?: ForceLogoutReason) => {
+    clearLocalState();
+    if (reason !== 'suspended') return;
+    setSuspended(true);
+    try { router.replace('/suspended'); } catch { /* router not mounted yet; the index gate redirects */ }
+  }, [clearLocalState]);
+  const clearSuspended = useCallback(() => setSuspended(false), []);
 
   useEffect(() => {
-    tokenStorage.setForceLogoutCallback(clearLocalState);
+    tokenStorage.setForceLogoutCallback(forceLogout);
     const unsubscribe = tokenStorage.subscribe(() => {
       const token = tokenStorage.getAccessToken();
       if (!token) { clearLocalState(); return; }
@@ -112,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } : current);
     });
     return () => { unsubscribe(); tokenStorage.setForceLogoutCallback(null); socketService.disconnect(); };
-  }, [clearLocalState]);
+  }, [clearLocalState, forceLogout]);
 
   // /users/me valida la sesión; Axios refresca el token si hace falta.
   useEffect(() => {
@@ -145,9 +155,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (authState.token) socketService.connect(authState.token);
   }, [authState.token]);
-  useEffect(() => {
-    void useFavoritesStore.getState().setAccount(authState.user?.id ?? null);
-  }, [authState.user?.id]);
 
   // ── Login ──────────────────────────────────────────────────────────────
   const login = useCallback(async (credentials: Credentials): Promise<AuthResponse> => {
@@ -164,6 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials.email,
       );
 
+      setSuspended(false);
       setAuthState({
         token: response.accessToken,
         refreshToken: response.refreshToken,
@@ -216,6 +224,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       await tokenStorage.save(response.accessToken, response.refreshToken, email);
 
+      setSuspended(false);
       setAuthState({
         token: response.accessToken,
         refreshToken: response.refreshToken,
@@ -233,16 +242,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ── Login con Google ──────────────────────────────────────────────────
   // Recibe el idToken de Firebase (ya autenticado con Google en el cliente,
   // ver handleGoogleSignIn en LogInView) y lo intercambia por la sesión propia.
-  const loginWithGoogle = useCallback(async (firebaseIdToken: string): Promise<AuthResponse> => {
+  const loginWithGoogle = useCallback(async (firebaseIdToken: string, extras?: GoogleSignupExtras): Promise<AuthResponse> => {
     if (purgeTimer.current) purgeAccountData();
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await loginWithGoogleService(firebaseIdToken);
+      const response = await loginWithGoogleService(firebaseIdToken, extras);
 
       await tokenStorage.save(response.accessToken, response.refreshToken, response.user?.email);
 
+      setSuspended(false);
       setAuthState({
         token: response.accessToken,
         refreshToken: response.refreshToken,
@@ -295,6 +305,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         authState,
         authLoaded,
         isAuthenticated,
+        suspended,
+        clearSuspended,
         isLoading,
         error,
         login,

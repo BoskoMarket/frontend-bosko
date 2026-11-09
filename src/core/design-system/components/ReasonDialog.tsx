@@ -21,6 +21,8 @@ export interface ReasonDialogProps {
   /** While true the dialog cannot be dismissed and the confirm button shows a spinner. */
   submitting?: boolean;
   maxLength?: number;
+  /** Minimum trimmed length to enable the confirm button (default: 1). */
+  minLength?: number;
   onCancel: () => void;
   /** Called with the trimmed, non-empty reason. */
   onConfirm: (reason: string) => void;
@@ -41,6 +43,7 @@ export function ReasonDialog({
   destructive = true,
   submitting = false,
   maxLength = 300,
+  minLength = 1,
   onCancel,
   onConfirm,
 }: ReasonDialogProps) {
@@ -83,7 +86,7 @@ export function ReasonDialog({
               label={confirmLabel}
               variant={destructive ? 'danger' : 'primary'}
               onPress={() => onConfirm(trimmed)}
-              disabled={!trimmed}
+              disabled={trimmed.length < Math.max(1, minLength)}
               loading={submitting}
               style={styles.action}
             />

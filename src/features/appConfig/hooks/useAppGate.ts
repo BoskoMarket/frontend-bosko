@@ -15,7 +15,7 @@ function isBelowMinVersion(current: string, min: string): boolean {
   return false;
 }
 
-const APP_CONFIG_QUERY = {
+export const APP_CONFIG_QUERY = {
   queryKey: QUERY_KEYS.appConfig,
   queryFn: fetchAppConfig,
   staleTime: 5 * 60 * 1000,

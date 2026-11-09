@@ -17,7 +17,14 @@ import { router } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useProfile } from '@/features/profile/state/ProfileContext';
 import { verifyPhoneWithFirebase } from '@/features/profile/services/profile';
-import { getUserErrorMessage } from '@/lib/errors';
+import { extractApiError, getUserErrorMessage } from '@/lib/errors';
+import { useCitiesQuery } from '@/hooks/queries/useCitiesQuery';
+import {
+  findCity,
+  phoneCountryMismatchMessage,
+  phoneMatchesCity,
+  phonePrefixHint,
+} from '@/features/markets/utils/phone';
 import {
   Button,
   Card,
@@ -39,7 +46,11 @@ const E164 = /^\+\d{8,15}$/;
 
 export default function VerifyPhoneScreen() {
   const tc = useThemeColors();
-  const { refreshProfile } = useProfile();
+  const { profile, refreshProfile } = useProfile();
+  const { data: cities } = useCitiesQuery();
+  // The profile carries only {id, name, currency}; the phone prefix comes from the cities list.
+  const city = findCity(cities, profile?.city?.id);
+  const prefixHint = phonePrefixHint(city);
 
   const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
@@ -52,7 +63,7 @@ export default function VerifyPhoneScreen() {
     if (loading) return;
     const trimmed = phone.trim();
     if (!trimmed) {
-      setError('Ingresá un número de teléfono');
+      setError('Ingresa un número de teléfono');
       return;
     }
 
@@ -60,7 +71,12 @@ export default function VerifyPhoneScreen() {
     const compact = trimmed.replace(/[\s\-().]/g, '');
     const normalized = compact.startsWith('+') ? compact : `+${compact}`;
     if (!E164.test(normalized)) {
-      setError('Ingresá el número con código de país, por ejemplo +54 9 11 1234-5678');
+      setError('Ingresa el número con código de país, por ejemplo +54 9 11 1234-5678');
+      return;
+    }
+
+    if (!phoneMatchesCity(normalized, city)) {
+      setError(phoneCountryMismatchMessage(city));
       return;
     }
 
@@ -77,7 +93,7 @@ export default function VerifyPhoneScreen() {
       setError(
         missingNative
           ? 'La verificación por SMS no está disponible en esta versión de la app.'
-          : err?.message || 'No se pudo enviar el SMS. Verificá el número.',
+          : err?.message || 'No se pudo enviar el SMS. Verifica el número.',
       );
     } finally {
       setLoading(false);
@@ -104,9 +120,13 @@ export default function VerifyPhoneScreen() {
       ]);
     } catch (err: any) {
       if (err?.code === 'auth/invalid-verification-code') {
-        setError('Código incorrecto. Intentá de nuevo.');
+        setError('Código incorrecto. Intenta de nuevo.');
       } else if (err?.isAxiosError) {
-        setError(getUserErrorMessage(err));
+        setError(
+          extractApiError(err).code === 'PHONE_COUNTRY_MISMATCH'
+            ? phoneCountryMismatchMessage(city)
+            : getUserErrorMessage(err),
+        );
       } else {
         setError(err?.message || 'No se pudo verificar el código.');
       }
@@ -140,7 +160,7 @@ export default function VerifyPhoneScreen() {
               <IconCircle name={step === 'phone' ? 'call-outline' : 'chatbubble-ellipses-outline'} size={68} />
 
               <Text variant="h3" center>
-                {step === 'phone' ? 'Ingresá tu número' : 'Ingresá el código'}
+                {step === 'phone' ? 'Ingresa tu número' : 'Ingresa el código'}
               </Text>
               <Text variant="body" color={tc.textSub} center>
                 {step === 'phone'
@@ -148,11 +168,15 @@ export default function VerifyPhoneScreen() {
                   : `Enviamos un código de 6 dígitos a ${phone}`}
               </Text>
 
+              {step === 'phone' && prefixHint ? (
+                <Text variant="caption" color={tc.textSub} center>{prefixHint}</Text>
+              ) : null}
+
               {step === 'phone' ? (
                 <Input
                   containerStyle={styles.fullWidth}
                   leftIcon="call-outline"
-                  placeholder="+54 9 11 1234-5678"
+                  placeholder={city ? `${city.phonePrefix} …` : '+54 9 11 1234-5678'}
                   value={phone}
                   onChangeText={setPhone}
                   keyboardType="phone-pad"
