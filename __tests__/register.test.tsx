@@ -77,9 +77,10 @@ describe("RegisterView", () => {
     );
 
     await waitFor(() =>
-      expect(router.push).toHaveBeenCalledWith(
-        "/auth/verify-email?email=nuevo%40bosko.com"
-      )
+      expect(router.push).toHaveBeenCalledWith({
+        pathname: "/auth/verify-email",
+        params: { email: "nuevo@bosko.com" },
+      })
     );
   });
 
