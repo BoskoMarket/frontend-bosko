@@ -12,6 +12,7 @@ import { RefreshControl, ScrollView, StatusBar, StyleSheet, View } from 'react-n
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { FEATURES } from '@/core/config/features';
 import { REEL_UPLOAD_ROUTE } from '@/features/reels/routes';
 
 import { useProfile } from '@/features/profile/state/ProfileContext';
@@ -43,10 +44,12 @@ const goOrders = () => router.push({ pathname: '/(tabs)/orders', params: { tab: 
 const goOrder = (id: string) => router.push({ pathname: '/orders/[id]', params: { id } });
 const goPublish = () => router.push('/service-form');
 
-const QUICK_ACTIONS: { id: string; label: string; icon: IconName; go: () => void }[] = [
+const getQuickActions = (): { id: string; label: string; icon: IconName; go: () => void }[] => [
   { id: 'post', label: 'Publicar servicio', icon: 'add-circle-outline', go: goPublish },
   { id: 'services', label: 'Mis servicios', icon: 'list-outline', go: () => router.push('/(tabs)/profile/Services') },
-  { id: 'reel', label: 'Subir reel', icon: 'videocam-outline', go: () => router.push(REEL_UPLOAD_ROUTE) },
+  ...(FEATURES.reels
+    ? [{ id: 'reel', label: 'Subir reel', icon: 'videocam-outline' as IconName, go: () => router.push(REEL_UPLOAD_ROUTE) }]
+    : []),
 ];
 
 function requestsTitle(count: number): string {
@@ -133,7 +136,7 @@ export default function ProviderHome() {
         ) : null}
 
         <View style={styles.row}>
-          {QUICK_ACTIONS.map((a) => (
+          {getQuickActions().map((a) => (
             <CategoryTile key={a.id} icon={a.icon} label={a.label} onPress={a.go} />
           ))}
         </View>

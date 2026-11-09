@@ -54,7 +54,7 @@ npx jest __tests__/login.test.tsx
 ```
 app/index.tsx          → Gate: authenticated → /(tabs), else → OnBoarding
 app/login/             → Login / Register flow
-app/(tabs)/            → Authenticated tab navigator: 5 labeled tabs (Inicio · Reels · Pedidos/Órdenes · Mensajes · Perfil)
+app/(tabs)/            → Authenticated tab navigator: 4 visible labeled tabs (Inicio · Pedidos/Órdenes · Mensajes · Perfil); the Reels tab is hidden (`href: null`) behind `FEATURES.reels`
 app/(tabs)/services/   → Catalog + category/[id] + provider/[id] stack. NOT a tab: hidden with `href: null`, still routable at /(tabs)/services/...
 app/chat/[id].tsx      → Individual chat screen (outside tabs, id = orderId)
 app/search.tsx         → Search screen
@@ -68,7 +68,8 @@ Auth guards:
 
 Tab bar rules (`src/components/CustomTabBar.tsx`, map in `odd/nav-map.md`):
 - Visible tabs = routes with an entry in `TABS` and without `href: null`; the bubble/notch math uses only those. Adding a tab means adding a `Tabs.Screen` (order = bar order) and a `TABS` entry.
-- The bar renders only on the 5 tab roots: `shouldShowTabBar(state, descriptors)` is false (bar returns `null`) when the focused route is hidden (`services`, `href: null`) or its nested stack is past the root (`route.state.index > 0`, e.g. `profile/kyc`). Nested screens use their back button as the exit and must not reserve bottom space for the bar.
+- The bar renders only on the 4 tab roots: `shouldShowTabBar(state, descriptors)` is false (bar returns `null`) when the focused route is hidden (`services`, `href: null`) or its nested stack is past the root (`route.state.index > 0`, e.g. `profile/kyc`). Nested screens use their back button as the exit and must not reserve bottom space for the bar.
+- Reels are postponed to the next version: `FEATURES.reels` (`src/core/config/features.ts`, `false`) hides the `reels` tab (`href: null`), the Perfil "Mis reels" row and autoplay row, and the ProviderHome "Subir reel" action; `/(tabs)/reels`, `/(tabs)/profile/my-reels` and `/upload-reel` redirect to `/(tabs)`. All reels code is kept: flip the flag to re-enable (then also bump the tab count above). A "Trabajos" tab (gallery of finished work) is planned to take the slot later; not built yet.
 - Labels are always visible; Pedidos reads "Órdenes" for providers. Each tab exposes `accessibilityRole="tab"`, label and selected state.
 - Badges: Mensajes = `useUnreadTotal()`; Pedidos/Órdenes (providers only) = `usePendingProviderRequestsCount()` (pending provider orders, shares the `providerOrders` query cache).
 - Orders opens on the provider segment for providers; an explicit `?tab=client|provider` always wins (`resolveOrdersSegment`).

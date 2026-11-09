@@ -38,6 +38,7 @@ import {
   dialog,
 } from '@/core/design-system';
 import type { BadgeTone } from '@/core/design-system';
+import { FEATURES } from '@/core/config/features';
 import { ReelsAutoplayRow } from './components/ReelsAutoplayRow';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { openNotifications } from '@/stores/notificationsUI.store';
@@ -506,8 +507,12 @@ export const ProfileScreen: React.FC = () => {
               label={isDark ? 'Modo Oscuro' : 'Modo Claro'}
               accessory={<ThemeToggle />}
             />
-            <Divider />
-            <ReelsAutoplayRow />
+            {FEATURES.reels ? (
+              <>
+                <Divider />
+                <ReelsAutoplayRow />
+              </>
+            ) : null}
             {__DEV__ ? (
               <>
                 <Divider />
