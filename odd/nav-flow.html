@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bosko Navigation Flow</title>
+<script>
+// SOURCE OF TRUTH: odd/nav-map.md. Update this data block by hand when the map changes (nothing below it needs editing).
+// node: [id, label, route, file, area, kind, roles, flags]
+//   kind  : screen | tab | modal | guard | external | redirect | dev
+//   roles : [] = everyone, otherwise ["client","provider","admin"] that can reach it
+//   flags : "entry" (app entry point, no incoming by design) | "orphan" (no incoming link) | "compat" (kept for deep links) | "warn:<text>" (open issue) ; optional ",N<id>" task ref
+// edge: [from, to, label, how, status, role, ref, task]
+//   how    : push | replace | redirect | guard | modal | local | tab | deeplink
+//   status : ok | doubtful | broken
+//   role   : all | client | provider | admin
+const NAVMAP = {
+  updated: "2026-11-02",
+  areas: [
+    { id: "ext",      title: "Guards y entradas externas",      x: 0,    y: 0,    cols: 1 },
+    { id: "auth",     title: "Auth y onboarding",               x: 250,  y: 0,    cols: 3 },
+    { id: "tabs",     title: "Tabs (barra de 5)",               x: 850,  y: 0,    cols: 3 },
+    { id: "catalog",  title: "Catalogo y busqueda (stack services oculto)", x: 850, y: 270, cols: 3 },
+    { id: "orders",   title: "Ordenes y chat (stack raiz)",     x: 250,  y: 400,  cols: 3 },
+    { id: "provider", title: "Proveedor (publicar y reels)",    x: 250,  y: 700,  cols: 3 },
+    { id: "profile",  title: "Perfil (stack anidado)",          x: 850,  y: 570,  cols: 3 },
+    { id: "admin",    title: "Admin y compatibilidad",          x: 0,    y: 440,  cols: 1 }
+  ],
+  nodes: [
+    ["g_root", "Guard raiz", "app/_layout.tsx", "app/_layout.tsx:101", "ext", "guard", [], ""],
+    ["g_tabs", "Guard (tabs)", "(tabs)/_layout", "app/(tabs)/_layout.tsx:25", "ext", "guard", [], ""],
+    ["g_login", "Guard inverso login", "login/_layout", "app/login/_layout.tsx:29", "ext", "guard", [], ""],
+    ["deeplink", "Deep link", "URL externa", "-", "ext", "external", [], ""],
+    ["push", "Push notification", "tap en notificacion", "app/_layout.tsx:77-89", "ext", "external", [], ""],
+
+    ["gate", "Gate", "/", "app/index.tsx", "auth", "screen", [], "entry"],
+    ["onboarding", "Onboarding", "/ (sin sesion)", "src/features/auth/screens/OnBoarding.tsx", "auth", "screen", [], ""],
+    ["login", "Login", "/login", "src/features/auth/screens/LogInView.tsx", "auth", "screen", [], ""],
+    ["register", "Registro (vista)", "/login (vista local)", "src/features/auth/screens/RegisterView.tsx", "auth", "screen", [], ""],
+    ["forgot", "Recuperar clave", "/login/forgot-password", "src/features/auth/screens/ForgotPasswordScreen.tsx", "auth", "screen", [], ""],
+    ["verify_reset", "Verificar codigo", "/auth/verify-reset-code", "src/features/auth/screens/VerifyResetCodeScreen.tsx", "auth", "screen", [], "warn:sin guard inverso (/auth/*),N3"],
+    ["reset_pw", "Nueva clave", "/auth/reset-password", "src/features/auth/screens/ResetPasswordScreen.tsx", "auth", "screen", [], "warn:sin guard inverso (/auth/*),N3"],
+    ["verify_email", "Verificar email", "/auth/verify-email", "src/features/auth/screens/VerifyEmailScreen.tsx", "auth", "screen", [], "warn:sin guard inverso (/auth/*),N3"],
+    ["terms", "Terminos", "/login/termsAndConditions", "src/features/auth/screens/TermsAndConditionsScreen.tsx", "auth", "screen", [], "orphan,N2"],
+    ["welcome", "Video de bienvenida", "/welcome-video", "src/features/auth/screens/WelcomeVideoScreen.tsx", "auth", "screen", [], "warn:sin guard por deep link,N4"],
+
+    ["tabbar", "Tab bar", "CustomTabBar", "src/components/CustomTabBar.tsx", "tabs", "tab", [], "entry"],
+    ["home", "Inicio", "/(tabs)", "ClientHome.tsx / ProviderHome.tsx (via DashboardScreen)", "tabs", "tab", [], ""],
+    ["reels", "Reels", "/(tabs)/reels", "app/(tabs)/reels.tsx", "tabs", "tab", [], ""],
+    ["orders", "Pedidos / Ordenes", "/(tabs)/orders", "app/(tabs)/orders.tsx", "tabs", "tab", [], ""],
+    ["chat_tab", "Mensajes", "/(tabs)/chat", "app/(tabs)/chat.tsx", "tabs", "tab", [], ""],
+    ["profile", "Perfil", "/(tabs)/profile", "src/features/profile/ProfileScreen.tsx", "tabs", "tab", [], ""],
+
+    ["services_index", "Catalogo", "/(tabs)/services", "app/(tabs)/services/index.tsx", "catalog", "screen", [], ""],
+    ["category", "Categoria", "/(tabs)/services/category/[id]", "src/features/servicesUser/screens/CategoryServicesScreen.tsx", "catalog", "screen", [], "warn:CTA 'Cotizar por chat' lleva al perfil,N7"],
+    ["provider", "Perfil de proveedor", "/(tabs)/services/provider/[id]", "src/features/servicesUser/screens/ProviderProfileScreen.tsx", "catalog", "screen", [], "warn:siempre cotiza services[0],N6"],
+    ["search", "Busqueda", "/search", "src/features/search/SearchPage.tsx", "catalog", "screen", [], ""],
+    ["m_detail", "Detalle de servicio", "modal", "src/features/servicesUser/components/ServiceDetailModal.tsx", "catalog", "modal", [], ""],
+    ["m_role", "Elegir rol", "modal (primera visita)", "src/features/servicesUser/components/RoleSelectionModal.tsx", "catalog", "modal", ["client"], ""],
+    ["m_notif", "Notificaciones", "modal global", "src/features/notifications/screens/NotificationsScreen.tsx", "catalog", "modal", [], "warn:hrefs string con 'as any',N8"],
+
+    ["order_detail", "Detalle de orden", "/orders/[id]", "src/features/orders/screens/OrderDetailScreen.tsx", "orders", "screen", [], ""],
+    ["checkout", "Checkout", "/orders/checkout", "src/features/orders/screens/CheckoutScreen.tsx", "orders", "screen", ["client"], ""],
+    ["payment_success", "Pago exitoso", "/orders/payment-success", "src/features/orders/screens/PaymentSuccessScreen.tsx", "orders", "screen", ["client"], ""],
+    ["quote", "Solicitar servicio", "/orders/quote", "src/features/orders/screens/QuoteRequestScreen.tsx", "orders", "screen", ["client"], ""],
+    ["review", "Calificar", "/orders/review", "src/features/reviews/screens/ReviewScreen.tsx", "orders", "screen", [], ""],
+    ["order_status", "Seguimiento", "/orders/status", "src/features/orders/screens/OrderStatusScreen.tsx", "orders", "screen", [], "orphan,N12"],
+    ["chat_id", "Chat de orden", "/chat/[id]", "src/features/chat/screens/ChatScreen.tsx", "orders", "screen", [], ""],
+
+    ["my_services", "Mis servicios", "/(tabs)/profile/Services", "src/features/servicesUser/screens/MyServiceScreen.tsx", "provider", "screen", ["provider"], ""],
+    ["service_form", "Publicar servicio", "/service-form", "src/features/servicesUser/screens/ServiceFormScreen.tsx", "provider", "screen", ["provider"], ""],
+    ["my_reels", "Mis reels", "/(tabs)/profile/my-reels", "src/features/reels/screens/MyReelsScreen.tsx", "provider", "screen", ["provider"], ""],
+    ["my_reviews", "Mis resenas", "/(tabs)/profile/my-reviews", "src/features/reviews/screens/MyReviewsScreen.tsx", "provider", "screen", ["provider"], ""],
+    ["upload_reel", "Publicar reel", "/upload-reel", "src/features/reels/screens/ReelUploadScreen.tsx", "provider", "screen", ["provider"], ""],
+
+    ["edit_profile", "Editar perfil", "/(tabs)/profile/EditProfile", "src/features/users/screens/EditProfileScreen.tsx", "profile", "screen", [], ""],
+    ["verify_phone", "Verificar telefono", "/(tabs)/profile/verify-phone", "src/features/profile/screens/VerifyPhoneScreen.tsx", "profile", "screen", [], ""],
+    ["change_pw", "Cambiar clave", "/(tabs)/profile/ChangePassword", "src/features/auth/screens/ChangePasswordScreen.tsx", "profile", "screen", [], ""],
+    ["delete_account", "Borrar cuenta", "/(tabs)/profile/delete-account", "src/features/profile/screens/DeleteAccountScreen.tsx", "profile", "screen", [], ""],
+    ["favorites", "Favoritos", "/(tabs)/profile/favorites", "src/features/favorites/screens/FavoritesScreen.tsx", "profile", "screen", ["client"], ""],
+    ["become_provider", "Ser proveedor", "/(tabs)/profile/become-provider", "src/features/kyc/screens/BecomeProviderScreen.tsx", "profile", "screen", ["client"], ""],
+    ["plans", "Plan", "/(tabs)/profile/plans", "src/features/plans/screens/PlansScreen.tsx", "profile", "screen", ["provider"], ""],
+    ["kyc", "Verificacion (KYC)", "/(tabs)/profile/kyc", "src/features/kyc/screens/KYCStatusScreen.tsx", "profile", "screen", ["provider"], ""],
+    ["kyc_intro", "KYC intro", "/(tabs)/profile/kyc/intro", "src/features/kyc/screens/KYCIntroScreen.tsx", "profile", "screen", ["provider"], ""],
+    ["kyc_document", "KYC documento", "/(tabs)/profile/kyc/document", "src/features/kyc/screens/KYCDocumentScreen.tsx", "profile", "screen", ["provider"], "orphan,N11"],
+    ["background_check", "Antecedentes", "/(tabs)/profile/background-check", "src/features/kyc/screens/BackgroundCheckScreen.tsx", "profile", "screen", ["provider"], ""],
+    ["payments", "Pagos simulados", "/(tabs)/profile/Payments", "src/features/payments/screens/PaymentsScreen.tsx", "profile", "screen", [], "orphan,N9"],
+    ["edit_type", "Editor legado", "/(tabs)/profile/edit/[type]", "app/(tabs)/profile/edit/[type].tsx", "profile", "screen", [], "orphan,N10"],
+    ["dev", "Component showcase", "/dev/components", "app/dev/components.tsx", "profile", "dev", [], ""],
+
+    ["admin_bg", "Admin antecedentes", "/admin/background-check", "src/features/admin/screens/AdminBackgroundCheckScreen.tsx", "admin", "screen", ["admin"], "orphan,N13"],
+    ["r_orders", "/orders", "redirect compat", "app/orders/index.tsx", "admin", "redirect", [], "compat"],
+    ["r_chat", "/chat", "redirect compat", "app/chat/index.tsx", "admin", "redirect", [], "compat"]
+  ],
+  edges: [
+    // entry and guards
+    ["gate", "home", "sesion activa", "redirect", "ok", "all", "app/index.tsx:23"],
+    ["gate", "onboarding", "sin sesion (render inline)", "local", "ok", "all", "app/index.tsx"],
+    ["g_login", "home", "autenticado en /login/*", "guard", "ok", "all", "app/login/_layout.tsx:29"],
+    ["g_root", "login", "sin sesion en segmento protegido", "guard", "ok", "all", "app/_layout.tsx:101"],
+    ["g_tabs", "login", "sin sesion", "guard", "ok", "all", "app/(tabs)/_layout.tsx:25"],
+    ["deeplink", "welcome", "deep link sin guard ni flag", "deeplink", "doubtful", "all", "app/welcome-video.tsx", "N4"],
+    ["deeplink", "verify_email", "deep link sin guard inverso", "deeplink", "doubtful", "all", "app/auth/_layout.tsx", "N3"],
+    ["deeplink", "reset_pw", "deep link sin guard inverso", "deeplink", "doubtful", "all", "app/auth/_layout.tsx", "N3"],
+    ["deeplink", "admin_bg", "unica via de entrada (guard de rol en la pantalla)", "deeplink", "ok", "admin", "app/admin/background-check.tsx"],
+    ["deeplink", "r_orders", "compat", "deeplink", "ok", "all", "app/orders/index.tsx"],
+    ["deeplink", "r_chat", "compat", "deeplink", "ok", "all", "app/chat/index.tsx"],
+    ["r_orders", "orders", "Redirect", "redirect", "ok", "all", "app/orders/index.tsx:4"],
+    ["r_chat", "chat_tab", "Redirect", "redirect", "ok", "all", "app/chat/index.tsx:4"],
+    ["push", "order_detail", "tipo order / review", "deeplink", "ok", "all", "app/_layout.tsx:77,:87"],
+    ["push", "chat_id", "tipo chat con orderId", "deeplink", "ok", "all", "app/_layout.tsx:79"],
+    ["push", "m_notif", "otro tipo: abre notificaciones", "deeplink", "ok", "all", "app/_layout.tsx:89"],
+
+    // auth
+    ["onboarding", "login", "Saltar / Comenzar / ya completado", "replace", "ok", "all", "OnBoarding.tsx:80,:85"],
+    ["login", "welcome", "Ingresar ok + flag WELCOME_VIDEO_PENDING", "replace", "ok", "all", "LogInView.tsx:95"],
+    ["login", "home", "Ingresar / Google ok", "replace", "ok", "all", "LogInView.tsx:97,:110"],
+    ["login", "forgot", "Olvidaste tu clave", "push", "ok", "all", "LogInView.tsx:186"],
+    ["login", "register", "Registrarse (vista local)", "local", "ok", "all", "LoginIndex showRegister"],
+    ["register", "login", "atras / Ingresar (vista local)", "local", "ok", "all", "RegisterView toRegister"],
+    ["register", "verify_email", "Crear cuenta ok (href string)", "push", "doubtful", "all", "RegisterView.tsx:138", "N1"],
+    ["register", "home", "Registrarse con Google", "replace", "ok", "all", "RegisterView.tsx:159"],
+    ["forgot", "verify_reset", "Enviar codigo (email)", "push", "ok", "all", "ForgotPasswordScreen.tsx:95"],
+    ["verify_reset", "reset_pw", "Continuar (email, code)", "push", "ok", "all", "VerifyResetCodeScreen.tsx:103"],
+    ["reset_pw", "login", "Iniciar sesion (exito)", "replace", "ok", "all", "ResetPasswordScreen.tsx:126"],
+    ["verify_email", "login", "Ir a iniciar sesion (logout)", "replace", "ok", "all", "VerifyEmailScreen.tsx:146"],
+    ["terms", "login", "Volver al inicio", "replace", "ok", "all", "TermsAndConditionsScreen.tsx:76"],
+    ["welcome", "home", "fin / timeout 8 s / Saltar", "replace", "ok", "all", "WelcomeVideoScreen.tsx:31"],
+
+    // tab bar
+    ["tabbar", "home", "tap tab", "tab", "ok", "all", "CustomTabBar.tsx"],
+    ["tabbar", "reels", "tap tab", "tab", "ok", "all", "CustomTabBar.tsx"],
+    ["tabbar", "orders", "tap tab (badge: pendientes)", "tab", "ok", "all", "CustomTabBar.tsx"],
+    ["tabbar", "chat_tab", "tap tab (badge: no leidos)", "tab", "ok", "all", "CustomTabBar.tsx"],
+    ["tabbar", "profile", "tap tab", "tab", "ok", "all", "CustomTabBar.tsx"],
+
+    // home (ClientHome / ProviderHome)
+    ["home", "search", "barra de busqueda", "push", "ok", "client", "ClientHome.tsx:170,:200,:223"],
+    ["home", "services_index", "Ver todas / Rubros / Explorar categorias", "push", "ok", "client", "ClientHome.tsx:171,:211,:227"],
+    ["home", "category", "tap categoria (from=home)", "push", "ok", "client", "ClientHome.tsx:174"],
+    ["home", "provider", "servicio popular (from=home)", "push", "ok", "client", "ClientHome.tsx:178"],
+    ["home", "become_provider", "Ofrecer", "push", "ok", "client", "ClientHome.tsx:161,:172,:308"],
+    ["home", "m_role", "primera visita", "modal", "ok", "client", "ClientHome.tsx:312"],
+    ["home", "m_notif", "campana (HomeTopBar)", "modal", "ok", "all", "HomeTopBar.tsx:22"],
+    ["home", "orders", "solicitudes ?tab=provider", "push", "ok", "provider", "ProviderHome.tsx:42"],
+    ["home", "order_detail", "tap en solicitud", "push", "ok", "provider", "ProviderHome.tsx:43,:177"],
+    ["home", "service_form", "Publicar servicio", "push", "ok", "provider", "ProviderHome.tsx:44,:47,:163"],
+    ["home", "my_services", "Mis servicios", "push", "ok", "provider", "ProviderHome.tsx:48"],
+    ["home", "upload_reel", "Subir reel", "push", "ok", "provider", "ProviderHome.tsx:49"],
+
+    // reels
+    ["reels", "provider", "ir al proveedor (from=reels)", "push", "ok", "all", "ReelsScreen.tsx:488"],
+    ["reels", "upload_reel", "Publicar reel", "push", "ok", "provider", "ReelsTopBar.tsx:35"],
+    ["reels", "search", "lupa", "push", "ok", "all", "ReelsTopBar.tsx:55"],
+
+    // catalog
+    ["services_index", "category", "tap categoria", "push", "ok", "all", "ServicesScreen.tsx:81"],
+    ["services_index", "search", "lupa / barra", "push", "ok", "all", "ServicesScreen.tsx:102,:116"],
+    ["category", "provider", "tap profesional (CTA 'Cotizar por chat')", "push", "doubtful", "all", "CategoryServicesScreen.tsx:149,:269", "N7"],
+    ["provider", "quote", "Solicitar servicio: siempre services[0]", "push", "doubtful", "client", "ProviderProfileScreen.tsx:292-299", "N6"],
+    ["provider", "m_detail", "abrir detalle de servicio", "modal", "ok", "all", "ProviderProfileScreen"],
+    ["m_detail", "quote", "Solicitar Servicio", "push", "ok", "client", "ServiceDetailModal.tsx:163"],
+    ["search", "category", "resultado categoria (from=search)", "push", "ok", "all", "SearchPage.tsx:107"],
+    ["search", "provider", "resultado profesional (from=search)", "push", "ok", "all", "SearchPage.tsx:127,:162"],
+    ["m_notif", "chat_id", "notificacion de chat (href string)", "push", "doubtful", "all", "NotificationsScreen.tsx:160, notificationRoute.ts:23", "N8"],
+    ["m_notif", "order_detail", "notificacion con orderId (href string)", "push", "doubtful", "all", "notificationRoute.ts:25", "N8"],
+    ["m_notif", "become_provider", "identity / background_check (href string)", "push", "doubtful", "all", "notificationRoute.ts:26", "N8"],
+
+    // orders and chat
+    ["orders", "order_detail", "tap en orden", "push", "ok", "all", "OrdersListScreen.tsx:198"],
+    ["orders", "home", "Explorar servicios (vacio)", "push", "ok", "client", "OrdersListScreen.tsx:144"],
+    ["orders", "profile", "Ver mi perfil (vacio)", "push", "ok", "provider", "OrdersListScreen.tsx:151"],
+    ["orders", "service_form", "Publicar un servicio (vacio)", "push", "ok", "provider", "OrdersListScreen.tsx:152"],
+    ["order_detail", "checkout", "Pagar", "push", "ok", "client", "OrderDetailScreen.tsx:136"],
+    ["order_detail", "chat_id", "Chat de la orden", "push", "ok", "all", "OrderDetailScreen.tsx:250"],
+    ["order_detail", "review", "Calificar", "push", "ok", "all", "OrderDetailScreen.tsx:371"],
+    ["checkout", "payment_success", "pago simulado ok", "replace", "ok", "client", "CheckoutScreen.tsx:92"],
+    ["payment_success", "order_detail", "Ver orden", "replace", "ok", "client", "PaymentSuccessScreen.tsx:78"],
+    ["payment_success", "home", "Ir al inicio", "replace", "ok", "client", "PaymentSuccessScreen.tsx:84"],
+    ["quote", "orders", "Ver mis ordenes (tras solicitar)", "replace", "ok", "client", "QuoteRequestScreen.tsx:100"],
+    ["order_status", "order_detail", "Ver detalle", "push", "ok", "all", "OrderStatusScreen.tsx:257"],
+    ["order_status", "chat_id", "Chat", "push", "ok", "all", "OrderStatusScreen.tsx:265"],
+    ["chat_tab", "chat_id", "tap conversacion", "push", "ok", "all", "ConversationsListScreen.tsx:102"],
+    ["chat_tab", "home", "Explorar servicios (vacio)", "push", "ok", "client", "ConversationsListScreen.tsx:256"],
+    ["chat_id", "order_detail", "ver orden (header / banner)", "push", "ok", "all", "ChatScreen.tsx:975,:1008"],
+
+    // profile
+    ["profile", "edit_profile", "avatar / Editar perfil", "push", "ok", "all", "ProfileScreen.tsx:211"],
+    ["profile", "favorites", "Favoritos", "push", "ok", "client", "ProfileScreen.tsx:410"],
+    ["profile", "become_provider", "Convertirme en proveedor", "push", "ok", "client", "ProfileScreen.tsx:356,:425"],
+    ["profile", "change_pw", "Cambiar contrasena", "push", "ok", "all", "ProfileScreen.tsx:493"],
+    ["profile", "delete_account", "Borrar cuenta", "push", "ok", "all", "ProfileScreen.tsx:534"],
+    ["profile", "m_notif", "Notificaciones", "modal", "ok", "all", "ProfileScreen.tsx:501"],
+    ["profile", "dev", "solo __DEV__", "push", "ok", "all", "ProfileScreen.tsx:519"],
+    ["profile", "my_services", "Mi negocio: Mis servicios", "push", "ok", "provider", "profileSections.ts:29"],
+    ["profile", "service_form", "Mi negocio: Publicar servicio", "push", "ok", "provider", "profileSections.ts:30"],
+    ["profile", "my_reels", "Mi negocio: Mis reels", "push", "ok", "provider", "profileSections.ts:31"],
+    ["profile", "my_reviews", "Mi negocio: Mis resenas", "push", "ok", "provider", "profileSections.ts:32"],
+    ["profile", "kyc", "Mi negocio: Verificacion", "push", "ok", "provider", "profileSections.ts:33"],
+    ["profile", "background_check", "Mi negocio: Antecedentes", "push", "ok", "provider", "profileSections.ts:34"],
+    ["profile", "plans", "Mi negocio: Plan", "push", "ok", "provider", "profileSections.ts:35"],
+    ["edit_profile", "verify_phone", "Verificar telefono", "push", "ok", "all", "EditProfileScreen.tsx:392"],
+    ["favorites", "category", "tap favorito (from=favorites)", "push", "ok", "client", "FavoritesScreen.tsx:61"],
+    ["favorites", "home", "Explorar servicios (vacio)", "push", "ok", "client", "FavoritesScreen.tsx:182"],
+    ["become_provider", "kyc", "Verificacion", "push", "ok", "all", "BecomeProviderScreen.tsx:266"],
+    ["become_provider", "background_check", "Antecedentes", "push", "ok", "all", "BecomeProviderScreen.tsx:285"],
+    ["become_provider", "service_form", "Publicar servicio (ya proveedor)", "push", "ok", "provider", "BecomeProviderScreen.tsx:296"],
+    ["kyc", "kyc_intro", "Iniciar verificacion", "push", "ok", "provider", "KYCStatusScreen.tsx:126"],
+    ["kyc", "profile", "volver al perfil", "push", "ok", "provider", "KYCStatusScreen.tsx:137"],
+    ["kyc_document", "kyc", "al terminar", "replace", "ok", "provider", "KYCDocumentScreen.tsx:138"],
+    ["delete_account", "order_detail", "ordenes activas bloquean", "push", "ok", "all", "DeleteAccountScreen.tsx:245"],
+    ["payments", "order_detail", "tap en pago (href string)", "push", "doubtful", "all", "PaymentsScreen.tsx:86", "N9"],
+
+    // provider
+    ["my_services", "service_form", "Editar / Publicar", "push", "ok", "provider", "MyServiceScreen.tsx:92,:150,:171"],
+    ["my_services", "become_provider", "guard: sin status de proveedor", "guard", "ok", "client", "useRequireProviderStatus.ts:22"],
+    ["service_form", "become_provider", "guard: sin status de proveedor", "guard", "ok", "client", "useRequireProviderStatus.ts:22"],
+    ["my_reels", "upload_reel", "Publicar reel", "push", "ok", "provider", "MyReelsScreen.tsx:232,:262"],
+    ["upload_reel", "my_reels", "Ver mis reels", "replace", "ok", "provider", "ReelUploadScreen.tsx:228"]
+  ],
+  tasks: {
+    N1: "Template string en href de registro", N2: "Terminos sin entrada", N3: "/auth/* sin guard inverso",
+    N4: "/welcome-video sin guard", N5: "Banner B33 (verificar cierre)", N6: "Proveedor cotiza siempre services[0]",
+    N7: "'Cotizar por chat' lleva al perfil", N8: "Notificaciones: hrefs string + as any", N9: "Pagos: huerfana + href string",
+    N10: "Editor legado edit/[type] huerfano", N11: "kyc/document huerfana", N12: "orders/status huerfana", N13: "admin/background-check sin entrada"
+  }
+};
+</script>
+<style>
+:root{
+  --bg:#f6f6f8;--panel:#ffffff;--ink:#1a1a22;--sub:#5d5d6b;--line:#d9d9e2;--grid:#ececf1;
+  --group:#fbfbfd;--node:#ffffff;--nodeb:#9a9aac;
+  --all:#6a6a7d;--client:#2563eb;--provider:#15803d;--admin:#c2410c;
+  --guard:#7c3aed;--warn:#d97706;--bad:#dc2626;--modal:#0f766e;--accent:#850021;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#101015;--panel:#17171e;--ink:#ececf3;--sub:#9d9db0;--line:#2c2c38;--grid:#1c1c25;
+  --group:#14141b;--node:#1e1e28;--nodeb:#4a4a5e;
+  --all:#9a9ab0;--client:#6ea0ff;--provider:#4ade80;--admin:#fb923c;--guard:#a78bfa;--warn:#fbbf24;--bad:#f87171;--modal:#2dd4bf;--accent:#ff5d85}}
+:root[data-theme="dark"]{
+  --bg:#101015;--panel:#17171e;--ink:#ececf3;--sub:#9d9db0;--line:#2c2c38;--grid:#1c1c25;
+  --group:#14141b;--node:#1e1e28;--nodeb:#4a4a5e;
+  --all:#9a9ab0;--client:#6ea0ff;--provider:#4ade80;--admin:#fb923c;--guard:#a78bfa;--warn:#fbbf24;--bad:#f87171;--modal:#2dd4bf;--accent:#ff5d85}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:13px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+.app{display:grid;grid-template-rows:auto 1fr;height:100vh}
+header{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:8px 16px;background:var(--panel);border-bottom:1px solid var(--line)}
+header h1{font-size:17px;margin:0 8px 0 0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink);padding:5px 10px;cursor:pointer;font:inherit}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
+label.chk{display:inline-flex;gap:5px;align-items:center;color:var(--sub);cursor:pointer}
+input[type=search]{padding:5px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;width:170px}
+button.btn{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:5px 10px;cursor:pointer;font:inherit}
+.main{display:grid;grid-template-columns:1fr 330px;min-height:0}
+#stage{position:relative;overflow:hidden;background-image:radial-gradient(var(--grid) 1px,transparent 1px);background-size:22px 22px;cursor:grab;touch-action:none}
+#stage.drag{cursor:grabbing}
+svg{width:100%;height:100%;display:block}
+aside{border-left:1px solid var(--line);background:var(--panel);overflow:auto;padding:12px 14px}
+aside h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--sub);margin:14px 0 6px}
+aside h2:first-child{margin-top:0}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;text-align:center}
+.stats div{border:1px solid var(--line);border-radius:8px;padding:5px 2px}
+.stats b{display:block;font-size:16px}
+.leg{display:grid;gap:5px}
+.leg div{display:flex;align-items:center;gap:8px;color:var(--sub)}
+.leg svg{width:34px;height:10px;flex:none}
+ul.list{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+ul.list li{border:1px solid var(--line);border-radius:8px;padding:5px 8px;cursor:pointer}
+ul.list li:hover{border-color:var(--accent)}
+ul.list small{color:var(--sub);display:block}
+.tag{display:inline-block;border-radius:5px;padding:0 5px;font-size:11px;margin-right:4px;border:1px solid currentColor}
+.tag.warn{color:var(--warn)}.tag.bad{color:var(--bad)}
+code{font:11px ui-monospace,Consolas,monospace;color:var(--sub);word-break:break-all}
+#banner{display:none;position:absolute;top:8px;left:8px;right:8px;background:var(--bad);color:#fff;padding:6px 10px;border-radius:8px;z-index:3}
+/* diagram */
+.gbox{fill:var(--group);stroke:var(--line)}
+.gtitle{fill:var(--sub);font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}
+.node rect.body{fill:var(--node);stroke:var(--nodeb);stroke-width:1.2}
+.node .t1{fill:var(--ink);font-size:11.5px;font-weight:600}
+.node .t2{fill:var(--sub);font-size:8.6px;font-family:ui-monospace,Consolas,monospace}
+.node{cursor:pointer}
+.node.tab rect.body{stroke:var(--accent);stroke-width:1.8}
+.node.guard rect.body{stroke:var(--guard);stroke-dasharray:2 3;stroke-width:1.6}
+.node.external rect.body{stroke:var(--sub);stroke-dasharray:5 3;rx:20}
+.node.modal rect.body{stroke:var(--modal);stroke-dasharray:6 3}
+.node.redirect rect.body,.node.dev rect.body{stroke-dasharray:3 3;opacity:.8}
+.node.orphan rect.body{stroke:var(--bad);stroke-width:2.2}
+.node.warn rect.body{stroke:var(--warn);stroke-width:2}
+.badge{font-size:8.5px;font-weight:700}
+.badge.o{fill:var(--bad)}.badge.w{fill:var(--warn)}
+.edge path.v{fill:none;stroke-width:1.5;opacity:.65}.edge.doubtful path.v,.edge.broken path.v,.edge.on path.v,.edge:hover path.v{opacity:1}
+.edge path.hit{fill:none;stroke:transparent;stroke-width:12}
+.edge.r-all path.v{stroke:var(--all)}.edge.r-client path.v{stroke:var(--client)}
+.edge.r-provider path.v{stroke:var(--provider)}.edge.r-admin path.v{stroke:var(--admin)}
+.edge.guard path.v,.edge.redirect path.v{stroke:var(--guard);stroke-dasharray:2 4;stroke-width:1.9}
+.edge.deeplink path.v{stroke-dasharray:1 4}
+.edge.doubtful path.v{stroke:var(--warn);stroke-dasharray:7 4;stroke-width:2.2}
+.edge.broken path.v{stroke:var(--bad);stroke-dasharray:7 4;stroke-width:2.4}
+.elabel{pointer-events:none;display:none}
+.elabel rect{fill:var(--panel);stroke:var(--line)}
+.elabel text{fill:var(--ink);font-size:9.5px}
+.edge.doubtful .elabel,.edge.broken .elabel,.edge.on .elabel,.edge:hover .elabel{display:block}
+.dim{opacity:.1}
+.node.dim{opacity:.18}
+.edge.on path.v{stroke-width:2.6}
+.hl rect.body{stroke:var(--accent)!important;stroke-width:3!important}
+.off{display:none}
+.fade{opacity:.22}
+@media (max-width:820px){.main{grid-template-columns:1fr;grid-template-rows:60vh auto}aside{border-left:0;border-top:1px solid var(--line)}input[type=search]{width:120px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Bosko &middot; flujo de navegacion</h1>
+    <span class="seg" role="group" aria-label="Rol" id="roles">
+      <button data-role="all" aria-pressed="true">Todos</button>
+      <button data-role="client" aria-pressed="false">Cliente</button>
+      <button data-role="provider" aria-pressed="false">Proveedor</button>
+      <button data-role="admin" aria-pressed="false">Admin</button>
+    </span>
+    <label class="chk"><input type="checkbox" id="fIssues"> Solo problemas</label>
+    <label class="chk"><input type="checkbox" id="fGuards"> Ocultar guards</label>
+    <input type="search" id="q" placeholder="Buscar pantalla o ruta" aria-label="Buscar">
+    <button class="btn" id="bFit">Ajustar</button>
+    <button class="btn" id="bTheme">Tema</button>
+  </header>
+  <div class="main">
+    <div id="stage"><div id="banner"></div>
+      <svg id="svg" role="img" aria-label="Diagrama del flujo de navegacion de Bosko"><defs id="defs"></defs><g id="vp"><g id="gGroups"></g><g id="gEdges"></g><g id="gNodes"></g></g></svg>
+    </div>
+    <aside>
+      <h2>Resumen</h2><div class="stats" id="stats"></div>
+      <h2>Seleccion</h2><div id="sel"><span style="color:var(--sub)">Click en una pantalla para enfocar sus enlaces. Esc o click en el fondo para salir. Rueda = zoom, arrastrar = mover.</span></div>
+      <h2>Leyenda</h2><div class="leg" id="legend"></div>
+      <h2>Problemas abiertos</h2><ul class="list" id="issues"></ul>
+    </aside>
+  </div>
+</div>
+<script>
+(function(){
+"use strict";
+var NS="http://www.w3.org/2000/svg", CW=176, CH=62, NW=156, NH=44, PADX=16, PADT=34, PADB=12;
+var N={}, nodes=[], edges=[], pos={}, sel=null, role="all";
+function el(n,a,p){var e=document.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+function esc(s){return String(s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
+function trunc(s,n){return s.length>n?s.slice(0,n-1)+"…":s}
+
+// ---- parse data
+NAVMAP.nodes.forEach(function(r){
+  var f=(r[7]||"").split(","), o={id:r[0],label:r[1],route:r[2],file:r[3],area:r[4],kind:r[5],roles:r[6],orphan:false,compat:false,warn:null,task:null};
+  f.forEach(function(x){x=x.trim();if(!x)return;if(x==="orphan")o.orphan=true;else if(x==="entry")o.entry=true;else if(x==="compat")o.compat=true;else if(x.indexOf("warn:")===0)o.warn=x.slice(5);else if(/^N\d+$/.test(x))o.task=x});
+  N[o.id]=o;nodes.push(o)});
+NAVMAP.edges.forEach(function(r,i){edges.push({i:i,from:r[0],to:r[1],label:r[2],how:r[3],status:r[4],role:r[5],ref:r[6]||"",task:r[7]||null})});
+var errs=[];
+edges.forEach(function(e){if(!N[e.from])errs.push("edge "+e.i+": unknown from "+e.from);if(!N[e.to])errs.push("edge "+e.i+": unknown to "+e.to)});
+var areaIds={};NAVMAP.areas.forEach(function(a){areaIds[a.id]=a});
+nodes.forEach(function(n){if(!areaIds[n.area])errs.push("node "+n.id+": unknown area "+n.area)});
+var inc={},out={};nodes.forEach(function(n){inc[n.id]=[];out[n.id]=[]});
+edges.forEach(function(e){if(N[e.from]&&N[e.to]){out[e.from].push(e);inc[e.to].push(e)}});
+nodes.forEach(function(n){var real=inc[n.id].filter(function(e){return N[e.from].kind!=="external"});
+  if(n.orphan&&real.length)errs.push("node "+n.id+" is flagged orphan but has screen incoming edges");
+  if(!n.orphan&&!real.length&&inc[n.id].length===0&&!n.entry&&["guard","external","redirect"].indexOf(n.kind)<0)errs.push("node "+n.id+" has no incoming edge and is not flagged orphan")});
+if(errs.length){var b=document.getElementById("banner");b.style.display="block";b.textContent="Data errors: "+errs.join(" | ");console.warn(errs)}
+
+// ---- layout
+var gp={};NAVMAP.areas.forEach(function(a){gp[a.id]={a:a,list:[]}});
+nodes.forEach(function(n){if(gp[n.area])gp[n.area].list.push(n)});
+var gGroups=document.getElementById("gGroups"),gEdges=document.getElementById("gEdges"),gNodes=document.getElementById("gNodes");
+NAVMAP.areas.forEach(function(a){var g=gp[a.id],rows=Math.ceil(g.list.length/a.cols),w=a.cols*CW+PADX*2-(CW-NW),h=rows*CH+PADT+PADB-(CH-NH);
+  el("rect",{x:a.x,y:a.y,width:w,height:h,rx:12,"class":"gbox"},gGroups);
+  var t=el("text",{x:a.x+PADX,y:a.y+20,"class":"gtitle"},gGroups);t.textContent=a.title;
+  g.list.forEach(function(n,i){pos[n.id]={x:a.x+PADX+(i%a.cols)*CW+NW/2,y:a.y+PADT+Math.floor(i/a.cols)*CH+NH/2}})});
+
+// ---- markers
+var defs=document.getElementById("defs");
+var mk=el("marker",{id:"arr",viewBox:"0 0 10 10",refX:9,refY:5,markerWidth:7,markerHeight:7,orient:"auto-start-reverse",markerUnits:"userSpaceOnUse"},defs);
+el("path",{d:"M0 1 L10 5 L0 9 z",fill:"context-stroke"},mk);
+
+// ---- edges
+function anchor(c,o){var dx=o.x-c.x,dy=o.y-c.y;if(!dx&&!dy)return{x:c.x,y:c.y};var hw=NW/2+2,hh=NH/2+2,s=Math.min(dx?hw/Math.abs(dx):1e9,dy?hh/Math.abs(dy):1e9);return{x:c.x+dx*s,y:c.y+dy*s}}
+var edgeEls=[];
+edges.forEach(function(e){
+  if(!pos[e.from]||!pos[e.to])return;
+  var a=pos[e.from],b=pos[e.to],p1=anchor(a,b),p2=anchor(b,a),dx=p2.x-p1.x,dy=p2.y-p1.y,d=Math.hypot(dx,dy)||1,off=Math.min(60,d*.14);
+  var mx=(p1.x+p2.x)/2-dy/d*off,my=(p1.y+p2.y)/2+dx/d*off;
+  var D="M"+p1.x.toFixed(1)+" "+p1.y.toFixed(1)+" Q"+mx.toFixed(1)+" "+my.toFixed(1)+" "+p2.x.toFixed(1)+" "+p2.y.toFixed(1);
+  var lx=.25*p1.x+.5*mx+.25*p2.x,ly=.25*p1.y+.5*my+.25*p2.y;
+  var g=el("g",{"class":"edge r-"+e.role+" "+e.how+" "+e.status,"data-i":e.i},gEdges);
+  el("path",{d:D,"class":"hit"},g);
+  el("path",{d:D,"class":"v","marker-end":"url(#arr)"},g);
+  var lg=el("g",{"class":"elabel"},g),txt=trunc(e.label,46),t=el("text",{x:lx,y:ly+3,"text-anchor":"middle"},lg);t.textContent=txt;
+  var w=txt.length*5+10;lg.insertBefore(el("rect",{x:lx-w/2,y:ly-7,width:w,height:14,rx:4}),t);
+  var tt=el("title",{},g);tt.textContent=N[e.from].label+" → "+N[e.to].label+" : "+e.label+" ["+e.how+", "+e.status+(e.ref?", "+e.ref:"")+"]";
+  edgeEls[e.i]=g});
+
+// ---- nodes
+var nodeEls={};
+nodes.forEach(function(n){var p=pos[n.id];if(!p)return;
+  var cls="node "+n.kind+(n.orphan?" orphan":"")+(n.warn?" warn":""),g=el("g",{"class":cls,"data-id":n.id,tabindex:0,role:"button","aria-label":n.label+" "+n.route},gNodes);
+  el("rect",{"class":"body",x:p.x-NW/2,y:p.y-NH/2,width:NW,height:NH,rx:n.kind==="external"?20:8},g);
+  var t1=el("text",{"class":"t1",x:p.x-NW/2+9,y:p.y-3},g);t1.textContent=trunc(n.label,(n.orphan||n.warn||n.compat)?17:24);
+  var t2=el("text",{"class":"t2",x:p.x-NW/2+9,y:p.y+12},g);t2.textContent=trunc(n.route,31);
+  if(n.orphan){var o=el("text",{"class":"badge o",x:p.x+NW/2-6,y:p.y-NH/2+11,"text-anchor":"end"},g);o.textContent="HUERFANA"}
+  else if(n.warn){var w=el("text",{"class":"badge w",x:p.x+NW/2-6,y:p.y-NH/2+11,"text-anchor":"end"},g);w.textContent="⚠"}
+  else if(n.compat){var c=el("text",{"class":"badge",x:p.x+NW/2-6,y:p.y-NH/2+11,"text-anchor":"end",fill:"var(--sub)"},g);c.textContent="compat"}
+  var tt=el("title",{},g);tt.textContent=n.label+"\n"+n.route+"\n"+n.file;
+  g.addEventListener("click",function(ev){ev.stopPropagation();focus(n.id)});
+  g.addEventListener("keydown",function(ev){if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();focus(n.id)}});
+  nodeEls[n.id]=g});
+
+// ---- filtering / focus
+function edgeVisible(e){
+  if(role!=="all"&&e.role!=="all"&&e.role!==role)return false;
+  if(document.getElementById("fGuards").checked&&(e.how==="guard"||e.how==="redirect"||e.how==="deeplink"||e.how==="tab"))return false;
+  return true}
+function nodeInRole(n){return role==="all"||!n.roles.length||n.roles.indexOf(role)>=0}
+function refresh(){
+  var issuesOnly=document.getElementById("fIssues").checked,q=document.getElementById("q").value.trim().toLowerCase(),nb={};
+  if(sel){nb[sel]=1;edges.forEach(function(e){if(edgeVisible(e)&&(e.from===sel||e.to===sel)){nb[e.from]=1;nb[e.to]=1}})}
+  edges.forEach(function(e){var g=edgeEls[e.i];if(!g)return;var vis=edgeVisible(e);g.classList.toggle("off",!vis);
+    var touch=sel&&(e.from===sel||e.to===sel),isIssue=e.status!=="ok",dim=false;
+    if(sel)dim=!touch;else if(issuesOnly)dim=!isIssue;
+    g.classList.toggle("dim",dim);g.classList.toggle("on",!!touch)});
+  nodes.forEach(function(n){var g=nodeEls[n.id];if(!g)return;var dim=false,hl=false;
+    if(sel)dim=!nb[n.id];else if(issuesOnly)dim=!(n.orphan||n.warn)&&!edges.some(function(e){return e.status!=="ok"&&(e.from===n.id||e.to===n.id)});
+    if(!nodeInRole(n))dim=true;
+    if(q&&(n.label+" "+n.route+" "+n.file).toLowerCase().indexOf(q)>=0)hl=true;
+    g.classList.toggle("dim",dim);g.classList.toggle("hl",hl)});
+  renderSel()}
+function focus(id){sel=(sel===id?null:id);refresh()}
+function renderSel(){var s=document.getElementById("sel");
+  if(!sel){s.innerHTML='<span style="color:var(--sub)">Click en una pantalla para enfocar sus enlaces. Esc o click en el fondo para salir. Rueda = zoom, arrastrar = mover.</span>';return}
+  var n=N[sel],h="<b>"+esc(n.label)+"</b><br><code>"+esc(n.route)+"</code><br><code>"+esc(n.file)+"</code>";
+  if(n.roles.length)h+="<br>Roles: "+n.roles.join(", ");
+  if(n.orphan)h+='<br><span class="tag bad">huerfana</span>'+(n.task?esc(n.task)+": "+esc(NAVMAP.tasks[n.task]||""):"");
+  if(n.warn)h+='<br><span class="tag warn">aviso</span>'+esc(n.warn)+(n.task?" ("+n.task+")":"");
+  function lst(title,arr,dir){if(!arr.length)return"";return"<h2>"+title+" ("+arr.length+")</h2><ul class='list'>"+arr.map(function(e){var o=N[dir==="to"?e.to:e.from];
+    return"<li data-go='"+o.id+"'><b>"+(dir==="to"?"→ ":"← ")+esc(o.label)+"</b>"+(e.status!=="ok"?" <span class='tag "+(e.status==="broken"?"bad":"warn")+"'>"+(e.status==="broken"?"roto":"dudoso")+"</span>":"")+"<small>"+esc(e.label)+" ["+e.how+(e.role!=="all"?", "+e.role:"")+"]</small><small><code>"+esc(e.ref)+"</code></small></li>"}).join("")+"</ul>"}
+  h+=lst("Salidas",out[sel].filter(edgeVisible),"to")+lst("Entradas",inc[sel].filter(edgeVisible),"from");
+  s.innerHTML=h;
+  [].forEach.call(s.querySelectorAll("li[data-go]"),function(li){li.addEventListener("click",function(){focus(li.getAttribute("data-go"))})})}
+
+// ---- static panels
+(function(){var br=edges.filter(function(e){return e.status==="broken"}).length,db=edges.filter(function(e){return e.status==="doubtful"}).length,or=nodes.filter(function(n){return n.orphan}).length;
+  document.getElementById("stats").innerHTML=[["Nodos",nodes.length],["Enlaces",edges.length],["Rotos",br],["Dudosos",db],["Huerfanas",or]].map(function(x){return"<div><b>"+x[1]+"</b>"+x[0]+"</div>"}).join("");
+  function sw(c,dash,w){return'<svg viewBox="0 0 34 10"><path d="M1 5H33" stroke="'+c+'" stroke-width="'+(w||2)+'" fill="none"'+(dash?' stroke-dasharray="'+dash+'"':"")+"/></svg>"}
+  document.getElementById("legend").innerHTML=[
+    [sw("var(--all)"),"Navegacion (cualquier rol)"],[sw("var(--client)"),"Solo cliente"],[sw("var(--provider)"),"Solo proveedor"],[sw("var(--admin)"),"Solo admin"],
+    [sw("var(--guard)","2 4",2.2),"Guard / redirect"],[sw("var(--warn)","7 4",2.4),"Dudoso (⚠)"],[sw("var(--bad)","7 4",2.4),"Roto (❌)"],
+    [sw("var(--all)","1 4"),"Deep link / push"],
+    ['<svg viewBox="0 0 34 14"><rect x="1" y="2" width="32" height="10" rx="3" fill="none" stroke="var(--bad)" stroke-width="2"/></svg>',"Huerfana (sin entrada)"],
+    ['<svg viewBox="0 0 34 14"><rect x="1" y="2" width="32" height="10" rx="3" fill="none" stroke="var(--modal)" stroke-dasharray="4 2"/></svg>',"Modal (sin ruta)"],
+    ['<svg viewBox="0 0 34 14"><rect x="1" y="2" width="32" height="10" rx="3" fill="none" stroke="var(--accent)" stroke-width="2"/></svg>',"Tab"]
+  ].map(function(r){return"<div>"+r[0]+"<span>"+r[1]+"</span></div>"}).join("");
+  var items=[];
+  nodes.forEach(function(n){if(n.orphan)items.push({id:n.id,t:"huerfana",c:"bad",task:n.task,txt:n.label+" ("+n.route+")"});else if(n.warn&&!edges.some(function(e){return e.task===n.task&&e.status!=="ok"}))items.push({id:n.id,t:"aviso",c:"warn",task:n.task,txt:n.label+": "+n.warn})});
+  edges.forEach(function(e){if(e.status!=="ok")items.push({id:e.from,t:e.status==="broken"?"roto":"dudoso",c:e.status==="broken"?"bad":"warn",task:e.task,txt:N[e.from].label+" → "+N[e.to].label+": "+e.label})});
+  var ul=document.getElementById("issues");ul.innerHTML=items.map(function(it){return"<li data-go='"+it.id+"'><span class='tag "+it.c+"'>"+it.t+"</span>"+(it.task?"<b>"+it.task+"</b> ":"")+esc(it.txt)+"</li>"}).join("");
+  [].forEach.call(ul.querySelectorAll("li"),function(li){li.addEventListener("click",function(){sel=null;focus(li.getAttribute("data-go"));zoomTo(li.getAttribute("data-go"))})})})();
+
+// ---- controls
+[].forEach.call(document.querySelectorAll("#roles button"),function(b){b.addEventListener("click",function(){role=b.getAttribute("data-role");
+  [].forEach.call(document.querySelectorAll("#roles button"),function(x){x.setAttribute("aria-pressed",x===b?"true":"false")});refresh()})});
+["fIssues","fGuards"].forEach(function(id){document.getElementById(id).addEventListener("change",refresh)});
+document.getElementById("q").addEventListener("input",refresh);
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&sel){sel=null;refresh()}});
+document.getElementById("bTheme").addEventListener("click",function(){var r=document.documentElement,dark=r.getAttribute("data-theme")?r.getAttribute("data-theme")==="dark":matchMedia("(prefers-color-scheme: dark)").matches;r.setAttribute("data-theme",dark?"light":"dark")});
+
+// ---- pan / zoom
+var stage=document.getElementById("stage"),svg=document.getElementById("svg"),vp=document.getElementById("vp"),view={x:0,y:0,k:1};
+function apply(){vp.setAttribute("transform","translate("+view.x+" "+view.y+") scale("+view.k+")")}
+function bounds(){var xs=[],ys=[];NAVMAP.areas.forEach(function(a){var g=gp[a.id],rows=Math.ceil(g.list.length/a.cols);xs.push(a.x,a.x+a.cols*CW+PADX*2);ys.push(a.y,a.y+rows*CH+PADT+PADB)});return{x0:Math.min.apply(0,xs),x1:Math.max.apply(0,xs),y0:Math.min.apply(0,ys),y1:Math.max.apply(0,ys)}}
+function fit(){var r=stage.getBoundingClientRect(),b=bounds(),w=b.x1-b.x0+40,h=b.y1-b.y0+40,k=Math.min(r.width/w,r.height/h);view.k=k;view.x=(r.width-w*k)/2-(b.x0-20)*k;view.y=(r.height-h*k)/2-(b.y0-20)*k;apply()}
+function zoomTo(id){var p=pos[id],r=stage.getBoundingClientRect();if(!p)return;view.k=Math.max(view.k,1.1);view.x=r.width/2-p.x*view.k;view.y=r.height/2-p.y*view.k;apply()}
+stage.addEventListener("wheel",function(e){e.preventDefault();var r=stage.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top,f=Math.exp(-e.deltaY*.0015),nk=Math.min(4,Math.max(.15,view.k*f));
+  view.x=mx-(mx-view.x)*(nk/view.k);view.y=my-(my-view.y)*(nk/view.k);view.k=nk;apply()},{passive:false});
+var drag=null,moved=false;
+stage.addEventListener("pointerdown",function(e){if(e.target.closest&&e.target.closest(".node"))return;drag={x:e.clientX,y:e.clientY,vx:view.x,vy:view.y};moved=false;stage.classList.add("drag");stage.setPointerCapture(e.pointerId)});
+stage.addEventListener("pointermove",function(e){if(!drag)return;var dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>3)moved=true;view.x=drag.vx+dx;view.y=drag.vy+dy;apply()});
+stage.addEventListener("pointerup",function(){drag=null;stage.classList.remove("drag")});
+stage.addEventListener("click",function(){if(moved){moved=false;return}if(sel){sel=null;refresh()}});
+document.getElementById("bFit").addEventListener("click",fit);
+window.addEventListener("resize",fit);
+fit();refresh();
+})();
+</script>
+</body>
+</html>
