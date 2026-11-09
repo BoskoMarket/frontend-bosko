@@ -6,7 +6,6 @@ import { Text } from 'react-native';
 import { PREMIUM_PALETTE, usePremiumColors, useThemeColors, PALETTE } from '@/core/design-system';
 import { useThemeStore } from '@/stores/theme.store';
 import { PremiumButton } from '@/components/PremiumButton';
-import { FeaturesSection } from '@/components/FeaturesSection';
 import { BrandMark } from '@/components/BrandMark';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -41,13 +40,11 @@ describe('shared components follow the theme', () => {
       <>
         <PremiumButton title="Suscribirme" onPress={() => {}} />
         <PremiumButton title="Outline" variant="outline" onPress={() => {}} />
-        <FeaturesSection />
         <BrandMark variant="lockup" tagline />
         <ThemeToggle />
       </>,
     );
     expect(getByText('Suscribirme')).toBeTruthy();
-    expect(getByText('Confianza Total')).toBeTruthy();
     expect(JSON.stringify(toJSON())).toContain(PALETTE[mode].text);
   });
 });

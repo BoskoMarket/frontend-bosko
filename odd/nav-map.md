@@ -38,14 +38,13 @@ Cambios de destino de esta reestructura:
 
 ## Rutas existentes (`app/`)
 
-Generado con `npm run routes:generate` (`scripts/generate-routes.cjs` → `.expo/types/router.d.ts`, ignorado por git, no se commitea) y contrastado con `git ls-files app`. 48 pantallas + 9 layouts. Los grupos `(tabs)` no aparecen en la URL pública (`/(tabs)/profile` ≡ `/profile`).
+Generado con `npm run routes:generate` (`scripts/generate-routes.cjs` → `.expo/types/router.d.ts`, ignorado por git, no se commitea) y contrastado con `git ls-files app`. 45 pantallas + 9 layouts. Los grupos `(tabs)` no aparecen en la URL pública (`/(tabs)/profile` ≡ `/profile`).
 
 | Ruta | Archivo |
 |---|---|
 | `/(tabs)/chat` | `app/(tabs)/chat.tsx` |
 | `/(tabs)` | `app/(tabs)/index.tsx` |
 | `/(tabs)/orders` | `app/(tabs)/orders.tsx` |
-| `/(tabs)/profile/AddServices` | `app/(tabs)/profile/AddServices.tsx` |
 | `/(tabs)/profile/ChangePassword` | `app/(tabs)/profile/ChangePassword.tsx` |
 | `/(tabs)/profile/EditProfile` | `app/(tabs)/profile/EditProfile.tsx` |
 | `/(tabs)/profile/Payments` | `app/(tabs)/profile/Payments.tsx` |
@@ -74,8 +73,6 @@ Generado con `npm run routes:generate` (`scripts/generate-routes.cjs` → `.expo
 | `/chat/[id]` | `app/chat/[id].tsx` |
 | `/chat` | `app/chat/index.tsx` |
 | `/` | `app/index.tsx` |
-| `/login/LogInView` | `app/login/LogInView.tsx` |
-| `/login/RegisterView` | `app/login/RegisterView.tsx` |
 | `/login/forgot-password` | `app/login/forgot-password.tsx` |
 | `/login` | `app/login/index.tsx` |
 | `/login/termsAndConditions` | `app/login/termsAndConditions.tsx` |
@@ -108,11 +105,11 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Login (`/login`) | `screens/LogInView.tsx:96` | "Ingresar" ok | `router.replace` | `/(tabs)` | - | ✅ |
 | Login (`/login`) | `screens/LogInView.tsx:109` | "Continuar con Google" ok | `router.replace` | `/(tabs)` | - | ✅ |
 | Login (`/login`) | `screens/LogInView.tsx:185` | "¿Olvidaste tu contraseña?" | `router.push` | `/login/forgot-password` | - | ✅ |
-| Login (`/login`) | `screens/LogInView.tsx` (prop `toRegister`) | "Registrarse" | Callback al padre → `showRegister=true` | `RegisterView` (vista local) | - | ⚠️ no-op si se abre como ruta `/login/LogInView` (sin prop) |
+| Login (`/login`) | `screens/LogInView.tsx` (prop `toRegister`) | "Registrarse" | Callback al padre → `showRegister=true` | `RegisterView` (vista local) | - | ✅ (rutas duplicadas eliminadas en `e971f5a`) |
 | Registro (`/login`, vista) | `screens/RegisterView.tsx:139` | "Crear cuenta" (paso 4) ok | `router.push` (string armado) | `/auth/verify-email` | `email` (query en el string, `encodeURIComponent`) | ⚠️ href string, no objeto |
 | Registro (`/login`, vista) | `screens/RegisterView.tsx:160` | "Registrarse con Google" ok | `router.replace` | `/(tabs)` | - | ✅ |
-| Registro (`/login`, vista) | `screens/RegisterView.tsx` (`handleBack`) | Flecha atrás en paso 1 | Callback `toRegister` → `showRegister=false` | `LogInView` (vista local) | - | ⚠️ no-op si se abre como ruta `/login/RegisterView` |
-| Registro (`/login`, vista) | `screens/RegisterView.tsx` (prop `toRegister`) | "Ingresar" (¿Ya tenés cuenta?) | Callback al padre → `showRegister=false` | `LogInView` (vista local) | - | ⚠️ idem |
+| Registro (`/login`, vista) | `screens/RegisterView.tsx` (`handleBack`) | Flecha atrás en paso 1 | Callback `toRegister` → `showRegister=false` | `LogInView` (vista local) | - | ✅ |
+| Registro (`/login`, vista) | `screens/RegisterView.tsx` (prop `toRegister`) | "Ingresar" (¿Ya tenés cuenta?) | Callback al padre → `showRegister=false` | `LogInView` (vista local) | - | ✅ |
 | Registro (`/login`, vista) | `screens/RegisterView.tsx:150` | Error general de registro | `Alert.alert` (modal nativo) | - | - | ✅ |
 | Recuperar contraseña (`/login/forgot-password`) | `screens/ForgotPasswordScreen.tsx:116` | Botón atrás | `safeBack` | `router.back()` o fallback `/login` | - | ✅ |
 | Recuperar contraseña (`/login/forgot-password`) | `screens/ForgotPasswordScreen.tsx:96` | "Enviar código" ok | `router.push` | `/auth/verify-reset-code` | `email` | ✅ |
@@ -130,7 +127,6 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Cambiar contraseña (`/(tabs)/profile/ChangePassword`) | `screens/ChangePasswordScreen.tsx:105` | "OK" del `Alert` de éxito | `Alert.alert` → `safeBack` | `router.back()` o fallback `/(tabs)/profile` | - | ✅ |
 | Layout tabs (`/(tabs)/*`) | `app/(tabs)/_layout.tsx:25` | Sin sesión (guard) | `<Redirect>` | `/login` | - | ✅ |
 | Layout raíz | `app/_layout.tsx:70` | Sin sesión y segmento protegido (`(tabs)`, `orders`, `chat`, `admin`, `service-form`, `search`, `upload-reel`) | `router.replace` (effect) | `/login` | - | ✅ |
-| Rutas duplicadas | `app/login/LogInView.tsx`, `app/login/RegisterView.tsx` | - | Wrappers de ruta que renderizan la vista sin props | - | - | ⚠️ ver "Enlaces rotos / dudosos" |
 | Tab bar (`/(tabs)/*`) | `src/components/CustomTabBar.tsx` (`onPress`) | Tap en un tab no enfocado (Inicio, Reels, Pedidos/Órdenes, Mensajes, Perfil) | `navigation.navigate` | `/(tabs)`, `/(tabs)/reels`, `/(tabs)/orders`, `/(tabs)/chat`, `/(tabs)/profile` | `route.params` | ✅ los 5 existen en `app/(tabs)/_layout.tsx`; `services` está oculto (`href: null`) |
 | Tab bar (`/(tabs)/*`) | `src/components/CustomTabBar.tsx` (`onPress`) | Tap en el tab ya enfocado con stack anidado | `StackActions.popToTop` | Raíz del stack del tab (ej. `/(tabs)/profile`) | - | ✅ |
 | Perfil (`/(tabs)/profile`) | `src/features/profile/ProfileScreen.tsx:349` | Tap en el avatar del hero | `router.push` | `/(tabs)/profile/EditProfile` | - | ✅ |
@@ -139,12 +135,6 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Editar perfil (`/(tabs)/profile/EditProfile`) | `src/features/users/screens/EditProfileScreen.tsx` | "Verificar" teléfono | `router.push` | `/(tabs)/profile/verify-phone` | - | ✅ |
 | Proveedor (`/(tabs)/services/provider/[id]`) | `src/features/servicesUser/components/ServiceDetailModal.tsx:162` | "Solicitar Servicio" (modal de detalle) | cierra el modal + `router.push({ pathname, params })` | `/orders/quote` | `serviceId`, `serviceTitle`, `providerName` (los lee `QuoteRequestScreen`) | ✅ |
 | Proveedor (`/(tabs)/services/provider/[id]`) | `src/features/servicesUser/components/ServiceDetailModal.tsx` | Abrir/cerrar detalle de servicio (lo monta `ProviderProfileScreen`) | `Modal` | - (modal, sin ruta) | - | ✅ |
-| Banner premium (sin uso) | `src/components/PremiumBanner.tsx:35` | Ícono de búsqueda | `router.push` | `/search` | - | ✅ (componente sin importadores) |
-| Banner premium (sin uso) | `src/components/PremiumBanner.tsx` | Ícono de notificaciones | `Pressable` sin `onPress` | - | - | ⚠️ no navega a ningún lado |
-| CTA proveedor (sin uso) | `src/components/ProviderCTA.tsx:78` | "Convertirme en Proveedor" | `onPress={() => {}}` (no-op) | debería ir a `/(tabs)/profile/become-provider` | - | ⚠️ no navega (componente sin importadores) |
-| Promo (sin uso) | `src/features/servicesUser/components/PromoBanner.tsx` | "Suscribirme" | `onPress={() => {}}` (no-op) | debería ir a `/(tabs)/profile/plans` | - | ⚠️ no navega (componente sin importadores) |
-| Tarjeta profesional (sin uso) | `src/features/servicesUser/components/ProfesionalCard.tsx` | "Reservar" | `TouchableOpacity` sin `onPress` | - | - | ⚠️ no navega (solo lo importa `ProfesionalCarousel`, que no tiene importadores) |
-| Carrusel de categorías (sin uso) | `src/components/CategoryVideoCarousel.tsx` | Tap en una categoría | callback `onSelectCategory(id)` | decide el padre (nadie lo monta) | `id` | ⚠️ sin importadores |
 | Auth gate de carga | `src/features/auth/state/AuthContext.tsx:263` | Error de sesión: "Reintentar conexión" / "Cerrar sesión" | `setAttempt` (re-valida) / `logout()` | - / `/login` (por el guard de `app/_layout.tsx`) | - | ✅ |
 | Infra (`app/_layout.tsx`) | `src/core/components/BiometricLockGate.tsx`, `ErrorBoundary.tsx`, `OfflineBanner.tsx`, `UpdateBanner.tsx` | Bloqueo biométrico, error de render, sin conexión, update disponible | Overlays / `applyUpdate` | - (sin navegación) | - | ✅ |
 | Home (`/(tabs)`) | `src/features/servicesUser/screens/DashboardScreen.tsx:364` | Barra "Buscar servicios, profesionales…" | `router.push` | `/search` | - | ✅ |
@@ -173,27 +163,39 @@ Layouts: `app/(tabs)/_layout.tsx`, `app/(tabs)/profile/_layout.tsx`, `app/(tabs)
 | Publicar servicio (`/service-form`) | `screens/ServiceFormScreen.tsx` (`handlePickImage`, galería) | "Foto principal" / "Agregar" | `ImagePicker` (selector nativo) | - | - | ✅ |
 | Layout servicios (`/(tabs)/services/*`) | `app/(tabs)/services/_layout.tsx` | - | Stack (index, category/[id], provider/[id]) con colores `tc.*` | - | - | ✅ |
 | Hero (sin uso) | `src/features/servicesUser/components/HeroCarousel.tsx:29` | "Explorar" | `router.push` | `/(tabs)/services` | - | ✅ (componente sin importadores, B26) |
-| Ruta huérfana | `app/(tabs)/profile/AddServices.tsx` | - | Registrada solo en `profile/_layout.tsx`; renderiza `ServiceFormScreen` | - | - | ⚠️ nadie navega ahí (B36) |
 
 ## Enlaces rotos / dudosos
 
 | Origen | Archivo:línea | Destino | Problema |
 |---|---|---|---|
 | Registro | `src/features/auth/screens/RegisterView.tsx:139` | `/auth/verify-email?email=…` | Href armado con template string en vez de `{ pathname, params }`; la ruta existe, pero no hay chequeo de tipos de params. |
-| Login / Registro (rutas) | `app/login/LogInView.tsx`, `app/login/RegisterView.tsx` | `/login/LogInView`, `/login/RegisterView` | Rutas huérfanas (nadie navega ahí; `/login` ya muestra ambas vistas vía `LoginIndex`). Si se abren, `toRegister` queda `undefined`: "Registrarse", "Ingresar" y la flecha atrás del paso 1 no hacen nada. |
+| Login / Registro (rutas) | `app/login/LogInView.tsx`, `app/login/RegisterView.tsx` | `/login/LogInView`, `/login/RegisterView` | ✅ removido en `e971f5a` (rutas huérfanas; `/login` ya muestra ambas vistas vía `LoginIndex`). |
 | Términos | `app/login/termsAndConditions.tsx` | `/login/termsAndConditions` | Sin entrada: ninguna pantalla enlaza a Términos (ni el registro ni el login). El banner de la pantalla asume que viene post-registro. |
 | Verificar email / reseteo | `app/auth/_layout.tsx` | `/auth/*` | Sin guard inverso: un usuario autenticado puede abrir `/auth/verify-email` o `/auth/reset-password` por deep link. |
 | Video de bienvenida | `app/welcome-video.tsx` | `/welcome-video` | Sin guard: se puede abrir por deep link sin sesión (termina en `/(tabs)` → redirige a `/login`) y sin el flag `WELCOME_VIDEO_PENDING_KEY`. |
-| Banner premium | `src/components/PremiumBanner.tsx` | (ícono de notificaciones) | Botón sin `onPress`; además el componente no tiene importadores. |
-| CTA proveedor / Promo | `src/components/ProviderCTA.tsx:78`, `src/features/servicesUser/components/PromoBanner.tsx` | `become-provider` / `plans` (inferidos) | `PremiumButton` con `onPress` no-op; ninguno de los dos tiene importadores. |
-| Tarjeta profesional | `src/features/servicesUser/components/ProfesionalCard.tsx` | "Reservar" | Sin `onPress`; solo la usa `ProfesionalCarousel`, que no se monta en ningún lado. |
+| Banner premium | `src/components/PremiumBanner.tsx` | (ícono de notificaciones) | ✅ removido en `e971f5a` (código muerto, sin importadores). |
+| CTA proveedor / Promo | `src/components/ProviderCTA.tsx`, `src/features/servicesUser/components/PromoBanner.tsx` | `become-provider` / `plans` (inferidos) | ✅ removidos en `e971f5a` (código muerto, sin importadores). |
+| Tarjeta profesional | `ProfesionalCard.tsx`, `ProfesionalCarousel.tsx` | "Reservar" | ✅ removidos en `e971f5a` (código muerto). También `FeaturesSection` y `CategoryVideoCarousel`. |
 | Home | `DashboardScreen.tsx:521` | `/(tabs)/profile` | Banner "¿Ofrecés servicios?" se muestra solo a proveedores y no lleva a `become-provider` ni a publicar (B33). |
 | Proveedor | `ProviderProfileScreen.tsx:228` | `/orders/quote` | Siempre cotiza `services[0]` (B35). |
 | Home / Categoría | `DashboardScreen.tsx:195`, `CategoryServicesScreen.tsx:141` | `/(tabs)/services/provider/[id]` | CTA "Cotizar por chat" lleva al perfil, no al chat (B34). |
-| Publicar (ruta duplicada) | `app/(tabs)/profile/AddServices.tsx` | `/(tabs)/profile/AddServices` | Sin entrada: nadie enlaza (B36); duplica `/service-form`. |
+| Publicar (ruta duplicada) | `app/(tabs)/profile/AddServices.tsx` | `/(tabs)/profile/AddServices` | ✅ removido en `e971f5a` (duplicaba `/service-form`; también su `Stack.Screen`). |
 
 ## Pantallas sin entrada
 
 Rutas de `app/` a las que no llega ningún enlace (huérfanas).
 
-_Se completa en T13 cruzando "Rutas existentes" con la columna "Destino"._
+Cruce de "Rutas existentes" contra los destinos de `router.*` / `<Redirect>` / `Link` en `src/` y `app/` (2026-11-02, T13). Ninguna ruta del código apunta a estas:
+
+| Ruta | Archivo | Qué es | Decisión |
+|---|---|---|---|
+| `/login/termsAndConditions` | `app/login/termsAndConditions.tsx` | Términos y condiciones (nadie enlaza: ni login ni registro) | **Se queda** (decisión de producto). Abierto: enlazarla desde el registro. |
+| `/welcome-video` | `app/welcome-video.tsx` | Video de bienvenida | **Se queda** (decisión de producto). Sí tiene entrada: `LogInView` hace `replace` tras verificar email; queda abierto el guard por deep link. |
+| `/(tabs)/profile/Payments` | `app/(tabs)/profile/Payments.tsx` | `PaymentsScreen` | Abierto: ninguna fila de Perfil ni acceso rápido la enlaza (¿entrada en "Mi actividad"?). |
+| `/(tabs)/profile/edit/[type]` | `app/(tabs)/profile/edit/[type].tsx` | `ProfileEditScreen` (editor legado por tipo) | Abierto: reemplazado por `EditProfile`; candidato a borrar. |
+| `/(tabs)/profile/kyc/document` | `app/(tabs)/profile/kyc/document.tsx` | `KYCDocumentScreen` | Abierto: `KYCStatus`/`KYCIntro` no la enlazan (el flujo vuelve a `/kyc`). Verificar si el flujo Didit la reemplazó. |
+| `/orders/status` | `app/orders/status.tsx` | `OrderStatusScreen` | Abierto: nadie la enlaza (el detalle vive en `/orders/[id]`). |
+| `/admin/background-check` | `app/admin/background-check.tsx` | Panel admin de antecedentes | Abierto: sin entrada en la UI (solo deep link; hay guard de rol en la pantalla). |
+| `/orders` y `/chat` | `app/orders/index.tsx`, `app/chat/index.tsx` | Redirects a `/(tabs)/orders` y `/(tabs)/chat` | Se quedan: compat de deep links, no son pantallas. |
+
+Confirmadas con entrada: `kyc`, `kyc/intro`, `my-reels`, `my-reviews`, `favorites`, `plans`, `become-provider`, `verify-phone`, `delete-account`, `ChangePassword`, `EditProfile`, `Services`, `background-check`, `upload-reel`, `orders/{[id],checkout,quote,review,payment-success}`, `chat/[id]`, `auth/*`, `login/forgot-password`, `search`, `service-form`.
