@@ -7,6 +7,7 @@ export const DEFAULT_DOCUMENT_TYPES: readonly string[] = ['DNI', 'CEDULA', 'PASA
 
 const LABELS: Record<string, string> = {
   DNI: 'DNI',
+  CC: 'Cédula de ciudadanía',
   CEDULA: 'Cédula',
   PASAPORTE: 'Pasaporte',
   RUT: 'RUT',

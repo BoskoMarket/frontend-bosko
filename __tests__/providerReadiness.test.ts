@@ -94,5 +94,6 @@ describe('document types', () => {
     expect(formatDocumentTypes(['DNI'])).toBe('DNI');
     expect(formatDocumentTypes(['DNI', 'CEDULA', 'PASAPORTE'])).toBe('DNI, Cédula o Pasaporte');
     expect(formatDocumentTypes(['CEDULA', 'PASAPORTE'])).toBe('Cédula o Pasaporte');
+    expect(formatDocumentTypes(['CC'])).toBe('Cédula de ciudadanía');
   });
 });

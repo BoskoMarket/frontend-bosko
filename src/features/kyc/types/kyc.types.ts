@@ -1,5 +1,5 @@
 export type KYCStatus = 'in_progress' | 'approved' | 'rejected' | 'expired' | 'pending' | 'declined' | 'failed' | 'not_started';
-export type DocumentType = 'DNI' | 'CEDULA' | 'PASAPORTE' | 'RUT';
+export type DocumentType = 'DNI' | 'CC' | 'CEDULA' | 'PASAPORTE' | 'RUT';
 
 export interface KYCVerification {
   status: KYCStatus;
