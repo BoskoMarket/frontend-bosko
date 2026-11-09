@@ -49,3 +49,9 @@ export function getRoleSection(status: ProviderStatus): ProfileSection | null {
   if (status === 'client') return { title: 'Mi actividad', rows: CLIENT_ROWS };
   return null;
 }
+
+/** Info rows visible to every role. */
+export const INFO_SECTION: ProfileSection = {
+  title: 'Información',
+  rows: [{ id: 'terms', icon: 'document-text-outline', label: 'Términos y condiciones', href: '/terms' }],
+};

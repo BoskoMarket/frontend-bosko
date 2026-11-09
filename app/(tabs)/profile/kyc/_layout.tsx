@@ -7,7 +7,6 @@ export default function KYCLayout() {
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: tc.bg } }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="intro" />
-      <Stack.Screen name="document" />
     </Stack>
   );
 }

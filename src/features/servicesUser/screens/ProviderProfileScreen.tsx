@@ -21,8 +21,9 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import api from '@/core/api/axiosinstance';
 import { safeBack } from '@/core/navigation/safeBack';
 import { ServiceDetailModal } from '../components/ServiceDetailModal';
+import { quoteHref, resolveQuoteTarget } from '../utils/quoteRoute';
 import type { ServiceSummary } from '@/types/services';
-import { Button, ScreenLoader, GRADIENTS, BRAND_RADIAL_FILL, TOKENS, useIsDark, useThemeColors, withAlpha, type ReportSheetSubmit, dialog, FONT_FAMILY, SPACING } from '@/core/design-system';
+import { Button, ScreenLoader, GRADIENTS, BRAND_RADIAL_FILL, TOKENS, useIsDark, useThemeColors, withAlpha, type ReportSheetSubmit, OptionSheet, dialog, FONT_FAMILY, SPACING } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
 import { ReportFlow } from '@/features/reports/components/ReportFlow';
@@ -124,6 +125,7 @@ export default function ProviderProfileScreen() {
 
   const [provider, setProvider] = useState<PublicProvider | null>(null);
   const [services, setServices] = useState<ServiceSummary[]>([]);
+  const [servicePickerVisible, setServicePickerVisible] = useState(false);
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [nextReviewPage, setNextReviewPage] = useState<number | undefined>();
   const [loadingReviews, setLoadingReviews] = useState(false);
@@ -288,15 +290,15 @@ export default function ProviderProfileScreen() {
   }
 
   const handleRequest = () => {
-    if (services.length === 0) return;
-    router.push({
-      pathname: '/orders/quote',
-      params: {
-        serviceId: services[0].id,
-        providerName: fullName,
-        serviceTitle: services[0].title,
-      },
-    });
+    const target = resolveQuoteTarget(services);
+    if (target.kind === 'direct') router.push(quoteHref(target.service, fullName));
+    else if (target.kind === 'choose') setServicePickerVisible(true);
+  };
+
+  const handlePickService = (serviceId: string) => {
+    setServicePickerVisible(false);
+    const service = services.find(item => item.id === serviceId);
+    if (service) router.push(quoteHref(service, fullName));
   };
 
   return (
@@ -519,6 +521,14 @@ export default function ProviderProfileScreen() {
           </Pressable>
         </View>
       )}
+
+      <OptionSheet
+        visible={servicePickerVisible}
+        title="¿Qué servicio querés cotizar?"
+        options={services.map(item => ({ id: item.id, label: item.title, description: item.summary }))}
+        onSelect={handlePickService}
+        onCancel={() => setServicePickerVisible(false)}
+      />
 
       <ServiceDetailModal
         visible={modalVisible}

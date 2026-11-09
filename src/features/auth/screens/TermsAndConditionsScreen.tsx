@@ -1,15 +1,16 @@
 /**
  * TermsAndConditionsScreen — Términos y condiciones, "Señal Nocturna".
  * Antes era un placeholder de texto suelto; ahora es un documento real y
- * navegable con banner de verificación de email + checkbox de aceptación.
+ * navegable. Se abre desde el último paso del registro (anónimo) y desde Perfil
+ * (autenticado): es informativa, no avanza ningún flujo ni cierra sesión.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { BRAND_NAME, Button, Card, GRADIENTS, NoticeBanner, SPACING, Text, TOKENS, useThemeColors } from '@/core/design-system';
+import { BRAND_NAME, Button, Card, GRADIENTS, SPACING, Text, TOKENS, useThemeColors } from '@/core/design-system';
 import { safeBack } from '@/core/navigation/safeBack';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
@@ -30,13 +31,14 @@ const SECTIONS = [
 
 export default function TermsAndConditionsScreen() {
   const tc = useThemeColors();
-  const [accepted, setAccepted] = useState(false);
+  // Sin historial (deep link) cae a /login; si hay sesión, el guard de /login lo manda a las tabs.
+  const goBack = () => safeBack(router, '/login');
 
   return (
     <View style={[styles.background, { backgroundColor: tc.bg }]}>
       <AnimatedBackground variant="minimal" />
       <LinearGradient colors={GRADIENTS.brandDeep} style={styles.header}>
-        <Pressable onPress={() => safeBack(router, '/login')} hitSlop={12} style={styles.backBtn}>
+        <Pressable onPress={goBack} hitSlop={12} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={22} color={TOKENS.onMedia.icon} />
         </Pressable>
         <View style={styles.headerText}>
@@ -48,10 +50,6 @@ export default function TermsAndConditionsScreen() {
       </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
-        <NoticeBanner icon="mail-unread-outline">
-          Te enviamos un correo de verificación. Revisá tu bandeja mientras leés los términos.
-        </NoticeBanner>
-
         {SECTIONS.map(s => (
           <Card key={s.title}>
             <Text variant="bodySmall" weight="700" style={styles.cardTitle}>{s.title}</Text>
@@ -59,21 +57,8 @@ export default function TermsAndConditionsScreen() {
           </Card>
         ))}
 
-        <Pressable onPress={() => setAccepted(a => !a)} style={styles.acceptRow} hitSlop={8}>
-          <View
-            style={[
-              styles.checkbox,
-              { borderColor: tc.border },
-              accepted && { borderColor: TOKENS.color.signal, backgroundColor: tc.accent },
-            ]}
-          >
-            {accepted && <Ionicons name="checkmark" size={14} color={TOKENS.color.signal} />}
-          </View>
-          <Text variant="bodySmall">Leí y acepto los términos y condiciones</Text>
-        </Pressable>
-
         <View style={styles.btnGap}>
-          <Button label="Volver al inicio" onPress={() => router.replace('/login')} fullWidth />
+          <Button label="Entendido" onPress={goBack} fullWidth />
         </View>
       </ScrollView>
     </View>
@@ -96,14 +81,5 @@ const styles = StyleSheet.create({
   body: { padding: SPACING.xl, gap: 14, paddingBottom: SPACING.huge },
   cardTitle: { marginBottom: SPACING.sm },
   cardBody: { lineHeight: 20 },
-  acceptRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: SPACING.xs },
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   btnGap: { marginTop: SPACING.xs },
 });
