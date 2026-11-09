@@ -1,11 +1,13 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
-import { BRAND } from './src/core/design-system/brand/brand.ts'; // explicit .ts: Expo's config loader does not resolve extensionless imports
+// Plain JSON on purpose: EAS reads this file with Node 20, which cannot load a TypeScript import (it fails silently).
+// brand.ts derives its name and primary color from the same JSON, so a rebrand still starts in the brand folder.
+import brand from './src/core/design-system/brand/brand.core.json';
 
 // Store identity (slug, owner, scheme, bundle ids, EAS projectId, updates URL) is deliberately
-// hardcoded: it must NOT change on a rebrand. Only the display name and brand colors come from BRAND.
+// hardcoded: it must NOT change on a rebrand. Only the display name and primary color come from brand.core.json.
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: BRAND.name,
+  name: brand.name,
   slug: 'Bosko',
   owner: 'apps-frank',
   version: '1.0.0',
@@ -21,7 +23,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   splash: {
     image: './assets/images/bosko-logo.png',
     resizeMode: 'contain',
-    backgroundColor: BRAND.colors.primary,
+    backgroundColor: brand.primary,
   },
   newArchEnabled: true,
   android: {
@@ -55,14 +57,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     infoPlist: {
       NSCameraUsageDescription:
-        `${BRAND.name} necesita acceso a la cámara para que puedas subir fotos y videos de tus servicios.`,
+        `${brand.name} necesita acceso a la cámara para que puedas subir fotos y videos de tus servicios.`,
       NSPhotoLibraryUsageDescription:
-        `${BRAND.name} necesita acceso a tu galería para que puedas subir fotos y videos de tus servicios.`,
-      NSPhotoLibraryAddUsageDescription: `${BRAND.name} necesita permiso para guardar fotos en tu galería.`,
+        `${brand.name} necesita acceso a tu galería para que puedas subir fotos y videos de tus servicios.`,
+      NSPhotoLibraryAddUsageDescription: `${brand.name} necesita permiso para guardar fotos en tu galería.`,
       NSMicrophoneUsageDescription:
-        `${BRAND.name} necesita acceso al micrófono para que puedas grabar y enviar mensajes de voz.`,
+        `${brand.name} necesita acceso al micrófono para que puedas grabar y enviar mensajes de voz.`,
       NSFaceIDUsageDescription:
-        `${BRAND.name} usa Face ID para desbloquear la app de forma segura y rápida.`,
+        `${brand.name} usa Face ID para desbloquear la app de forma segura y rápida.`,
     },
   },
   web: {
@@ -79,7 +81,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         image: './assets/images/bosko-logo.png',
         imageWidth: 200,
         resizeMode: 'contain',
-        backgroundColor: BRAND.colors.primary,
+        backgroundColor: brand.primary,
       },
     ],
     'expo-secure-store',
@@ -91,7 +93,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-notifications',
       {
         icon: './assets/images/bosko-logo.png',
-        color: BRAND.colors.primary,
+        color: brand.primary,
         defaultChannel: 'default',
         sounds: [],
       },
@@ -100,10 +102,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-image-picker',
       {
         photosPermission:
-          `${BRAND.name} necesita acceso a tu galería para subir fotos y videos de tus servicios.`,
+          `${brand.name} necesita acceso a tu galería para subir fotos y videos de tus servicios.`,
         cameraPermission:
-          `${BRAND.name} necesita acceso a la cámara para subir fotos y videos de tus servicios.`,
-        microphonePermission: `${BRAND.name} necesita acceso al micrófono para grabar videos.`,
+          `${brand.name} necesita acceso a la cámara para subir fotos y videos de tus servicios.`,
+        microphonePermission: `${brand.name} necesita acceso al micrófono para grabar videos.`,
       },
     ],
     'expo-document-picker',
@@ -122,7 +124,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-location',
       {
         locationWhenInUsePermission:
-          `${BRAND.name} usa tu ubicación para ubicar tu perfil cuando vos lo solicites.`,
+          `${brand.name} usa tu ubicación para ubicar tu perfil cuando vos lo solicites.`,
       },
     ],
     './plugins/withBouncyCastleFix',
