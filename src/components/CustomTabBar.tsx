@@ -55,7 +55,7 @@ function buildPath(W: number, cx: number): string {
 // ── Component ─────────────────────────────────────────────────────────────────
 /**
  * Routes that get a slot in the bar: they have a TABS entry and are not hidden
- * with `href: null` (hidden routes stay navigable, e.g. the services catalog).
+ * with `href: null` or the hidden style Expo Router derives from it.
  * Each entry keeps its navigator route index so presses target the right route.
  */
 export function getVisibleRoutes(
@@ -66,8 +66,10 @@ export function getVisibleRoutes(
     .map((route, routeIndex) => ({ route, routeIndex }))
     .filter(({ route }) => {
       if (!TABS[route.name]) return false;
-      const href = (descriptors[route.key]?.options as { href?: string | null } | undefined)?.href;
-      return href !== null;
+      const options = descriptors[route.key]?.options;
+      const href = (options as { href?: string | null } | undefined)?.href;
+      const tabBarItemStyle = StyleSheet.flatten(options?.tabBarItemStyle);
+      return href !== null && tabBarItemStyle?.display !== 'none';
     });
 }
 

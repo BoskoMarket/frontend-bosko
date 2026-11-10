@@ -143,6 +143,23 @@ describe('tab helpers', () => {
     expect(getVisibleRoutes(props.state, props.descriptors).map((v) => v.route.name)).toEqual(['index', 'works', 'orders', 'chat', 'profile']);
   });
 
+  it.each([
+    { display: 'none' },
+    [{ display: 'none' }],
+  ])('getVisibleRoutes drops Expo Router hidden styles and preserves route indices', (tabBarItemStyle) => {
+    const { props } = makeProps('index', ['services']);
+    props.descriptors['reels-key'] = {
+      options: {
+        tabBarItemStyle,
+        tabBarButton: () => null,
+      },
+    } as unknown as typeof props.descriptors[string];
+
+    const visible = getVisibleRoutes(props.state, props.descriptors);
+    expect(visible.map(({ route }) => route.name)).toEqual(['index', 'works', 'orders', 'chat', 'profile']);
+    expect(visible.map(({ routeIndex }) => routeIndex)).toEqual([0, 2, 3, 4, 5]);
+  });
+
   it('getTabLabel resolves role-aware labels', () => {
     expect(getTabLabel('orders', false)).toBe('Pedidos');
     expect(getTabLabel('orders', true)).toBe('Órdenes');
