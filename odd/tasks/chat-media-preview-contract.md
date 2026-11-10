@@ -9,7 +9,7 @@ Two separately pushed review branches; the user will open the PRs.
 ## Tasks
 - T1 — S1-S2 — Frontend: render media preview from message type and retain safe fallback behavior — commit: frontend `cc2b8a4`.
 - T2 — S2 — Backend: expose lastMessage messageType and replace media storage-key content with a stable non-path placeholder — commit: backend `5d6c0d6`.
-- T3 — S2 — Verify both repos, commit separate slices, and push both branches without opening or merging PRs — commits: frontend `cc2b8a4` + task evidence `f1825cf`, backend `5d6c0d6`; pushes pending.
+- T3 — S2 — Verify both repos, commit separate slices, and push both branches without opening or merging PRs — frontend commits `cc2b8a4`, `f1825cf`, `eeb733e`; backend commit `5d6c0d6`; both branches pushed to `origin`.
 
 ## Log
 - L1: Cuando estamos en la pantalla principal de mensajes, aparece el ultimo mensaje, el problema que si es un archivo multimedia o algo asi asi dice chat/uuid/xxxxxx eso esta rarisimo
@@ -20,3 +20,4 @@ Two separately pushed review branches; the user will open the PRs.
 - L6: The user authorized one bounded backend test attempt; `get-conversations.usecase.spec.ts` passed (1 suite, 4 tests, 4.853 seconds). No broad backend Jest run was requested or performed.
 - L7: Frontend focused tests and full suite passed (86 suites, 998 tests).
 - L8: Reviewable slice boundaries: frontend code/tests, 72 changed lines in `cc2b8a4` based on `origin/dev`; backend code/tests/API docs, 73 changed lines in `5d6c0d6` based on `origin/main`. Frontend branch is intentionally based on `dev`; opening its PR against `main` would include the unrelated existing divergence.
+- L9: Pushed `fix/chat-media-preview` to `origin` in both repositories. No PR was opened or merged; the user will open both PRs.
