@@ -7,9 +7,9 @@ Two separately pushed review branches; the user will open the PRs.
 2. S2: User requested: “corregir ambos? hace PR no mergees directo, trabaja en ramas separadas y hace push. Yo abro los PRs.” The frontend and local backend changes must be delivered on separate branches, pushed, and not merged; the user opens the PRs.
 
 ## Tasks
-- T1 — S1-S2 — Frontend: render media preview from message type and retain safe fallback behavior — commit: pending.
-- T2 — S2 — Backend: expose lastMessage messageType and replace media storage-key content with a stable non-path placeholder — commit: pending.
-- T3 — S2 — Verify both repos, commit separate slices, and push both branches without opening or merging PRs — commit: both task commits.
+- T1 — S1-S2 — Frontend: render media preview from message type and retain safe fallback behavior — commit: frontend `cc2b8a4`.
+- T2 — S2 — Backend: expose lastMessage messageType and replace media storage-key content with a stable non-path placeholder — commit: backend `5d6c0d6`.
+- T3 — S2 — Verify both repos, commit separate slices, and push both branches without opening or merging PRs — commits: frontend `cc2b8a4`, backend `5d6c0d6`; pushes pending.
 
 ## Log
 - L1: Cuando estamos en la pantalla principal de mensajes, aparece el ultimo mensaje, el problema que si es un archivo multimedia o algo asi asi dice chat/uuid/xxxxxx eso esta rarisimo
@@ -17,3 +17,5 @@ Two separately pushed review branches; the user will open the PRs.
 - L3: si es ahi
 - L4: Backend inspection on the development server confirmed SendMediaUseCase persists the storage key in content; the user explicitly redirected implementation to the local backend-bosko checkout at /home/gonza/bosko/backend-bosko. Server remains read-only and unchanged.
 - L5: The backend verification command was mistakenly invoked from the frontend working directory; Jest reported “No tests found” before running any backend tests. Preserve this failed setup attempt; do not rerun backend verification without the user's explicit authorization.
+- L6: The user authorized one bounded backend test attempt; `get-conversations.usecase.spec.ts` passed (1 suite, 4 tests, 4.853 seconds). No broad backend Jest run was requested or performed.
+- L7: Frontend focused tests and full suite passed (86 suites, 998 tests).
