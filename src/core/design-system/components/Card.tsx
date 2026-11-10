@@ -10,6 +10,8 @@ export interface CardProps extends ViewProps {
   radius?: keyof typeof TOKENS.radius;
   bordered?: boolean;
   elevated?: boolean;
+  /** Render a solid theme surface instead of the default glass surface. */
+  solid?: boolean;
   onPress?: () => void;
   /** Layout styles for the inner surface (gap, flexDirection, alignItems…). `style` targets the outer wrapper. */
   contentStyle?: ViewStyle;
@@ -27,6 +29,7 @@ export function Card({
   radius = 'md',
   bordered = true,
   elevated = false,
+  solid = false,
   onPress,
   style,
   contentStyle,
@@ -55,9 +58,12 @@ export function Card({
     backgroundColor: tc.card,
     ...(bordered ? { borderWidth: 1, borderColor: tc.cardBorder } : null),
     ...contentStyle,
+    ...(solid ? { backgroundColor: tc.surface } : null),
   };
 
-  const surface = (
+  const surface = solid ? (
+    <View style={surfaceStyle}>{children}</View>
+  ) : (
     <BlurView intensity={16} tint={isDark ? 'dark' : 'light'} style={surfaceStyle}>
       {children}
     </BlurView>

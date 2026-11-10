@@ -29,6 +29,15 @@ import { Input as LegacyInput } from '@/core/components/Input';
 import { EmptyState as LegacyEmptyState } from '@/core/components/EmptyState';
 import { ToastRoot as LegacyToastRoot, toast as legacyToast } from '@/core/components/Toast';
 import { useThemeStore } from '@/stores/theme.store';
+import { Card } from '@/core/design-system/components/Card';
+
+jest.mock('@/core/components/BlurView', () => ({
+  BlurView: ({ children, ...props }: { children?: React.ReactNode; [key: string]: unknown }) => {
+    const React = require('react');
+    const { View } = require('react-native');
+    return React.createElement(View, { ...props, testID: 'blur-view' }, children);
+  },
+}));
 
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
@@ -280,6 +289,26 @@ describe.each(['dark', 'light'] as const)('ReasonDialog (%s)', (mode) => {
 });
 
 describe('ConfirmDialog', () => {
+  it.each([
+    ['dark', '#131118'],
+    ['light', '#FFFFFF'],
+  ] as const)('renders an opaque theme surface without blur (%s)', (mode, surface) => {
+    act(() => { useThemeStore.getState().setMode(mode); });
+    const { getByText, queryByTestId, toJSON } = render(
+      <ConfirmDialog visible title="Confirmar" onDismiss={jest.fn()} actions={[{ label: 'OK', onPress: jest.fn() }]} />,
+    );
+
+    expect(getByText('Confirmar')).toBeTruthy();
+    expect(queryByTestId('blur-view')).toBeNull();
+    expect(JSON.stringify(toJSON())).toContain(`"backgroundColor":"${surface}"`);
+    act(() => { useThemeStore.getState().setMode('dark'); });
+  });
+
+  it('keeps glass blur enabled for cards by default', () => {
+    const { getByTestId } = render(<Card>Regular card</Card>);
+    expect(getByTestId('blur-view')).toBeTruthy();
+  });
+
   it('renders copy and fires action callbacks', () => {
     const onOk = jest.fn();
     const onCancel = jest.fn();
