@@ -23,16 +23,16 @@ Branch: `fix/logout-dialog-city-loading`, based on `chore/local-works-demo` at `
 ## Tasks
 
 - [x] T1 — Render the shared confirmation dialog on an opaque surface without using native blur; preserve visual styling, accessibility, dismiss and action behavior, and the existing appearance of other cards. Add meaningful regression coverage and run focused checks. Rollback boundary: shared dialog/card changes and related tests.
-- [ ] T2 — Verify cities through the actual local API and a freshly started Metro instance using the selected environment, without stopping the existing server or resetting the device. Record exact findings and remaining reload/device limitations. Rollback boundary: only an additional task-owned development server and its logs.
+- [x] T2 — Verify cities through the actual local API and a freshly started Metro instance using the selected environment, without stopping the existing server or resetting the device. Record exact findings and remaining reload/device limitations. Rollback boundary: only an additional task-owned development server and its logs.
 
 ## Progress
 
-- T1 implementation and independent focused verification are complete; the work-unit commit is pending. `Card` now has an opt-in `solid` surface that uses a regular native `View` with the active theme's opaque `tc.surface`; `ConfirmDialog` opts into it. Other cards keep the default glass `BlurView` path.
+- T1 implementation and independent focused verification are complete in commit `a7f67df`. `Card` now has an opt-in `solid` surface that uses a regular native `View` with the active theme's opaque `tc.surface`; `ConfirmDialog` opts into it. Other cards keep the default glass `BlurView` path.
 - T1 regression coverage renders the confirmation dialog in dark and light themes, checks the opaque surface color and absence of the blur view, and confirms a regular Card still uses blur.
 - Existing local API and demo database remain active; existing Metro 8081 remains user-owned.
 - T2 independent runtime check: `GET http://127.0.0.1:3101/api/v1/cities` returned HTTP 200 with a direct `data` array of 2 cities. A separate, task-owned Expo Metro process on port 8099 returned `/status` HTTP 200. Its Android development bundle returned HTTP 200 in 5.7 seconds (17,707,709 bytes) and contained both the exact local API URL and the cities service. The task-owned process and its 11 child processes were stopped; port 8099 closed while existing ports 8081 and 3101 remained listening. No emulator interaction or reload occurred. These findings support restarting the existing Metro process to load the current `.env`, but do not prove the user's in-progress registration screen is fixed until they can safely reload.
 - Independent checks: the three focused Jest suites passed (102 tests); Jest emitted asynchronous Icon `act(...)` warnings in the design-system and city-selection suites. TypeScript and scoped ESLint on the changed dialog/card/test files passed.
 - Checks observed: `npm test -- --runTestsByPath __tests__/designSystemComponents.test.tsx` — 1 suite, 77 tests passed (Jest emitted an existing async Icon `act(...)` warning); `npm run typecheck` — passed; scoped ESLint on the three T1 source/test files — passed; `git diff --check` — passed. Local cities API 200/2 and emulator reverse mapping were verified during prior read-only diagnostics; current Android visual verification remains pending.
-- Commits: none yet.
+- Commits: T1 `a7f67df`; T2 evidence commit pending.
 - Risk assessment was unassessable due the untracked task document; the conservative high-risk fallback used the independent verifier above. RDD remained off.
-- Next step: commit the T1 change, then record T2's completed runtime verification and the remaining user-controlled reload.
+- Next step: restart the user's existing Metro process to load `.env`, then fully reload the app when the user is ready to re-enter any in-progress registration data. Verify both the city picker and the logout dialog on Android. No user process or registration data was intentionally interrupted during this task.
