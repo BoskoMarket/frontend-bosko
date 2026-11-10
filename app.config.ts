@@ -108,6 +108,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         microphonePermission: `${brand.name} necesita acceso al micrófono para grabar videos.`,
       },
     ],
+    './plugins/withImagePickerCropColors',
     'expo-document-picker',
     'expo-web-browser',
     [
