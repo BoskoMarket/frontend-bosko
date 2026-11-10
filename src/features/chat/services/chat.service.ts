@@ -44,7 +44,12 @@ export interface Conversation {
   id: string;
   orderId: string;
   otherParty: OtherParty;
-  lastMessage?: { content: string; senderId: string; createdAt: string | Date } | null;
+  lastMessage?: {
+    content: string;
+    messageType?: Message['messageType'];
+    senderId: string;
+    createdAt: string | Date;
+  } | null;
   unreadCount: number;
   /** Snapshot from the conversation endpoint; null means status unavailable. */
   orderStatus?: OrderStatus | null;

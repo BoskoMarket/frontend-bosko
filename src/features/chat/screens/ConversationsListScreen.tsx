@@ -31,17 +31,21 @@ import { Avatar, Badge, EmptyState, FONT_FAMILY, NoticeBanner, ScreenHeader, Ske
 
 type MessagePreview = { icon?: React.ComponentProps<typeof Ionicons>['name']; label: string };
 
-function getMessagePreview(content?: string | null): MessagePreview {
+function getMessagePreview(content?: string | null, messageType?: string): MessagePreview {
+  if (messageType === 'audio') return { icon: 'mic-outline', label: 'Mensaje de voz' };
+  if (messageType === 'image') return { icon: 'image-outline', label: 'Foto' };
+  if (messageType === 'file') return { icon: 'attach-outline', label: 'Archivo' };
   if (!content) return { label: 'Conversación iniciada' };
   if (content.startsWith('🎤')) return { icon: 'mic-outline', label: 'Mensaje de voz' };
   if (content.startsWith('🖼') || content.startsWith('📷')) return { icon: 'image-outline', label: 'Foto' };
   if (content.startsWith('🎥')) return { icon: 'videocam-outline', label: 'Video' };
   if (content.startsWith('📎')) return { icon: 'document-outline', label: 'Documento' };
-  if (content.startsWith('http://') || content.startsWith('https://')) {
-    if (/\.(mp3|m4a|aac|ogg|wav)/i.test(content)) return { icon: 'mic-outline', label: 'Mensaje de voz' };
-    if (/\.(mp4|mov|avi|webm)/i.test(content)) return { icon: 'videocam-outline', label: 'Video' };
-    if (/\.(pdf|doc|docx|xls|xlsx)/i.test(content)) return { icon: 'document-outline', label: 'Documento' };
-    if (/\.(jpg|jpeg|png|gif|webp)/i.test(content)) return { icon: 'image-outline', label: 'Foto' };
+  const pathname = content.split(/[?#]/, 1)[0].toLowerCase();
+  if (/\.(mp3|m4a|aac|ogg|wav)$/.test(pathname)) return { icon: 'mic-outline', label: 'Mensaje de voz' };
+  if (/\.(mp4|mov|avi|webm)$/.test(pathname)) return { icon: 'videocam-outline', label: 'Video' };
+  if (/\.(pdf|doc|docx|xls|xlsx)$/.test(pathname)) return { icon: 'document-outline', label: 'Documento' };
+  if (/\.(jpg|jpeg|png|gif|webp)$/.test(pathname)) return { icon: 'image-outline', label: 'Foto' };
+  if (/^https?:\/\//i.test(content) || /^chat\/\S+\/\S+$/i.test(pathname)) {
     return { icon: 'attach-outline', label: 'Archivo' };
   }
   return { label: content };
@@ -86,7 +90,7 @@ function ConversationItem({ item }: { item: Conversation; myUserId?: string }) {
     return () => anim.stop();
   }, [hasUnread]);
 
-  const preview = getMessagePreview(item.lastMessage?.content);
+  const preview = getMessagePreview(item.lastMessage?.content, item.lastMessage?.messageType);
   const statusBadge = chatStatusBadge(item.orderStatus);
 
   return (
