@@ -82,6 +82,42 @@ describe.each(['dark', 'light'] as const)('chat and reels screens (%s)', (mode) 
       expect(mockPush).toHaveBeenCalledWith({ pathname: '/chat/[id]', params: { id: 'o1' } });
     });
 
+    it.each([
+      ['chat/9f2c/IMG_1234.jpg', 'Foto'],
+      ['chat/9f2c/clip.mp4', 'Video'],
+      ['chat/9f2c/contract.pdf', 'Documento'],
+      ['chat/9f2c/blob', 'Archivo'],
+      ['https://storage.example/chat/photo.jpg?signature=abc', 'Foto'],
+    ])('shows a safe %s media preview', async (content, label) => {
+      mockFetchConversations.mockResolvedValueOnce([conversation({
+        lastMessage: { content, createdAt: '2026-01-05T10:00:00Z' },
+      })]);
+      const { findByLabelText, queryByText } = render(<ConversationsListScreen />);
+      expect(await findByLabelText(`Chat con Ana Gómez, 2 sin leer. ${label}`)).toBeTruthy();
+      expect(queryByText(content)).toBeNull();
+    });
+
+    it('keeps ordinary text containing a slash as a text preview', async () => {
+      mockFetchConversations.mockResolvedValueOnce([conversation({
+        lastMessage: { content: 'sí/no', createdAt: '2026-01-05T10:00:00Z' },
+      })]);
+      const { findByLabelText } = render(<ConversationsListScreen />);
+      expect(await findByLabelText('Chat con Ana Gómez, 2 sin leer. sí/no')).toBeTruthy();
+    });
+
+    it.each([
+      ['image', '[image]', 'Foto'],
+      ['audio', '[audio]', 'Mensaje de voz'],
+      ['file', '[file]', 'Archivo'],
+    ])('uses backend messageType=%s for the preview', async (messageType, content, label) => {
+      mockFetchConversations.mockResolvedValueOnce([conversation({
+        lastMessage: { content, messageType, createdAt: '2026-01-05T10:00:00Z' },
+      })]);
+      const { findByLabelText, queryByText } = render(<ConversationsListScreen />);
+      expect(await findByLabelText(`Chat con Ana Gómez, 2 sin leer. ${label}`)).toBeTruthy();
+      expect(queryByText(content)).toBeNull();
+    });
+
     it('does not show the refresh warning when the load succeeds', async () => {
       mockFetchConversations.mockResolvedValueOnce([conversation()]);
       const { findByLabelText, queryByText } = render(<ConversationsListScreen />);
