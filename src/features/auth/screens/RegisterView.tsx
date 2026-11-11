@@ -37,7 +37,7 @@ import {
 } from '@/core/design-system';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useGoogleSignIn } from '@/features/auth/hooks/useGoogleSignIn';
-import { getFormErrors, getUserErrorMessage } from '@/lib/errors';
+import { extractApiError, getFormErrors, getUserErrorMessage } from '@/lib/errors';
 import { BrandMark } from '@/components/BrandMark';
 import { CityPicker } from '@/features/auth/components/CityPicker';
 import { useCitiesQuery } from '@/hooks/queries/useCitiesQuery';
@@ -158,6 +158,22 @@ export default function RegisterView({ toRegister }: { toRegister?: () => void }
       });
       router.push({ pathname: '/auth/verify-email', params: { email } });
     } catch (err) {
+      if (extractApiError(err).code === 'EMAIL_ALREADY_IN_USE') {
+        clearError();
+        dialog.fromAlert(
+          'Correo ya registrado',
+          'Si tu cuenta todavía no está verificada, puedes solicitar un nuevo código de verificación.',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            {
+              text: 'Verificar correo',
+              onPress: () => router.push({ pathname: '/auth/verify-email', params: { email } }),
+            },
+          ],
+        );
+        return;
+      }
+
       // VALIDATION_ERROR: volver al primer paso con error y mostrarlo en su input
       const { fields, general } = getFormErrors(err, REGISTER_FIELDS);
       const firstInvalid = STEPS.findIndex(s => fields[s.field]);
