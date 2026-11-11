@@ -24,13 +24,16 @@ Branch: `fix/local-registration-mail`, based on `fix/logout-dialog-city-loading`
 
 ## Tasks
 
-- [ ] T1 — Start a reliable local SMTP sink and owner-only inbox using existing dependencies or a small local helper. Verify mail acceptance, local-only bindings, and retrieval without sending external messages. Record runtime/restart details and targeted checks.
+- [x] T1 — Start a reliable local SMTP sink and owner-only inbox using existing dependencies or a small local helper. Verify mail acceptance, local-only bindings, and retrieval without sending external messages. Record runtime/restart details and targeted checks.
 - [ ] T2 — Add a safe way to continue verification when registration returns `EMAIL_ALREADY_IN_USE`, preserving all other error paths and existing Spanish product language. Add meaningful focused regression tests.
 - [ ] T3 — Verify local registration and resend end-to-end using only a synthetic account, clean up only that account if safe, and document how the owner can continue their partially created account. Report any unavailable UI/device checks.
 
 ## Progress
 
-- Read-only diagnosis complete: one local registration request returned HTTP 500 with SMTP `ECONNREFUSED`; no local SMTP listener was running. No user data has been changed during investigation.
-- Existing demo API, Postgres and Redis remain running. No mail service has been started yet.
-- Checks and commits: pending.
-- Next step: resolve T1 using an existing local SMTP tool if available, then verify the account recovery flow.
+- T1 runtime setup is complete; its checkbox remains open pending the parent work-unit commit. The cached image `public.ecr.aws/supabase/mailpit:v1.30.2` is running in task-owned container `bosko-lwd-a1-mailpit`. Host ports 1025 (SMTP) and 8025 (inbox UI) bind only to `127.0.0.1`. SMTP uses accept-any auth to accommodate the task backend's local credentials; credential values were not inspected. No relay configuration or relay flags are present. Version checks and remote CSS/font access are disabled.
+- The initial internal Docker network prevented host port publishing on this engine. That empty task-owned container/network were removed and recreated on the default bridge; the published host bindings were verified as loopback-only and both endpoints are reachable from the host. Mailpit has no configured SMTP relay, so received messages are captured for local viewing and are not forwarded.
+- Runtime checks: Mailpit container health is healthy; inbox UI returns HTTP 200; the installed Nodemailer from the read-only backend checkout successfully delivered one synthetic `.invalid` message using synthetic credentials. The inbox returned exactly one match for its unique synthetic subject. Exact-message DELETE returned HTTP 405, so that harmless synthetic message remains in this task-owned inbox; no bulk delete was attempted. No real message contents were read or printed.
+- The task-owned local API was restarted from the existing compiled `dist/main.js` in the isolated temp snapshot without reading or changing its `.env`. It runs hidden as PID 10552 from `C:\Users\frank\AppData\Local\Temp\bosko-local-works-demo-20261110-a1\backend`, with stdout/stderr redirected to the sibling `api-mail-restart.stdout.log` and `api-mail-restart.stderr.log`. Source and compiled entry both bind to `127.0.0.1`; health and cities endpoints return HTTP 200, with 2 cities. Existing Postgres and Redis were not restarted. The pre-existing unverified account was not inspected or changed.
+- Restart Mailpit after a stop with `docker --host npipe:////./pipe/dockerDesktopLinuxEngine start bosko-lwd-a1-mailpit`; while running, `docker --host npipe:////./pipe/dockerDesktopLinuxEngine restart bosko-lwd-a1-mailpit` preserves its captured inbox in the container. The task-owned backend API is a separate hidden process; do not restart Metro or reload the app during the registration recovery task.
+- Checks and commits: runtime verification passed; parent independently confirmed the API and inbox each return HTTP 200. T1 work-unit commit pending.
+- Next step: implement T2's non-destructive verification recovery, then run T3 with a synthetic account only.
