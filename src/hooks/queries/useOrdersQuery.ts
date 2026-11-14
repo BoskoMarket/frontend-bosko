@@ -251,6 +251,8 @@ export function useConfirmOrder() {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.clientOrders });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.providerOrders });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.orderById(id) });
+      // Confirming completes the order, which changes the Perfil counters.
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.profileStats });
     },
   });
 }

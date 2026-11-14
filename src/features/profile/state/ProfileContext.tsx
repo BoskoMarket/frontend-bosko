@@ -20,7 +20,8 @@ export const useProfile = () => {
     profile: query.data ?? null,
     isLoading: query.isLoading,
     error: query.error ? getUserErrorMessage(query.error) : null,
-    refreshProfile: async () => { await query.refetch(); },
+    /** Resolves true when the refetch succeeded (refetch itself never rejects). */
+    refreshProfile: async (): Promise<boolean> => !(await query.refetch()).isError,
     updateProfile: async (payload: UpdateProfilePayload) => {
       await updateMutation.mutateAsync(payload);
     },

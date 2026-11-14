@@ -26,7 +26,7 @@ import {
   dialog,
 } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
-import { getUserErrorMessage } from '@/lib/errors';
+import { getChangePasswordErrorMessage } from '@/features/auth/utils/passwordErrors';
 
 function getStrength(pwd: string): 0 | 1 | 2 | 3 {
   if (!pwd) return 0;
@@ -101,11 +101,14 @@ export default function ChangePasswordScreen() {
     setIsLoading(true);
     try {
       await changePasswordService(currentPassword, newPassword);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
       dialog.fromAlert('¡Listo!', 'Tu contraseña fue actualizada exitosamente.', [
         { text: 'OK', onPress: () => safeBack(router, '/(tabs)/profile') },
       ]);
     } catch (err) {
-      setError(getUserErrorMessage(err));
+      setError(getChangePasswordErrorMessage(err));
     } finally {
       setIsLoading(false);
     }

@@ -2,6 +2,7 @@
 import {
   ActivityIndicator,
   Animated,
+  Linking,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -19,10 +20,12 @@ import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from './state/ProfileContext';
 import { useProviderStatus } from '@/hooks/useProviderStatus';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
-import { getUserStats, UserStats } from '@/features/profile/services/profile';
+import { useProfileStats } from '@/hooks/queries/useProfileQuery';
+import { useSupportContact } from '@/features/appConfig/hooks/useSupportContact';
 import {
   TOKENS,
   GRADIENTS,
+  SPACING,
   Avatar,
   Badge,
   Button,
@@ -30,12 +33,14 @@ import {
   Divider,
   EmptyState,
   ListRow,
+  NoticeBanner,
   Skeleton,
   Text,
   useIsDark,
   useThemeColors,
   withAlpha,
   dialog,
+  toast,
 } from '@/core/design-system';
 import type { BadgeTone } from '@/core/design-system';
 import { FEATURES } from '@/core/config/features';
@@ -45,7 +50,7 @@ import { openNotifications } from '@/stores/notificationsUI.store';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { toneColors } from '@/features/kyc/constants/kycStatus';
 import type { KYCStatus } from '@/features/kyc/types/kyc.types';
-import { getRoleSection, INFO_SECTION } from './utils/profileSections';
+import { canChangePassword, getRoleSection, INFO_SECTION } from './utils/profileSections';
 import type { ProfileRowBadge } from './utils/profileSections';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
@@ -86,17 +91,26 @@ function useCountUp(target: number, duration = 900) {
 
 // ── Stat cell ────────────────────────────────────────────────────────────────
 function StatCell({
-  value, label, suffix, color,
+  value, label, decimals, animate = true, hideFromA11y, color,
 }: {
-  value: number; label: string; suffix?: string; color?: string;
+  value: number; label: string; decimals?: number;
+  /** Count-up only suits integers: decimals (rating) render the final value directly. */
+  animate?: boolean;
+  /** The parent is already a labelled element: do not announce the cell twice. */
+  hideFromA11y?: boolean;
+  color?: string;
 }) {
   const tc = useThemeColors();
-  const displayed = useCountUp(value);
+  const counted = useCountUp(animate ? value : 0);
+  const shown = animate ? counted : value;
   return (
-    <View style={ss.statCell}>
+    <View
+      style={ss.statCell}
+      accessibilityElementsHidden={hideFromA11y}
+      importantForAccessibility={hideFromA11y ? 'no-hide-descendants' : 'auto'}
+    >
       <Text variant="h3" weight="800" color={color ?? tc.text}>
-        {suffix === 'fixed' ? displayed.toFixed(1) : displayed}
-        {suffix && suffix !== 'fixed' ? suffix : ''}
+        {decimals !== undefined ? shown.toFixed(decimals) : shown}
       </Text>
       <Text variant="caption" color={tc.textSub}>{label}</Text>
     </View>
@@ -163,12 +177,17 @@ export const ProfileScreen: React.FC = () => {
   const isDark = useIsDark();
   const { logout } = useAuth();
   const { profile, isLoading, error: profileError, refreshProfile } = useProfile();
-  const { status: roleStatus, kycStatus, isLoading: roleLoading } = useProviderStatus();
+  const {
+    status: roleStatus, kycStatus, isLoading: roleLoading, isRoleUnknown, retryRole,
+  } = useProviderStatus();
   const { count: favCount } = useFavorites();
+  const { url: supportUrl } = useSupportContact();
+  const statsQuery = useProfileStats();
+  const stats = statsQuery.data ?? null;
+  const statsFailed = statsQuery.isError && stats === null;
 
-  const [stats, setStats]               = useState<UserStats | null>(null);
-  const [statsFailed, setStatsFailed]   = useState(false);
   const [refreshing, setRefreshing]     = useState(false);
+  const [loggingOut, setLoggingOut]     = useState(false);
 
   // Entrance animations for 5 sections
   const sections = useRef(Array.from({ length: 5 }, () => new Animated.Value(0))).current;
@@ -188,28 +207,30 @@ export const ProfileScreen: React.FC = () => {
     transform: [{ translateY: sections[i].interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
   });
 
-  const loadStats = useCallback(async () => {
-    setStatsFailed(false);
-    try {
-      setStats(await getUserStats());
-    } catch {
-      setStatsFailed(true);
-    }
-  }, []);
-
-  // Load stats
-  useEffect(() => {
-    if (profile) loadStats();
-  }, [profile?.id, loadStats]);
-
+  const { refetch: refetchStats } = statsQuery;
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refreshProfile().catch(() => {});
-    await loadStats();
+    const [profileOk, statsResult] = await Promise.all([refreshProfile(), refetchStats()]);
     setRefreshing(false);
-  }, [refreshProfile, loadStats]);
+    // Cached data stays on screen when a refresh fails: say so instead of failing silently.
+    if (!profileOk || statsResult.isError) {
+      toast.error('No se pudo actualizar', 'Mostramos los últimos datos guardados.');
+    }
+  }, [refreshProfile, refetchStats]);
 
   const openEditProfile = useCallback(() => router.push('/(tabs)/profile/EditProfile'), []);
+
+  const openSupport = useCallback(async () => {
+    if (!supportUrl) {
+      toast.warning('Soporte no disponible', 'Inténtalo de nuevo en unos minutos.');
+      return;
+    }
+    try {
+      await Linking.openURL(supportUrl);
+    } catch {
+      toast.error('No se pudo abrir WhatsApp', 'Verifica que la aplicación esté instalada e inténtalo de nuevo.');
+    }
+  }, [supportUrl]);
 
   const handleLogout = () => {
     dialog.fromAlert('Cerrar sesión', '¿Quieres cerrar sesión en este dispositivo?', [
@@ -218,8 +239,16 @@ export const ProfileScreen: React.FC = () => {
         text: 'Cerrar sesión',
         style: 'destructive',
         onPress: async () => {
-          // RootLayoutNav owns the redirect to /login once the session is gone.
-          await logout();
+          setLoggingOut(true);
+          try {
+            // RootLayoutNav owns the redirect to /login once the session is gone.
+            await logout();
+          } catch {
+            // The local session is already cleared; only the remote cleanup failed.
+            toast.error('No se pudo cerrar la sesión', 'Inténtalo de nuevo.');
+          } finally {
+            setLoggingOut(false);
+          }
         },
       },
     ]);
@@ -241,7 +270,7 @@ export const ProfileScreen: React.FC = () => {
     ? `${profile.firstName}${profile.lastName ? ' ' + profile.lastName : ''}`
     : '';
   const memberSince = profile?.createdAt
-    ? new Date(profile.createdAt).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
+    ? new Date(profile.createdAt).toLocaleDateString('es',{ month: 'long', year: 'numeric' })
     : '';
 
   const statusBar = <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />;
@@ -350,16 +379,21 @@ export const ProfileScreen: React.FC = () => {
             ) : null}
           </View>
 
-          {/* KYC badge: providers (con toggle de disponibilidad) y pending (solo estado) */}
+          {/* KYC badge: providers open the KYC screen; pending users get status only (their
+              single entry is the "camino a ser prestador" card below). */}
           {(isProvider || isPending) && kycCfg && kycStatus !== 'approved' ? (
             <View style={ss.badgeRow}>
-              <Pressable
-                onPress={() => router.push(isPending ? '/(tabs)/profile/become-provider' : '/(tabs)/profile/kyc')}
-                accessibilityRole="button"
-                accessibilityLabel={`${kycCfg.label}. Ver estado de verificación`}
-              >
+              {isProvider ? (
+                <Pressable
+                  onPress={() => router.push('/(tabs)/profile/kyc')}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${kycCfg.label}. Ver estado de verificación`}
+                >
+                  <Badge label={kycCfg.label} tone={kycCfg.tone} icon={kycCfg.icon} />
+                </Pressable>
+              ) : (
                 <Badge label={kycCfg.label} tone={kycCfg.tone} icon={kycCfg.icon} />
-              </Pressable>
+              )}
             </View>
           ) : null}
 
@@ -377,13 +411,21 @@ export const ProfileScreen: React.FC = () => {
           />
         </Animated.View>
 
+        {/* Refresh failed while a cached profile is on screen: keep the data, offer a retry. */}
+        {profileError && profile ? (
+          <View style={ss.inlineError}>
+            <NoticeBanner variant="error">No pudimos actualizar tu perfil. Mostramos los últimos datos guardados.</NoticeBanner>
+            <Button label="Reintentar" variant="ghost" size="sm" onPress={() => { void refreshProfile(); }} />
+          </View>
+        ) : null}
+
         {/* ── Stats (distintas según rol) ───────────────────────────────── */}
         <Animated.View style={[ss.statsWrap, sec(1)]}>
           <Card padding="lg" radius="lg" contentStyle={ss.statsCard}>
             {statsFailed && stats === null ? (
               <Pressable
                 style={ss.statsError}
-                onPress={loadStats}
+                onPress={() => { void refetchStats(); }}
                 accessibilityRole="button"
                 accessibilityLabel="No se pudieron cargar tus estadísticas. Reintentar"
               >
@@ -396,7 +438,7 @@ export const ProfileScreen: React.FC = () => {
               <>
                 <StatCell value={stats.servicesCount ?? 0}   label="Servicios" />
                 <View style={[ss.statDivider, { backgroundColor: tc.border }]} />
-                <StatCell value={stats.averageRating ?? 0}   label="Valoración" suffix="fixed" color={TOKENS.color.rating} />
+                <StatCell value={stats.averageRating ?? 0}   label="Valoración" decimals={1} animate={false} color={TOKENS.color.rating} />
                 <View style={[ss.statDivider, { backgroundColor: tc.border }]} />
                 <StatCell value={stats.reviewsCount ?? 0}    label="Reseñas" />
                 <View style={[ss.statDivider, { backgroundColor: tc.border }]} />
@@ -411,8 +453,9 @@ export const ProfileScreen: React.FC = () => {
                   onPress={() => router.push('/(tabs)/profile/favorites')}
                   accessibilityRole="button"
                   accessibilityLabel={`Favoritos: ${favCount}`}
+                  accessibilityHint="Abre tus favoritos"
                 >
-                  <StatCell value={favCount} label="Favoritos" color={TOKENS.color.signal} />
+                  <StatCell value={favCount} label="Favoritos" hideFromA11y color={TOKENS.color.signal} />
                 </Pressable>
               </>
             )}
@@ -420,7 +463,7 @@ export const ProfileScreen: React.FC = () => {
         </Animated.View>
 
         {/* ── Estado "en camino a ser proveedor" (KYC arrancado, sin aprobar) ── */}
-        {isPending && kycCfg && kycColors && (
+        {!isRoleUnknown && isPending && kycCfg && kycColors && (
           <Animated.View style={[ss.section, sec(2)]}>
             <Pressable
               onPress={() => router.push('/(tabs)/profile/become-provider')}
@@ -446,7 +489,13 @@ export const ProfileScreen: React.FC = () => {
         )}
 
         {/* ── Role group: Mi negocio (proveedor) / Mi actividad (cliente) ── */}
-        {roleSection ? (
+        {isRoleUnknown ? (
+          // KYC status failed to load: do not guess "client" (it could be a pending provider).
+          <Animated.View style={[ss.inlineError, sec(2)]}>
+            <NoticeBanner variant="error">No pudimos cargar el estado de tu cuenta de proveedor.</NoticeBanner>
+            <Button label="Reintentar" variant="ghost" size="sm" onPress={() => { void retryRole(); }} />
+          </Animated.View>
+        ) : roleSection ? (
           <Animated.View style={sec(2)}>
             <SettingsGroup title={roleSection.title}>
               {roleSection.rows.map((row, i) => {
@@ -476,24 +525,30 @@ export const ProfileScreen: React.FC = () => {
               label="Editar Perfil"
               onPress={openEditProfile}
             />
-            <Divider />
-            <SettingsRow
-              icon="card-outline"
-              label="Métodos de Pago"
-              badge="Próximamente"
-              badgeTone="neutral"
-            />
+            {FEATURES.payments ? (
+              <>
+                <Divider />
+                <SettingsRow
+                  icon="card-outline"
+                  label="Métodos de Pago"
+                  badge="Próximamente"
+                  badgeTone="neutral"
+                />
+              </>
+            ) : null}
           </SettingsGroup>
         </Animated.View>
 
         <Animated.View style={sec(4)}>
-          <SettingsGroup title="Seguridad">
-            <SettingsRow
-              icon="lock-closed-outline"
-              label="Cambiar Contraseña"
-              onPress={() => router.push('/(tabs)/profile/ChangePassword')}
-            />
-          </SettingsGroup>
+          {canChangePassword(profile?.authProvider) ? (
+            <SettingsGroup title="Seguridad">
+              <SettingsRow
+                icon="lock-closed-outline"
+                label="Cambiar Contraseña"
+                onPress={() => router.push('/(tabs)/profile/ChangePassword')}
+              />
+            </SettingsGroup>
+          ) : null}
 
           <SettingsGroup title="Preferencias">
             <SettingsRow
@@ -529,13 +584,16 @@ export const ProfileScreen: React.FC = () => {
 
           <SettingsGroup title={INFO_SECTION.title}>
             {INFO_SECTION.rows.map((row) => (
-              <SettingsRow
-                key={row.id}
-                icon={row.icon}
-                label={row.label}
-                onPress={() => router.push(row.href as never)}
-              />
+              <React.Fragment key={row.id}>
+                <SettingsRow
+                  icon={row.icon}
+                  label={row.label}
+                  onPress={() => router.push(row.href as never)}
+                />
+                <Divider />
+              </React.Fragment>
             ))}
+            <SettingsRow icon="help-buoy-outline" label="Ayuda y soporte" onPress={openSupport} />
           </SettingsGroup>
 
           <View style={ss.dangerGroup}>
@@ -544,10 +602,12 @@ export const ProfileScreen: React.FC = () => {
               variant="dangerOutline"
               fullWidth
               icon={<Ionicons name="log-out-outline" size={18} color={TOKENS.color.error} />}
+              loading={loggingOut}
               onPress={handleLogout}
             />
             <Pressable
               onPress={() => router.push('/(tabs)/profile/delete-account')}
+              hitSlop={SPACING.sm}
               accessibilityRole="button"
               accessibilityLabel="Eliminar cuenta"
               style={ss.deleteBtn}
@@ -612,7 +672,8 @@ const ss = StyleSheet.create({
 
   // Danger zone
   dangerGroup: { marginHorizontal: 16, marginTop: 22, gap: 8 },
-  deleteBtn: { alignItems: 'center', paddingVertical: 10 },
+  deleteBtn: { alignItems: 'center', justifyContent: 'center', minHeight: 44, paddingVertical: 10 },
+  inlineError: { marginHorizontal: 16, marginTop: 16, gap: 4, alignItems: 'stretch' },
   deleteText: { textDecorationLine: 'underline' },
 
   providerCtaText: { flex: 1, gap: 3 },

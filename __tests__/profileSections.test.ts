@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { getRoleSection, INFO_SECTION } from '@/features/profile/utils/profileSections';
+import { canChangePassword, getRoleSection, INFO_SECTION } from '@/features/profile/utils/profileSections';
 
 let mockReels = false;
 let mockPayments = false;
@@ -89,5 +89,13 @@ describe('INFO_SECTION', () => {
   it('links the terms and conditions for every role', () => {
     expect(INFO_SECTION.rows.map((r) => r.label)).toEqual(['Términos y condiciones']);
     expect(routeExists(INFO_SECTION.rows[0].href)).toBe(true);
+  });
+});
+
+describe('canChangePassword', () => {
+  it('hides the password change for Google accounts only', () => {
+    expect(canChangePassword('google')).toBe(false);
+    expect(canChangePassword('password')).toBe(true);
+    expect(canChangePassword(undefined)).toBe(true);
   });
 });

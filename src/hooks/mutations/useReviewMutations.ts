@@ -15,6 +15,7 @@ export function useCreateReview() {
     onSuccess: (review, payload) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.serviceReviews(review.providerId) });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.orderById(payload.orderId) });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.profileStats });
       maybePromptReview();
     },
     onError: (error, payload) => {

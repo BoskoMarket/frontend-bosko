@@ -1,5 +1,5 @@
 import api from "@/core/api/axiosinstance";
-import { extensionForMime } from "@/core/media/imageMime";
+import { extensionForMime, type ImageMime } from "@/core/media/imageMime";
 import type { UserCity } from "@/features/markets/types";
 
 
@@ -50,10 +50,13 @@ export async function toggleAvailabilityService(isAvailable: boolean): Promise<U
     return data;
 }
 
-/** Subir avatar — POST /users/me/avatar */
-export async function uploadAvatar(fileUri: string): Promise<{ avatarUrl: string }> {
+/** Subir avatar — POST /users/me/avatar. `mimeType` defaults to JPEG when the picker did not report one. */
+export interface AvatarFile { uri: string; mimeType?: ImageMime }
+
+export async function uploadAvatar(file: AvatarFile): Promise<{ avatarUrl: string }> {
+    const mimeType = file.mimeType ?? 'image/jpeg';
     const formData = new FormData();
-    formData.append('avatar', { uri: fileUri, type: 'image/jpeg', name: 'avatar.jpg' } as any);
+    formData.append('avatar', { uri: file.uri, type: mimeType, name: `avatar.${extensionForMime(mimeType)}` } as any);
 
     const { data } = await api.post<{ avatarUrl: string }>("/users/me/avatar", formData, {
         headers: { "Content-Type": "multipart/form-data" },

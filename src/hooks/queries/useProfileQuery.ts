@@ -10,6 +10,7 @@ import {
   getUserStats,
   type UpdateProfilePayload,
   type BannerFile,
+  type AvatarFile,
 } from '@/features/profile/services/profile';
 import { useAuth } from '@/features/auth/state/AuthContext';
 
@@ -67,8 +68,8 @@ export function useUpdateProfile() {
   return useMutation({
     mutationFn: (payload: UpdateProfilePayload) => updateUserProfile(payload),
     onSuccess: (updated) => {
+      // The PATCH response is the full profile: one cache write, no extra refetch.
       qc.setQueryData(QUERY_KEYS.profile, updated);
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.profile });
     },
   });
 }
@@ -97,7 +98,7 @@ export function useToggleAvailability() {
 export function useUploadAvatar() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (fileUri: string) => uploadAvatar(fileUri),
+    mutationFn: (file: AvatarFile) => uploadAvatar(file),
     onSuccess: ({ avatarUrl }) => {
       qc.setQueryData(QUERY_KEYS.profile, (old: any) =>
         old ? { ...old, avatarUrl } : old,
