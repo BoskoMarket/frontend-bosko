@@ -39,6 +39,8 @@ export const useKYC = () => {
     kyc: query.data ?? null,
     loading,
     error,
+    /** The status request failed and there is no cached value to fall back on. */
+    loadFailed: query.isError && query.data == null,
     isVerified: query.data?.isVerified ?? false,
     refresh: async () => { await query.refetch(); },
     start: async () => { await startMutation.mutateAsync(); },

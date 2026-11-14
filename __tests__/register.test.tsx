@@ -3,6 +3,7 @@ import { act, fireEvent, render, waitFor } from "@testing-library/react-native";
 import RegisterView from "@/features/auth/screens/RegisterView";
 import { router } from "expo-router";
 import { TERMS_VERSION } from "@/core/config/terms";
+import { DialogRoot } from "@/core/design-system";
 
 const mockRegisterUser = jest.fn();
 const mockClearError = jest.fn();
@@ -154,10 +155,14 @@ describe("RegisterView", () => {
 
   it("muestra el error del backend cuando falla el registro", async () => {
     mockRegisterUser.mockRejectedValueOnce({
-      response: { data: { message: "El correo ya está registrado" } },
+      isAxiosError: true,
+      response: {
+        status: 409,
+        data: { success: false, statusCode: 409, code: "ACCOUNT_CONFLICT", message: "Conflict" },
+      },
     });
 
-    const api = render(<RegisterView toRegister={jest.fn()} />);
+    const api = render(<><RegisterView toRegister={jest.fn()} /><DialogRoot /></>);
     await fillUntilCityStep(api, "repetido@bosko.com");
 
     fireEvent.press(api.getByText("Tandil"));
@@ -167,6 +172,64 @@ describe("RegisterView", () => {
     });
 
     await waitFor(() => expect(mockRegisterUser).toHaveBeenCalled());
+    expect(api.queryByText(/todavía no está verificada/)).toBeNull();
+    expect(api.getByText("Error")).toBeTruthy();
     expect(router.replace).not.toHaveBeenCalled();
+    expect(router.push).not.toHaveBeenCalledWith(expect.objectContaining({ pathname: "/auth/verify-email" }));
+    fireEvent.press(api.getByText("OK"));
+  });
+
+  it("offers verification for EMAIL_ALREADY_IN_USE and opens it only after confirmation", async () => {
+    mockRegisterUser.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        status: 409,
+        data: { success: false, statusCode: 409, code: "EMAIL_ALREADY_IN_USE", message: "Email already in use" },
+      },
+    });
+    const api = render(<><RegisterView toRegister={jest.fn()} /><DialogRoot /></>);
+    await fillUntilCityStep(api, " Repetido@Ejemplo.com ");
+
+    fireEvent.press(api.getByText("Barranquilla"));
+    fireEvent.press(api.getByLabelText("Acepto los términos y la política de privacidad"));
+    mockClearError.mockClear();
+    await act(async () => {
+      fireEvent.press(api.getAllByText("Crear cuenta")[1]);
+    });
+
+    expect(mockRegisterUser).toHaveBeenCalledWith(expect.objectContaining({ email: "repetido@ejemplo.com" }));
+    expect(api.getByText("Si tu cuenta todavía no está verificada, puedes solicitar un nuevo código de verificación.")).toBeTruthy();
+    expect(router.push).not.toHaveBeenCalledWith(expect.objectContaining({ pathname: "/auth/verify-email" }));
+    expect(mockRegisterUser).toHaveBeenCalledTimes(1);
+    expect(mockClearError).toHaveBeenCalled();
+
+    fireEvent.press(api.getByText("Verificar correo"));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: "/auth/verify-email",
+      params: { email: "repetido@ejemplo.com" },
+    });
+    expect(mockRegisterUser).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the user on registration when canceling existing-account recovery", async () => {
+    mockRegisterUser.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        status: 409,
+        data: { success: false, statusCode: 409, code: "EMAIL_ALREADY_IN_USE", message: "Email already in use" },
+      },
+    });
+    const api = render(<><RegisterView toRegister={jest.fn()} /><DialogRoot /></>);
+    await fillUntilCityStep(api, "repetido@bosko.com");
+
+    fireEvent.press(api.getByText("Tandil"));
+    fireEvent.press(api.getByLabelText("Acepto los términos y la política de privacidad"));
+    await act(async () => {
+      fireEvent.press(api.getAllByText("Crear cuenta")[1]);
+    });
+
+    fireEvent.press(api.getByText("Cancelar"));
+    expect(router.push).not.toHaveBeenCalledWith(expect.objectContaining({ pathname: "/auth/verify-email" }));
+    expect(mockRegisterUser).toHaveBeenCalledTimes(1);
   });
 });

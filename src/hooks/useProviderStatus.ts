@@ -33,9 +33,12 @@ export function useProviderStatus(): {
   canPublish: boolean;
   nextStep: ReadinessStep;
   isLoading: boolean;
+  /** KYC status failed to load, so a non-provider's role is unknown (not 'client'). */
+  isRoleUnknown: boolean;
+  retryRole: () => Promise<void>;
 } {
   const { profile, isLoading: profileLoading } = useProfile();
-  const { verification, loading: kycLoading } = useKYC();
+  const { verification, loading: kycLoading, loadFailed, refresh } = useKYC();
 
   const rawKyc = (verification?.status?.toLowerCase() ?? 'not_started') as KYCStatus;
   // Pending "vacío" (sin inquiry todavía) cuenta como not_started, no como en progreso
@@ -47,5 +50,13 @@ export function useProviderStatus(): {
     phoneVerified: profile?.isPhoneVerified === true,
   });
 
-  return { status, kycStatus, kycApproved, phoneVerified, canPublish, nextStep, isLoading: profileLoading || kycLoading };
+  // A provider is certain from the profile alone; everyone else needs the KYC answer.
+  const isRoleUnknown = loadFailed && profile?.isProvider !== true;
+
+  return {
+    status, kycStatus, kycApproved, phoneVerified, canPublish, nextStep,
+    isLoading: profileLoading || kycLoading,
+    isRoleUnknown,
+    retryRole: refresh,
+  };
 }

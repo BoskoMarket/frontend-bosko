@@ -60,7 +60,12 @@ export function getRoleSection(status: ProviderStatus): ProfileSection | null {
   return null;
 }
 
-/** Info rows visible to every role. */
+/** Google accounts have no password to change; absent `authProvider` is treated as password. */
+export function canChangePassword(authProvider?: 'password' | 'google'): boolean {
+  return authProvider !== 'google';
+}
+
+/** Info rows visible to every role (the support row is added by the screen: it opens WhatsApp). */
 export const INFO_SECTION: ProfileSection = {
   title: 'Información',
   rows: [{ id: 'terms', icon: 'document-text-outline', label: 'Términos y condiciones', href: '/terms' }],

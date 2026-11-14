@@ -168,12 +168,13 @@ export default function EditProfileScreen() {
     });
 
     if (!result.canceled && result.assets[0]) {
-      const uri = result.assets[0].uri;
+      const asset = result.assets[0];
+      const uri = asset.uri;
       setAvatarUri(uri);
 
       setUploadingAvatar(true);
       try {
-        await uploadAvatar(uri);
+        await uploadAvatar({ uri, mimeType: resolveImageMime(asset) });
         toast.success('Foto actualizada');
       } catch (err: any) {
         toast.error('No se pudo subir la foto', getUserErrorMessage(err));
