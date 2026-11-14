@@ -4,14 +4,15 @@ export const WRONG_CURRENT_PASSWORD_MESSAGE = 'La contraseña actual es incorrec
 
 /**
  * True when PATCH /users/me/password rejected the *current* password. The backend does not
- * document one code for it, so accept the known codes, a 401, or a 400 that is not a
- * field-validation error (those carry details about the new password instead).
+ * document one code for it, so accept the known codes or a 401 without any other code (an
+ * expired session is refreshed by the axios interceptor before it reaches here). Any other
+ * 400 keeps its own message instead of blaming the password.
  */
 export function isWrongCurrentPassword(error: unknown): boolean {
   const { code, statusCode } = extractApiError(error);
   if (code === 'INVALID_PASSWORD' || code === 'INVALID_CREDENTIALS') return true;
-  if (statusCode === 401) return true;
-  return statusCode === 400 && code !== 'VALIDATION_ERROR';
+  // extractApiError reports HTTP_ERROR when the response body carries no business code.
+  return statusCode === 401 && code === 'HTTP_ERROR';
 }
 
 export function getChangePasswordErrorMessage(error: unknown): string {

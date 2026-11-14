@@ -12,9 +12,16 @@ describe('getChangePasswordErrorMessage', () => {
   it.each([
     [400, 'INVALID_PASSWORD'],
     [401, undefined],
-    [400, 'BAD_REQUEST'],
+    [401, 'INVALID_CREDENTIALS'],
   ])('maps a wrong current password (%s %s)', (status, code) => {
     expect(getChangePasswordErrorMessage(apiError(status, code))).toBe(WRONG_CURRENT_PASSWORD_MESSAGE);
+  });
+
+  it.each([
+    [400, 'BAD_REQUEST'],
+    [401, 'TOKEN_EXPIRED'],
+  ])('does not blame the password for an unrelated %s %s', (status, code) => {
+    expect(getChangePasswordErrorMessage(apiError(status, code))).not.toBe(WRONG_CURRENT_PASSWORD_MESSAGE);
   });
 
   it('keeps field validation errors for the new password', () => {
