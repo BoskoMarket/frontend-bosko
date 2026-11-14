@@ -365,10 +365,10 @@ export const ProfileScreen: React.FC = () => {
           {profile?.email ? <Text variant="body" color={tc.textSub}>{profile.email}</Text> : null}
 
           <View style={ss.metaRow}>
-            {profile?.location ? (
+            {profile?.city?.name || profile?.location ? (
               <View style={ss.metaItem}>
                 <Ionicons name="location-outline" size={13} color={tc.textSub} />
-                <Text variant="caption" color={tc.textSub}>{profile.location}</Text>
+                <Text variant="caption" color={tc.textSub}>{profile.city?.name ?? profile.location}</Text>
               </View>
             ) : null}
             {memberSince ? (
