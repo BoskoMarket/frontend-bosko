@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, RefreshControl, type LayoutChangeEvent, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getLoadErrorMessage } from '@/lib/errors';
+import { getLoadErrorMessage, isCancelledError } from '@/lib/errors';
 import {
   BRAND_NAME,
   Button,
@@ -13,6 +13,7 @@ import {
   SPACING,
   TAB_BAR_CLEARANCE,
   Text,
+  toast,
   TOKENS,
   useThemeColors,
 } from '@/core/design-system';
@@ -65,7 +66,11 @@ export default function WorksFeedScreen() {
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await refetch();
+      const result = await refetch();
+      // With items on screen the error state is not shown, so a failed refresh must say so.
+      if (result.isError && !isCancelledError(result.error)) {
+        toast.error('No pudimos actualizar', getLoadErrorMessage(result.error));
+      }
     } finally {
       setRefreshing(false);
     }
@@ -75,6 +80,11 @@ export default function WorksFeedScreen() {
   const loadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage && !isRefetching && !isFetchNextPageError) fetchNextPage({ cancelRefetch: false });
   }, [hasNextPage, isFetchingNextPage, isRefetching, isFetchNextPageError, fetchNextPage]);
+
+  // Same guards as loadMore: a retry must not start a page fetch during a refetch.
+  const retryLoadMore = useCallback(() => {
+    if (!isFetchingNextPage && !isRefetching) fetchNextPage({ cancelRefetch: false });
+  }, [isFetchingNextPage, isRefetching, fetchNextPage]);
 
   const viewportH = useRef(0);
   const contentH = useRef(0);
@@ -111,7 +121,7 @@ export default function WorksFeedScreen() {
   const showSkeleton = feed.isPending;
   const showError = feed.isError && items.length === 0;
   const showPageError = feed.isFetchNextPageError && items.length > 0 && !feed.isFetchingNextPage;
-  const showEmpty =!showSkeleton && !showError && items.length === 0;
+  const showEmpty = !showSkeleton && !showError && items.length === 0;
 
   return (
     <View style={[styles.root, { backgroundColor: tc.bg }]}>
@@ -198,7 +208,7 @@ export default function WorksFeedScreen() {
             <Text variant="bodySmall" color={tc.textSub} center>
               {getLoadErrorMessage(feed.error)}
             </Text>
-            <Button label="Reintentar" variant="outline" size="sm" onPress={() => fetchNextPage({ cancelRefetch: false })} />
+            <Button label="Reintentar" variant="outline" size="sm" onPress={retryLoadMore} />
           </View>
         ) : null}
       </ScrollView>

@@ -22,9 +22,6 @@ import { useCategories, useCreateService, useMyServices, useUpdateService } from
 import { fetchServiceById } from "../services/services";
 import { Button, Card, Chip, Input, ScreenHeader, SPACING, Text, TOKENS, useIsDark, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
 import { getFormErrors, getUserErrorMessage } from '@/lib/errors';
-
-const SERVICE_FIELDS = ['title', 'description', 'price'] as const;
-type ServiceField = (typeof SERVICE_FIELDS)[number];
 import { runWithRetry } from '@/lib/runWithRetry';
 import { toast } from '@/core/components/Toast';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
@@ -32,6 +29,9 @@ import { getPublishBlock } from '@/features/kyc/utils/publishErrors';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 import { DESCRIPTION_MIN as MIN_DESCRIPTION, TITLE_MAX, TITLE_MIN, validateServiceFields } from '@/features/servicesUser/utils/serviceFormRules';
+
+const SERVICE_FIELDS = ['title', 'description', 'price'] as const;
+type ServiceField = (typeof SERVICE_FIELDS)[number];
 
 type FormState = {
   title: string;

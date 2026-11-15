@@ -6,7 +6,6 @@
  * Rebrand "Señal Nocturna" — mismo chrome que el resto del flujo de auth.
  */
 
-import { getResendCodeErrorMessage } from '@/features/auth/utils/resetCodeErrors';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -33,6 +32,7 @@ import {
   useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { forgotPasswordService } from '@/features/auth/services/auth';
+import { getResendCodeErrorMessage } from '@/features/auth/utils/resetCodeErrors';
 
 const CODE_LENGTH = 6;
 const RESEND_COOLDOWN = 30;

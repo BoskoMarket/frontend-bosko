@@ -31,7 +31,13 @@ export interface CursorCollection<T> {
   nextCursor: string | null;
 }
 
-/** Strict reader for cursor pages: a missing list or a non-string cursor is a malformed response. */
+/**
+ * Strict reader for cursor pages (docs/trabajos-feed-contract.md: `data.{data, nextCursor}`,
+ * `nextCursor` is `null` on the last page; an empty feed is `{ data: [], nextCursor: null }`).
+ * The only leniency is an absent `nextCursor`, read as `null` (end of list). A non-object or
+ * array payload, a missing `data` array or a non-string cursor is a malformed response and throws,
+ * so it is never shown as an empty feed.
+ */
 export function readCursorCollection<T>(value: unknown): CursorCollection<T> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     throw new Error('El servidor devolvió una página con un formato inesperado.');

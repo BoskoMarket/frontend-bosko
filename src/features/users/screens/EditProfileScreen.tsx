@@ -40,12 +40,12 @@ import {
   dialog,
 } from '@/core/design-system';
 import { getFormErrors, getUserErrorMessage } from '@/lib/errors';
-
-const PROFILE_FIELDS = ['firstName', 'lastName', 'phone', 'bio'] as const;
-type ProfileField = (typeof PROFILE_FIELDS)[number];
 import { IMAGE_UPLOAD_MAX_BYTES, resolveImageMime } from '@/core/media/imageMime';
 import { resolveFileSize } from '@/features/reels/constants/reelUploadRules';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+
+const PROFILE_FIELDS = ['firstName', 'lastName', 'phone', 'bio'] as const;
+type ProfileField = (typeof PROFILE_FIELDS)[number];
 
 const AVATAR_SIZE = 104;
 const BIO_MAX = 500;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, fireEvent, render } from '@testing-library/react-native';
 
 const mockPush = jest.fn();
 const mockRefetch = jest.fn();
@@ -8,6 +8,11 @@ let mockFeed: any;
 let mockIsProvider = false;
 const mockCategoryCalls: Array<string | null> = [];
 
+const mockToastError = jest.fn();
+jest.mock('@/core/design-system/components/Toast', () => ({
+  ...jest.requireActual('@/core/design-system/components/Toast'),
+  toast: { error: (...a: unknown[]) => mockToastError(...a), success: jest.fn(), warning: jest.fn() },
+}));
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
@@ -176,6 +181,30 @@ describe('WorksFeedScreen', () => {
       nativeEvent: { layoutMeasurement: { height: 800 }, contentOffset: { y: 900 }, contentSize: { height: 1800 } },
     });
     expect(mockFetchNext).not.toHaveBeenCalled();
+  });
+
+  it('footer retry does not fetch while a refetch is running', () => {
+    mockFeed = feedState({
+      data: { pages: [{ data: [item('w1')], nextCursor: 'n' }] },
+      hasNextPage: true,
+      isFetchNextPageError: true,
+      isRefetching: true,
+      error: { isAxiosError: true, message: 'Network Error' },
+    });
+    const { getByText } = render(<WorksFeedScreen />);
+    fireEvent.press(getByText('Reintentar'));
+    expect(mockFetchNext).not.toHaveBeenCalled();
+  });
+
+  it('shows a toast when a pull-to-refresh fails while photos are on screen', async () => {
+    const error = { isAxiosError: true, message: 'Network Error' };
+    mockRefetch.mockResolvedValueOnce({ isError: true, error });
+    mockFeed = feedState({ data: { pages: [{ data: [item('w1')], nextCursor: null }] } });
+    const { UNSAFE_getAllByType } = render(<WorksFeedScreen />);
+    const { RefreshControl } = require('react-native');
+    const rc = UNSAFE_getAllByType(RefreshControl)[0];
+    await act(async () => { await rc.props.onRefresh(); });
+    expect(mockToastError).toHaveBeenCalledWith('No pudimos actualizar', getLoadErrorMessage(error));
   });
 
   it('fetches the next page when the content is shorter than the viewport', () => {
