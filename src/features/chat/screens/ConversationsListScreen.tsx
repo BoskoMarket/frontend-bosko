@@ -19,7 +19,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getLoadErrorMessage } from '@/lib/errors';
+import { getLoadErrorMessage, getRateLimitBackoffUntil } from '@/lib/errors';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { Animated } from 'react-native';
 import { router } from 'expo-router';
@@ -191,9 +191,7 @@ export default function ConversationsListScreen() {
       setUnreadTotal(data.reduce((acc, c) => acc + c.unreadCount, 0));
       setLoadError(null);
     } catch (err: any) {
-      if (err?.response?.status === 429) {
-        pollBackoffRef.current = Date.now() + 60_000;
-      }
+      pollBackoffRef.current = getRateLimitBackoffUntil(err) || pollBackoffRef.current;
       console.error('Error al cargar conversaciones:', err);
       setLoadError(err ?? new Error('conversations load failed'));
     } finally {

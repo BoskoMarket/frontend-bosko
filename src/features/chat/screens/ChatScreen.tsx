@@ -74,7 +74,7 @@ import {
   type ChatBlockState,
 } from '../constants/chatBlockRules';
 import { useBlockUser, useUnblockUser } from '@/hooks/mutations/useBlockMutations';
-import { NETWORK_ERROR_MESSAGE, getUserErrorMessage, isNetworkError } from '@/lib/errors';
+import { NETWORK_ERROR_MESSAGE, getRateLimitBackoffUntil, getUserErrorMessage, isNetworkError } from '@/lib/errors';
 import { isVideoUrl } from '../utils/mediaUrl';
 import {
   Avatar,
@@ -608,9 +608,7 @@ export default function ChatScreen() {
       setLoadFailed(false);
       await markAsRead(convId).catch(() => {});
     } catch (err: any) {
-      if (err?.response?.status === 429) {
-        pollBackoffRef.current = Date.now() + 60_000;
-      }
+      pollBackoffRef.current = getRateLimitBackoffUntil(err) || pollBackoffRef.current;
       console.error('Error loading messages:', err);
       setLoadFailed(true);
     }

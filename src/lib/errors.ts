@@ -219,6 +219,8 @@ const MAX_RETRY_DELAY_MS = 30_000;
 
 /** Política de reintento para queries (operaciones seguras): red, 429 y 5xx. */
 export function shouldRetryRequest(failureCount: number, error: unknown): boolean {
+  // A cancelled request is intentional (screen left, superseded): never retry it.
+  if (isCancelledError(error)) return false;
   const status = (error as AxiosError)?.response?.status;
   if (status && NON_RETRYABLE_STATUS.includes(status)) return false;
   return failureCount < 2;
@@ -233,6 +235,20 @@ export function getRetryAfterMs(error: unknown): number | null {
   if (value !== "" && Number.isFinite(seconds)) return Math.max(0, seconds * 1000);
   const date = Date.parse(value);
   return Number.isNaN(date) ? null : Math.max(0, date - Date.now());
+}
+
+const DEFAULT_POLL_BACKOFF_MS = 60_000;
+const MAX_POLL_BACKOFF_MS = 5 * 60_000;
+
+/**
+ * Pausa para polling manual (no TanStack) tras un 429: devuelve el timestamp hasta el cual
+ * no hay que volver a pedir, o 0 si el error no es de rate limit. Respeta `Retry-After`
+ * (tope 5 min); sin header, 60 s.
+ */
+export function getRateLimitBackoffUntil(error: unknown, now: number = Date.now()): number {
+  if (getErrorKind(error) !== "rate_limited") return 0;
+  const wait = getRetryAfterMs(error) ?? DEFAULT_POLL_BACKOFF_MS;
+  return now + Math.min(wait, MAX_POLL_BACKOFF_MS);
 }
 
 /** Backoff exponencial; respeta `Retry-After` cuando el server lo manda. */

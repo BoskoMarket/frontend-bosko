@@ -1,6 +1,7 @@
 import {
   extractApiError,
   getFormErrors,
+  getRateLimitBackoffUntil,
   getRetryAfterMs,
   getRetryDelayMs,
   shouldRetryRequest,
@@ -56,4 +57,18 @@ test('backoff respeta Retry-After y tiene tope', () => {
   expect(getRetryDelayMs(1, axiosError(500))).toBe(2000);
   expect(getRetryDelayMs(10, axiosError(500))).toBe(30_000);
   expect(getRetryDelayMs(0, axiosError(429, '', { 'retry-after': '3600' }))).toBe(30_000);
+});
+
+test('no reintenta requests cancelados', () => {
+  const cancelled = { isAxiosError: true, code: 'ERR_CANCELED', name: 'CanceledError', message: 'canceled' };
+  expect(shouldRetryRequest(0, cancelled)).toBe(false);
+});
+
+test('pausa el polling tras 429: Retry-After con tope, 60 s por defecto, 0 si no es 429', () => {
+  const now = 1_000_000;
+  expect(getRateLimitBackoffUntil(axiosError(429, ''), now)).toBe(now + 60_000);
+  expect(getRateLimitBackoffUntil(axiosError(429, '', { 'retry-after': '5' }), now)).toBe(now + 5000);
+  expect(getRateLimitBackoffUntil(axiosError(429, '', { 'retry-after': '99999' }), now)).toBe(now + 300_000);
+  expect(getRateLimitBackoffUntil(axiosError(500, ''), now)).toBe(0);
+  expect(getRateLimitBackoffUntil(axiosError(), now)).toBe(0);
 });
