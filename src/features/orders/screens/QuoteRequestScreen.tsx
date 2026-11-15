@@ -29,10 +29,13 @@ import {
   TOKENS,
   useThemeColors,
   dialog, FONT_FAMILY } from '@/core/design-system';
-import { getUserErrorMessage } from '@/lib/errors';
+import { getFormErrors } from '@/lib/errors';
 import { runWithRetry } from '@/lib/runWithRetry';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { availableSlots, buildDayOptions, isSlotStillAvailable, toScheduledIso, DEFAULT_SLOT_HOUR } from '../utils/scheduledDate';
+
+const QUOTE_FIELDS = ['message', 'address'] as const;
+type QuoteField = (typeof QUOTE_FIELDS)[number];
 
 export default function QuoteRequestScreen() {
   const tc = useThemeColors();
@@ -67,6 +70,7 @@ export default function QuoteRequestScreen() {
     if (!daySlots.some((s) => s.hour === slotHour)) setSlotHour(daySlots[0]?.hour ?? DEFAULT_SLOT_HOUR);
   };
   const [isLoading, setIsLoading] = useState(false);
+  const [serverErrors, setServerErrors] = useState<Partial<Record<QuoteField, string>>>({});
 
   const handleSubmit = async () => {
     if (!message.trim()) {
@@ -87,6 +91,7 @@ export default function QuoteRequestScreen() {
     }
 
     setIsLoading(true);
+    setServerErrors({});
     const payload = {
       serviceId: params.serviceId,
       message: message.trim(),
@@ -96,7 +101,11 @@ export default function QuoteRequestScreen() {
     // A network failure offers "Reintentar" with the same payload; the form keeps what was typed.
     const result = await runWithRetry(() => addOrder(payload), {
       title: 'No se pudo enviar la solicitud',
-      onError: (err) => dialog.fromAlert('Error', getUserErrorMessage(err)),
+      onError: (err) => {
+        const { fields, general } = getFormErrors(err, QUOTE_FIELDS);
+        setServerErrors(fields);
+        if (general) dialog.fromAlert('Error', general);
+      },
     });
     setIsLoading(false);
     if (result.ok) {
@@ -164,6 +173,7 @@ export default function QuoteRequestScreen() {
                   numberOfLines={5}
                   textAlignVertical="top"
                   maxLength={500}
+                  error={serverErrors.message}
                 />
                 <Text style={[styles.charCount, { color: tc.textSub }]}>{message.length}/500</Text>
               </View>
@@ -178,6 +188,7 @@ export default function QuoteRequestScreen() {
                   value={address}
                   onChangeText={setAddress}
                   returnKeyType="next"
+                  error={serverErrors.address}
                 />
               </View>
 

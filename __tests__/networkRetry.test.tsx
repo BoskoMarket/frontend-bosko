@@ -122,6 +122,20 @@ describe('QuoteRequestScreen network failure', () => {
   });
 });
 
+describe('QuoteRequestScreen validation errors', () => {
+  afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks(); });
+
+  it('shows details[] under the matching input instead of an alert', async () => {
+    const alert = jest.spyOn(dialog, 'fromAlert').mockImplementation(() => {});
+    mockAddOrder.mockRejectedValueOnce(serverError());
+    const { getByPlaceholderText, getByText, findByText } = render(<QuoteRequestScreen />);
+    fireEvent.changeText(getByPlaceholderText(/Necesito una instalación eléctrica/), 'Hola');
+    fireEvent.press(getByText('Enviar solicitud'));
+    expect(await findByText('too short')).toBeTruthy();
+    expect(alert).not.toHaveBeenCalled();
+  });
+});
+
 describe('OrderDetailScreen network failure', () => {
   afterEach(() => { jest.restoreAllMocks(); jest.clearAllMocks(); });
 
