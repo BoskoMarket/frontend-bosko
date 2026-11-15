@@ -26,7 +26,7 @@ import {
   dialog,
 } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
-import { getChangePasswordErrorMessage } from '@/features/auth/utils/passwordErrors';
+import { getChangePasswordFormErrors, type ChangePasswordField } from '@/features/auth/utils/passwordErrors';
 
 function getStrength(pwd: string): 0 | 1 | 2 | 3 {
   if (!pwd) return 0;
@@ -70,6 +70,7 @@ export default function ChangePasswordScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<ChangePasswordField, string>>>({});
 
   const newRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
@@ -86,6 +87,7 @@ export default function ChangePasswordScreen() {
   const handleSave = async () => {
     Keyboard.dismiss();
     setError('');
+    setFieldErrors({});
     if (!currentPassword || !newPassword || !confirmPassword) {
       setError('Completa todos los campos');
       return;
@@ -108,7 +110,9 @@ export default function ChangePasswordScreen() {
         { text: 'OK', onPress: () => safeBack(router, '/(tabs)/profile') },
       ]);
     } catch (err) {
-      setError(getChangePasswordErrorMessage(err));
+      const { fields, general } = getChangePasswordFormErrors(err);
+      setFieldErrors(fields);
+      setError(general ?? '');
     } finally {
       setIsLoading(false);
     }
@@ -144,7 +148,8 @@ export default function ChangePasswordScreen() {
                     leftIcon="lock-closed-outline"
                     placeholder="••••••••"
                     value={currentPassword}
-                    onChangeText={t => { setCurrentPassword(t); setError(''); }}
+                    error={fieldErrors.currentPassword}
+                    onChangeText={t => { setCurrentPassword(t); setError(''); setFieldErrors(p => ({ ...p, currentPassword: undefined })); }}
                     secureTextEntry
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -158,7 +163,8 @@ export default function ChangePasswordScreen() {
                       leftIcon="lock-closed-outline"
                       placeholder="••••••••"
                       value={newPassword}
-                      onChangeText={t => { setNewPassword(t); setError(''); }}
+                      error={fieldErrors.newPassword}
+                      onChangeText={t => { setNewPassword(t); setError(''); setFieldErrors(p => ({ ...p, newPassword: undefined })); }}
                       secureTextEntry
                       autoCapitalize="none"
                       autoCorrect={false}

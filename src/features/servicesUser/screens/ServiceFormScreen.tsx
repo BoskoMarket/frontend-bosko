@@ -21,7 +21,10 @@ import { uploadServiceImages } from "@/features/servicesUser/services/service";
 import { useCategories, useCreateService, useMyServices, useUpdateService } from "@/hooks/queries/useMarketplaceQuery";
 import { fetchServiceById } from "../services/services";
 import { Button, Card, Chip, Input, ScreenHeader, SPACING, Text, TOKENS, useIsDark, useThemeColors, dialog, FONT_FAMILY } from '@/core/design-system';
-import { getUserErrorMessage } from '@/lib/errors';
+import { getFormErrors, getUserErrorMessage } from '@/lib/errors';
+
+const SERVICE_FIELDS = ['title', 'description', 'price'] as const;
+type ServiceField = (typeof SERVICE_FIELDS)[number];
 import { runWithRetry } from '@/lib/runWithRetry';
 import { toast } from '@/core/components/Toast';
 import { useRequireProviderStatus } from '@/hooks/useRequireProviderStatus';
@@ -91,6 +94,7 @@ export default function ServiceFormScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [serverErrors, setServerErrors] = useState<Partial<Record<ServiceField, string>>>({});
   const [imageUri, setImageUri] = useState<string | undefined>();
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
@@ -159,8 +163,8 @@ export default function ServiceFormScreen() {
   const fieldErrors = validateServiceFields({ title: form.title, description: form.description, hasPhoto: !!imageUri });
   if (titleUnchanged) delete fieldErrors.title;
   const photoError = submitAttempted ? fieldErrors.photo : undefined;
-  const titleError = (submitAttempted || form.title.length > 0) ? fieldErrors.title : undefined;
-  const descriptionError = (submitAttempted || form.description.length > 0) ? fieldErrors.description : undefined;
+  const titleError = serverErrors.title ?? ((submitAttempted || form.title.length > 0) ? fieldErrors.title : undefined);
+  const descriptionError = serverErrors.description ?? ((submitAttempted || form.description.length > 0) ? fieldErrors.description : undefined);
 
   const validateForm = () => {
     setSubmitAttempted(true);
@@ -205,6 +209,7 @@ export default function ServiceFormScreen() {
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
+    setServerErrors({});
     setSubmitting(true);
     try {
       const payload = await buildPayload();
@@ -270,7 +275,9 @@ export default function ServiceFormScreen() {
       if (err?.code === "SERVICE_LIMIT_REACHED" || err?.response?.data?.code === "SERVICE_LIMIT_REACHED") {
         toast.warning("Límite de tu plan", "Actualiza a plan Plus para publicar más servicios.");
       } else {
-        toast.error("Error", getUserErrorMessage(err));
+        const { fields, general } = getFormErrors(err, SERVICE_FIELDS);
+        setServerErrors(fields);
+        if (general) toast.error("Error", general);
       }
     } finally {
       setSubmitting(false);
@@ -304,7 +311,7 @@ export default function ServiceFormScreen() {
             value={form.title}
             maxLength={TITLE_MAX}
             error={titleError}
-            onChangeText={(t) => setForm((p) => ({ ...p, title: t }))}
+            onChangeText={(t) => { setForm((p) => ({ ...p, title: t })); setServerErrors((p) => ({ ...p, title: undefined })); }}
           />
           <Text variant="caption" color={tc.textMuted}>
             {form.title.length}/{TITLE_MAX} caracteres (mínimo {TITLE_MIN})
@@ -318,7 +325,7 @@ export default function ServiceFormScreen() {
             numberOfLines={5}
             textAlignVertical="top"
             error={descriptionError}
-            onChangeText={(t) => setForm((p) => ({ ...p, description: t }))}
+            onChangeText={(t) => { setForm((p) => ({ ...p, description: t })); setServerErrors((p) => ({ ...p, description: undefined })); }}
           />
           <Text variant="caption" color={tc.textMuted}>
             {form.description.trim().length}/{MIN_DESCRIPTION} caracteres mínimos
@@ -333,8 +340,9 @@ export default function ServiceFormScreen() {
           <Input
             placeholder="Ej: 5000 (opcional)"
             keyboardType="numeric"
+            error={serverErrors.price}
             value={form.price}
-            onChangeText={(t) => setForm((p) => ({ ...p, price: t.replace(/[^0-9.,]/g, "") }))}
+            onChangeText={(t) => { setForm((p) => ({ ...p, price: t.replace(/[^0-9.,]/g, "") })); setServerErrors((p) => ({ ...p, price: undefined })); }}
           />
         </FormCard>
 

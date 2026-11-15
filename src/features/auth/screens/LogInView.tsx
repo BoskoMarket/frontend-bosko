@@ -35,11 +35,14 @@ import {
 } from '@/core/design-system';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useGoogleSignIn } from '@/features/auth/hooks/useGoogleSignIn';
-import { getUserErrorMessage } from '@/lib/errors';
+import { getFormErrors, getUserErrorMessage } from '@/lib/errors';
 import { BrandMark } from '@/components/BrandMark';
 import { WELCOME_VIDEO_PENDING_KEY } from '@/features/auth/constants';
 
 const REMEMBERED_EMAIL_KEY = `${STORAGE_PREFIX}_REMEMBERED_EMAIL`;
+
+const LOGIN_FIELDS = ['email', 'password'] as const;
+type LoginField = (typeof LOGIN_FIELDS)[number];
 
 export default function LogInView({ toRegister }: { toRegister?: () => void }) {
   const tc = useThemeColors();
@@ -51,6 +54,7 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<LoginField, string>>>({});
   const [rememberMe, setRememberMe] = useState(false);
 
   const passwordRef = useRef<TextInput>(null);
@@ -81,6 +85,7 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
       return;
     }
     setLocalError('');
+    setFieldErrors({});
     clearError();
     try {
       const trimmedEmail = email.trim().toLowerCase();
@@ -97,7 +102,9 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
         router.replace('/(tabs)');
       }
     } catch (err) {
-      setLocalError(getUserErrorMessage(err));
+      const { fields, general } = getFormErrors(err, LOGIN_FIELDS);
+      setFieldErrors(fields);
+      setLocalError(general ?? '');
     }
   };
 
@@ -144,7 +151,8 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
                     leftIcon="mail-outline"
                     placeholder="Correo electrónico"
                     value={email}
-                    onChangeText={text => { setEmail(text); setLocalError(''); clearError(); }}
+                    error={fieldErrors.email}
+                    onChangeText={text => { setEmail(text); setLocalError(''); setFieldErrors(p => ({ ...p, email: undefined })); clearError(); }}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -160,7 +168,8 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
                     leftIcon="lock-closed-outline"
                     placeholder="Contraseña"
                     value={password}
-                    onChangeText={text => { setPassword(text); setLocalError(''); clearError(); }}
+                    error={fieldErrors.password}
+                    onChangeText={text => { setPassword(text); setLocalError(''); setFieldErrors(p => ({ ...p, password: undefined })); clearError(); }}
                     secureTextEntry
                     autoCapitalize="none"
                     autoCorrect={false}

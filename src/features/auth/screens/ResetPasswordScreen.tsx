@@ -29,6 +29,9 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { resetPasswordService } from '@/features/auth/services/auth';
+import { getFieldErrors, getFormErrors } from '@/lib/errors';
+
+const RESET_FIELDS = ['newPassword'] as const;
 
 export default function ResetPasswordScreen() {
   const tc = useThemeColors();
@@ -39,6 +42,7 @@ export default function ResetPasswordScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [newPasswordError, setNewPasswordError] = useState<string | undefined>();
   const [success, setSuccess] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(20)).current;
@@ -82,6 +86,7 @@ export default function ResetPasswordScreen() {
     if (msg) { setError(msg); return; }
 
     setError('');
+    setNewPasswordError(undefined);
     setLoading(true);
     try {
       await resetPasswordService(email, code, newPassword);
@@ -95,6 +100,12 @@ export default function ResetPasswordScreen() {
         Animated.timing(successFadeAnim, { toValue: 1, duration: MOTION.modalFadeIn.duration, useNativeDriver: true }).start();
       });
     } catch (err: any) {
+      if (getFieldErrors(err).length) {
+        const { fields, general } = getFormErrors(err, RESET_FIELDS);
+        setNewPasswordError(fields.newPassword);
+        setError(general ?? '');
+        return;
+      }
       const errCode = err?.response?.data?.code;
       if (errCode === 'INVALID_VERIFICATION_CODE') setError('Código incorrecto o expirado. Vuelve a solicitarlo.');
       else if (errCode === 'NOT_FOUND')      setError('Usuario no encontrado.');
@@ -162,7 +173,8 @@ export default function ResetPasswordScreen() {
                     placeholder="Nueva contraseña"
                     secureTextEntry
                     value={newPassword}
-                    onChangeText={setNewPassword}
+                    error={newPasswordError}
+                    onChangeText={t => { setNewPassword(t); setNewPasswordError(undefined); }}
                     autoCapitalize="none"
                   />
                 </View>
