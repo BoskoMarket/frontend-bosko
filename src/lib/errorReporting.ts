@@ -1,4 +1,5 @@
 import { captureError } from '@/core/monitoring/sentry';
+import { getClientRequestId } from '@/core/api/requestId';
 import { extractApiError, isCancelledError } from './errors';
 
 /**
@@ -20,5 +21,5 @@ export function reportApiError(error: unknown, context?: Record<string, unknown>
   const isServer = statusCode >= 500;
   const isUnknown = code === 'UNKNOWN_ERROR';
   if (!isServer && !isUnknown) return;
-  captureError(error, { ...context, code, statusCode, requestId });
+  captureError(error, { ...context, code, statusCode, requestId, clientRequestId: getClientRequestId(error) });
 }

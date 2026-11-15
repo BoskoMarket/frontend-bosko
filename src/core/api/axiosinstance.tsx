@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { API_URL } from '@/core/config/env';
 import { tokenStorage } from '@/core/auth/tokenStorage';
+import { createRequestId, REQUEST_ID_HEADER } from './requestId';
 import type { ApiResponse, AuthResponse } from '@/features/auth/types';
 
 const TIMEOUT = 30_000;
@@ -73,6 +74,8 @@ api.interceptors.request.use((config: SessionConfig) => {
   const token = tokenStorage.getAccessToken();
   if (token) config.headers.Authorization = `Bearer ${token}`;
   else delete config.headers.Authorization;
+  // Kept across the 401 retry so one logical call keeps one id.
+  if (!config.headers[REQUEST_ID_HEADER]) config.headers[REQUEST_ID_HEADER] = createRequestId();
   config.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
   return config;
 });
