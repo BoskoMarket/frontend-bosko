@@ -1,5 +1,5 @@
 import { dialog, toast } from '@/core/design-system';
-import { getUserErrorMessage, isNetworkError, NETWORK_ERROR_MESSAGE } from './errors';
+import { getUserErrorMessage, isCancelledError, isNetworkError, NETWORK_ERROR_MESSAGE } from './errors';
 
 export type RetryResult<T> = { ok: true; value: T } | { ok: false; error: unknown };
 
@@ -25,6 +25,8 @@ export async function runWithRetry<T>(
     try {
       return { ok: true, value: await action() };
     } catch (error) {
+      // A cancelled request is intentional (screen left, superseded): no toast, no retry prompt.
+      if (isCancelledError(error)) return { ok: false, error };
       if (!isNetworkError(error)) {
         if (onError) onError(error);
         else toast.error(title, getUserErrorMessage(error));

@@ -167,6 +167,21 @@ const SOCIAL = {
   CANNOT_BLOCK_SELF: "No puedes bloquearte a ti mismo",
 } as const;
 
+/** Backend codes added for catalog parity; copy reused from the feature mappers. */
+const CATALOG_SYNC = {
+  POST_LIMIT_REACHED: "Llegaste al máximo de fotos. Borra alguna para subir otra.",
+  INVALID_MEDIA: "No pudimos leer esa imagen. Usa una foto JPG, PNG o WebP.",
+  UPLOAD_BUSY: "Estamos procesando otra foto. Prueba de nuevo en unos segundos.",
+  ORDER_CLOSED: "No puedes enviar mensajes en una orden finalizada.",
+  REPORT_NOT_FOUND: "Lo que quieres reportar ya no está disponible.",
+  IDEMPOTENCY_KEY_REUSED: "Esta solicitud ya se envió con otros datos. Actualiza e intenta de nuevo.",
+  KYC_SESSION_PENDING: "Ya tienes una verificación en curso. Espera a que termine.",
+  REAUTH_FAILED: "No pudimos verificar tu cuenta. Intenta de nuevo.",
+  INVALID_PASSWORD: "Contraseña incorrecta. Verifica e intenta de nuevo.",
+  ACTIVE_ORDERS: "Tienes órdenes activas. Finalízalas o cancélalas antes de continuar.",
+  ACCOUNT_INACTIVE: "Tu cuenta está desactivada. Contacta a soporte.",
+} as const;
+
 /** Códigos genéricos que agrupan errores no clasificados por status HTTP. */
 const GENERIC = {
   BAD_REQUEST: "La solicitud no es válida",
@@ -196,6 +211,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
   ...PAYMENT,
   ...PLAN,
   ...SOCIAL,
+  ...CATALOG_SYNC,
 };
 
 export type ErrorCode = keyof typeof ERROR_MESSAGES;

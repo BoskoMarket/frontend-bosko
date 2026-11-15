@@ -1,4 +1,4 @@
-import { AxiosError } from "axios";
+import axios, { AxiosError } from "axios";
 import { ERROR_MESSAGES, DEFAULT_ERROR_MESSAGE, type ErrorCode } from "./error-messages";
 
 /** Detalle de error de validación por campo (ver frontend-error-contract.md) */
@@ -36,6 +36,10 @@ export interface ApiError {
  * sin traducir — la traducción la hace `getUserErrorMessage()`.
  */
 export function extractApiError(error: unknown): ApiError {
+  if (isCancelledError(error)) {
+    return { code: "REQUEST_CANCELLED", serverMessage: (error as Error).message ?? "canceled", statusCode: 0 };
+  }
+
   if ((error as AxiosError)?.isAxiosError) {
     const axiosError = error as AxiosError<BackendErrorResponse>;
     const data = axiosError.response?.data;
@@ -83,8 +87,18 @@ export function extractApiError(error: unknown): ApiError {
 export const NETWORK_ERROR_MESSAGE =
   "No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.";
 
+export const CANCELLED_ERROR_MESSAGE = "La solicitud se canceló.";
+
+/** true cuando el request fue abortado por la app (AbortController / CanceledError), no por la red. */
+export function isCancelledError(error: unknown): boolean {
+  const e = error as { code?: string; name?: string } | null | undefined;
+  if (!e || typeof e !== "object") return false;
+  return axios.isCancel(error) || e.code === "ERR_CANCELED" || e.name === "CanceledError";
+}
+
 /** true cuando el request no llegó al servidor (sin respuesta: offline, timeout, DNS). */
 export function isNetworkError(error: unknown): boolean {
+  if (isCancelledError(error)) return false;
   const e = error as AxiosError | undefined;
   if (!e?.isAxiosError) return false;
   if (e.code === "ERR_NETWORK" || e.code === "ECONNABORTED" || e.code === "ETIMEDOUT") return true;
@@ -115,11 +129,51 @@ export function getUserErrorMessage(error: unknown): string {
     return NETWORK_ERROR_MESSAGE;
   }
 
+  if (code === "REQUEST_CANCELLED") {
+    return CANCELLED_ERROR_MESSAGE;
+  }
+
   if (code === "UNKNOWN_ERROR") {
     return serverMessage || DEFAULT_ERROR_MESSAGE;
   }
 
   return ERROR_MESSAGES[code as ErrorCode] ?? DEFAULT_ERROR_MESSAGE;
+}
+
+export type ErrorKind =
+  | "cancelled"
+  | "offline"
+  | "rate_limited"
+  | "forbidden"
+  | "not_found"
+  | "server"
+  | "unknown";
+
+/** Clasifica un error para elegir el estado de UI (offline vs. server vs. permisos, etc.). */
+export function getErrorKind(error: unknown): ErrorKind {
+  if (isCancelledError(error)) return "cancelled";
+  const { code, statusCode } = extractApiError(error);
+  if (code === "NETWORK_ERROR") return "offline";
+  if (code === "RATE_LIMITED" || statusCode === 429) return "rate_limited";
+  if (statusCode === 401 || statusCode === 403) return "forbidden";
+  if (statusCode === 404) return "not_found";
+  if (statusCode >= 500) return "server";
+  return "unknown";
+}
+
+export const LOAD_ERROR_MESSAGES: Record<Exclude<ErrorKind, "cancelled">, string> = {
+  offline: NETWORK_ERROR_MESSAGE,
+  rate_limited: "Hiciste demasiadas solicitudes. Espera un momento e intenta de nuevo.",
+  forbidden: "No tienes permiso para ver este contenido.",
+  not_found: "Este contenido ya no está disponible.",
+  server: "Tuvimos un problema en el servidor. Intenta de nuevo más tarde.",
+  unknown: "No pudimos cargar la información. Intenta de nuevo.",
+};
+
+/** Mensaje para estados de carga fallida; solo `offline` habla de la conexión. */
+export function getLoadErrorMessage(error: unknown): string {
+  const kind = getErrorKind(error);
+  return kind === "cancelled" ? CANCELLED_ERROR_MESSAGE : LOAD_ERROR_MESSAGES[kind];
 }
 
 /** Detalles de validación por campo, para asociarlos a inputs de un form. */
