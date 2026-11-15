@@ -61,6 +61,18 @@ describe('works service', () => {
     expect(mockGet.mock.calls[0][1].params).toEqual({ limit: 20, categoryId: 'cat-1', cursor: 'c1' });
   });
 
+  it('rejects malformed feed responses instead of returning an empty feed', async () => {
+    for (const bad of [undefined, null, [], {}, { data: 'x' }, { data: [], nextCursor: 5 }]) {
+      mockGet.mockResolvedValueOnce({ data: bad });
+      await expect(fetchWorksFeed({})).rejects.toThrow();
+    }
+  });
+
+  it('accepts a valid empty page with a missing cursor', async () => {
+    mockGet.mockResolvedValueOnce({ data: { data: [] } });
+    expect(await fetchWorksFeed({})).toEqual({ data: [], nextCursor: null });
+  });
+
   it('reads the photos of a service from a list or a paginated envelope', async () => {
     mockGet.mockResolvedValueOnce({ data: [{ id: 'p1' }] });
     expect(await fetchServiceWorks('s1')).toEqual([{ id: 'p1' }]);

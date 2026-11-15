@@ -2,14 +2,17 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, RefreshControl, type LayoutChangeEvent, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getLoadErrorMessage } from '@/lib/errors';
 import {
   BRAND_NAME,
+  Button,
   Chip,
   EmptyState,
   ScreenHeader,
   Skeleton,
   SPACING,
   TAB_BAR_CLEARANCE,
+  Text,
   TOKENS,
   useThemeColors,
 } from '@/core/design-system';
@@ -57,7 +60,7 @@ export default function WorksFeedScreen() {
   const items = useMemo(() => flattenWorksPages(feed.data?.pages), [feed.data]);
   const category = categories.find((c) => c.id === categoryId);
 
-  const { refetch, fetchNextPage, hasNextPage, isFetchingNextPage, isRefetching } = feed;
+  const { refetch, fetchNextPage, hasNextPage, isFetchingNextPage, isRefetching, isFetchNextPageError } = feed;
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -70,8 +73,8 @@ export default function WorksFeedScreen() {
 
   // Never start a page fetch while a refetch runs, and never cancel it: both would break pull-to-refresh.
   const loadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage && !isRefetching) fetchNextPage({ cancelRefetch: false });
-  }, [hasNextPage, isFetchingNextPage, isRefetching, fetchNextPage]);
+    if (hasNextPage && !isFetchingNextPage && !isRefetching && !isFetchNextPageError) fetchNextPage({ cancelRefetch: false });
+  }, [hasNextPage, isFetchingNextPage, isRefetching, isFetchNextPageError, fetchNextPage]);
 
   const viewportH = useRef(0);
   const contentH = useRef(0);
@@ -107,7 +110,8 @@ export default function WorksFeedScreen() {
 
   const showSkeleton = feed.isPending;
   const showError = feed.isError && items.length === 0;
-  const showEmpty = !showSkeleton && !showError && items.length === 0;
+  const showPageError = feed.isFetchNextPageError && items.length > 0 && !feed.isFetchingNextPage;
+  const showEmpty =!showSkeleton && !showError && items.length === 0;
 
   return (
     <View style={[styles.root, { backgroundColor: tc.bg }]}>
@@ -147,7 +151,7 @@ export default function WorksFeedScreen() {
           <EmptyState
             icon="cloud-offline-outline"
             title="No pudimos cargar los trabajos"
-            subtitle="Revisa tu conexión e intenta de nuevo."
+            subtitle={getLoadErrorMessage(feed.error)}
             cta={{ label: 'Reintentar', onPress: () => refetch() }}
           />
         ) : null}
@@ -188,6 +192,15 @@ export default function WorksFeedScreen() {
         ) : null}
 
         {feed.isFetchingNextPage ? <ActivityIndicator style={styles.footer} color={TOKENS.color.primary} /> : null}
+
+        {showPageError ? (
+          <View style={styles.pageError} accessibilityRole="alert">
+            <Text variant="bodySmall" color={tc.textSub} center>
+              {getLoadErrorMessage(feed.error)}
+            </Text>
+            <Button label="Reintentar" variant="outline" size="sm" onPress={() => fetchNextPage({ cancelRefetch: false })} />
+          </View>
+        ) : null}
       </ScrollView>
     </View>
   );
@@ -201,4 +214,5 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.xs },
   skeletonRow: { flexDirection: 'row', justifyContent: 'space-between' },
   footer: { marginVertical: SPACING.xl },
+  pageError: { alignItems: 'center', gap: SPACING.md, marginVertical: SPACING.xl },
 });

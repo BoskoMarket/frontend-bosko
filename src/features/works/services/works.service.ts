@@ -1,5 +1,5 @@
 import api from '@/core/api/axiosinstance';
-import { readCollection } from '@/core/api/collections';
+import { readCollection, readCursorCollection } from '@/core/api/collections';
 import { extractApiError } from '@/lib/errors';
 import { extensionForMime } from '@/core/media/imageMime';
 import { WORKS_FEED_PAGE_SIZE, WORK_UPLOAD_TIMEOUT_MS } from '../constants';
@@ -11,14 +11,14 @@ export async function fetchWorksFeed(params: {
   categoryId?: string | null;
   limit?: number;
 }): Promise<WorksFeedPage> {
-  const { data } = await api.get<WorksFeedPage>('/posts/feed', {
+  const { data } = await api.get<unknown>('/posts/feed', {
     params: {
       limit: params.limit ?? WORKS_FEED_PAGE_SIZE,
       ...(params.categoryId ? { categoryId: params.categoryId } : {}),
       ...(params.cursor ? { cursor: params.cursor } : {}),
     },
   });
-  return { data: data?.data ?? [], nextCursor: data?.nextCursor ?? null };
+  return readCursorCollection<WorkFeedItem>(data);
 }
 
 /** GET /services/:id/posts — public photos of one service. */

@@ -32,6 +32,7 @@ jest.mock('@/hooks/queries/useWorksQuery', () => ({
 }));
 
 import WorksFeedScreen from '@/features/works/screens/WorksFeedScreen';
+import { getLoadErrorMessage } from '@/lib/errors';
 
 const item = (id: string) => ({
   id,
@@ -103,6 +104,42 @@ describe('WorksFeedScreen', () => {
     expect(getByText('No pudimos cargar los trabajos')).toBeTruthy();
     fireEvent.press(getByText('Reintentar'));
     expect(mockRefetch).toHaveBeenCalled();
+  });
+
+  it('shows a message per error kind on the initial load error', () => {
+    mockFeed = feedState({ isError: true, data: undefined, error: { response: { status: 500, data: {} }, isAxiosError: true } });
+    const { getByText, queryByText } = render(<WorksFeedScreen />);
+    expect(getByText(getLoadErrorMessage(mockFeed.error))).toBeTruthy();
+    expect(getLoadErrorMessage(mockFeed.error)).not.toBe(getLoadErrorMessage({ isAxiosError: true, message: 'Network Error' }));
+    expect(queryByText('Revisa tu conexión e intenta de nuevo.')).toBeNull();
+  });
+
+  it('shows a footer retry when the next page fails and keeps the loaded photos', () => {
+    mockFeed = feedState({
+      data: { pages: [{ data: [item('w1')], nextCursor: 'n' }] },
+      hasNextPage: true,
+      isError: true,
+      isFetchNextPageError: true,
+      error: { isAxiosError: true, message: 'Network Error' },
+    });
+    const { getByText, queryByText } = render(<WorksFeedScreen />);
+    expect(queryByText('No pudimos cargar los trabajos')).toBeNull();
+    expect(getByText(getLoadErrorMessage(mockFeed.error))).toBeTruthy();
+    fireEvent.press(getByText('Reintentar'));
+    expect(mockFetchNext).toHaveBeenCalledWith({ cancelRefetch: false });
+  });
+
+  it('does not auto-page while the last page fetch is in error', () => {
+    mockFeed = feedState({
+      data: { pages: [{ data: [item('w1')], nextCursor: 'n' }] },
+      hasNextPage: true,
+      isFetchNextPageError: true,
+    });
+    const { UNSAFE_getAllByType } = render(<WorksFeedScreen />);
+    const { ScrollView } = require('react-native');
+    const sv = UNSAFE_getAllByType(ScrollView).find((s: any) => s.props.onScroll);
+    sv.props.onScroll({ nativeEvent: { layoutMeasurement: { height: 800 }, contentOffset: { y: 0 }, contentSize: { height: 900 } } });
+    expect(mockFetchNext).not.toHaveBeenCalled();
   });
 
   it('renders the photos and opens the detail on press', () => {
