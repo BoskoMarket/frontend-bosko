@@ -1,5 +1,5 @@
 import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
-import { reportApiError } from '@/lib/errorReporting';
+import { reportApiError, keyScope } from '@/lib/errorReporting';
 import { getRetryDelayMs, shouldRetryRequest } from '@/lib/errors';
 
 /**
@@ -16,11 +16,11 @@ import { getRetryDelayMs, shouldRetryRequest } from '@/lib/errors';
 
 export const queryClient = new QueryClient({
   queryCache: new QueryCache({
-    onError: (error, query) => reportApiError(error, { source: 'query', queryKey: query.queryKey }),
+    onError: (error, query) => reportApiError(error, { source: 'query', queryKey: keyScope(query.queryKey) }),
   }),
   mutationCache: new MutationCache({
     onError: (error, _vars, _ctx, mutation) =>
-      reportApiError(error, { source: 'mutation', mutationKey: mutation.options.mutationKey }),
+      reportApiError(error, { source: 'mutation', mutationKey: keyScope(mutation.options.mutationKey) }),
   }),
   defaultOptions: {
     queries: {

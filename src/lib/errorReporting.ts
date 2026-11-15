@@ -2,6 +2,15 @@ import { captureError } from '@/core/monitoring/sentry';
 import { extractApiError, isCancelledError } from './errors';
 
 /**
+ * Only the first segment of a query/mutation key is safe to send to Sentry: the rest
+ * carries user data (search text, emails, ids).
+ */
+export function keyScope(key: readonly unknown[] | undefined): string | undefined {
+  const head = key?.[0];
+  return typeof head === 'string' ? head : undefined;
+}
+
+/**
  * Reports unexpected failures (5xx and unknown) with the traceability fields from the
  * backend envelope. Cancellations, offline and 4xx are expected noise and are skipped.
  */

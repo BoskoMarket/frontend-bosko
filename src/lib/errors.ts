@@ -170,10 +170,28 @@ export const LOAD_ERROR_MESSAGES: Record<Exclude<ErrorKind, "cancelled">, string
   unknown: "No pudimos cargar la información. Intenta de nuevo.",
 };
 
-/** Mensaje para estados de carga fallida; solo `offline` habla de la conexión. */
+/** Generic transport/status codes: their kind-based copy fits a load state better. */
+const KIND_COPY_CODES = new Set(["FORBIDDEN", "NOT_FOUND", "INTERNAL_ERROR", "RATE_LIMITED", "HTTP_ERROR"]);
+
+/**
+ * Message for failed load states. A catalogued backend code (400/409/422, ACCOUNT_SUSPENDED,
+ * session errors...) keeps its specific copy; otherwise the kind-based copy applies.
+ * Only `offline` talks about the connection and a 401 never says "no permission".
+ */
 export function getLoadErrorMessage(error: unknown): string {
   const kind = getErrorKind(error);
-  return kind === "cancelled" ? CANCELLED_ERROR_MESSAGE : LOAD_ERROR_MESSAGES[kind];
+  if (kind === "cancelled") return CANCELLED_ERROR_MESSAGE;
+  if (kind === "offline") return NETWORK_ERROR_MESSAGE;
+  const { code, details, statusCode } = extractApiError(error);
+  if (code === "VALIDATION_ERROR" && details?.length) {
+    return details.map((d) => `${d.field}: ${d.message}`).join("\n");
+  }
+  if (!KIND_COPY_CODES.has(code) && code !== "UNKNOWN_ERROR") {
+    const catalogued = ERROR_MESSAGES[code as ErrorCode];
+    if (catalogued) return catalogued;
+  }
+  if (statusCode === 401) return ERROR_MESSAGES.UNAUTHORIZED;
+  return LOAD_ERROR_MESSAGES[kind];
 }
 
 /** Detalles de validación por campo, para asociarlos a inputs de un form. */
