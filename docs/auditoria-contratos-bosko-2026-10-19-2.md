@@ -1,5 +1,7 @@
 # Auditoría de contratos API de Bosko
 
+> **Histórico.** Parte de este documento quedó desactualizada: `POST/DELETE /users/me/banner`, `POST /users/:id/report`, `POST /reels/upload` y `GET /app/config` sí existen en el backend (verificado en `backend-bosko` `7c294b7`). No usarlo como fuente de verdad; ver `odd/tasks/error-handling-audit.md`.
+
 Fecha: 19 de octubre de 2026 (Argentina) / 20 de octubre UTC. **Solo lectura.**
 
 ## Alcance y resultado

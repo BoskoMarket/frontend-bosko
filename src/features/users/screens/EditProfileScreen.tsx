@@ -1,6 +1,6 @@
 ﻿/**
  * EditProfileScreen — Editar perfil con avatar y portada.
- * PATCH /users/me + POST /users/me/avatar + POST/DELETE /users/me/banner (propuesto, BR01)
+ * PATCH /users/me + POST /users/me/avatar + POST/DELETE /users/me/banner (both exist in the backend)
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
