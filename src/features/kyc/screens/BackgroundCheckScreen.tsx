@@ -27,9 +27,10 @@ import {
   useThemeColors,
   useIsDark,
   dialog,
+  toast,
   BRAND_NAME,
 } from '@/core/design-system';
-import { getUserErrorMessage } from '@/lib/errors';
+import { getLoadErrorMessage, getUserErrorMessage, isCancelledError } from '@/lib/errors';
 import {
   BackgroundCheckState,
   getBackgroundCheckStatus,
@@ -67,8 +68,10 @@ export default function BackgroundCheckScreen() {
     try {
       const data = await getBackgroundCheckStatus();
       setState(data ?? { status: 'NOT_SUBMITTED' });
-    } catch {
+    } catch (e: unknown) {
+      // Keep the upload flow reachable, but tell the user the status could not be loaded.
       setState({ status: 'NOT_SUBMITTED' });
+      if (!isCancelledError(e)) toast.error('No pudimos cargar tu estado', getLoadErrorMessage(e));
     } finally {
       setLoading(false);
     }

@@ -11,7 +11,7 @@ Source: `app-error-handling-audit.md` (backend `7c294b7`, frontend `dev` `f19a0c
 - [x] T1 `lib/errors`: cancellation is not network error (#6); `getErrorKind` (offline/rate/forbidden/notfound/server); catalog parity with backend codes (#2); `requestId` to Sentry/log context (#5)
 - [x] T2 Works feed: use mapper per error kind, strict collection reader, pagination-error footer (#3)
 - [x] T3 Boolean-error screens use mapper: Orders list, ClientHome, ProviderHome, Search, Conversations (#4)
-- [ ] T4 Silent `catch {}` + raw `error.message`: admin/KYC/forgot/payment (#4)
+- [x] T4 Silent `catch {}` + raw `error.message`: admin/KYC/forgot/payment (#4)
 - [ ] T5 Unify retry (`runWithRetry` vs queryClient vs conversations backoff) (#7)
 - [ ] T6 Field `details[]` in forms beyond Register (#8)
 - [ ] T7 Stale comments/docs: banner routes exist (`EditProfileScreen`, `bannerErrors`) + contracts doc
@@ -21,3 +21,4 @@ Route per task recorded below as work starts.
 - T1: route delegated direct (writer). Checks: jest full 90 suites green, tsc clean, lint:ds 0.
 - T2: route direct inline (3 source files, understood scope). Added `readCursorCollection` (strict cursor-page reader; `readPaginatedCollection` needs total/page/limit, which the feed lacks). Feed error uses `getLoadErrorMessage`; footer retry on `isFetchNextPageError`; auto-paging paused while that error is set. Checks: jest full 90 suites / 1029 tests green, tsc clean, lint:ds 0.
 - T3: route direct inline (6 source files, small understood edits). `useOrders` now exposes `clientError`/`providerError` (raw) and `error` uses `getLoadErrorMessage`; OrdersListScreen shows mapped message + retry (empty state, or banner + retry above a non-empty list). ClientHome/ProviderHome inline errors use `getLoadErrorMessage` (offline icon only for offline kind). SearchContext error uses `getLoadErrorMessage`. ConversationsListScreen keeps the error object (not a boolean) and shows the mapped message; 429 backoff untouched (T5). Checks: jest full 91 suites / 1035 tests green, tsc clean, lint:ds 0.
+- T4: route direct inline (7 small understood edits + 1 helper). Admin approve/reject catches show `getUserErrorMessage` (cancellations ignored); KYC `BackgroundCheckScreen.load` keeps the NOT_SUBMITTED fallback but toasts `getLoadErrorMessage`; VerifyResetCode resend and ForgotPassword use new `auth/utils/resetCodeErrors` (NOT_FOUND/USER_NOT_FOUND keeps dedicated copy, no hand-decoded `response.data.code`); `PaymentContext.error` uses `getLoadErrorMessage` (was `error.message`); `useKYCQuery` Didit failure no longer surfaces the raw SDK message (fixed Spanish copy). `usePaymentsQuery` already used `getUserErrorMessage`, unchanged. Checks: jest full 92 suites / 1039 tests green, tsc clean, lint:ds 0.

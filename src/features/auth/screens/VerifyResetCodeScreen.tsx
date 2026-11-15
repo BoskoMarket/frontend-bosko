@@ -6,6 +6,7 @@
  * Rebrand "Señal Nocturna" — mismo chrome que el resto del flujo de auth.
  */
 
+import { getResendCodeErrorMessage } from '@/features/auth/utils/resetCodeErrors';
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -111,8 +112,9 @@ export default function VerifyResetCodeScreen() {
     try {
       await forgotPasswordService(String(email).toLowerCase());
       setCooldown(RESEND_COOLDOWN);
-    } catch {
-      setError('No pudimos reenviar el código. Intenta de nuevo.');
+    } catch (err: unknown) {
+      const message = getResendCodeErrorMessage(err);
+      if (message) setError(message);
     } finally {
       setResending(false);
     }

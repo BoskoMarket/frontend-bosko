@@ -32,6 +32,7 @@ import {
   useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { safeBack } from '@/core/navigation/safeBack';
 import { forgotPasswordService } from '@/features/auth/services/auth';
+import { getForgotPasswordErrorMessage } from '@/features/auth/utils/resetCodeErrors';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 export default function ForgotPasswordScreen() {
@@ -94,10 +95,9 @@ export default function ForgotPasswordScreen() {
       }).start(() => {
         router.push({ pathname: '/auth/verify-reset-code', params: { email: trimmedEmail } });
       });
-    } catch (err: any) {
-      const code = err?.response?.data?.code;
-      if (code === 'NOT_FOUND') setError('Ese email no está registrado.');
-      else setError('Error al enviar el código. Intenta de nuevo.');
+    } catch (err: unknown) {
+      const message = getForgotPasswordErrorMessage(err);
+      if (message) setError(message);
       setIsLoading(false);
     }
   };

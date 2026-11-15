@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getLoadErrorMessage } from '@/lib/errors';
 import type { Payment, PaymentHistoryItem, EarningsItem } from '../services/payments';
 import {
   usePaymentHistory,
@@ -6,6 +7,10 @@ import {
   useInitiatePayment,
   useOrderPayment,
 } from '@/hooks/queries/usePaymentsQuery';
+
+function paymentsLoadError(error: unknown): string {
+  return error ? getLoadErrorMessage(error) : '';
+}
 
 export function PaymentsProvider({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
@@ -27,7 +32,7 @@ export function usePayments() {
     history: (historyQ.data?.data ?? []) as PaymentHistoryItem[],
     earnings: (earningsQ.data?.data ?? []) as EarningsItem[],
     loading: historyQ.isLoading || earningsQ.isLoading || initiateM.isPending,
-    error: historyQ.error?.message ?? earningsQ.error?.message ?? '',
+    error: paymentsLoadError(historyQ.error ?? earningsQ.error),
 
     initiate: (orderId: string): Promise<Payment> => {
       setOrderPaymentId(orderId);

@@ -34,7 +34,7 @@ async function launchDidit(sessionToken: string): Promise<'completed' | 'cancell
     throw new Error(
       result.error.type === 'sessionExpired'
         ? 'La sesión de verificación expiró. Por favor, intenta de nuevo.'
-        : (result.error.message ?? 'Error en la verificación'),
+        : 'No pudimos completar la verificación. Intenta de nuevo.',
     );
   }
 
