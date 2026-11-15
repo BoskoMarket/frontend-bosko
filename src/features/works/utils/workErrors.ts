@@ -5,6 +5,8 @@ export const WORK_LIMIT_MESSAGE = `Llegaste al máximo de ${WORKS_LIMIT_PER_PROV
 
 /**
  * Maps a failed upload / edit / delete request to Spanish toast copy. Never throws.
+ * Copy that needs context (limit number, upload size, ownership) stays here; everything else
+ * (UPLOAD_BUSY, INVALID_MEDIA, INVALID_UPLOAD, ...) comes from the central catalog.
  * `upload` selects the copy for a dropped connection while the photo is being sent.
  */
 export function getWorkErrorMessage(err: unknown, opts: { upload?: boolean } = {}): string {
@@ -16,12 +18,9 @@ export function getWorkErrorMessage(err: unknown, opts: { upload?: boolean } = {
   if (code === 'POST_LIMIT_REACHED') {
     return WORK_LIMIT_MESSAGE;
   }
-  if (code === 'UPLOAD_BUSY') return 'Estamos procesando otra foto. Prueba de nuevo en unos segundos.';
-  if (code === 'RATE_LIMITED' || statusCode === 429) {
+  // UPLOAD_BUSY also arrives as 429 but has its own catalog copy.
+  if (code !== 'UPLOAD_BUSY' && (code === 'RATE_LIMITED' || statusCode === 429)) {
     return 'Subiste muchas fotos en poco tiempo. Espera un minuto y prueba de nuevo.';
-  }
-  if (code === 'INVALID_UPLOAD' || code === 'INVALID_MEDIA') {
-    return 'No pudimos leer esa imagen. Usa una foto JPG, PNG o WebP.';
   }
   if (statusCode === 413 || code === 'PAYLOAD_TOO_LARGE') return 'La imagen es demasiado grande. El máximo es 10 MB.';
   if (code === 'FORBIDDEN' || statusCode === 403) return 'Solo puedes gestionar las fotos de tus propios servicios.';

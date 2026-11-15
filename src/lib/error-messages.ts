@@ -170,6 +170,7 @@ const SOCIAL = {
 /** Backend codes added for catalog parity; copy reused from the feature mappers. */
 const CATALOG_SYNC = {
   POST_LIMIT_REACHED: "Llegaste al máximo de fotos. Borra alguna para subir otra.",
+  INVALID_UPLOAD: "No pudimos leer esa imagen. Usa una foto JPG, PNG o WebP.",
   INVALID_MEDIA: "No pudimos leer esa imagen. Usa una foto JPG, PNG o WebP.",
   UPLOAD_BUSY: "Estamos procesando otra foto. Prueba de nuevo en unos segundos.",
   ORDER_CLOSED: "No puedes enviar mensajes en una orden finalizada.",
