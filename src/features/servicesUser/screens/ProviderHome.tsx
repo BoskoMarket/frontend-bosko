@@ -12,6 +12,7 @@ import { RefreshControl, ScrollView, StatusBar, StyleSheet, View } from 'react-n
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { getErrorKind, getLoadErrorMessage } from '@/lib/errors';
 import { FEATURES } from '@/core/config/features';
 import { REEL_UPLOAD_ROUTE } from '@/features/reels/routes';
 
@@ -100,7 +101,8 @@ export default function ProviderHome() {
   ].filter((t): t is { label: string; value: string } => t !== null);
 
   const ordersLoading = ordersQuery.isLoading || pendingCountQuery.isLoading;
-  const ordersFailed = (ordersQuery.isError && !ordersQuery.data) || (pendingCountQuery.isError && pendingCountQuery.data === undefined);
+  const ordersError = ordersQuery.error ?? pendingCountQuery.error;
+  const ordersFailed =(ordersQuery.isError && !ordersQuery.data) || (pendingCountQuery.isError && pendingCountQuery.data === undefined);
 
   return (
     <View style={[styles.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
@@ -148,8 +150,12 @@ export default function ProviderHome() {
             </View>
           ) : ordersFailed ? (
             <View style={styles.error}>
-              <Ionicons name="cloud-offline-outline" size={32} color={tc.textSub} />
-              <Text variant="bodySmall" color={tc.textSub}>No se pudieron cargar las solicitudes</Text>
+              <Ionicons
+                name={getErrorKind(ordersError) === 'offline' ? 'cloud-offline-outline' : 'alert-circle-outline'}
+                size={32}
+                color={tc.textSub}
+              />
+              <Text variant="bodySmall" color={tc.textSub}>{getLoadErrorMessage(ordersError)}</Text>
                <Button label="Reintentar" size="sm" onPress={() => {
                  void ordersQuery.refetch();
                  void pendingCountQuery.refetch();

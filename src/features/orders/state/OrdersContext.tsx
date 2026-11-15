@@ -13,7 +13,7 @@ import {
   useCancelOrder,
   useDisputeOrder,
 } from '@/hooks/queries/useOrdersQuery';
-import { getUserErrorMessage } from '@/lib/errors';
+import { getLoadErrorMessage } from '@/lib/errors';
 
 export const OrdersProvider = ({ children }: { children: React.ReactNode }) => (
   <>{children}</>
@@ -47,10 +47,12 @@ export const useOrders = () => {
     loadMoreClientOrders: clientQ.fetchNextPage,
     loadMoreProviderOrders: providerQ.fetchNextPage,
     loading: clientQ.isLoading || providerQ.isLoading,
+    clientError: clientQ.error ?? null,
+    providerError: providerQ.error ?? null,
     error: clientQ.error
-      ? getUserErrorMessage(clientQ.error)
+      ? getLoadErrorMessage(clientQ.error)
       : providerQ.error
-        ? getUserErrorMessage(providerQ.error)
+        ? getLoadErrorMessage(providerQ.error)
         : null,
 
     loadClientOrders,

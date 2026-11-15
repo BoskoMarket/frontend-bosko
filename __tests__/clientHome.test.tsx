@@ -2,6 +2,7 @@ import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import ClientHome from '@/features/servicesUser/screens/ClientHome';
+import { getLoadErrorMessage } from '@/lib/errors';
 import { useThemeStore } from '@/stores/theme.store';
 
 jest.mock('react-native-safe-area-context', () => ({
@@ -99,6 +100,17 @@ describe('ClientHome', () => {
     const { getByText } = render(<ClientHome />);
     fireEvent.press(getByText('Reintentar'));
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('explains the real failure kind instead of a fixed message', () => {
+    const offline = Object.assign(new Error('Network Error'), { isAxiosError: true, code: 'ERR_NETWORK' });
+    const server = Object.assign(new Error('boom'), { isAxiosError: true, response: { status: 503 } });
+    mockServices.mockReturnValue({ data: undefined, isLoading: false, isError: true, error: server, refetch: jest.fn() });
+    mockCategories.mockReturnValue({ data: undefined, isLoading: false, isError: true, error: offline, refetch: jest.fn() });
+    const { getByText, queryByText } = render(<ClientHome />);
+    expect(getByText(getLoadErrorMessage(server))).toBeTruthy();
+    expect(getByText(getLoadErrorMessage(offline))).toBeTruthy();
+    expect(queryByText(/No se pudieron cargar/)).toBeNull();
   });
 
   it('shows the empty state when there are no services', () => {

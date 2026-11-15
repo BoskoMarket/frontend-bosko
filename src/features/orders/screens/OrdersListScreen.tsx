@@ -25,7 +25,8 @@ import { useIsProvider } from '@/hooks/queries/useProfileQuery';
 import { Order, OrderStatus } from '../types/orders.types';
 import { ORDER_STATUS } from '../constants/orderStatus';
 import { countAwaitingConfirmation } from '../utils/orderActions';
-import { Badge, Button, EmptyState, ScreenHeader, SkeletonList, TOKENS, useThemeColors, FONT_FAMILY } from '@/core/design-system';
+import { Badge, Button, EmptyState, NoticeBanner, ScreenHeader, SkeletonList, TOKENS, useThemeColors, FONT_FAMILY } from '@/core/design-system';
+import { getLoadErrorMessage } from '@/lib/errors';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 type TabType = 'client' | 'provider';
@@ -107,7 +108,7 @@ export default function OrdersListScreen() {
   const { clientOrders, providerOrders, loading, loadClientOrders, loadProviderOrders,
     clientHasMore, providerHasMore, clientLoadingMore, providerLoadingMore,
     clientFetching, providerFetching,
-    clientMoreError, providerMoreError, loadMoreClientOrders, loadMoreProviderOrders } = useOrders();
+    clientMoreError, providerMoreError, clientError, providerError, loadMoreClientOrders, loadMoreProviderOrders } = useOrders();
   // `?tab=provider` (e.g. from the provider home) opens the provider list.
   const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
   const isProvider = useIsProvider();
@@ -137,10 +138,19 @@ export default function OrdersListScreen() {
   const loadingMore = activeTab === 'client' ? clientLoadingMore : providerLoadingMore;
   const fetching = activeTab === 'client' ? clientFetching : providerFetching;
   const moreError = activeTab === 'client' ? clientMoreError : providerMoreError;
+  const listError = activeTab === 'client' ? clientError : providerError;
+  const reloadActive = activeTab === 'client' ? loadClientOrders : loadProviderOrders;
   const loadMore = activeTab === 'client' ? loadMoreClientOrders : loadMoreProviderOrders;
 
   const OrdersEmptyState = () =>
-    activeTab === 'client' ? (
+    listError ? (
+      <EmptyState
+        icon="alert-circle-outline"
+        title="No pudimos cargar tus órdenes"
+        subtitle={getLoadErrorMessage(listError)}
+        cta={{ label: 'Reintentar', onPress: () => { void reloadActive(); } }}
+      />
+    ) : activeTab === 'client' ? (
       <EmptyState
         icon="receipt-outline"
         title="Todavía no pediste nada"
@@ -199,6 +209,12 @@ export default function OrdersListScreen() {
           data={orders}
           onEndReached={() => { if (hasMore && !loadingMore && !moreError) loadMore(); }}
           onEndReachedThreshold={0.4}
+          ListHeaderComponent={listError && orders.length > 0 ? (
+            <View>
+              <NoticeBanner variant="error">{getLoadErrorMessage(listError)}</NoticeBanner>
+              <Button label="Reintentar" size="sm" variant="outline" onPress={() => { void reloadActive(); }} />
+            </View>
+          ) : null}
           ListFooterComponent={loadingMore ? <SkeletonList variant="card" count={2} /> : moreError ? (
             <Button label="Reintentar cargar más" onPress={() => { loadMore(); }} />
           ) : null}

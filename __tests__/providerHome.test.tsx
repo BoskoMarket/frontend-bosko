@@ -15,6 +15,8 @@ jest.mock('@/features/profile/state/ProfileContext', () => ({ useProfile: () => 
 jest.mock('@/features/notifications/state/NotificationsContext', () => ({ useNotifications: () => ({ unreadCount: 0 }) }));
 jest.mock('@/stores/notificationsUI.store', () => ({ openNotifications: jest.fn() }));
 
+import { getLoadErrorMessage } from '@/lib/errors';
+
 const mockOrders = jest.fn();
 const mockStats = jest.fn();
 jest.mock('@/hooks/queries/useOrdersQuery', () => ({
@@ -106,6 +108,14 @@ describe('ProviderHome', () => {
     expect(queryByText(/solicitudes nuevas/)).toBeNull();
     fireEvent.press(getByText('Reintentar'));
     expect(refetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the real failure kind, not a fixed message', () => {
+    const server = Object.assign(new Error('boom'), { isAxiosError: true, response: { status: 500 } });
+    mockOrders.mockReturnValue({ data: undefined, isLoading: false, isError: true, error: server, refetch: jest.fn() });
+    const { getByText, queryByText } = render(<ProviderHome />);
+    expect(getByText(getLoadErrorMessage(server))).toBeTruthy();
+    expect(queryByText('No se pudieron cargar las solicitudes')).toBeNull();
   });
 
   it('does not flash empty/error states while loading', () => {

@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { getErrorKind, getLoadErrorMessage } from '@/lib/errors';
 import { getProviderRouteId } from '@/features/servicesUser/services/catalog';
 import { useCategories, useFeaturedServices } from '@/hooks/queries/useMarketplaceQuery';
 import { useFavorites } from '@/features/favorites/state/FavoritesContext';
@@ -119,12 +120,16 @@ function CategoryCardSkeletons() {
   );
 }
 
-function InlineError({ message, onRetry }: { message: string; onRetry: () => void }) {
+function InlineError({ error, onRetry }: { error: unknown; onRetry: () => void }) {
   const tc = useThemeColors();
   return (
     <View style={styles.inlineError}>
-      <Ionicons name="cloud-offline-outline" size={32} color={tc.textSub} />
-      <Text variant="bodySmall" color={tc.textSub}>{message}</Text>
+      <Ionicons
+        name={getErrorKind(error) === 'offline' ? 'cloud-offline-outline' : 'alert-circle-outline'}
+        size={32}
+        color={tc.textSub}
+      />
+      <Text variant="bodySmall" color={tc.textSub}>{getLoadErrorMessage(error)}</Text>
       <Button label="Reintentar" size="sm" onPress={onRetry} />
     </View>
   );
@@ -228,7 +233,7 @@ export default function ClientHome() {
           {categoriesQuery.isLoading && !categories.length ? (
             <CategoryCardSkeletons />
           ) : categoriesQuery.isError && !categories.length ? (
-            <InlineError message="No se pudieron cargar las categorías" onRetry={() => categoriesQuery.refetch()} />
+            <InlineError error={categoriesQuery.error} onRetry={() => categoriesQuery.refetch()} />
           ) : (
             <View style={styles.cards}>
               {categories.slice(0, CATEGORY_CARD_LIMIT).map((c, i) => {
@@ -262,7 +267,7 @@ export default function ClientHome() {
           {servicesQuery.isLoading ? (
             <ServiceSkeletons />
           ) : servicesQuery.isError ? (
-            <InlineError message="No se pudieron cargar los servicios" onRetry={() => servicesQuery.refetch()} />
+            <InlineError error={servicesQuery.error} onRetry={() => servicesQuery.refetch()} />
           ) : services.length === 0 ? (
             <EmptyState
               icon="search-outline"
