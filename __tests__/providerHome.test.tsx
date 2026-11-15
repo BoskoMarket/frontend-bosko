@@ -19,9 +19,11 @@ import { getLoadErrorMessage } from '@/lib/errors';
 
 const mockOrders = jest.fn();
 const mockStats = jest.fn();
+let mockPendingOverride: Record<string, unknown> | null = null;
 jest.mock('@/hooks/queries/useOrdersQuery', () => ({
   useProviderOrders: () => mockOrders(),
   usePendingProviderRequestsQuery: () => {
+    if (mockPendingOverride) return { refetch: jest.fn(), ...mockPendingOverride };
     const orders = mockOrders();
     return { data: orders.data?.filter((o: { status: string }) => o.status === 'pending').length,
       isLoading: orders.isLoading, isError: orders.isError, refetch: jest.fn() };
@@ -116,6 +118,19 @@ describe('ProviderHome', () => {
     const { getByText, queryByText } = render(<ProviderHome />);
     expect(getByText(getLoadErrorMessage(server))).toBeTruthy();
     expect(queryByText('No se pudieron cargar las solicitudes')).toBeNull();
+  });
+
+  it('shows the error of the query that failed, not the other one', () => {
+    const server = Object.assign(new Error('boom'), { isAxiosError: true, response: { status: 500 } });
+    const stale = Object.assign(new Error('x'), { isAxiosError: true, response: { status: 404 } });
+    mockOrders.mockReturnValue({ data: [], isLoading: false, isError: true, error: stale, refetch: jest.fn() });
+    mockPendingOverride = { data: undefined, isLoading: false, isError: true, error: server };
+    try {
+      const { getByText } = render(<ProviderHome />);
+      expect(getByText(getLoadErrorMessage(server))).toBeTruthy();
+    } finally {
+      mockPendingOverride = null;
+    }
   });
 
   it('does not flash empty/error states while loading', () => {

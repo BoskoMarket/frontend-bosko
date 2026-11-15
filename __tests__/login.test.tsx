@@ -5,12 +5,13 @@ import { router } from "expo-router";
 
 const mockLogin = jest.fn();
 const mockClearError = jest.fn();
+let mockContextError: string | null = null;
 
 jest.mock("@/features/auth/state/AuthContext", () => ({
   useAuth: () => ({
     login: mockLogin,
     isLoading: false,
-    error: null,
+    error: mockContextError,
     clearError: mockClearError,
   }),
 }));
@@ -25,6 +26,7 @@ jest.mock("expo-router", () => ({
 describe("LogInView", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockContextError = null;
     jest.useFakeTimers();
   });
 
@@ -77,5 +79,26 @@ describe("LogInView", () => {
 
     expect(await findByText("Email o contraseña incorrectos")).toBeTruthy();
     expect(router.replace).not.toHaveBeenCalled();
+  });
+
+  it("no repite el error de validación del contexto cuando ya está en el campo", async () => {
+    mockContextError = "email: Email inválido";
+    mockLogin.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        data: {
+          code: "VALIDATION_ERROR", message: "x", statusCode: 400,
+          details: [{ field: "email", message: "Email inválido" }],
+        },
+      },
+    });
+    const { getByTestId, getByText, queryByText, getAllByText } = render(<LogInView toRegister={jest.fn()} />);
+    fireEvent.changeText(getByTestId("login-email"), "user@example.com");
+    fireEvent.changeText(getByTestId("login-password"), "Password1!");
+    await act(async () => {
+      fireEvent.press(getByText("Ingresar"));
+    });
+    await waitFor(() => expect(getAllByText("Email inválido")).toHaveLength(1));
+    expect(queryByText("email: Email inválido")).toBeNull();
   });
 });

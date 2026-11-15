@@ -21,16 +21,16 @@ import {
   Badge,
   Button,
   Card,
+  EmptyState,
   NoticeBanner,
   ScreenHeader,
   Text,
   useThemeColors,
   useIsDark,
   dialog,
-  toast,
   BRAND_NAME,
 } from '@/core/design-system';
-import { getLoadErrorMessage, getUserErrorMessage, isCancelledError } from '@/lib/errors';
+import { getErrorKind, getLoadErrorMessage, getUserErrorMessage, isCancelledError } from '@/lib/errors';
 import {
   BackgroundCheckState,
   getBackgroundCheckStatus,
@@ -57,6 +57,8 @@ export default function BackgroundCheckScreen() {
   const [state, setState]       = useState<BackgroundCheckState | null>(null);
   const [loading, setLoading]   = useState(true);
   const [uploading, setUploading] = useState(false);
+  // When the status cannot be loaded we do not know it: no faked status and no upload path.
+  const [loadError, setLoadError] = useState<unknown>(null);
 
   useEffect(() => {
     load();
@@ -65,13 +67,12 @@ export default function BackgroundCheckScreen() {
 
   const load = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await getBackgroundCheckStatus();
       setState(data ?? { status: 'NOT_SUBMITTED' });
     } catch (e: unknown) {
-      // Keep the upload flow reachable, but tell the user the status could not be loaded.
-      setState({ status: 'NOT_SUBMITTED' });
-      if (!isCancelledError(e)) toast.error('No pudimos cargar tu estado', getLoadErrorMessage(e));
+      if (!isCancelledError(e)) setLoadError(e);
     } finally {
       setLoading(false);
     }
@@ -171,6 +172,13 @@ export default function BackgroundCheckScreen() {
           {/* Estado actual */}
           {loading ? (
             <ActivityIndicator color={TOKENS.color.primary} style={s.loader} />
+          ) : loadError ? (
+            <EmptyState
+              icon={getErrorKind(loadError) === 'offline' ? 'cloud-offline-outline' : 'alert-circle-outline'}
+              title="No pudimos cargar tu estado"
+              subtitle={getLoadErrorMessage(loadError)}
+              cta={{ label: 'Reintentar', onPress: load }}
+            />
           ) : (
             <>
               <View style={[s.statusCard, { backgroundColor: tone.bg }]}>

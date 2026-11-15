@@ -120,7 +120,9 @@ export default function LogInView({ toRegister }: { toRegister?: () => void }) {
     }
   };
 
-  const displayError = localError || error || '';
+  // With inline field errors the context error repeats the same validation text: skip it.
+  const hasFieldErrors = Object.keys(fieldErrors).length > 0;
+  const displayError = localError || (hasFieldErrors ? '' : error || '');
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>

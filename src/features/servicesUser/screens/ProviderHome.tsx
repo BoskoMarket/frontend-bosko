@@ -101,8 +101,13 @@ export default function ProviderHome() {
   ].filter((t): t is { label: string; value: string } => t !== null);
 
   const ordersLoading = ordersQuery.isLoading || pendingCountQuery.isLoading;
-  const ordersError = ordersQuery.error ?? pendingCountQuery.error;
-  const ordersFailed =(ordersQuery.isError && !ordersQuery.data) || (pendingCountQuery.isError && pendingCountQuery.data === undefined);
+  // Show the error of the query that actually failed (and has no data to fall back on).
+  const failedQuery =
+    ordersQuery.isError && !ordersQuery.data ? ordersQuery
+    : pendingCountQuery.isError && pendingCountQuery.data === undefined ? pendingCountQuery
+    : null;
+  const ordersFailed = failedQuery !== null;
+  const ordersError = failedQuery?.error ?? null;
 
   return (
     <View style={[styles.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>

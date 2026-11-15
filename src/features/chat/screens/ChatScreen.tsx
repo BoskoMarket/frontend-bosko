@@ -74,7 +74,7 @@ import {
   type ChatBlockState,
 } from '../constants/chatBlockRules';
 import { useBlockUser, useUnblockUser } from '@/hooks/mutations/useBlockMutations';
-import { NETWORK_ERROR_MESSAGE, getRateLimitBackoffUntil, getUserErrorMessage, isNetworkError } from '@/lib/errors';
+import { NETWORK_ERROR_MESSAGE, getRateLimitBackoffUntil, getUserErrorMessage, isCancelledError, isNetworkError } from '@/lib/errors';
 import { isVideoUrl } from '../utils/mediaUrl';
 import {
   Avatar,
@@ -531,8 +531,8 @@ export default function ChatScreen() {
       const conv = await fetchConversationByOrder(params.id);
       setConversation(conv);
       return conv.id;
-    } catch {
-      setLoadFailed(true);
+    } catch (err) {
+      if (!isCancelledError(err)) setLoadFailed(true);
       return params.id;
     }
   }, [params.id]);
@@ -609,6 +609,7 @@ export default function ChatScreen() {
       await markAsRead(convId).catch(() => {});
     } catch (err: any) {
       pollBackoffRef.current = getRateLimitBackoffUntil(err) || pollBackoffRef.current;
+      if (isCancelledError(err)) return;
       console.error('Error loading messages:', err);
       setLoadFailed(true);
     }
