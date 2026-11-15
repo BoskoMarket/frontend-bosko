@@ -194,6 +194,11 @@ export function getLoadErrorMessage(error: unknown): string {
   return LOAD_ERROR_MESSAGES[kind];
 }
 
+/** Catalog copy for a bare `{ code }` payload (WS error events carry no HTTP envelope). */
+export function getSocketErrorMessage(error: { code: string }): string {
+  return ERROR_MESSAGES[error.code as ErrorCode] ?? DEFAULT_ERROR_MESSAGE;
+}
+
 /** Detalles de validación por campo, para asociarlos a inputs de un form. */
 export function getFieldErrors(error: unknown): ApiErrorDetail[] {
   const { code, details } = extractApiError(error);

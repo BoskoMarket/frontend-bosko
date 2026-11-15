@@ -66,9 +66,16 @@ export async function getReelsFeed(page = 1, limit = 10, feed?: ReelsFeedType): 
   return res.data;
 }
 
-/** GET /reels/me?page=1&limit=20 — reels propios del usuario autenticado (paginado) */
+/**
+ * GET /reels/me?page=1&limit=20 — own reels. The backend answers a plain array (no page
+ * metadata), so it is wrapped as a final page: no next page is requested.
+ */
 export async function getMyReels(page = 1, limit = 20): Promise<PaginatedCollection<Reel>> {
   const res = await api.get<unknown>('/reels/me', { params: { page, limit } });
+  if (Array.isArray(res.data)) {
+    const data = res.data as Reel[];
+    return { data, total: (page - 1) * limit + data.length, page, limit };
+  }
   return readPaginatedCollection<Reel>(res.data);
 }
 

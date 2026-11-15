@@ -4,8 +4,15 @@ import {
   getRateLimitBackoffUntil,
   getRetryAfterMs,
   getRetryDelayMs,
+  getSocketErrorMessage,
   shouldRetryRequest,
 } from '@/lib/errors';
+import { DEFAULT_ERROR_MESSAGE, ERROR_MESSAGES } from '@/lib/error-messages';
+
+test('getSocketErrorMessage maps catalog codes and falls back for unknown ones', () => {
+  expect(getSocketErrorMessage({ code: 'RATE_LIMITED' })).toBe(ERROR_MESSAGES.RATE_LIMITED);
+  expect(getSocketErrorMessage({ code: 'SOMETHING_NEW' })).toBe(DEFAULT_ERROR_MESSAGE);
+});
 
 const axiosError = (status?: number, data?: unknown, headers: Record<string, string> = {}) => ({
   isAxiosError: true,

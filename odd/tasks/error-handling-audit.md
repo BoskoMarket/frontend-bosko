@@ -27,6 +27,7 @@ Route per task recorded below as work starts.
 - T7: route direct inline. Checks: see commit.
 
 ## Round 2 (remaining front-only items)
-- [ ] T8 Endpoint/type mismatches: reels `/me` parser vs array, remove dead `GET /orders` wrapper, stats type (`averageRating` nullable, `totalEarnings`), `alreadyProvider` in `StartVerificationResponse`, `EXPO_PUBLIC_API_URL` must end in `/api/v1`, chat WS error codes + unused backend events note
+- T8: route direct inline (small, understood edits across a few files). Checks: full jest (96 suites, 1069 tests) green, tsc --noEmit clean, lint:ds 0 violations. Added tests: apiUrlEnv, reels array, getSocketErrorMessage, chat unknown WS code toast.
+- [x] T8 Endpoint/type mismatches: reels `/me` parser vs array, remove dead `GET /orders` wrapper, stats type (`averageRating` nullable, `totalEarnings`), `alreadyProvider` in `StartVerificationResponse`, `EXPO_PUBLIC_API_URL` must end in `/api/v1`, chat WS error codes + unused backend events note
 - [ ] T9 Error system gaps: send `x-request-id` from client and attach to reports, fold feature mappers (works/reports/kyc publish) onto central catalog, profile load errors by kind, `passwordErrors` heuristic cleanup, quote/order form `details[]`, remaining forms with matching fields
 - Out of scope (need backend/product): admin pending-check endpoint, plans/subscriptions mock, payments mocks, public-profile default values.

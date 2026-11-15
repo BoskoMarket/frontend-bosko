@@ -74,7 +74,7 @@ import {
   type ChatBlockState,
 } from '../constants/chatBlockRules';
 import { useBlockUser, useUnblockUser } from '@/hooks/mutations/useBlockMutations';
-import { NETWORK_ERROR_MESSAGE, getRateLimitBackoffUntil, getUserErrorMessage, isCancelledError, isNetworkError } from '@/lib/errors';
+import { NETWORK_ERROR_MESSAGE, getRateLimitBackoffUntil, getSocketErrorMessage, getUserErrorMessage, isCancelledError, isNetworkError } from '@/lib/errors';
 import { isVideoUrl } from '../utils/mediaUrl';
 import {
   Avatar,
@@ -541,7 +541,10 @@ export default function ChatScreen() {
 
   // Socket `error` carries no conversation id: only resync, let the real orderStatus / block flags decide.
   useEffect(() => socketService.onError(error => {
-    if (!isOrderClosedSocketError(error) && !isUserBlockedSocketError(error)) return;
+    if (!isOrderClosedSocketError(error) && !isUserBlockedSocketError(error)) {
+      toast.error(getSocketErrorMessage(error));
+      return;
+    }
     if (isUserBlockedSocketError(error)) toast.error(CHAT_BLOCKED_TOAST);
     refreshClosedOrderStateRef.current();
   }), []);

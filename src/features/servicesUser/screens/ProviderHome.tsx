@@ -95,7 +95,7 @@ export default function ProviderHome() {
 
   const stats = statsQuery.data;
   const statTiles = [
-    stats && stats.averageRating > 0 ? { label: 'Rating', value: stats.averageRating.toFixed(1) } : null,
+    stats && stats.averageRating != null && stats.averageRating > 0 ? { label: 'Rating', value: stats.averageRating.toFixed(1) } : null,
     stats ? { label: 'Trabajos', value: String(stats.completedOrders) } : null,
     stats ? { label: 'Servicios', value: String(stats.servicesCount) } : null,
   ].filter((t): t is { label: string; value: string } => t !== null);

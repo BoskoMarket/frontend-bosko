@@ -1,6 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ERROR_MESSAGES } from '@/lib/error-messages';
 
 const mockFetchConversationByOrder = jest.fn();
 const mockFetchMessages = jest.fn();
@@ -147,6 +148,14 @@ describe('ChatScreen blocked state', () => {
     mockFetchConversationByOrder.mockResolvedValue(conv({ blockedByMe: true }));
     await act(async () => { mockSocketError?.({ code: 'USER_BLOCKED' }); });
     expect(await findByText(CHAT_BLOCKED_BY_ME_NOTICE)).toBeTruthy();
+  });
+
+  it('shows catalog copy for an unknown socket error code', async () => {
+    mockFetchConversationByOrder.mockResolvedValue(conv());
+    const { findByLabelText } = renderChat();
+    await findByLabelText('Mensaje');
+    await act(async () => { mockSocketError?.({ code: 'RATE_LIMITED' }); });
+    expect(mockToastError).toHaveBeenCalledWith(ERROR_MESSAGES.RATE_LIMITED);
   });
 });
 
