@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { useCreateReview } from '@/hooks/mutations/useReviewMutations';
-import { extractApiError, getUserErrorMessage } from '@/lib/errors';
+import { extractApiError, getFormErrors, getUserErrorMessage } from '@/lib/errors';
 import { runWithRetry } from '@/lib/runWithRetry';
 import {
   TOKENS,
@@ -55,6 +55,7 @@ export default function ReviewScreen() {
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
+  const [commentError, setCommentError] = useState<string | undefined>();
 
   const displayRating = hoverRating || rating;
 
@@ -66,6 +67,7 @@ export default function ReviewScreen() {
     }
 
     inFlight.current = true;
+    setCommentError(undefined);
     const input = { orderId: orderId!, rating, comment: comment.trim() };
     const result = await runWithRetry(() => createReview(input), {
       title: 'No pudimos enviar tu reseña',
@@ -76,7 +78,9 @@ export default function ReviewScreen() {
           ]);
           return;
         }
-        toast.error('No pudimos enviar tu reseña', getUserErrorMessage(err));
+        const { fields, general } = getFormErrors(err, ['comment'] as const);
+        setCommentError(fields.comment);
+        if (general) toast.error('No pudimos enviar tu reseña', general);
       },
     });
     inFlight.current = false;
@@ -189,6 +193,7 @@ export default function ReviewScreen() {
               placeholder="¿Qué te pareció el servicio? ¿Recomendarías al profesional?"
               multiline
               maxLength={MAX_COMMENT}
+              error={commentError}
               textAlignVertical="top"
             />
             <Text variant="caption" color={tc.textMuted} style={styles.charCount}>
