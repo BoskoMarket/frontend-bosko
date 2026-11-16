@@ -109,6 +109,7 @@ const QUICK_REPLIES = ['Hola, ¿estás disponible?', '¿Cuánto sale el trabajo?
 
 const POLL_INTERVAL = 10000;
 const TYPING_THROTTLE = 2000;
+const SOCKET_TOAST_DEDUPE_MS = 10_000;
 const MAX_VIDEO_SECONDS = 60;
 
 function formatDuration(ms: number): string {
@@ -467,6 +468,7 @@ export default function ChatScreen() {
       .catch(() => {});
   }, [params.id]);
   const refreshClosedOrderStateRef = useRef(refreshClosedOrderState);
+  const socketToastAtRef = useRef(new Map<string, number>());
   refreshClosedOrderStateRef.current = refreshClosedOrderState;
   // The backend rejected our own send with ORDER_CLOSED: hard lock, tell the user and resync.
   const handleClosedOrderError = useCallback((err: unknown): boolean => {
@@ -540,8 +542,13 @@ export default function ChatScreen() {
   useEffect(() => { setClosedByServer(false); setBlockedByServer(false); }, [params.id]);
 
   // Socket `error` carries no conversation id: only resync, let the real orderStatus / block flags decide.
+  // Unknown codes carry no action context and can stack: at most one toast per code every 10 s.
   useEffect(() => socketService.onError(error => {
     if (!isOrderClosedSocketError(error) && !isUserBlockedSocketError(error)) {
+      const now = Date.now();
+      const last = socketToastAtRef.current.get(error.code);
+      if (last !== undefined && now - last < SOCKET_TOAST_DEDUPE_MS) return;
+      socketToastAtRef.current.set(error.code, now);
       toast.error(getSocketErrorMessage(error));
       return;
     }
