@@ -19,7 +19,18 @@ describe('EXPO_PUBLIC_API_URL', () => {
     expect(load('https://api.example.test/api/v1/').API_URL).toBe('https://api.example.test/api/v1');
   });
 
-  it.each(['https://api.example.test', 'https://api.example.test/api', 'https://api.example.test/api/v2'])(
+  it('ignores query and hash, and works with a URL polyfill that throws', () => {
+    const RealURL = global.URL;
+    (global as any).URL = function () { throw new Error('polyfill'); };
+    try {
+      expect(load('https://api.example.test/api/v1?x=1').API_URL).toBe('https://api.example.test/api/v1?x=1');
+      expect(load('https://api.example.test/prefix/api/v1/#top').API_URL).toContain('/prefix/api/v1');
+    } finally {
+      global.URL = RealURL;
+    }
+  });
+
+  it.each(['https://api.example.test', 'https://api.example.test/api', 'https://api.example.test/api/v2', 'https://api/v1', 'https://api.example.test/x?next=/api/v1'])(
     'rejects %s',
     (url) => expect(() => load(url)).toThrow('/api/v1'),
   );
