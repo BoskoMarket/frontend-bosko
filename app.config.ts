@@ -3,17 +3,27 @@ import type { ConfigContext, ExpoConfig } from 'expo/config';
 // brand.ts derives its name and primary color from the same JSON, so a rebrand still starts in the brand folder.
 import brand from './src/core/design-system/brand/brand.core.json';
 
+// Build variant, set per EAS profile in eas.json (APP_VARIANT). Each non-production variant gets its own
+// application id, scheme and display name so development, preview and production install side by side.
+// Unset (local `expo start`, production) keeps the production identity.
+const VARIANTS = {
+  development: { suffix: '.dev', schemeSuffix: '-dev', label: ' (Dev)' },
+  preview: { suffix: '.preview', schemeSuffix: '-preview', label: ' (Preview)' },
+} as const;
+const variant = VARIANTS[process.env.APP_VARIANT as keyof typeof VARIANTS];
+const idSuffix = variant?.suffix ?? '';
+
 // Store identity (slug, owner, scheme, bundle ids, EAS projectId, updates URL) is deliberately
 // hardcoded: it must NOT change on a rebrand. Only the display name and primary color come from brand.core.json.
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: brand.name,
+  name: `${brand.name}${variant?.label ?? ''}`,
   slug: 'Bosko',
   owner: 'apps-frank',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/images/bosko-logo.png',
-  scheme: 'bosko',
+  scheme: `bosko${variant?.schemeSuffix ?? ''}`,
   userInterfaceStyle: 'automatic',
   androidStatusBar: {
     barStyle: 'dark-content',
@@ -27,13 +37,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   newArchEnabled: true,
   android: {
-    package: 'com.boskoapp.mobile',
+    package: `com.boskoapp.mobile${idSuffix}`,
     adaptiveIcon: {
       foregroundImage: './assets/images/adaptive-icon.png',
       backgroundColor: '#ffffff',
     },
     edgeToEdgeEnabled: true,
-    googleServicesFile: './google-services.json',
+    // Firebase needs one registered Android app per application id: EAS file env var per profile, repo file as fallback.
+    googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
     permissions: [
       'android.permission.CAMERA',
       'android.permission.RECORD_AUDIO',
@@ -53,7 +64,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
   },
   ios: {
-    bundleIdentifier: 'com.boskoapp.mobile',
+    bundleIdentifier: `com.boskoapp.mobile${idSuffix}`,
     supportsTablet: true,
     infoPlist: {
       NSCameraUsageDescription:
