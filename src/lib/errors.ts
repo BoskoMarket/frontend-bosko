@@ -112,8 +112,7 @@ export function isNetworkError(error: unknown): boolean {
  * Devuelve el mensaje en español listo para mostrar al usuario.
  *
  * - `VALIDATION_ERROR` con `details[]`: arma un mensaje combinando cada
- *   `{field, message}` (el backend puede agregar campos que el cliente
- *   todavía no conoce sin romper el mapeo).
+ *   `message` (sin duplicados y sin nombres de campo crudos).
  * - `UNKNOWN_ERROR` (throw local, no viene del backend): usa el mensaje
  *   propio del `Error` en vez del genérico, porque ese texto lo escribió
  *   la app, no el server — no aplica la regla de "no confiar en message".
@@ -125,7 +124,8 @@ export function getUserErrorMessage(error: unknown): string {
   const { code, serverMessage, details } = extractApiError(error);
 
   if (code === "VALIDATION_ERROR" && details?.length) {
-    return details.map((d) => `${d.field}: ${d.message}`).join("\n");
+    // Messages only, deduped: raw backend field names never reach the user.
+    return [...new Set(details.map((d) => d.message))].join("\n");
   }
 
   if (code === "NETWORK_ERROR") {

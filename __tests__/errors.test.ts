@@ -5,6 +5,7 @@ import {
   getRetryAfterMs,
   getRetryDelayMs,
   getSocketErrorMessage,
+  getUserErrorMessage,
   shouldRetryRequest,
   VALIDATION_ERROR_MESSAGE,
 } from '@/lib/errors';
@@ -90,4 +91,14 @@ test('varios campos desconocidos usan copy genérico sin nombres de campo', () =
   expect(fields).toEqual({});
   expect(general).toBe(VALIDATION_ERROR_MESSAGE);
   expect(general).not.toMatch(/a\.b|c\.d/);
+});
+
+test('getUserErrorMessage shows only deduped detail messages, never field names', () => {
+  const msg = getUserErrorMessage(validationError([
+    { field: 'email', message: 'Email inválido' },
+    { field: 'mail', message: 'Email inválido' },
+    { field: 'password', message: 'Muy corta' },
+  ]));
+  expect(msg).toBe('Email inválido\nMuy corta');
+  expect(msg).not.toMatch(/email:|password/);
 });

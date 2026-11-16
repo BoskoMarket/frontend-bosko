@@ -27,7 +27,7 @@ describe('getChangePasswordErrorMessage', () => {
   it('keeps field validation errors for the new password', () => {
     const err = apiError(400, 'VALIDATION_ERROR');
     (err.response.data as any).details = [{ field: 'newPassword', message: 'too short' }];
-    expect(getChangePasswordErrorMessage(err)).toContain('newPassword');
+    expect(getChangePasswordErrorMessage(err)).toBe('too short');
   });
 
   it('does not blame the password for a server failure', () => {
