@@ -189,7 +189,7 @@ export default function ReviewScreen() {
             <Input
               label="Cuéntanos tu experiencia"
               value={comment}
-              onChangeText={setComment}
+              onChangeText={(v) => { setComment(v); setCommentError(undefined); }}
               placeholder="¿Qué te pareció el servicio? ¿Recomendarías al profesional?"
               multiline
               maxLength={MAX_COMMENT}

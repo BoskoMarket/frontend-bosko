@@ -134,6 +134,17 @@ describe('QuoteRequestScreen validation errors', () => {
     expect(await findByText('too short')).toBeTruthy();
     expect(alert).not.toHaveBeenCalled();
   });
+
+  it('clears the field error when the user edits that input', async () => {
+    jest.spyOn(dialog, 'fromAlert').mockImplementation(() => {});
+    mockAddOrder.mockRejectedValueOnce(serverError());
+    const { getByPlaceholderText, getByText, findByText, queryByText } = render(<QuoteRequestScreen />);
+    fireEvent.changeText(getByPlaceholderText(/Necesito una instalación eléctrica/), 'Hola');
+    fireEvent.press(getByText('Enviar solicitud'));
+    expect(await findByText('too short')).toBeTruthy();
+    fireEvent.changeText(getByPlaceholderText(/Necesito una instalación eléctrica/), 'Hola, necesito ayuda');
+    expect(queryByText('too short')).toBeNull();
+  });
 });
 
 describe('OrderDetailScreen network failure', () => {

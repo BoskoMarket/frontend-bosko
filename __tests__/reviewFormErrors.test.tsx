@@ -40,6 +40,18 @@ describe('ReviewScreen validation errors', () => {
     const { getByLabelText, getByText } = render(<ReviewScreen />);
     fireEvent.press(getByLabelText('4 estrellas: Bueno'));
     fireEvent.press(getByText('Enviar Reseña'));
-    await waitFor(() => expect(errorToast).toHaveBeenCalledWith('No pudimos enviar tu reseña', 'rating: Calificación inválida'));
+    await waitFor(() => expect(errorToast).toHaveBeenCalledWith('No pudimos enviar tu reseña', 'Calificación inválida'));
+  });
+});
+
+describe('ReviewScreen clears server errors on edit', () => {
+  it('drops the comment error when the user edits the comment', async () => {
+    mockCreate.mockRejectedValueOnce(validation('comment', 'Comentario demasiado corto'));
+    const { getByLabelText, getByText, findByText, queryByText, getByPlaceholderText } = render(<ReviewScreen />);
+    fireEvent.press(getByLabelText('4 estrellas: Bueno'));
+    fireEvent.press(getByText('Enviar Reseña'));
+    expect(await findByText('Comentario demasiado corto')).toBeTruthy();
+    fireEvent.changeText(getByPlaceholderText(/Qué te pareció/), 'Muy buen trabajo');
+    expect(queryByText('Comentario demasiado corto')).toBeNull();
   });
 });

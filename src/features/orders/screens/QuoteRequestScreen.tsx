@@ -72,6 +72,13 @@ export default function QuoteRequestScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [serverErrors, setServerErrors] = useState<Partial<Record<QuoteField, string>>>({});
 
+  const clearServerError = (field: QuoteField) =>
+    setServerErrors((prev) => {
+      if (!prev[field]) return prev;
+      const { [field]: _removed, ...rest } = prev;
+      return rest;
+    });
+
   const handleSubmit = async () => {
     if (!message.trim()) {
       dialog.fromAlert('Campo requerido', 'Describe qué necesitas para que el proveedor pueda cotizar.');
@@ -168,7 +175,7 @@ export default function QuoteRequestScreen() {
                 <Input
                   placeholder="Ej: Necesito una instalación eléctrica en 3 habitaciones. Tengo los materiales..."
                   value={message}
-                  onChangeText={setMessage}
+                  onChangeText={(v) => { setMessage(v); clearServerError('message'); }}
                   multiline
                   numberOfLines={5}
                   textAlignVertical="top"
@@ -186,7 +193,7 @@ export default function QuoteRequestScreen() {
                   leftIcon="location-outline"
                   placeholder="Ej: Av. Corrientes 1234, CABA"
                   value={address}
-                  onChangeText={setAddress}
+                  onChangeText={(v) => { setAddress(v); clearServerError('address'); }}
                   returnKeyType="next"
                   error={serverErrors.address}
                 />
