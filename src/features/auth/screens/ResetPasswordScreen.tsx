@@ -29,6 +29,10 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import { safeBack } from '@/core/navigation/safeBack';
 import { resetPasswordService } from '@/features/auth/services/auth';
+import { getFieldErrors, getFormErrors } from '@/lib/errors';
+
+const RESET_FIELDS = ['newPassword'] as const;
+const INVALID_CODE_MESSAGE = 'Código incorrecto o expirado. Vuelve a solicitarlo.';
 
 export default function ResetPasswordScreen() {
   const tc = useThemeColors();
@@ -39,6 +43,7 @@ export default function ResetPasswordScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [newPasswordError, setNewPasswordError] = useState<string | undefined>();
   const [success, setSuccess] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(20)).current;
@@ -82,6 +87,7 @@ export default function ResetPasswordScreen() {
     if (msg) { setError(msg); return; }
 
     setError('');
+    setNewPasswordError(undefined);
     setLoading(true);
     try {
       await resetPasswordService(email, code, newPassword);
@@ -95,8 +101,16 @@ export default function ResetPasswordScreen() {
         Animated.timing(successFadeAnim, { toValue: 1, duration: MOTION.modalFadeIn.duration, useNativeDriver: true }).start();
       });
     } catch (err: any) {
+      if (getFieldErrors(err).length) {
+        // Only newPassword is an input here. Details on `code` (or any other field the user
+        // cannot see) mean the code is wrong or expired: show friendly copy, never raw field names.
+        const { fields, general } = getFormErrors(err, RESET_FIELDS);
+        setNewPasswordError(fields.newPassword);
+        setError(general ? INVALID_CODE_MESSAGE : '');
+        return;
+      }
       const errCode = err?.response?.data?.code;
-      if (errCode === 'INVALID_VERIFICATION_CODE') setError('Código incorrecto o expirado. Vuelve a solicitarlo.');
+      if (errCode === 'INVALID_VERIFICATION_CODE') setError(INVALID_CODE_MESSAGE);
       else if (errCode === 'NOT_FOUND')      setError('Usuario no encontrado.');
       else if (errCode === 'BAD_REQUEST') setError('Código inválido, expirado o contraseña muy corta.');
       else setError('Error al restablecer. Intenta de nuevo.');
@@ -162,7 +176,8 @@ export default function ResetPasswordScreen() {
                     placeholder="Nueva contraseña"
                     secureTextEntry
                     value={newPassword}
-                    onChangeText={setNewPassword}
+                    error={newPasswordError}
+                    onChangeText={t => { setNewPassword(t); setNewPasswordError(undefined); }}
                     autoCapitalize="none"
                   />
                 </View>

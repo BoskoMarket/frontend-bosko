@@ -6,6 +6,8 @@ export interface StartVerificationResponse {
   inquiryId: string;
   sessionToken: string;
   verificationUrl: string;
+  /** POST /identity/start answers `{ alreadyProvider: true }` (no session) for an existing provider. */
+  alreadyProvider?: boolean;
 }
 
 export async function getKYCStatus(): Promise<KYCVerification | null> {

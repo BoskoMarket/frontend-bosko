@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/core/query/queryKeys';
-import { getUserErrorMessage } from '../lib/errors';
+import { getLoadErrorMessage } from '../lib/errors';
 import type { SearchResponse } from '../interfaces/search';
 import { search as searchApi } from '../features/search/services/search.service';
 
@@ -37,7 +37,7 @@ export const useSearch = (): SearchState => {
       setResults(data as SearchResponse);
       return data as SearchResponse;
     } catch (err) {
-      setError(getUserErrorMessage(err));
+      setError(getLoadErrorMessage(err));
       return null;
     } finally {
       setLoading(false);

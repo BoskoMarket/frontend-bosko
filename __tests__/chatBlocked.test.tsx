@@ -1,6 +1,7 @@
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ERROR_MESSAGES } from '@/lib/error-messages';
 
 const mockFetchConversationByOrder = jest.fn();
 const mockFetchMessages = jest.fn();
@@ -147,6 +148,32 @@ describe('ChatScreen blocked state', () => {
     mockFetchConversationByOrder.mockResolvedValue(conv({ blockedByMe: true }));
     await act(async () => { mockSocketError?.({ code: 'USER_BLOCKED' }); });
     expect(await findByText(CHAT_BLOCKED_BY_ME_NOTICE)).toBeTruthy();
+  });
+
+  it('shows catalog copy for an unknown socket error code', async () => {
+    mockFetchConversationByOrder.mockResolvedValue(conv());
+    const { findByLabelText } = renderChat();
+    await findByLabelText('Mensaje');
+    await act(async () => { mockSocketError?.({ code: 'RATE_LIMITED' }); });
+    expect(mockToastError).toHaveBeenCalledWith(ERROR_MESSAGES.RATE_LIMITED);
+  });
+});
+
+describe('ChatScreen socket error toasts', () => {
+  it('toasts an unknown code at most once per 10 s', async () => {
+    mockFetchConversationByOrder.mockResolvedValue(conv());
+    const { findByLabelText } = renderChat();
+    await findByLabelText('Mensaje');
+    const nowSpy = jest.spyOn(Date, 'now');
+    nowSpy.mockReturnValue(1_000_000);
+    await act(async () => { mockSocketError?.({ code: 'RATE_LIMITED' }); mockSocketError?.({ code: 'RATE_LIMITED' }); });
+    expect(mockToastError).toHaveBeenCalledTimes(1);
+    await act(async () => { mockSocketError?.({ code: 'INTERNAL_ERROR' }); });
+    expect(mockToastError).toHaveBeenCalledTimes(2);
+    nowSpy.mockReturnValue(1_010_001);
+    await act(async () => { mockSocketError?.({ code: 'RATE_LIMITED' }); });
+    expect(mockToastError).toHaveBeenCalledTimes(3);
+    nowSpy.mockRestore();
   });
 });
 

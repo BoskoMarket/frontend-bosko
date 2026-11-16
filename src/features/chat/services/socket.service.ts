@@ -59,6 +59,7 @@ class SocketService {
         conversationId: data.conversationId as string, readBy: typeof data.readBy === 'string' ? data.readBy : undefined,
       }));
     });
+    // The backend also emits `joined_conversation` and `messages_delivered`; the client does not use them.
     socket.on('error', (data: unknown) => {
       if (!object(data) || typeof data.code !== 'string') return;
       const error: ChatSocketError = {

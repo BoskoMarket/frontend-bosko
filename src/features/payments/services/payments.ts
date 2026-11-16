@@ -1,6 +1,8 @@
 /**
  * payments.ts — Servicio de pagos.
- * Conectado a los endpoints reales de /payments/*.
+ * NO esta conectado a un backend: /payments/* no tiene controller. Todo pasa
+ * por los mocks de ./mockPayments (simulacion local). Oculto en v1 detras de
+ * FEATURES.payments (false).
  */
 
 import { simulatePayment, getSimulatedPayment, simulatedHistory } from './mockPayments';

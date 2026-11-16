@@ -18,10 +18,13 @@ import {
 import { REEL_MAX_SECONDS, resolveFileSize, validateReelVideo, type ReelVideoAsset } from '../constants/reelUploadRules';
 import { IMAGE_UPLOAD_MAX_BYTES, resolveImageMime } from '@/core/media/imageMime';
 import { ReelVideoPreview } from '../components/ReelVideoPreview';
-import { getUserErrorMessage } from '@/lib/errors';
+import { getFormErrors } from '@/lib/errors';
 import { alertPermissionDenied } from '@/lib/permissionAlert';
 import { safeBack } from '@/core/navigation/safeBack';
 import { MY_REELS_ROUTE } from '@/features/reels/routes';
+
+const REEL_FIELDS = ['videoUrl', 'description', 'tags'] as const;
+type ReelField = (typeof REEL_FIELDS)[number];
 
 export default function ReelUploadScreen() {
   useRequireProviderStatus('provider');
@@ -38,6 +41,7 @@ export default function ReelUploadScreen() {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<ReelField, string>>>({});
   const [publicationUncertain, setPublicationUncertain] = useState(false);
   const busyRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -64,6 +68,17 @@ export default function ReelUploadScreen() {
   }, []);
 
   // Editing the form is a deliberate user change: it lifts the uncertain-publication lock.
+  const editField = (field: ReelField) => {
+    setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  };
+
+  // Maps the server's details[] to the inputs; anything else becomes the banner message.
+  const applyServerError = (err: unknown) => {
+    const { fields, general } = getFormErrors(err, REEL_FIELDS);
+    setFieldErrors(fields);
+    setError(general ?? null);
+  };
+
   const clearUncertain = () => {
     if (publicationUncertain) { setPublicationUncertain(false); setError(null); }
   };
@@ -128,6 +143,7 @@ export default function ReelUploadScreen() {
     setSaving(true);
     setProgress(0);
     setError(null);
+    setFieldErrors({});
     const controller = new AbortController();
     abortRef.current = controller;
     let publishing = false;
@@ -167,7 +183,8 @@ export default function ReelUploadScreen() {
         }
         setError(kind === 'invalidUpload' || kind === 'providerRequired' || kind === 'busy'
           ? REEL_UPLOAD_ERROR_MESSAGES[kind]
-          : getUserErrorMessage(err));
+          : null);
+        if (!(kind === 'invalidUpload' || kind === 'providerRequired' || kind === 'busy')) applyServerError(err);
         return;
       }
       const kind = classifyReelUploadError(err);
@@ -180,7 +197,8 @@ export default function ReelUploadScreen() {
         ]);
         return;
       }
-      setError(kind === 'other' ? getUserErrorMessage(err) : REEL_UPLOAD_ERROR_MESSAGES[kind]);
+      if (kind === 'other') applyServerError(err);
+      else setError(REEL_UPLOAD_ERROR_MESSAGES[kind]);
     } finally {
       abortRef.current = null;
       setUploading(false);
@@ -216,11 +234,11 @@ export default function ReelUploadScreen() {
         )}
 
         {useLink && (
-          <Input label="Enlace directo al video" accessibilityLabel="Enlace del video" placeholder="https://…/video.mp4" autoCapitalize="none" autoCorrect={false} keyboardType="url" value={videoUrl} onChangeText={(t) => { clearUncertain(); setVideoUrl(t); }} editable={!saving} />
+          <Input label="Enlace directo al video" accessibilityLabel="Enlace del video" placeholder="https://…/video.mp4" autoCapitalize="none" autoCorrect={false} keyboardType="url" value={videoUrl} error={fieldErrors.videoUrl} onChangeText={(t) => { clearUncertain(); editField('videoUrl'); setVideoUrl(t); }} editable={!saving} />
         )}
 
-        <Input label="Descripción" accessibilityLabel="Descripción" value={description} onChangeText={(t) => { clearUncertain(); setDescription(t); }} multiline maxLength={2000} editable={!saving} />
-        <Input label="Etiquetas separadas por comas" accessibilityLabel="Etiquetas" value={tagsText} onChangeText={(t) => { clearUncertain(); setTagsText(t); }} editable={!saving} />
+        <Input label="Descripción" accessibilityLabel="Descripción" value={description} error={fieldErrors.description} onChangeText={(t) => { clearUncertain(); editField('description'); setDescription(t); }} multiline maxLength={2000} editable={!saving} />
+        <Input label="Etiquetas separadas por comas" accessibilityLabel="Etiquetas" value={tagsText} error={fieldErrors.tags} onChangeText={(t) => { clearUncertain(); editField('tags'); setTagsText(t); }} editable={!saving} />
 
         {error && <NoticeBanner variant="error">{error}</NoticeBanner>}
         {publicationUncertain && (

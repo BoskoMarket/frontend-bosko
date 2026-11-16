@@ -32,6 +32,7 @@ import {
   useThemeColors, FONT_FAMILY } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { forgotPasswordService } from '@/features/auth/services/auth';
+import { getResendCodeErrorMessage } from '@/features/auth/utils/resetCodeErrors';
 
 const CODE_LENGTH = 6;
 const RESEND_COOLDOWN = 30;
@@ -111,8 +112,9 @@ export default function VerifyResetCodeScreen() {
     try {
       await forgotPasswordService(String(email).toLowerCase());
       setCooldown(RESEND_COOLDOWN);
-    } catch {
-      setError('No pudimos reenviar el código. Intenta de nuevo.');
+    } catch (err: unknown) {
+      const message = getResendCodeErrorMessage(err);
+      if (message) setError(message);
     } finally {
       setResending(false);
     }

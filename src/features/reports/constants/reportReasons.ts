@@ -32,4 +32,3 @@ export const REPORT_CONTEXT_MESSAGE = 'No pudimos verificar tu participación en
 export const REPORT_RATE_LIMIT_MESSAGE = 'Hiciste demasiados intentos. Espera un momento y prueba de nuevo.';
 export const REPORT_ALREADY_REPORTED_MESSAGE = 'Ya reportaste esto.';
 export const REPORT_FAILED_TITLE = 'No se pudo enviar el reporte';
-export const REPORT_FAILED_MESSAGE = 'Intenta de nuevo en unos segundos.';

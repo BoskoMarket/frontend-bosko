@@ -12,6 +12,7 @@ import { RefreshControl, ScrollView, StatusBar, StyleSheet, View } from 'react-n
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { getErrorKind, getLoadErrorMessage } from '@/lib/errors';
 import { FEATURES } from '@/core/config/features';
 import { REEL_UPLOAD_ROUTE } from '@/features/reels/routes';
 
@@ -94,13 +95,19 @@ export default function ProviderHome() {
 
   const stats = statsQuery.data;
   const statTiles = [
-    stats && stats.averageRating > 0 ? { label: 'Rating', value: stats.averageRating.toFixed(1) } : null,
+    stats && stats.averageRating != null && stats.averageRating > 0 ? { label: 'Rating', value: stats.averageRating.toFixed(1) } : null,
     stats ? { label: 'Trabajos', value: String(stats.completedOrders) } : null,
     stats ? { label: 'Servicios', value: String(stats.servicesCount) } : null,
   ].filter((t): t is { label: string; value: string } => t !== null);
 
   const ordersLoading = ordersQuery.isLoading || pendingCountQuery.isLoading;
-  const ordersFailed = (ordersQuery.isError && !ordersQuery.data) || (pendingCountQuery.isError && pendingCountQuery.data === undefined);
+  // Show the error of the query that actually failed (and has no data to fall back on).
+  const failedQuery =
+    ordersQuery.isError && !ordersQuery.data ? ordersQuery
+    : pendingCountQuery.isError && pendingCountQuery.data === undefined ? pendingCountQuery
+    : null;
+  const ordersFailed = failedQuery !== null;
+  const ordersError = failedQuery?.error ?? null;
 
   return (
     <View style={[styles.root, { backgroundColor: tc.bg, paddingTop: insets.top }]}>
@@ -148,8 +155,12 @@ export default function ProviderHome() {
             </View>
           ) : ordersFailed ? (
             <View style={styles.error}>
-              <Ionicons name="cloud-offline-outline" size={32} color={tc.textSub} />
-              <Text variant="bodySmall" color={tc.textSub}>No se pudieron cargar las solicitudes</Text>
+              <Ionicons
+                name={getErrorKind(ordersError) === 'offline' ? 'cloud-offline-outline' : 'alert-circle-outline'}
+                size={32}
+                color={tc.textSub}
+              />
+              <Text variant="bodySmall" color={tc.textSub}>{getLoadErrorMessage(ordersError)}</Text>
                <Button label="Reintentar" size="sm" onPress={() => {
                  void ordersQuery.refetch();
                  void pendingCountQuery.refetch();

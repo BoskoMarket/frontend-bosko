@@ -1,10 +1,20 @@
 import {
   extractApiError,
   getFormErrors,
+  getRateLimitBackoffUntil,
   getRetryAfterMs,
   getRetryDelayMs,
+  getSocketErrorMessage,
+  getUserErrorMessage,
   shouldRetryRequest,
+  VALIDATION_ERROR_MESSAGE,
 } from '@/lib/errors';
+import { DEFAULT_ERROR_MESSAGE, ERROR_MESSAGES } from '@/lib/error-messages';
+
+test('getSocketErrorMessage maps catalog codes and falls back for unknown ones', () => {
+  expect(getSocketErrorMessage({ code: 'RATE_LIMITED' })).toBe(ERROR_MESSAGES.RATE_LIMITED);
+  expect(getSocketErrorMessage({ code: 'SOMETHING_NEW' })).toBe(DEFAULT_ERROR_MESSAGE);
+});
 
 const axiosError = (status?: number, data?: unknown, headers: Record<string, string> = {}) => ({
   isAxiosError: true,
@@ -30,7 +40,7 @@ test('asocia details[] a inputs conocidos y agrupa los desconocidos', () => {
   ]);
   expect(getFormErrors(err, ['email', 'password'] as const)).toEqual({
     fields: { email: 'email must be an email' },
-    general: 'address.city: city is required',
+    general: 'city is required',
   });
 });
 
@@ -56,4 +66,39 @@ test('backoff respeta Retry-After y tiene tope', () => {
   expect(getRetryDelayMs(1, axiosError(500))).toBe(2000);
   expect(getRetryDelayMs(10, axiosError(500))).toBe(30_000);
   expect(getRetryDelayMs(0, axiosError(429, '', { 'retry-after': '3600' }))).toBe(30_000);
+});
+
+test('no reintenta requests cancelados', () => {
+  const cancelled = { isAxiosError: true, code: 'ERR_CANCELED', name: 'CanceledError', message: 'canceled' };
+  expect(shouldRetryRequest(0, cancelled)).toBe(false);
+});
+
+test('pausa el polling tras 429: Retry-After con tope, 60 s por defecto, 0 si no es 429', () => {
+  const now = 1_000_000;
+  expect(getRateLimitBackoffUntil(axiosError(429, ''), now)).toBe(now + 60_000);
+  expect(getRateLimitBackoffUntil(axiosError(429, '', { 'retry-after': '5' }), now)).toBe(now + 5000);
+  expect(getRateLimitBackoffUntil(axiosError(429, '', { 'retry-after': '99999' }), now)).toBe(now + 300_000);
+  expect(getRateLimitBackoffUntil(axiosError(500, ''), now)).toBe(0);
+  expect(getRateLimitBackoffUntil(axiosError(), now)).toBe(0);
+});
+
+test('varios campos desconocidos usan copy genérico sin nombres de campo', () => {
+  const err = validationError([
+    { field: 'a.b', message: 'x' },
+    { field: 'c.d', message: 'y' },
+  ]);
+  const { fields, general } = getFormErrors(err, ['email'] as const);
+  expect(fields).toEqual({});
+  expect(general).toBe(VALIDATION_ERROR_MESSAGE);
+  expect(general).not.toMatch(/a\.b|c\.d/);
+});
+
+test('getUserErrorMessage shows only deduped detail messages, never field names', () => {
+  const msg = getUserErrorMessage(validationError([
+    { field: 'email', message: 'Email inválido' },
+    { field: 'mail', message: 'Email inválido' },
+    { field: 'password', message: 'Muy corta' },
+  ]));
+  expect(msg).toBe('Email inválido\nMuy corta');
+  expect(msg).not.toMatch(/email:|password/);
 });

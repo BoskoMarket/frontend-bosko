@@ -26,7 +26,7 @@ export function getPublishBlock(error: unknown): PublishBlock | null {
   if (code === 'IDENTITY_NOT_VERIFIED') {
     return {
       code,
-      message: 'Verifica tu identidad para publicar tu servicio.',
+      message: ERROR_MESSAGES.IDENTITY_NOT_VERIFIED,
       route: BECOME_PROVIDER_ROUTE,
       ctaLabel: 'Verificar identidad',
     };

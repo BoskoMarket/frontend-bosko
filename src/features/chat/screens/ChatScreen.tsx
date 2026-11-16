@@ -74,7 +74,7 @@ import {
   type ChatBlockState,
 } from '../constants/chatBlockRules';
 import { useBlockUser, useUnblockUser } from '@/hooks/mutations/useBlockMutations';
-import { NETWORK_ERROR_MESSAGE, getUserErrorMessage, isNetworkError } from '@/lib/errors';
+import { NETWORK_ERROR_MESSAGE, getRateLimitBackoffUntil, getSocketErrorMessage, getUserErrorMessage, isCancelledError, isNetworkError } from '@/lib/errors';
 import { isVideoUrl } from '../utils/mediaUrl';
 import {
   Avatar,
@@ -109,6 +109,7 @@ const QUICK_REPLIES = ['Hola, ¿estás disponible?', '¿Cuánto sale el trabajo?
 
 const POLL_INTERVAL = 10000;
 const TYPING_THROTTLE = 2000;
+const SOCKET_TOAST_DEDUPE_MS = 10_000;
 const MAX_VIDEO_SECONDS = 60;
 
 function formatDuration(ms: number): string {
@@ -467,6 +468,7 @@ export default function ChatScreen() {
       .catch(() => {});
   }, [params.id]);
   const refreshClosedOrderStateRef = useRef(refreshClosedOrderState);
+  const socketToastAtRef = useRef(new Map<string, number>());
   refreshClosedOrderStateRef.current = refreshClosedOrderState;
   // The backend rejected our own send with ORDER_CLOSED: hard lock, tell the user and resync.
   const handleClosedOrderError = useCallback((err: unknown): boolean => {
@@ -531,8 +533,8 @@ export default function ChatScreen() {
       const conv = await fetchConversationByOrder(params.id);
       setConversation(conv);
       return conv.id;
-    } catch {
-      setLoadFailed(true);
+    } catch (err) {
+      if (!isCancelledError(err)) setLoadFailed(true);
       return params.id;
     }
   }, [params.id]);
@@ -540,8 +542,16 @@ export default function ChatScreen() {
   useEffect(() => { setClosedByServer(false); setBlockedByServer(false); }, [params.id]);
 
   // Socket `error` carries no conversation id: only resync, let the real orderStatus / block flags decide.
+  // Unknown codes carry no action context and can stack: at most one toast per code every 10 s.
   useEffect(() => socketService.onError(error => {
-    if (!isOrderClosedSocketError(error) && !isUserBlockedSocketError(error)) return;
+    if (!isOrderClosedSocketError(error) && !isUserBlockedSocketError(error)) {
+      const now = Date.now();
+      const last = socketToastAtRef.current.get(error.code);
+      if (last !== undefined && now - last < SOCKET_TOAST_DEDUPE_MS) return;
+      socketToastAtRef.current.set(error.code, now);
+      toast.error(getSocketErrorMessage(error));
+      return;
+    }
     if (isUserBlockedSocketError(error)) toast.error(CHAT_BLOCKED_TOAST);
     refreshClosedOrderStateRef.current();
   }), []);
@@ -608,9 +618,8 @@ export default function ChatScreen() {
       setLoadFailed(false);
       await markAsRead(convId).catch(() => {});
     } catch (err: any) {
-      if (err?.response?.status === 429) {
-        pollBackoffRef.current = Date.now() + 60_000;
-      }
+      pollBackoffRef.current = getRateLimitBackoffUntil(err) || pollBackoffRef.current;
+      if (isCancelledError(err)) return;
       console.error('Error loading messages:', err);
       setLoadFailed(true);
     }

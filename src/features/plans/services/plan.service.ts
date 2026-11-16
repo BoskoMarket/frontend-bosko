@@ -1,6 +1,9 @@
 /**
  * Servicio de planes y suscripciones.
- * GET /plans, /plans/my-plan, POST/DELETE /subscriptions, GET /subscriptions/history
+ * Backend real: solo GET /plans, GET /plans/my-plan y GET /subscriptions/history.
+ * No existe POST/DELETE /subscriptions: suscribirse y cancelar son simulaciones
+ * locales (AsyncStorage por usuario, ver `storageKey`), no una integracion real.
+ * Oculto en v1 detras de FEATURES.payments.
  */
 
 import api from '@/core/api/axiosinstance';

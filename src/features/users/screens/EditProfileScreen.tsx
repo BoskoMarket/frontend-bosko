@@ -1,6 +1,6 @@
 ﻿/**
  * EditProfileScreen — Editar perfil con avatar y portada.
- * PATCH /users/me + POST /users/me/avatar + POST/DELETE /users/me/banner (propuesto, BR01)
+ * PATCH /users/me + POST /users/me/avatar + POST/DELETE /users/me/banner (both exist in the backend)
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -39,10 +39,13 @@ import {
   useThemeColors,
   dialog,
 } from '@/core/design-system';
-import { getUserErrorMessage } from '@/lib/errors';
+import { getFormErrors, getUserErrorMessage } from '@/lib/errors';
 import { IMAGE_UPLOAD_MAX_BYTES, resolveImageMime } from '@/core/media/imageMime';
 import { resolveFileSize } from '@/features/reels/constants/reelUploadRules';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+
+const PROFILE_FIELDS = ['firstName', 'lastName', 'phone', 'bio'] as const;
+type ProfileField = (typeof PROFILE_FIELDS)[number];
 
 const AVATAR_SIZE = 104;
 const BIO_MAX = 500;
@@ -65,6 +68,8 @@ export default function EditProfileScreen() {
   const [bannerUri, setBannerUri] = useState<string | null>(null);
   const [updatingBanner, setUpdatingBanner] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [serverErrors, setServerErrors] = useState<Partial<Record<ProfileField, string>>>({});
+  const clearServerError = (field: ProfileField) => setServerErrors(p => (p[field] ? { ...p, [field]: undefined } : p));
   const seeded = useRef(!!profile);
 
   // The profile can arrive after the screen mounts (cold start / refetch): seed the form once.
@@ -200,12 +205,15 @@ export default function EditProfileScreen() {
   const handleSave = useCallback(async () => {
     if (!canSave) return;
     setSaving(true);
+    setServerErrors({});
     try {
       await updateProfile({ firstName: trimmedFirstName, lastName, bio, phone, ...(coordinates ?? {}) });
       toast.success('Perfil actualizado', 'Tus datos se guardaron correctamente.');
       safeBack(router, '/(tabs)/profile');
     } catch (err: any) {
-      toast.error('No se pudo guardar', getUserErrorMessage(err));
+      const { fields, general } = getFormErrors(err, PROFILE_FIELDS);
+      setServerErrors(fields);
+      if (general) toast.error('No se pudo guardar', general);
     } finally {
       setSaving(false);
     }
@@ -363,16 +371,17 @@ export default function EditProfileScreen() {
             <Input
               label="Nombre"
               value={firstName}
-              onChangeText={setFirstName}
+              onChangeText={t => { setFirstName(t); clearServerError('firstName'); }}
               placeholder="Tu nombre"
-              error={firstNameError}
+              error={firstNameError ?? serverErrors.firstName}
               autoCapitalize="words"
             />
 
             <Input
               label="Apellido"
               value={lastName}
-              onChangeText={setLastName}
+              error={serverErrors.lastName}
+              onChangeText={t => { setLastName(t); clearServerError('lastName'); }}
               placeholder="Tu apellido"
               autoCapitalize="words"
             />
@@ -396,7 +405,8 @@ export default function EditProfileScreen() {
               </View>
               <Input
                 value={phone}
-                onChangeText={setPhone}
+                error={serverErrors.phone}
+                onChangeText={t => { setPhone(t); clearServerError('phone'); }}
                 placeholder="+54 11 1234 5678"
                 keyboardType="phone-pad"
                 accessibilityLabel="Teléfono"
@@ -431,7 +441,8 @@ export default function EditProfileScreen() {
               <Input
                 label="Bio"
                 value={bio}
-                onChangeText={setBio}
+                error={serverErrors.bio}
+                onChangeText={t => { setBio(t); clearServerError('bio'); }}
                 placeholder="Cuéntanos sobre ti..."
                 multiline
                 maxLength={BIO_MAX}

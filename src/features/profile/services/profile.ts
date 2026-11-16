@@ -88,8 +88,10 @@ export async function removeBanner(): Promise<{ bannerUrl: null }> {
 export interface UserStats {
     servicesCount: number;
     reviewsCount: number;
-    averageRating: number;
+    /** null until the user has reviews */
+    averageRating: number | null;
     completedOrders: number;
+    totalEarnings: number;
 }
 
 export async function getUserStats(): Promise<UserStats> {

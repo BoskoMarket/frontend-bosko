@@ -34,7 +34,7 @@ async function launchDidit(sessionToken: string): Promise<'completed' | 'cancell
     throw new Error(
       result.error.type === 'sessionExpired'
         ? 'La sesión de verificación expiró. Por favor, intenta de nuevo.'
-        : (result.error.message ?? 'Error en la verificación'),
+        : 'No pudimos completar la verificación. Intenta de nuevo.',
     );
   }
 
@@ -46,7 +46,7 @@ export function useStartKYC() {
   return useMutation({
     mutationFn: async () => {
       const response = await startVerification();
-      if ('alreadyProvider' in response && response.alreadyProvider === true) return;
+      if (response.alreadyProvider === true) return;
       if (!response.sessionToken) throw new Error('No se recibió token de verificación del servidor');
       const outcome = await launchDidit(response.sessionToken);
       if (outcome === 'cancelled') await cancelVerification();

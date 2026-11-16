@@ -414,7 +414,7 @@ export const ProfileScreen: React.FC = () => {
         {/* Refresh failed while a cached profile is on screen: keep the data, offer a retry. */}
         {profileError && profile ? (
           <View style={ss.inlineError}>
-            <NoticeBanner variant="error">No pudimos actualizar tu perfil. Mostramos los últimos datos guardados.</NoticeBanner>
+            <NoticeBanner variant="error">{profileError} Mostramos los últimos datos guardados.</NoticeBanner>
             <Button label="Reintentar" variant="ghost" size="sm" onPress={() => { void refreshProfile(); }} />
           </View>
         ) : null}

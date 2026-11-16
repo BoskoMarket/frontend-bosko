@@ -19,6 +19,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { getLoadErrorMessage, getRateLimitBackoffUntil, isCancelledError } from '@/lib/errors';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { Animated } from 'react-native';
 import { router } from 'expo-router';
@@ -160,7 +161,7 @@ export default function ConversationsListScreen() {
   const setUnreadTotal = useChatStore((s) => s.setUnreadTotal);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [loadError, setLoadError] = useState(false);
+  const [loadError, setLoadError] = useState<unknown>(null);
   const pollBackoffRef = useRef(0);
 
   const load = useCallback(async () => {
@@ -188,13 +189,12 @@ export default function ConversationsListScreen() {
         }),
       );
       setUnreadTotal(data.reduce((acc, c) => acc + c.unreadCount, 0));
-      setLoadError(false);
+      setLoadError(null);
     } catch (err: any) {
-      if (err?.response?.status === 429) {
-        pollBackoffRef.current = Date.now() + 60_000;
-      }
+      pollBackoffRef.current = getRateLimitBackoffUntil(err) || pollBackoffRef.current;
+      if (isCancelledError(err)) return;
       console.error('Error al cargar conversaciones:', err);
-      setLoadError(true);
+      setLoadError(err ?? new Error('conversations load failed'));
     } finally {
       setLoading(false);
     }
@@ -240,7 +240,7 @@ export default function ConversationsListScreen() {
           ListHeaderComponent={
             loadError && conversations.length > 0 ? (
               <NoticeBanner variant="error" style={styles.errorBanner}>
-                No pudimos actualizar tus mensajes. Desliza hacia abajo para reintentar.
+                {getLoadErrorMessage(loadError)} Desliza hacia abajo para reintentar.
               </NoticeBanner>
             ) : null
           }
@@ -249,7 +249,7 @@ export default function ConversationsListScreen() {
               <EmptyState
                 icon="cloud-offline-outline"
                 title="No pudimos cargar tus mensajes"
-                subtitle="Hubo un problema de conexión. Prueba de nuevo en unos segundos."
+                subtitle={getLoadErrorMessage(loadError)}
                 cta={{ label: 'Reintentar', onPress: load }}
               />
             ) : (

@@ -1,7 +1,6 @@
-import { extractApiError } from '@/lib/errors';
+import { extractApiError, getUserErrorMessage } from '@/lib/errors';
 import {
   REPORT_ALREADY_REPORTED_MESSAGE,
-  REPORT_FAILED_MESSAGE,
   REPORT_FAILED_TITLE,
   REPORT_UNAVAILABLE_MESSAGE,
   REPORT_TARGET_MISSING_MESSAGE,
@@ -41,5 +40,6 @@ export function reportErrorFeedback(err: unknown): ReportErrorFeedback {
     return { title: REPORT_FAILED_TITLE, message: REPORT_RATE_LIMIT_MESSAGE, close: false };
   }
   if (statusCode === 405 || statusCode === 501) return { title: REPORT_UNAVAILABLE_MESSAGE, close: false };
-  return { title: REPORT_FAILED_TITLE, message: REPORT_FAILED_MESSAGE, close: false };
+  // Unmapped codes fall back to the central catalog (generic copy when unknown).
+  return { title: REPORT_FAILED_TITLE, message: getUserErrorMessage(err), close: false };
 }

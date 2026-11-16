@@ -11,6 +11,7 @@ jest.mock('@/core/api/axiosinstance', () => ({
 
 import { uploadBanner, removeBanner } from '@/features/profile/services/profile';
 import { getBannerErrorMessage } from '@/features/profile/utils/bannerErrors';
+import { getUserErrorMessage } from '@/lib/errors';
 
 describe('banner service', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -51,8 +52,8 @@ describe('banner service', () => {
 describe('getBannerErrorMessage', () => {
   const err = (status: number) => ({ response: { status } });
 
-  it.each([404, 405, 501])('maps %s to a retry message', (s) => {
-    expect(getBannerErrorMessage(err(s))).toMatch(/Intenta de nuevo/);
+  it.each([404, 405, 501])('delegates %s to the shared mapper (route exists)', (s) => {
+    expect(getBannerErrorMessage(err(s))).toBe(getUserErrorMessage(err(s)));
   });
   it('maps 413 to a size message', () => {
     expect(getBannerErrorMessage(err(413))).toMatch(/5 MB/);

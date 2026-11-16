@@ -1,4 +1,4 @@
-import { readCollection, readPaginatedCollection } from '@/core/api/collections';
+import { readPaginatedCollection } from '@/core/api/collections';
 /**
  * Servicio de órdenes.
  * Encapsula todas las llamadas al backend relacionadas con órdenes.
@@ -18,12 +18,6 @@ import { normalizeOrder } from './normalizeOrder';
 interface FetchOrdersParams {
   page?: number;
   limit?: number;
-}
-
-/** Obtener todas las órdenes del usuario autenticado (como cliente y proveedor) */
-export async function fetchOrders(params?: FetchOrdersParams): Promise<Order[]> {
-  const { data } = await api.get<any>('/orders', { params });
-  return readCollection<any>(data).map(normalizeOrder);
 }
 
 /** Obtener órdenes donde el usuario es cliente */

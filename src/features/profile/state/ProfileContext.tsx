@@ -5,7 +5,7 @@ import {
   useToggleAvailability,
 } from '@/hooks/queries/useProfileQuery';
 import type { UpdateProfilePayload } from '@/features/profile/services/profile';
-import { getUserErrorMessage } from '@/lib/errors';
+import { getLoadErrorMessage } from '@/lib/errors';
 
 export const ProfileProvider = ({ children }: { children: React.ReactNode }) => (
   <>{children}</>
@@ -19,7 +19,7 @@ export const useProfile = () => {
   return {
     profile: query.data ?? null,
     isLoading: query.isLoading,
-    error: query.error ? getUserErrorMessage(query.error) : null,
+    error: query.error ? getLoadErrorMessage(query.error) : null,
     /** Resolves true when the refetch succeeded (refetch itself never rejects). */
     refreshProfile: async (): Promise<boolean> => !(await query.refetch()).isError,
     updateProfile: async (payload: UpdateProfilePayload) => {

@@ -27,6 +27,7 @@ import {
   useIsDark,
   dialog,
 } from '@/core/design-system';
+import { getUserErrorMessage, isCancelledError } from '@/lib/errors';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 interface PendingUser {
@@ -52,8 +53,8 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
       await adminReview(item.id, false, reason);
       setRejectOpen(false);
       onReview(item.id);
-    } catch {
-      dialog.fromAlert('Error', 'No se pudo rechazar.');
+    } catch (e: unknown) {
+      if (!isCancelledError(e)) dialog.fromAlert('Error', getUserErrorMessage(e));
     } finally {
       setRejecting(false);
     }
@@ -109,8 +110,8 @@ function ProviderCard({ item, onReview }: { item: PendingUser; onReview: (id: st
                     try {
                       await adminReview(item.id, true);
                       onReview(item.id);
-                    } catch {
-                      dialog.fromAlert('Error', 'No se pudo aprobar.');
+                    } catch (e: unknown) {
+                      if (!isCancelledError(e)) dialog.fromAlert('Error', getUserErrorMessage(e));
                     }
                   },
                 },
@@ -144,7 +145,9 @@ export default function AdminBackgroundCheckScreen() {
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
-    // El endpoint GET /admin/background-check/pending no está disponible en el backend actual
+    // GET /admin/background-check/pending does not exist in the backend, so there is no
+    // list to load: this screen is always empty. Only PATCH /admin/background-check/:userId
+    // exists (adminReview), usable once a list source is available.
     setItems([]);
     setLoading(false);
     setRefreshing(false);

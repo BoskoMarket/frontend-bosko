@@ -1,3 +1,4 @@
+import { nextCollectionPage } from '@/core/api/collections';
 import api from '@/core/api/axiosinstance';
 import { fetchOrdersAsClient, fetchOrdersAsProvider } from '@/features/orders/services/orders.service';
 import { getMyServices } from '@/features/servicesUser/services/service';
@@ -40,10 +41,25 @@ it('requests and returns a page of own reels and provider reviews', async () => 
   expect(get).toHaveBeenCalledWith('/reviews/providers/p1/reviews', { params: { page: 2, limit: 10 } });
 });
 
-it('defaults own reels to page 1 / limit 20 and rejects a bare array', async () => {
+it('defaults own reels to page 1 / limit 20 and wraps the backend plain array as a final page', async () => {
   get.mockResolvedValueOnce({ data: { data: [], total: 0, page: 1, limit: 20 } });
   await getMyReels();
   expect(get).toHaveBeenLastCalledWith('/reels/me', { params: { page: 1, limit: 20 } });
-  get.mockResolvedValueOnce({ data: [{ id: 'r1' }] });
+  get.mockResolvedValueOnce({ data: [{ id: 'r1' }, { id: 'r2' }] });
+  const page = await getMyReels();
+  expect(page).toEqual({ data: [{ id: 'r1' }, { id: 'r2' }], total: 2, page: 1, limit: 20 });
+  expect(nextCollectionPage(page)).toBeUndefined();
+  get.mockResolvedValueOnce({ data: 'nope' });
   await expect(getMyReels()).rejects.toThrow('formato inesperado');
+});
+
+it('treats a full plain-array reels page as possibly having a next page', async () => {
+  const full = Array.from({ length: 20 }, (_, i) => ({ id: `r${i}` }));
+  get.mockResolvedValueOnce({ data: full });
+  const page = await getMyReels();
+  expect(nextCollectionPage(page)).toBe(2);
+  get.mockResolvedValueOnce({ data: full });
+  expect(nextCollectionPage(await getMyReels(3))).toBe(4);
+  get.mockResolvedValueOnce({ data: [] });
+  expect(nextCollectionPage(await getMyReels(2))).toBeUndefined();
 });

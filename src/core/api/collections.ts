@@ -26,6 +26,30 @@ export function readPaginatedCollection<T>(value: unknown): PaginatedCollection<
   return page as PaginatedCollection<T>;
 }
 
+export interface CursorCollection<T> {
+  data: T[];
+  nextCursor: string | null;
+}
+
+/**
+ * Strict reader for cursor pages (docs/trabajos-feed-contract.md: `data.{data, nextCursor}`,
+ * `nextCursor` is `null` on the last page; an empty feed is `{ data: [], nextCursor: null }`).
+ * The only leniency is an absent `nextCursor`, read as `null` (end of list). A non-object or
+ * array payload, a missing `data` array or a non-string cursor is a malformed response and throws,
+ * so it is never shown as an empty feed.
+ */
+export function readCursorCollection<T>(value: unknown): CursorCollection<T> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('El servidor devolvió una página con un formato inesperado.');
+  }
+  const page = value as { data?: unknown; nextCursor?: unknown };
+  const cursor = page.nextCursor ?? null;
+  if (!Array.isArray(page.data) || (cursor !== null && typeof cursor !== 'string')) {
+    throw new Error('El servidor devolvió una página con un formato inesperado.');
+  }
+  return { data: page.data as T[], nextCursor: cursor };
+}
+
 /**
  * Flattens pages of a newest-first list. A new item can push an earlier one onto the next
  * page, so the same id may show up twice; the first occurrence wins.
