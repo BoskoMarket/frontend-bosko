@@ -3,6 +3,7 @@ import {
   getErrorKind,
   getLoadErrorMessage,
   LOAD_ERROR_MESSAGES,
+  VALIDATION_ERROR_MESSAGE,
   getUserErrorMessage,
   isCancelledError,
   isNetworkError,
@@ -68,9 +69,10 @@ describe('getLoadErrorMessage uses the backend code catalog', () => {
     expect(msg).not.toMatch(/permiso/i);
   });
 
-  test('VALIDATION_ERROR joins the details', () => {
+  test('VALIDATION_ERROR gets generic copy without field names', () => {
     const e = axiosError(400, body('VALIDATION_ERROR', 400, { details: [{ field: 'limit', message: 'too big' }] }));
-    expect(getLoadErrorMessage(e)).toBe('limit: too big');
+    expect(getLoadErrorMessage(e)).toBe(VALIDATION_ERROR_MESSAGE);
+    expect(getLoadErrorMessage(e)).not.toMatch(/limit/);
   });
 
   test('generic codes and unknown codes fall back to kind copy, without mentioning the connection', () => {

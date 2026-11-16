@@ -6,6 +6,7 @@ import {
   getRetryDelayMs,
   getSocketErrorMessage,
   shouldRetryRequest,
+  VALIDATION_ERROR_MESSAGE,
 } from '@/lib/errors';
 import { DEFAULT_ERROR_MESSAGE, ERROR_MESSAGES } from '@/lib/error-messages';
 
@@ -38,7 +39,7 @@ test('asocia details[] a inputs conocidos y agrupa los desconocidos', () => {
   ]);
   expect(getFormErrors(err, ['email', 'password'] as const)).toEqual({
     fields: { email: 'email must be an email' },
-    general: 'address.city: city is required',
+    general: 'city is required',
   });
 });
 
@@ -78,4 +79,15 @@ test('pausa el polling tras 429: Retry-After con tope, 60 s por defecto, 0 si no
   expect(getRateLimitBackoffUntil(axiosError(429, '', { 'retry-after': '99999' }), now)).toBe(now + 300_000);
   expect(getRateLimitBackoffUntil(axiosError(500, ''), now)).toBe(0);
   expect(getRateLimitBackoffUntil(axiosError(), now)).toBe(0);
+});
+
+test('varios campos desconocidos usan copy genérico sin nombres de campo', () => {
+  const err = validationError([
+    { field: 'a.b', message: 'x' },
+    { field: 'c.d', message: 'y' },
+  ]);
+  const { fields, general } = getFormErrors(err, ['email'] as const);
+  expect(fields).toEqual({});
+  expect(general).toBe(VALIDATION_ERROR_MESSAGE);
+  expect(general).not.toMatch(/a\.b|c\.d/);
 });

@@ -89,6 +89,9 @@ export const NETWORK_ERROR_MESSAGE =
 
 export const CANCELLED_ERROR_MESSAGE = "La solicitud se canceló.";
 
+/** Generic copy for a VALIDATION_ERROR that cannot be tied to a visible input (never shows field names). */
+export const VALIDATION_ERROR_MESSAGE = "Revisa los datos e inténtalo de nuevo.";
+
 /** true cuando el request fue abortado por la app (AbortController / CanceledError), no por la red. */
 export function isCancelledError(error: unknown): boolean {
   const e = error as { code?: string; name?: string } | null | undefined;
@@ -182,10 +185,8 @@ export function getLoadErrorMessage(error: unknown): string {
   const kind = getErrorKind(error);
   if (kind === "cancelled") return CANCELLED_ERROR_MESSAGE;
   if (kind === "offline") return NETWORK_ERROR_MESSAGE;
-  const { code, details, statusCode } = extractApiError(error);
-  if (code === "VALIDATION_ERROR" && details?.length) {
-    return details.map((d) => `${d.field}: ${d.message}`).join("\n");
-  }
+  const { code, statusCode } = extractApiError(error);
+  if (code === "VALIDATION_ERROR") return VALIDATION_ERROR_MESSAGE;
   if (!KIND_COPY_CODES.has(code) && code !== "UNKNOWN_ERROR") {
     const catalogued = ERROR_MESSAGES[code as ErrorCode];
     if (catalogued) return catalogued;
@@ -230,10 +231,12 @@ export function getFormErrors<F extends string>(
     if ((knownFields as readonly string[]).includes(field)) {
       fields[field as F] ??= message;
     } else {
-      unknown.push(`${field}: ${message}`);
+      unknown.push(message);
     }
   }
-  return { fields, general: unknown.length ? unknown.join("\n") : null };
+  // Never surface raw field names: a lone unknown detail keeps its message, several get generic copy.
+  const general = unknown.length === 0 ? null : unknown.length === 1 ? unknown[0] : VALIDATION_ERROR_MESSAGE;
+  return { fields, general };
 }
 
 /** Status que nunca se reintentan: repetir el request no cambia el resultado. */

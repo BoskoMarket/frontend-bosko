@@ -31,7 +31,7 @@ describe('getChangePasswordFormErrors', () => {
       validationError([{ field: 'other', message: 'Nope' }]),
     );
     expect(fields).toEqual({});
-    expect(general).toBe('other: Nope');
+    expect(general).toBe('Nope');
   });
 
   it('keeps the wrong-current-password heuristic for non-validation errors', () => {
@@ -56,6 +56,6 @@ describe('getFormErrors for the other forms', () => {
       known as readonly string[],
     );
     expect(fields[field as never]).toBe('Campo inválido');
-    expect(general).toBe('mystery: Extra');
+    expect(general).toBe('Extra');
   });
 });
