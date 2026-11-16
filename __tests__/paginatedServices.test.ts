@@ -52,3 +52,14 @@ it('defaults own reels to page 1 / limit 20 and wraps the backend plain array as
   get.mockResolvedValueOnce({ data: 'nope' });
   await expect(getMyReels()).rejects.toThrow('formato inesperado');
 });
+
+it('treats a full plain-array reels page as possibly having a next page', async () => {
+  const full = Array.from({ length: 20 }, (_, i) => ({ id: `r${i}` }));
+  get.mockResolvedValueOnce({ data: full });
+  const page = await getMyReels();
+  expect(nextCollectionPage(page)).toBe(2);
+  get.mockResolvedValueOnce({ data: full });
+  expect(nextCollectionPage(await getMyReels(3))).toBe(4);
+  get.mockResolvedValueOnce({ data: [] });
+  expect(nextCollectionPage(await getMyReels(2))).toBeUndefined();
+});
