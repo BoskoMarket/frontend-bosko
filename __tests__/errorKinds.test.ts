@@ -12,7 +12,6 @@ import { ERROR_MESSAGES } from '@/lib/error-messages';
 
 const mockCaptureError = jest.fn();
 jest.mock('@/core/monitoring/sentry', () => ({ captureError: (...a: unknown[]) => mockCaptureError(...a) }));
-// eslint-disable-next-line import/first
 import { reportApiError, keyScope } from '@/lib/errorReporting';
 
 const axiosError = (status?: number, data?: unknown) => ({
