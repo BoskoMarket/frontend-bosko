@@ -192,6 +192,18 @@ describe.each(['dark', 'light'] as const)('DeleteAccountScreen (%s)', (mode) => 
     expect(mockLogout).not.toHaveBeenCalled();
   });
 
+  it('shows a VALIDATION_ERROR detail on the password input and clears it on edit', async () => {
+    autoConfirm();
+    mockDeleteAccount.mockRejectedValueOnce({ isAxiosError: true, response: { status: 400, data: { success: false, statusCode: 400, code: 'VALIDATION_ERROR', message: 'bad', details: [{ field: 'password', message: 'La contraseña es demasiado larga' }] } } });
+    const utils = render(<DeleteAccountScreen />);
+    goToStep2(utils);
+    fireEvent.changeText(utils.getByPlaceholderText('••••••••'), 'secret1');
+    fireEvent.press(utils.getByText('Eliminar mi cuenta'));
+    await waitFor(() => expect(utils.getByText('La contraseña es demasiado larga')).toBeTruthy());
+    fireEvent.changeText(utils.getByPlaceholderText('••••••••'), 'secret12');
+    expect(utils.queryByText('La contraseña es demasiado larga')).toBeNull();
+  });
+
   it('deactivates, announces the purge date and logs out (password)', async () => {
     autoConfirm();
     mockDeleteAccount.mockResolvedValueOnce({ deletionScheduledAt: '2026-11-13T12:00:00Z' });

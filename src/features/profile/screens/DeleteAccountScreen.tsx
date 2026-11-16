@@ -32,6 +32,7 @@ import {
   useThemeColors,
   dialog,
 } from '@/core/design-system';
+import { getFormErrors } from '@/lib/errors';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 
 const CONFIRM_WORD = 'ELIMINAR';
@@ -98,6 +99,7 @@ export default function DeleteAccountScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [passwordError, setPasswordError] = useState<string | undefined>();
 
   const iconScale = useRef(new Animated.Value(0.85)).current;
   const iconOpacity = useRef(new Animated.Value(0)).current;
@@ -129,6 +131,7 @@ export default function DeleteAccountScreen() {
       setStep(1);
       setPassword('');
       setError('');
+      setPasswordError(undefined);
     } else {
       safeBack(router, '/(tabs)/profile');
     }
@@ -146,6 +149,7 @@ export default function DeleteAccountScreen() {
           style: 'destructive',
           onPress: async () => {
             setError('');
+            setPasswordError(undefined);
             setLoading(true);
             try {
               let credentials: DeleteAccountCredentials;
@@ -179,7 +183,11 @@ export default function DeleteAccountScreen() {
                 setError('No pudimos verificar tu cuenta de Google. Intenta de nuevo.');
               else if (code === 'INVALID_PASSWORD' || err?.response?.status === 401)
                 setError(isGoogle ? 'No pudimos verificar tu cuenta de Google. Intenta de nuevo.' : 'Contraseña incorrecta. Verifica e intenta de nuevo.');
-              else setError('Error al eliminar la cuenta. Intenta más tarde.');
+              else if (code === 'VALIDATION_ERROR') {
+                const { fields, general } = getFormErrors(err, ['password'] as const);
+                setPasswordError(fields.password);
+                if (general) setError(general);
+              } else setError('Error al eliminar la cuenta. Intenta más tarde.');
             } finally {
               setLoading(false);
             }
@@ -320,7 +328,8 @@ export default function DeleteAccountScreen() {
               <Input
                 label="Ingresa tu contraseña actual"
                 value={password}
-                onChangeText={setPassword}
+                error={passwordError}
+                onChangeText={(t) => { setPasswordError(undefined); setPassword(t); }}
                 placeholder="••••••••"
                 secureTextEntry
                 autoCapitalize="none"

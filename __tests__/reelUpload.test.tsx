@@ -221,4 +221,17 @@ describe('ReelUploadScreen', () => {
     expect(mockPost).toHaveBeenCalledTimes(2);
     expect(mockPost.mock.calls[1]).toEqual(['/reels', { videoUrl: 'https://cdn.test/late.mp4', description: '', tags: [] }]);
   });
+
+  it('shows a VALIDATION_ERROR detail under the matching input and clears it on edit', async () => {
+    setMode('dark');
+    const err = { isAxiosError: true, response: { status: 400, data: { success: false, statusCode: 400, code: 'VALIDATION_ERROR', message: 'bad', details: [{ field: 'description', message: 'La descripción es demasiado larga' }] } } };
+    mockPost.mockResolvedValueOnce({ data: { videoUrl: 'https://cdn.test/video.mp4', duration: 12 } }).mockRejectedValueOnce(err);
+    const { getByText, queryByText, getByLabelText } = render(<ReelUploadScreen />);
+    await act(async () => { fireEvent.press(getByText('Elegir de la galería')); });
+    await act(async () => { fireEvent.press(getByText('Publicar reel')); });
+    expect(getByText('La descripción es demasiado larga')).toBeTruthy();
+    expect(queryByText(/description/)).toBeNull();
+    fireEvent.changeText(getByLabelText('Descripción'), 'nueva');
+    expect(queryByText('La descripción es demasiado larga')).toBeNull();
+  });
 });
