@@ -145,7 +145,9 @@ export default function AdminBackgroundCheckScreen() {
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
-    // El endpoint GET /admin/background-check/pending no está disponible en el backend actual
+    // GET /admin/background-check/pending does not exist in the backend, so there is no
+    // list to load: this screen is always empty. Only PATCH /admin/background-check/:userId
+    // exists (adminReview), usable once a list source is available.
     setItems([]);
     setLoading(false);
     setRefreshing(false);
