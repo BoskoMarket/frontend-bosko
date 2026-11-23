@@ -22,8 +22,6 @@ import type {
   OrderStatus,
   PaginatedResponse,
 } from '@/features/orders/types/orders.types';
-import { toast } from '@/core/components/Toast';
-import { getUserErrorMessage } from '@/lib/errors';
 
 type OrdersPages = InfiniteData<PaginatedResponse<Order>, number>;
 const selectOrders = (data: OrdersPages): Order[] => flattenUniqueById(data.pages);
@@ -96,6 +94,8 @@ export function useOrder(id: string | undefined) {
     queryKey: QUERY_KEYS.orderById(id!),
     queryFn: () => fetchOrderById(id!),
     enabled: !!id,
+    // Opened from a push or a list: do not trust the 2 min staleTime for the detail.
+    refetchOnMount: 'always',
   });
 }
 
@@ -127,7 +127,6 @@ export function useAcceptOrder() {
     onError: (err, id, ctx) => {
       if (ctx?.prevList)  qc.setQueryData(QUERY_KEYS.providerOrders, ctx.prevList);
       if (ctx?.prevOrder) qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
-      toast.error('No se pudo aceptar la orden', getUserErrorMessage(err));
     },
     onSettled: (_data, _err, id) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.providerOrders });
@@ -155,7 +154,6 @@ export function useRejectOrder() {
     onError: (err, { id }, ctx) => {
       if (ctx?.prevList)  qc.setQueryData(QUERY_KEYS.providerOrders, ctx.prevList);
       if (ctx?.prevOrder) qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
-      toast.error('No se pudo rechazar la orden', getUserErrorMessage(err));
     },
     onSettled: (_data, _err, { id }) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.providerOrders });
@@ -182,7 +180,6 @@ export function useStartOrder() {
     onError: (err, id, ctx) => {
       if (ctx?.prevList)  qc.setQueryData(QUERY_KEYS.providerOrders, ctx.prevList);
       if (ctx?.prevOrder) qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
-      toast.error('No se pudo iniciar la orden', getUserErrorMessage(err));
     },
     onSettled: (_data, _err, id) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.providerOrders });
@@ -213,7 +210,6 @@ export function useMarkOrderDone() {
       if (ctx?.prevClient)   qc.setQueryData(QUERY_KEYS.clientOrders, ctx.prevClient);
       if (ctx?.prevProvider) qc.setQueryData(QUERY_KEYS.providerOrders, ctx.prevProvider);
       if (ctx?.prevOrder)    qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
-      toast.error('No se pudo marcar como terminado', getUserErrorMessage(err));
     },
     onSettled: (_data, _err, id) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.clientOrders });
@@ -245,7 +241,6 @@ export function useConfirmOrder() {
       if (ctx?.prevClient)   qc.setQueryData(QUERY_KEYS.clientOrders, ctx.prevClient);
       if (ctx?.prevProvider) qc.setQueryData(QUERY_KEYS.providerOrders, ctx.prevProvider);
       if (ctx?.prevOrder)    qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
-      toast.error('No se pudo confirmar el trabajo', getUserErrorMessage(err));
     },
     onSettled: (_data, _err, id) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.clientOrders });
@@ -280,7 +275,6 @@ export function useCancelOrder() {
       if (ctx?.prevClient)   qc.setQueryData(QUERY_KEYS.clientOrders, ctx.prevClient);
       if (ctx?.prevProvider) qc.setQueryData(QUERY_KEYS.providerOrders, ctx.prevProvider);
       if (ctx?.prevOrder)    qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
-      toast.error('No se pudo cancelar la orden', getUserErrorMessage(err));
     },
     onSettled: (_data, _err, { id }) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.clientOrders });
@@ -313,7 +307,6 @@ export function useDisputeOrder() {
       if (ctx?.prevClient)   qc.setQueryData(QUERY_KEYS.clientOrders, ctx.prevClient);
       if (ctx?.prevProvider) qc.setQueryData(QUERY_KEYS.providerOrders, ctx.prevProvider);
       if (ctx?.prevOrder)    qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
-      toast.error('No se pudo abrir la disputa', getUserErrorMessage(err));
     },
     onSettled: (_data, _err, { id }) => {
       qc.invalidateQueries({ queryKey: QUERY_KEYS.clientOrders });

@@ -119,7 +119,7 @@ export default function QuoteRequestScreen() {
       dialog.fromAlert(
         '¡Solicitud enviada!',
         'El proveedor recibirá tu solicitud y te responderá pronto.',
-        [{ text: 'Ver mis órdenes', onPress: () => router.replace('/(tabs)/orders') }],
+        [{ text: 'Ver mis órdenes', onPress: () => router.replace('/(tabs)/orders?tab=client') }],
       );
     }
   };

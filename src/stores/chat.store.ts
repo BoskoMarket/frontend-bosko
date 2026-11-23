@@ -9,6 +9,7 @@ interface ChatState {
   unreadTotal: number;
   setUnreadTotal: (n: number) => void;
   incrementUnread: () => void;
+  clearConversationUnread: (convId: string) => void;
 
   socketReady: boolean;
   setSocketReady: (ready: boolean) => void;
@@ -38,6 +39,14 @@ export const useChatStore = create<ChatState>((set) => ({
   unreadTotal: 0,
   setUnreadTotal: (unreadTotal) => set({ unreadTotal }),
   incrementUnread: () => set((state) => ({ unreadTotal: state.unreadTotal + 1 })),
+  clearConversationUnread: (convId) =>
+    set((state) => {
+      const cleared = state.conversations.find((c) => c.id === convId)?.unreadCount ?? 0;
+      return {
+        conversations: state.conversations.map((c) => (c.id === convId ? { ...c, unreadCount: 0 } : c)),
+        unreadTotal: Math.max(0, state.unreadTotal - cleared),
+      };
+    }),
 
   socketReady: false,
   setSocketReady: (socketReady) => set({ socketReady }),

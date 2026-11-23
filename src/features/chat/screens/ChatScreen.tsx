@@ -407,6 +407,7 @@ export default function ChatScreen() {
   const { data: profile } = useProfile();
   const { authState } = useAuth();
   const updateLastMessage = useChatStore((s) => s.updateLastMessage);
+  const clearConversationUnread = useChatStore((s) => s.clearConversationUnread);
   const insets = useSafeAreaInsets();
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
@@ -616,7 +617,7 @@ export default function ChatScreen() {
       nextPageRef.current = 2;
       setMessages(latest);
       setLoadFailed(false);
-      await markAsRead(convId).catch(() => {});
+      await markAsRead(convId).then(() => useChatStore.getState().clearConversationUnread(convId)).catch(() => {});
     } catch (err: any) {
       pollBackoffRef.current = getRateLimitBackoffUntil(err) || pollBackoffRef.current;
       if (isCancelledError(err)) return;
@@ -681,10 +682,10 @@ export default function ChatScreen() {
         msg.messageType === 'file'  ? '📎 Archivo' :
         msg.content ?? '';
       updateLastMessage(msg.conversationId, preview, msg.senderId);
-      markAsRead(msg.conversationId).catch(() => {});
+      markAsRead(msg.conversationId).then(() => clearConversationUnread(msg.conversationId)).catch(() => {});
     });
     return () => unsub();
-  }, [updateLastMessage]);
+  }, [updateLastMessage, clearConversationUnread]);
 
   useEffect(() => {
     let active = true;

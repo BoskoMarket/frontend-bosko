@@ -12,6 +12,11 @@ Delivery strategy: ask-on-risk. Forecast ~300 authored lines.
 - [x] T3 Order detail shows requested date (`scheduledDate`), counterparty name, cancellation/dispute reason and who closed it (`OrderDetailScreen.tsx`).
 - [x] T4 `useDisputeOrder` patches and invalidates client and provider lists (`useOrdersQuery.ts`).
 
+- [x] T5 Single error surface per order action: remove the duplicate toast in the mutation hooks (`useOrdersQuery.ts` onError) or the dialog in `runAction`, keep one (audit #8).
+- [x] T6 Order detail never shows stale state when opened from a push or list: `refetchOrder` on mount in `useOrder` (audit #9).
+- [x] T7 After quoting, `router.replace('/(tabs)/orders?tab=client')` so providers see the order they created (`QuoteRequestScreen.tsx`, audit #11).
+- [x] T8 Chat unread badge clears: after `markAsRead` in `ChatScreen.tsx` update chat store / invalidate `conversations` (audit #14).
+
 ## Acceptance
 - Neutral Spanish copy, no hardcoded design literals (tokens/DS only), `npm run lint` and `npm test` green.
 - Tests: push tap routing, cache invalidation after dispute and push, detail renders date/party/reason.
