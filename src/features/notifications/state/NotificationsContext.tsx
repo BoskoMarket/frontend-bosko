@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 import { clearAllNotifications } from '../services/notifications.service';
-import { QUERY_KEYS } from '@/core/query/queryKeys';
+import { invalidateOnPush } from '../utils/refreshOnPush';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   useNotificationsQuery,
@@ -40,8 +40,8 @@ export function useNotifications() {
 
   useEffect(() => {
     if (isExpoGo) return;
-    listenerRef.current = Notifications.addNotificationReceivedListener(() => {
-      qc.invalidateQueries({ queryKey: QUERY_KEYS.unreadCount });
+    listenerRef.current = Notifications.addNotificationReceivedListener((notification) => {
+      invalidateOnPush(qc, notification.request.content.data);
     });
     return () => listenerRef.current?.remove();
   }, [qc]);

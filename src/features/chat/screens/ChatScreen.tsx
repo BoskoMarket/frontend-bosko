@@ -57,6 +57,8 @@ import {
   Conversation,
 } from '../services/chat.service';
 import { socketService } from '../services/socket.service';
+import { useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/core/query/queryKeys';
 import { useChatStore } from '@/stores/chat.store';
 import { useAuth } from '@/features/auth/state/AuthContext';
 import { useProfile } from '@/hooks/queries/useProfileQuery';
@@ -407,6 +409,16 @@ export default function ChatScreen() {
   const { data: profile } = useProfile();
   const { authState } = useAuth();
   const updateLastMessage = useChatStore((s) => s.updateLastMessage);
+  const qc = useQueryClient();
+  // Clears the local unread count and, when the store could not account for it (conversation not
+  // loaded yet, or it still had unread), resyncs conversations so the tab badge matches the server.
+  const syncReadState = useCallback((id: string) => {
+    const store = useChatStore.getState();
+    const known = store.conversations.find((c) => c.id === id);
+    const needsSync = !known || known.unreadCount > 0;
+    store.clearConversationUnread(id);
+    if (needsSync) qc.invalidateQueries({ queryKey: QUERY_KEYS.conversations });
+  }, [qc]);
   const insets = useSafeAreaInsets();
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
@@ -616,14 +628,14 @@ export default function ChatScreen() {
       nextPageRef.current = 2;
       setMessages(latest);
       setLoadFailed(false);
-      await markAsRead(convId).catch(() => {});
+      await markAsRead(convId).then(() => syncReadState(convId)).catch(() => {});
     } catch (err: any) {
       pollBackoffRef.current = getRateLimitBackoffUntil(err) || pollBackoffRef.current;
       if (isCancelledError(err)) return;
       console.error('Error loading messages:', err);
       setLoadFailed(true);
     }
-  }, []);
+  }, [syncReadState]);
 
   const loadOlderMessages = useCallback(async (convId: string) => {
     if (!hasMoreRef.current || loadingMore) return;
@@ -681,10 +693,10 @@ export default function ChatScreen() {
         msg.messageType === 'file'  ? '📎 Archivo' :
         msg.content ?? '';
       updateLastMessage(msg.conversationId, preview, msg.senderId);
-      markAsRead(msg.conversationId).catch(() => {});
+      markAsRead(msg.conversationId).then(() => syncReadState(msg.conversationId)).catch(() => {});
     });
     return () => unsub();
-  }, [updateLastMessage]);
+  }, [updateLastMessage, syncReadState]);
 
   useEffect(() => {
     let active = true;

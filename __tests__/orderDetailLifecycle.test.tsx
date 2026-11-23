@@ -18,6 +18,7 @@ jest.mock('expo-router', () => ({
   useFocusEffect: (effect: () => void) => { require('react').useEffect(effect, []); },
 }));
 jest.mock('@/components/AnimatedBackground', () => ({ AnimatedBackground: () => null }));
+jest.mock('@/features/orders/components/DisputeSupportNotice', () => ({ DisputeSupportNotice: () => null }));
 jest.mock('@/features/orders/state/OrdersContext', () => ({
   useOrders: () => ({ confirmOrder: mockConfirm, disputeOrder: mockDispute }),
 }));
@@ -112,4 +113,36 @@ it('in progress: provider can mark done but nobody can cancel', () => {
   expect(getByText('Marcar como terminado')).toBeTruthy();
   expect(getByText('Abrir disputa')).toBeTruthy();
   expect(queryByText('Cancelar orden')).toBeNull();
+});
+
+describe('order context (date, party, reason, who closed)', () => {
+  const people = { client: { id: 'client', firstName: 'Ana', lastName: 'Paz' }, provider: { id: 'provider', firstName: 'Luis' } };
+
+  it('shows the requested date and the counterparty name per role', () => {
+    mockOrder = order({ status: 'accepted', scheduledDate: new Date(2026, 10, 20, 14, 0).toISOString(), ...people });
+    const client = render(<OrderDetailScreen />);
+    expect(client.getByText('Fecha solicitada: 20 nov, 14:00')).toBeTruthy();
+    expect(client.getByText('Proveedor: Luis')).toBeTruthy();
+    client.unmount();
+    mockProfileId = 'provider';
+    const provider = render(<OrderDetailScreen />);
+    expect(provider.getByText('Cliente: Ana Paz')).toBeTruthy();
+  });
+
+  it('shows cancellation reason and who cancelled even when not refunded', () => {
+    mockOrder = order({ status: 'cancelled', cancelledBy: 'provider', cancellationReason: 'No tengo disponibilidad', ...people });
+    const { getByText } = render(<OrderDetailScreen />);
+    expect(getByText('Cancelada por el proveedor')).toBeTruthy();
+    expect(getByText('No tengo disponibilidad')).toBeTruthy();
+  });
+
+  it('shows the dispute reason and the system auto-close', () => {
+    mockOrder = order({ status: 'disputed', disputeReason: 'Trabajo incompleto', ...people });
+    const a = render(<OrderDetailScreen />);
+    expect(a.getByText('Trabajo incompleto')).toBeTruthy();
+    a.unmount();
+    mockOrder = order({ status: 'completed', closedBy: 'system', ...people });
+    const b = render(<OrderDetailScreen />);
+    expect(b.getByText('Cerrada por el sistema tras el plazo de confirmación')).toBeTruthy();
+  });
 });

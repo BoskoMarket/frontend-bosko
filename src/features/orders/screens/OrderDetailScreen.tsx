@@ -45,6 +45,7 @@ import {
 } from '@/core/design-system';
 import type { TimelineStep } from '@/core/design-system';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
+import { getOrderClosureInfo, getOrderCounterparty, getOrderScheduledText } from '../utils/orderDetailInfo';
 import { DisputeSupportNotice } from '../components/DisputeSupportNotice';
 
 // Pasos del timeline en orden
@@ -217,6 +218,9 @@ export default function OrderDetailScreen() {
   const plan = getOrderActions(order, role);
   const infoText = getOrderInfoText(plan.info, order);
   const systemCancelled = isSystemCancelled(order);
+  const scheduledText = getOrderScheduledText(order);
+  const party = getOrderCounterparty(order, role);
+  const closure = getOrderClosureInfo(order);
   const has = (id: OrderActionId) => plan.actions.includes(id);
 
   return (
@@ -249,8 +253,29 @@ export default function OrderDetailScreen() {
                 <Text variant="bodySmall" color={tc.textSub}>{order.address}</Text>
               </View>
             )}
+            {scheduledText && (
+              <View style={styles.metaRow}>
+                <MaterialIcons name="event" size={14} color={tc.textSub} />
+                <Text variant="bodySmall" color={tc.textSub}>Fecha solicitada: {scheduledText}</Text>
+              </View>
+            )}
+            {party && (
+              <View style={styles.metaRow}>
+                <MaterialIcons name="person" size={14} color={tc.textSub} />
+                <Text variant="bodySmall" color={tc.textSub}>{party.label}: {party.name}</Text>
+              </View>
+            )}
           </Card>
         </Animated.View>
+
+        {/* Motivo y quién cerró la orden (cancelada, en disputa o cierre automático) */}
+        {closure && (
+          <Card padding="lg" radius="lg" contentStyle={styles.card}>
+            <Text variant="label" color={tc.text}>{closure.title}</Text>
+            {closure.by && <Text variant="bodySmall" color={tc.textSub}>{closure.by}</Text>}
+            {closure.reason && <Text variant="body" color={tc.textSub}>{closure.reason}</Text>}
+          </Card>
+        )}
 
         {/* Timeline */}
         <Animated.View style={enter(1)}>
@@ -287,7 +312,7 @@ export default function OrderDetailScreen() {
                 Reembolsado{order.agreedPrice ? ` — ${formatCurrency(order.agreedPrice)}` : ''}
               </Text>
               <Text variant="bodySmall" color={tc.textSub}>
-                {order.disputeReason || order.cancellationReason || 'El monto fue devuelto a tu método de pago original.'}
+                {closure?.reason ? 'El monto fue devuelto.' : 'El monto fue devuelto a tu método de pago original.'}
               </Text>
             </View>
           </View>
