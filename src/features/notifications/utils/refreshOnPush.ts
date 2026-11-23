@@ -7,7 +7,8 @@ import { QUERY_KEYS } from '@/core/query/queryKeys';
  * `data.orderId` is optional: without it every cached order detail is invalidated.
  */
 export function invalidateOnPush(qc: QueryClient, data?: Record<string, unknown> | null): void {
-  const orderId = data?.orderId;
+  const rawOrderId = data?.orderId;
+  const orderId = typeof rawOrderId === 'number' ? String(rawOrderId) : rawOrderId;
   qc.invalidateQueries({ queryKey: QUERY_KEYS.unreadCount });
   qc.invalidateQueries({ queryKey: QUERY_KEYS.clientOrders });
   qc.invalidateQueries({ queryKey: QUERY_KEYS.providerOrders });
