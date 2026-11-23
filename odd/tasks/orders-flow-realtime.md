@@ -22,9 +22,15 @@ Delivery strategy: ask-on-risk. Forecast ~300 authored lines.
 - Tests: push tap routing, cache invalidation after dispute and push, detail renders date/party/reason.
 
 ## Out of scope (next)
-Audit items 7-28 (double error toast, stale detail, `?tab=client` redirect, chat unread badge, etc.).
+Audit items 7, 10, 12, 13 and 15-28 (stale/offline notification handling, dedup of the conversations source, polling guards, dead code, etc.). Items 1-6, 8, 9, 11 and 14 shipped in PR #76.
+
+## Backend gaps found (API check on 2026-11-23)
+Verified with the REST flow (happy, reject, cancel, dispute) against the production API using two test accounts. Not verified: UI, push token, live socket.
+- [ ] B1 `GET /orders/:id` does not return the dispute reason or who opened it (only `cancellationReason`). The closure card in `OrderDetailScreen` cannot show it for `disputed` orders until the backend exposes it (e.g. `disputeReason`, `disputedBy`). Request to the backend team pending.
+- [ ] B2 No notification reaches the client when the provider starts the job (`IN_PROGRESS`). Confirm whether that is intended.
+- [ ] B3 The disputed test order `840d7796…` stays open awaiting support; the API has no way to resolve it.
 
 ## Progress
-Route: delegated writer for T1-T4 (4+ files, non-trivial).
+Route: delegated writer for T1-T8 (4+ files, non-trivial).
 
-T1-T4 implemented and verified (npm test 1111 pass, lint clean, tsc clean). Not committed.
+T1-T8 implemented, verified (npm test 1115 pass, lint and tsc clean, CI green) and merged in PR #76. Still to verify on a dev build with two accounts: push tap routing, badges, cold-start chat from a push.
