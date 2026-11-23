@@ -18,9 +18,9 @@ import { ThemeProvider } from "@react-navigation/native";
 import { AppBackground } from "@/core/components/AppBackground";
 import { usePushNotificationSetup } from "@/hooks/usePushNotificationSetup";
 import { NotificationsModalRoot } from "@/features/notifications/screens/NotificationsScreen";
-import { getNotificationRoute, isChatNotificationType, isV1NotificationType, resolveNotificationRoute } from "@/features/notifications/utils/notificationRoute";
+import { resolvePushTapRoute } from "@/features/notifications/utils/pushTapRoute";
+import { invalidateOnPush } from "@/features/notifications/utils/refreshOnPush";
 import { lookupOrderIdByConversation } from "@/features/notifications/utils/conversationOrderLookup";
-import type { Notification } from "@/features/notifications/services/notifications.service";
 import { openNotifications } from "@/stores/notificationsUI.store";
 import { ErrorBoundary } from "@/core/components/ErrorBoundary";
 import { BiometricLockGate } from "@/core/components/BiometricLockGate";
@@ -69,26 +69,15 @@ function useNotificationNavigation(ready: boolean) {
 }
 
 function handleNotificationResponse(response: Notifications.NotificationResponse) {
-  const data = response.notification.request.content.data as Record<string, string> | undefined;
+  const data = response.notification.request.content.data as Record<string, unknown> | undefined;
   if (!data) return;
 
-  try {
-    if (data.type === 'order' && data.orderId) {
-      router.push({ pathname: '/orders/[id]', params: { id: data.orderId } });
-    } else if (isChatNotificationType(data.type) && data.orderId) {
-      router.push({ pathname: '/chat/[id]', params: { id: data.orderId } });
-    } else if (isChatNotificationType(data.type) && data.conversationId) {
-      // Only the conversation id is known: resolve it to the ORDER id (never use it as the route param).
-      void resolveNotificationRoute(
-        { id: '', userId: '', title: '', body: '', read: false, createdAt: '', type: 'chat', data: { conversationId: data.conversationId } } as Notification,
-        lookupOrderIdByConversation,
-      ).then((route) => { try { if (route) router.push(route); } catch {} });
-    } else if (data.type === 'review' && data.orderId) {
-      router.push({ pathname: '/orders/[id]', params: { id: data.orderId } });
-    } else {
-      openNotifications();
-    }
-  } catch {}
+  // Opening from a push must show fresh orders / conversations, not the pre-push cache.
+  invalidateOnPush(queryClient, data);
+  // Chat taps that only carry the conversation id are resolved to the ORDER id first.
+  void resolvePushTapRoute(data, lookupOrderIdByConversation)
+    .then((route) => { try { if (route) router.push(route); else openNotifications(); } catch {} })
+    .catch(() => { try { openNotifications(); } catch {} });
 }
 
 function RootLayoutNav() {

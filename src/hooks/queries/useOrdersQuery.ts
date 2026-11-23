@@ -296,18 +296,28 @@ export function useDisputeOrder() {
     mutationFn: ({ id, payload }: { id: string; payload: DisputeOrderPayload }) =>
       disputeOrder(id, payload),
     onMutate: async ({ id }) => {
+      await qc.cancelQueries({ queryKey: QUERY_KEYS.clientOrders });
+      await qc.cancelQueries({ queryKey: QUERY_KEYS.providerOrders });
       await qc.cancelQueries({ queryKey: QUERY_KEYS.orderById(id) });
-      const prevOrder = qc.getQueryData<Order>(QUERY_KEYS.orderById(id));
+      const prevClient   = qc.getQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.clientOrders);
+      const prevProvider = qc.getQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders);
+      const prevOrder    = qc.getQueryData<Order>(QUERY_KEYS.orderById(id));
+      qc.setQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.clientOrders, old => patchOrders(old, id, 'disputed'));
+      qc.setQueryData<InfiniteData<PaginatedResponse<Order>, number>>(QUERY_KEYS.providerOrders, old => patchOrders(old, id, 'disputed'));
       if (prevOrder) {
         qc.setQueryData<Order>(QUERY_KEYS.orderById(id), { ...prevOrder, status: 'disputed' });
       }
-      return { prevOrder };
+      return { prevClient, prevProvider, prevOrder };
     },
     onError: (err, { id }, ctx) => {
-      if (ctx?.prevOrder) qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
+      if (ctx?.prevClient)   qc.setQueryData(QUERY_KEYS.clientOrders, ctx.prevClient);
+      if (ctx?.prevProvider) qc.setQueryData(QUERY_KEYS.providerOrders, ctx.prevProvider);
+      if (ctx?.prevOrder)    qc.setQueryData(QUERY_KEYS.orderById(id), ctx.prevOrder);
       toast.error('No se pudo abrir la disputa', getUserErrorMessage(err));
     },
     onSettled: (_data, _err, { id }) => {
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.clientOrders });
+      qc.invalidateQueries({ queryKey: QUERY_KEYS.providerOrders });
       qc.invalidateQueries({ queryKey: QUERY_KEYS.orderById(id) });
     },
   });
