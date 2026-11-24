@@ -2,15 +2,34 @@
 
 Registro de **lo que el frontend necesita que el backend construya o confirme**. Cada entrada describe el contrato propuesto (método, ruta, auth, campos, validaciones, respuesta, errores) y cómo se comporta la app mientras el endpoint no exista, para poder pasarla tal cual al equipo de backend.
 
-Formato: una entrada por pedido, con ID `BRxx`. Estados: ⬜ pendiente de backend · 🟡 en desarrollo · ✅ desplegado y verificado desde la app.
+Formato: una entrada por pedido, con ID `BRxx`. Estados: ⬜ abierto · 🟡 entregado según los contratos del backend, sin verificar desde la app · ✅ desplegado y verificado desde la app (ninguno todavía).
 
-Relacionado: `odd/ux-gaps.md` (huecos de UX que originan estos pedidos).
+Relacionado: `odd/archive/ux-gaps.md` (huecos de UX que originan estos pedidos; archivado el 2026-11-24, las referencias G## apuntan a ese archivo).
+
+## Reconciliación del 2026-11-24
+
+Este archivo se contrastó con los contratos que el backend publicó después: `docs/backend-contract-fixes.md`, `docs/frontend-media-reports.md`, `docs/frontend-account-lifecycle.md`, `docs/frontend-app-config.md` y `docs/backend-prd-v1-contracts.md` (`docs/trabajos-feed-contract.md` no aporta nada a BR01-BR12). Los estados de abajo reflejan **lo que esos documentos dicen**; ningún pedido se verificó contra producción desde la app (ver `docs/STATUS.md`). Siguen abiertos BR07, BR08, BR11 y, en parte, BR06, BR09, BR10 y BR12.
+
+| ID | Estado según los contratos | Notas |
+|---|---|---|
+| BR01 | Entregado en backend | Falta probar desde la app |
+| BR02 | Entregado en backend (`ORDER_CLOSED`, `orderStatus`) | Falta probar por REST y socket; el `orderId` de `new_message` va en BR09 |
+| BR03 | Entregado en backend | Falta probar los cuatro puntos de entrada |
+| BR04 | Entregado en backend | Reels está oculto en v1 (`FEATURES.reels`) |
+| BR05 | Entregado en backend | Contradicciones abajo; sin verificar contra producción |
+| BR06 | Entregado en parte | Falta `storeUrls`; el frontend sigue sin leerlo |
+| BR07 | Abierto | No aparece en ningún contrato |
+| BR08 | Abierto | Pagos y planes están fuera de v1 |
+| BR09 | Contratado, sin verificar | Ver BR09 |
+| BR10 | Parcial | Ver BR10 |
+| BR11 | Abierto | No aparece en ningún contrato |
+| BR12 | Entregado en parte | Snapshot regenerado el 2026-11-09 |
 
 ---
 
 ## BR01 — Subir/quitar portada de perfil
 
-**Estado:** 🟡 desplegado en backend (`frontend-media-reports.md` / `backend-contract-fixes.md`, 2026-10-20); frontend integrado en PRs #47–#52, falta verificar desde la app · **Origen:** G10 (`odd/ux-gaps.md`) · **Frontend:** implementado
+**Estado:** 🟡 desplegado en backend según `docs/frontend-media-reports.md` (portada 3:1, 1500×500, 5 MiB; `POST` responde 201 con `data.bannerUrl`, `DELETE` 200 con `bannerUrl: null`); frontend integrado en PRs #47–#52; sin verificar desde la app · **Origen:** G10 (`odd/archive/ux-gaps.md`) · **Frontend:** implementado
 
 ### Contexto
 
@@ -73,7 +92,7 @@ Relacionado: `odd/ux-gaps.md` (huecos de UX que originan estos pedidos).
 
 ## BR02 — Rechazar mensajes en órdenes finalizadas
 
-**Estado:** 🟡 desplegado en backend (`frontend-media-reports.md` / `backend-contract-fixes.md`, 2026-10-20); frontend integrado en PRs #47–#52, falta verificar desde la app
+**Estado:** 🟡 desplegado en backend según `docs/backend-contract-fixes.md` (409 `ORDER_CLOSED` por REST, evento `error` por socket, `orderStatus` en las conversaciones); frontend integrado en PRs #47–#52; sin verificar por REST ni socket. El punto 3 (`orderId` en `new_message`) sigue en BR09.
 
 ### Contexto
 
@@ -117,7 +136,7 @@ El cliente trata `403`, `409` y `422` como "orden cerrada": muestra "No podés e
 
 ## BR03 — Reportes de usuarios y contenido
 
-**Estado:** 🟡 desplegado en backend (`frontend-media-reports.md` / `backend-contract-fixes.md`, 2026-10-20); frontend integrado en PRs #47–#52, falta verificar desde la app · **Origen:** G69, G86 (`odd/ux-gaps.md`) · **Frontend:** implementado
+**Estado:** 🟡 desplegado en backend según `docs/frontend-media-reports.md` (usuario, reseña y reel; cola admin `GET /admin/reports`); frontend integrado en PRs #47–#52; sin verificar desde la app. Diferencia con lo pedido: `CANNOT_REPORT_SELF` responde 422 y las reseñas conservan 400 `CANNOT_REPORT_OWN_REVIEW` · **Origen:** G69, G86 (`odd/archive/ux-gaps.md`) · **Frontend:** implementado
 
 ### Contexto
 
@@ -183,7 +202,7 @@ Códigos estables, en inglés y en minúscula: `spam`, `inappropriate`, `harassm
 
 ## BR04 — Subida de videos para reels
 
-**Estado:** 🟡 desplegado en backend (`frontend-media-reports.md` / `backend-contract-fixes.md`, 2026-10-20); frontend integrado en PRs #47–#52, falta verificar desde la app · **Origen:** G87, G64 (`odd/ux-gaps.md`) · **Frontend:** implementado
+**Estado:** 🟡 desplegado en backend según `docs/frontend-media-reports.md` (`POST /reels/upload`, 100 MiB, hasta 60 s, MP4/MOV; códigos `INVALID_MEDIA`, `UNSUPPORTED_MEDIA_TYPE`, `PROVIDER_REQUIRED`); frontend integrado en PRs #47–#52; sin verificar desde la app. Reels está oculto en v1 · **Origen:** G87, G64 (`odd/archive/ux-gaps.md`) · **Frontend:** implementado
 
 ### Contexto
 
@@ -229,7 +248,9 @@ Para archivos de hasta 100 MB conviene una **URL prefirmada** (`POST /reels/uplo
 
 ## BR05 — Eliminar cuenta con período de gracia de 30 días
 
-**Estado:** ⬜ pendiente de backend — **riesgo hoy:** `DELETE /users/me` ignora la contraseña y no bloquea por órdenes activas (auditoría C04) · **Origen:** G17, G18, G19 (`odd/ux-gaps.md`) · **Frontend:** implementado
+**Estado:** 🟡 desplegado en backend según `docs/frontend-account-lifecycle.md` (valida contraseña o `googleIdToken` de los últimos 5 min, bloquea con `ACTIVE_ORDERS`, gracia de 30 días, `authProvider` en `GET /users/me`); sin verificar contra producción · **Origen:** G17
+
+> **Contradicciones sin resolver.** (1) Este pedido registraba un riesgo (`DELETE /users/me` ignoraba la contraseña y no bloqueaba por órdenes activas, auditoría C04); el contrato de backend dice que ahora ambas cosas se validan. Nadie lo probó contra producción: no darlo por cerrado hasta probarlo con una cuenta de prueba. (2) El punto 2 pedía `reactivated: true` en la respuesta del login; `docs/frontend-account-lifecycle.md` describe la reactivación pero no menciona ese campo, así que el aviso "Reactivamos tu cuenta" puede no aparecer. (3) El contrato exige además una autenticación de Google de los últimos 5 minutos para **recuperar** la cuenta, no solo para darla de baja. (4) La purga anonimiza y no borra el historial compartido, las copias de seguridad ni datos en Didit/Firebase (el pedido solo recomendaba anonimizar)., G18, G19 (`odd/archive/ux-gaps.md`) · **Frontend:** implementado
 
 ### Contexto
 
@@ -282,11 +303,11 @@ Un job elimina definitivamente las cuentas con `deletionScheduledAt` vencido. **
 
 ## BR06 — Configuración remota de la app (versión mínima, mantenimiento y tiendas)
 
-**Estado:** ⬜ pendiente de backend (desde 2026-10-20 la app pide el endpoint una sola vez por sesión si responde 404) · **Origen:** G111 (`odd/ux-gaps.md`) · **Frontend:** implementado (falla en silencio si el endpoint no existe)
+**Estado:** 🟡 entregado en parte según `docs/frontend-app-config.md`: `GET /app/config` existe y devuelve `minVersion`, `maintenanceMode` y `maintenanceMessage` (variables `APP_MIN_VERSION`, `APP_MAINTENANCE_MODE`, `APP_MAINTENANCE_MESSAGE`, leídas al arrancar el proceso). **No** entrega `storeUrls` ni versión mínima por plataforma. Pendiente en frontend: "Reintentar" en mantenimiento, y leer `storeUrls` si el backend lo agrega (hoy no se lee en `src/`). `docs/PRD.md` §7 #1 dice que falta cargar `APP_SUPPORT_WHATSAPP` en el servidor; `docs/frontend-app-config.md` no lista esa variable: sin verificar · **Origen:** G111 (`odd/archive/ux-gaps.md`) · **Frontend:** implementado (falla en silencio si el endpoint no existe)
 
 ### Contexto
 
-La app consulta `GET /app/config` al arrancar para bloquear versiones viejas o mostrar mantenimiento. El endpoint **no existe todavía**: ante cualquier error la app sigue normal (nunca se bloquea por falta del endpoint). Además, el botón "Actualizar ahora" en iOS abre una búsqueda en la App Store porque la app no conoce el enlace de su ficha.
+La app consulta `GET /app/config` al arrancar para bloquear versiones viejas o mostrar mantenimiento. (Cuando se escribió este pedido el endpoint no existía; hoy existe según el contrato.) Ante cualquier error la app sigue normal (nunca se bloquea por falta del endpoint). Además, el botón "Actualizar ahora" en iOS abre una búsqueda en la App Store porque la app no conoce el enlace de su ficha.
 
 ### 1. Leer la configuración
 
@@ -321,7 +342,7 @@ La app consulta `GET /app/config` al arrancar para bloquear versiones viejas o m
 
 ## BR07 — Conteo de órdenes pendientes del proveedor
 
-**Estado:** ⬜ pendiente de backend · **Origen:** auditoría C12, revisión PR #50 · **Frontend:** recorre todas las páginas
+**Estado:** ⬜ abierto (ningún contrato lo menciona; el conteo sigue calculándose en `src/hooks/queries/useOrdersQuery.ts` sobre `providerOrders`) · **Origen:** auditoría C12, revisión PR #50 · **Frontend:** recorre todas las páginas
 
 - **Pedido:** `GET /orders/provider?status=pending` (filtro) o `GET /orders/provider/pending-count` → `{ "count": number }`.
 - **Por qué:** el badge de Órdenes y ProviderHome hoy piden todas las páginas de `/orders/provider` en serie para contar las pendientes (N requests por cada aceptar/rechazar).
@@ -329,35 +350,35 @@ La app consulta `GET /app/config` al arrancar para bloquear versiones viejas o m
 
 ## BR08 — Forma de `PlanDto` y de `GET /plans/my-plan`
 
-**Estado:** ⬜ pendiente de backend · **Origen:** auditoría C05, C25 · **Frontend:** muestra solo "Hasta N servicios"
+**Estado:** ⬜ abierto, baja prioridad (planes fuera de v1; `BENEFIT_LABELS` sigue vacío en `src/features/plans/services/plan.service.ts`) · **Origen:** auditoría C05, C25 · **Frontend:** muestra solo "Hasta N servicios"
 
 - **Pedido:** documentar en OpenAPI los campos de beneficio de `PlanDto` (nombres y tipos) y la respuesta de `GET /plans/my-plan` (plan, límites, `maxServices`, servicios usados).
 - **Por qué:** sin esos nombres la pantalla de planes oculta los beneficios (`BENEFIT_LABELS` vacío en `plan.service.ts`) y el cupo de servicios se calcula con una regla local (FREE = 1).
 
 ## BR09 — `orderId` en la notificación de mensaje nuevo
 
-**Estado:** ⬜ pendiente de backend · **Origen:** auditoría C21 · **Frontend:** resuelve conversación → orden desde la lista de conversaciones
+**Estado:** 🟡 contratado, sin verificar: `docs/backend-prd-v1-contracts.md` (línea 148) dice que el `data` de los avisos incluye siempre `orderId` cuando corresponde. Ningún documento confirma que `new_message` lo traiga en producción; hasta probarlo en un dispositivo, el toque en un aviso de mensaje puede caer en la lista de chats · **Origen:** auditoría C21 · **Frontend:** resuelve conversación → orden desde la lista de conversaciones
 
 - **Pedido:** incluir `orderId` en `data` del push/notificación `NEW_MESSAGE` (hoy solo `conversationId`).
 - **Por qué:** la ruta del chat usa el id de la orden; sin él la app tiene que buscar la conversación antes de abrir el hilo.
 
 ## BR10 — Reemplazar o reordenar la foto principal de un servicio
 
-**Estado:** ⬜ pendiente de backend · **Origen:** auditoría C17 · **Frontend:** "Cambiar foto" agrega otra imagen al final
+**Estado:** 🟡 parcial: `docs/backend-prd-v1-contracts.md` (línea 227) dice que `POST /services/:id/images` reemplaza la foto principal con `main=true`. Los endpoints de reordenar y borrar por clave de este pedido no aparecen en ningún contrato. El frontend (`src/features/servicesUser/services/service.ts`) no envía `main`: sin verificar si "Cambiar foto" ya reemplaza · **Origen:** auditoría C17 · **Frontend:** "Cambiar foto" agrega otra imagen al final
 
 - **Pedido:** `PATCH /services/:id/images` con el orden de claves (o `PUT /services/:id/images/main`), y `DELETE /services/:id/images/:key`.
 - **Por qué:** el catálogo usa `images[0]` como miniatura; hoy la foto nueva queda al final y la anterior sigue como principal.
 
 ## BR11 — Listado de antecedentes pendientes para ADMIN
 
-**Estado:** ⬜ pendiente de backend · **Origen:** auditoría C26 · **Frontend:** panel vacío
+**Estado:** ⬜ abierto (ningún contrato lo menciona; `AdminBackgroundCheckScreen` sigue sin lista y lo declara en un comentario). `docs/PRD.md` §6 deja el panel admin de antecedentes fuera de v1 · **Origen:** auditoría C26 · **Frontend:** panel vacío
 
 - **Pedido:** `GET /admin/background-check?status=pending&page=&limit=` (solo ADMIN) con usuario, archivo y fecha.
 - **Por qué:** `AdminBackgroundCheckScreen` no tiene de dónde leer la cola; el `PATCH` de revisión ya existe.
 
 ## BR12 — Exportar el OpenAPI de la revisión desplegada
 
-**Estado:** ⬜ pendiente de backend · **Origen:** auditoría C24 · **Frontend:** snapshot desactualizado en `docs/backend-openapi.json`
+**Estado:** 🟡 entregado en parte: `docs/backend-openapi.json` y `src/core/api/generated/schema.ts` se regeneraron el 2026-11-09 (commit `6e99722`; `docs/PRD.md` §6 dice que `contracts:check` pasa) y `GET /api/v1/health` agrega `data.revision` (`docs/frontend-media-reports.md`). Sin verificar: que el backend publique `openapi.json` como artefacto de CD por revisión desplegada (`docs/backend-prd-v1-contracts.md`, línea 249) y que los DTO de respuesta ya estén tipados · **Origen:** auditoría C24 · **Frontend:** el snapshot ya no está desactualizado, pero sigue siendo una copia manual
 
 - **Pedido:** publicar `openapi.json` por versión desplegada (artefacto de CD o `GET /api/v1/docs-json`) con los DTO de respuesta tipados (hoy muchos son `Record<string, never>`).
 - **Por qué:** `contracts:check` compara contra un snapshot local y puede quedar verde con un contrato viejo.
