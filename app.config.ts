@@ -39,8 +39,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     package: `com.boskoapp.mobile${idSuffix}`,
     adaptiveIcon: {
-      foregroundImage: './assets/images/adaptive-icon.png',
-      backgroundColor: '#ffffff',
+      foregroundImage: './assets/images/bosko-logo.png',
+      backgroundColor: brand.primary,
     },
     edgeToEdgeEnabled: true,
     // Firebase needs one registered Android app per application id: EAS file env var per profile, repo file as fallback.
