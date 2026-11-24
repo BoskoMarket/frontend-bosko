@@ -1,155 +1,100 @@
-# Bosko — Mapa de flujos (retroactivo)
+# Bosko — Mapa de flujos (v1)
 
-> **Desactualizado respecto del producto objetivo.** Describe lo que había en el código antes de la v1 (incluye Reels como tab, pagos simulados y planes). El producto acordado y sus flujos con manejo de errores están en `docs/PRD.md`; la sección 6 de ese documento lista la distancia con el código.
+Reescrito el 2026-11-24 a partir de `docs/PRD.md` (sección 5) y de las rutas reales de `app/`. Sustituye al mapa anterior, que incluía Reels como pestaña, pagos simulados y planes. El detalle de errores por pantalla está en el PRD; el estado de verificación (qué se probó y qué no) está en `docs/STATUS.md`.
 
-Generado a partir del código real (`app/`, `src/features/`), no de un intake previo — la app ya está construida. Sirve como referencia para no romper flujos existentes al agregar features nuevas, y como base para futuras auditorías de estados faltantes (error/vacío/confirmación).
+Roles: **client**, **pending** (inició KYC, sin aprobar) y **provider** (KYC aprobado), derivados en `useProviderStatus()`. Mercados: Tandil (ARS) y Barranquilla (COP); la ciudad se elige al registrarse.
 
-Roles: **client** (usuario común) · **pending** (inició KYC, no aprobado aún) · **provider** (KYC aprobado) — derivados en `useProviderStatus()`, nunca un flag suelto. Un usuario puede pasar de client → pending → provider, nunca al revés automáticamente (hay ruta de rechazo, ver KYC).
+El cliente paga al proveedor **fuera de la app**. Dentro de la app no hay checkout, planes ni Reels (`FEATURES.payments = false`, `FEATURES.reels = false` en `src/core/config/features.ts`): sus rutas redirigen a `/(tabs)`.
 
----
+## 1. Estructura
 
-## 1. Auth
+Barra de pestañas (`CustomTabBar`): **Inicio · Trabajos · Pedidos (Órdenes para proveedores) · Mensajes · Perfil**. Reels existe como pestaña oculta (`href: null`). `services/*` se puede abrir por ruta, pero no es pestaña.
 
-| Ruta | Screen | Rol | Qué hace |
-|---|---|---|---|
-| `/login` | `LogInView` | anónimo | Email/password + botón Google |
-| `/login/RegisterView` | `RegisterView` | anónimo | Alta de cuenta + botón Google |
-| `/login/forgot-password` | `ForgotPasswordScreen` | anónimo | Pide email para código de recuperación |
-| `/auth/verify-reset-code` | `VerifyResetCodeScreen` | anónimo | Input de OTP recibido por email |
-| `/auth/reset-password` | `ResetPasswordScreen` | anónimo | Nueva contraseña tras OTP válido |
-| `/terms` | `TermsAndConditionsScreen` | anónimo y autenticado | T&C (enlazado desde el último paso del registro y desde Perfil) |
-| `/auth/verify-email` | `VerifyEmailScreen` | recién registrado | Verificación de email post-registro |
-| `/welcome-video` | `WelcomeVideoScreen` | recién registrado | Video de bienvenida (una sola vez) |
-| — | `OnBoarding` | primer uso | Slides de onboarding (`screens/OnBoarding.tsx`) |
-| `(tabs)/profile/ChangePassword` | `ChangePasswordScreen` (auth) | autenticado | Cambio de contraseña desde perfil |
+Guardas: `app/index.tsx` (puerta principal) → `(tabs)/_layout.tsx` (sin token va a `/login`) → `login/_layout.tsx` (con token va a `/(tabs)`). Una cuenta suspendida (403 `ACCOUNT_SUSPENDED`) va a `/suspended`.
 
-**Guards** (3 capas, ver CLAUDE.md): `app/index.tsx` (gate primario) → `(tabs)/_layout.tsx` (redirect a `/login` si no hay token) → `login/_layout.tsx` (redirect a `/(tabs)` si ya autenticado).
+## 2. Registro y acceso
 
-**Estados conocidos**: refresh-token automático vía interceptor de axios (cola de requests concurrentes, logout forzado si el refresh falla — `axiosinstance.tsx`). Error de credenciales / email no verificado: manejo puntual, no auditado screen por screen en este pase.
+| Ruta | Qué hace |
+|---|---|
+| `/login`, `/login/forgot-password` | Ingreso (email o Google) y recuperación |
+| `/auth/verify-reset-code`, `/auth/reset-password` | Código por email y nueva contraseña |
+| `/auth/verify-email` | Código de 6 dígitos (10 min), reenvío con espera de 60 s |
+| `/auth/select-city` | Ciudad y términos para cuentas de Google o sin ciudad |
+| `/terms` | Términos y condiciones (registro y Perfil) |
+| `/welcome-video` | Video de bienvenida, una sola vez |
 
----
+Flujo: onboarding → registro (ciudad y términos) → verificar email → video de bienvenida → Inicio.
 
-## 2. Convertirse en proveedor (KYC)
+## 3. Ser proveedor y publicar el servicio
 
-Flujo lineal client → pending → provider.
+1. Perfil → `profile/become-provider` → `profile/kyc/intro` → captura con Didit → `profile/kyc` (estado).
+2. Verificar el teléfono (`profile/verify-phone`, Firebase): obligatorio para proveedores.
+3. Estados KYC: `in_progress` → `pending` → `approved`. `rejected`/`declined` permiten reintento mientras queden intentos; `failed`/`expired` reintentan sin consumir intento; con intentos agotados se ofrece contactar a soporte por WhatsApp.
+4. Antecedentes (`profile/background-check`) son opcionales y dan una insignia. Revisión admin: `/admin/background-check`.
+5. Con `approved`: `profile/Services` y `/service-form`. **Un solo servicio** por proveedor (422 `SERVICE_LIMIT_REACHED`), con foto principal obligatoria; la categoría no cambia después de publicar.
 
-| Ruta | Screen | Qué hace |
+## 4. Descubrir
+
+- Inicio: categorías y destacados. Búsqueda en `/search`. Catálogo en `services/category/[id]` y `services/provider/[id]`.
+- **Trabajos** (`(tabs)/works`): feed público de fotos de trabajos terminados. `/work/[id]` muestra el detalle, **Cotizar** y denunciar. El proveedor administra sus fotos en `profile/my-works` (máximo 30; con 3 denuncias se ocultan hasta revisión).
+- Favoritos guardados en la cuenta: `profile/favorites`.
+
+## 5. Orden
+
+```
+pending ──accept──> accepted ──start──> in_progress ──terminado──> awaiting_confirmation ──confirma / 3 días──> completed
+   │                    │                    │                              │
+   ├─ reject / vence 48 h                    │                              │
+   ▼                    ▼                    ▼                              ▼
+cancelled           cancelled             disputed                       disputed
+```
+
+Acciones por rol (`getOrderActions`, `src/features/orders/utils/orderActions.ts`):
+
+| Estado | Cliente | Proveedor |
 |---|---|---|
-| `(tabs)/profile/become-provider` | `BecomeProviderScreen` | Entry point, explica el proceso |
-| `(tabs)/profile/kyc/intro` | `KYCIntroScreen` | Explicación KYC antes de arrancar |
-| `(tabs)/profile/kyc/document` | `KYCDocumentScreen` | Captura de documento (DNI/CEDULA/PASAPORTE/RUT) vía `@didit-protocol/sdk-react-native` |
-| `(tabs)/profile/kyc/index` | `KYCStatusScreen` | Estado de la verificación en curso |
-| `(tabs)/profile/background-check` | `BackgroundCheckScreen` | Antecedentes (posterior/paralelo a KYC) |
-| `/admin/background-check` | `AdminBackgroundCheckScreen` | Vista admin para revisar antecedentes |
-| — | `KYCRejectedScreen` | Estado terminal: rechazado, con motivo (`rejectionReason`) |
+| `pending` | Cancelar | Aceptar, rechazar (vence a las 48 h) |
+| `accepted` | Cancelar | Iniciar, cancelar |
+| `in_progress` | Abrir disputa | Marcar terminado, abrir disputa |
+| `awaiting_confirmation` | Confirmar, reportar problema (disputa) | Solo espera; se cierra sola a los 3 días |
+| `completed` | Reseñar (una por orden) | — |
+| `cancelled` por vencimiento | Cotizar a otro proveedor | Aviso "solicitud vencida" |
 
-**Estados reales** (`KYCStatus`, `src/features/kyc/types/kyc.types.ts`): `not_started` · `in_progress` · `pending` · `approved` · `rejected` · `declined` · `failed` · `expired`. Todos tienen representación en `KYCStatusScreen`/`KYCRejectedScreen` salvo verificación puntual de `expired`/`declined`/`failed` — revisar que compartan copy con `rejected` o tengan mensaje propio.
+Rutas: `(tabs)/orders` (lista; abre en la pestaña de proveedor si el usuario es proveedor, `?tab=client|provider` manda), `/orders/quote` (nueva solicitud), `/orders/[id]` (detalle), `/orders/review`. Cancelar y rechazar piden motivo. Disputa: la resuelve soporte a mano por WhatsApp (`SupportContactButton`; el detalle de la orden muestra `DisputeSupportNotice`). Que el proveedor no pueda disputar desde `awaiting_confirmation` está marcado en el código como decisión de producto abierta.
 
-**Retomable**: sí — `attemptCount`/`maxAttempts` en `KYCVerification` indica reintentos controlados, no hay reinicio total forzado.
-
----
-
-## 3. Marketplace (descubrimiento)
-
-| Ruta | Screen | Rol | Qué hace |
-|---|---|---|---|
-| `(tabs)/index` | `DashboardScreen` | todos | Home — categorías, destacados, CTA "hacete proveedor" (`ProviderCTA`) si es `client` |
-| `(tabs)/services/index` | `ServicesScreen` | todos | Listado general de servicios |
-| `(tabs)/services/category/[id]` | `CategoryServicesScreen` | todos | Servicios filtrados por categoría |
-| `(tabs)/services/provider/[id]` | `ProviderProfileScreen` | todos | Perfil público de un proveedor (real, activo — reemplazó al viejo `/profile/[id]`, ver limpieza de deadcode) |
-| `/search` | `SearchPage` | todos | Búsqueda con debounce (`useDebouncedValue`, 275ms) |
-| `(tabs)/profile/favorites` | `FavoritesScreen` | todos | Favoritos (Zustand `favorites.store`, persist AsyncStorage) |
-
-**Navegación a perfil de proveedor**: desde Dashboard, CategoryServices, Search y Reels — todas usan `router.push({ pathname: '/(tabs)/services/provider/[id]', params: { id, from } })`, con `from` para tracking de origen.
-
----
-
-## 4. Servicio propio (rol provider)
-
-| Ruta | Screen | Qué hace |
-|---|---|---|
-| `(tabs)/profile/Services` | `MyServiceScreen` | Gestión del/los servicio(s) propios |
-| `(tabs)/profile/AddServices` | `ServiceFormScreen` | Alta de servicio |
-| `/service-form` (modal) | `ServiceFormScreen` | Edición (mismo componente, ruta modal) |
-
-**Gate**: `useRequireProviderStatus()` — bloquea acceso si el rol no es `provider`.
-
----
-
-## 5. Órdenes (pedido de servicio)
-
-Estados reales (`OrderStatus`, `src/features/orders/types/orders.types.ts`): `pending → accepted → in_progress → completed`, con salidas a `cancelled` o `disputed` en cualquier punto antes de `completed`.
-
-| Ruta | Screen | Rol | Qué hace |
-|---|---|---|---|
-| `(tabs)/orders` | `OrdersListScreen` | cliente y proveedor (vista distinta, `role` en `Order`) | Lista de órdenes propias |
-| `/orders/quote` | `QuoteRequestScreen` | cliente | Pedir cotización a un proveedor |
-| `/orders/checkout` | `CheckoutScreen` | cliente | Checkout tras acordar precio |
-| `/orders/payment-success` | `PaymentSuccessScreen` | cliente | Confirmación de pago |
-| `/orders/[id]` | `OrderDetailScreen` | ambos | Detalle completo de una orden |
-| `/orders/status` | `OrderStatusScreen` | ambos | Tracking de estado en curso |
-| `/orders/review` | `ReviewScreen` | cliente | Dejar reseña tras `completed` |
-
-**Confirmaciones esperables** (no auditadas línea a línea): cancelar orden (`RejectOrderPayload`/`cancellationReason`) y abrir disputa (`DisputeOrderPayload`/`disputeReason`) son acciones con motivo obligatorio — deberían tener modal de confirmación + input de texto, revisar que `OrderDetailScreen` lo cubra.
-
-**Optimistic UI**: ya implementado en 6 mutations de órdenes (onMutate/onError/onSettled + rollback + toast, según CLAUDE.md cambios recientes) — patrón a repetir en mutations nuevas del módulo.
-
----
+`/orders/checkout` y `/orders/payment-success` siguen en el repositorio pero redirigen mientras `FEATURES.payments` sea `false`.
 
 ## 6. Chat
 
-| Ruta | Screen | Qué hace |
+`(tabs)/chat` lista las conversaciones; `/chat/[id]` abre una (el `id` es el de la **orden**). No hay mensajes directos fuera de una orden.
+
+- Texto, imagen, video (hasta 60 s) y audio. Indicador de escritura. Tiempo real por socket.io con polling de respaldo cada 10 s.
+- Orden `completed` o `cancelled`: solo lectura (el servidor responde 409 `ORDER_CLOSED`). En `disputed` se puede escribir.
+- Menú del chat: denunciar o bloquear al otro usuario. Bloqueados: `profile/blocked-users`.
+
+## 7. Reseñas, denuncias y suspensión
+
+- Solo el cliente califica al proveedor tras `completed`; el proveedor puede responder (`profile/my-reviews`).
+- Se pueden denunciar usuarios, reseñas, fotos de Trabajos y reels (`ReportFlow`, `src/features/reports`). Las denuncias las revisa el equipo con la API de admin; no hay panel en la app.
+- Suspensión total: `/suspended` con contacto de soporte; se cierra la sesión.
+
+## 8. Perfil y cuenta
+
+`profile/index` es el centro: editar perfil (`EditProfile`), verificar teléfono, favoritos, usuarios bloqueados, Mis trabajos (proveedor), Mis reseñas, términos y cambio de contraseña (`ChangePassword`). El modal global de notificaciones se monta en `app/_layout.tsx`. Hay un único interruptor de push.
+
+**Eliminar cuenta** (`profile/delete-account`): pide contraseña o reautenticación reciente con Google (5 min); se bloquea con órdenes activas (`ACTIVE_ORDERS`); la cuenta queda oculta 30 días y se recupera al iniciar sesión; después se anonimiza (el historial compartido se conserva de forma anónima).
+
+## 9. Fuera de v1 (código conservado)
+
+| Qué | Dónde | Cómo reactivar |
 |---|---|---|
-| `(tabs)/chat` | `ConversationsListScreen` | Lista de conversaciones (ligadas a una orden — no hay DMs libres) |
-| `/chat/[id]` | `ChatScreen` | Chat 1:1, `id` = `orderId` |
+| Reels (feed, Mis reels, subir reel) | `(tabs)/reels`, `profile/my-reels`, `/upload-reel`, `features/reels` | `FEATURES.reels = true` |
+| Pagos, checkout, planes | `/orders/checkout`, `/orders/payment-success`, `profile/plans`, `features/payments`, `features/plans` | `FEATURES.payments = true` |
 
-Real-time vía socket.io con poll de respaldo cada 10s si el socket está desconectado (`socketReady` en `chat.store`). Soporta texto, imagen, video (≤60s), audio (long-press). Indicador de escritura animado.
+## 10. Huecos conocidos
 
----
+Verificados al reescribir este mapa (2026-11-24). El resto está en `docs/STATUS.md`.
 
-## 7. Pagos y planes
-
-| Ruta | Screen | Qué hace |
-|---|---|---|
-| `(tabs)/profile/Payments` | `PaymentsScreen` | Métodos de pago / historial |
-| `(tabs)/profile/plans` | `PlansScreen` | Planes/suscripción |
-
----
-
-## 8. Reels
-
-| Ruta | Screen | Qué hace |
-|---|---|---|
-| `(tabs)/reels` | `ReelsScreen` | Feed de reels de proveedores |
-| `(tabs)/profile/my-reels` | `MyReelsScreen` | Grilla de reels propios (rol provider) — likes/comentarios, editar descripción/tags, eliminar |
-| `/(tabs)/profile/upload-reel` | `ReelUploadScreen` | Publicar reel por enlace HTTPS (rol provider) |
-
----
-
-## 9. Reseñas
-
-| Ruta | Screen | Qué hace |
-|---|---|---|
-| `(tabs)/profile/my-reviews` | `MyReviewsScreen` | Reseñas recibidas/hechas por el usuario |
-| `/orders/review` | `ReviewScreen` | Dejar reseña (ver Órdenes) |
-
----
-
-## 10. Perfil y cuenta
-
-| Ruta | Screen | Qué hace |
-|---|---|---|
-| `(tabs)/profile/index` | `ProfileScreen` (`features/profile/ProfileScreen.tsx`) | Perfil propio — hub de todo lo demás |
-| `(tabs)/profile/EditProfile` | `EditProfileScreen` | Edición de perfil |
-| `(tabs)/profile/verify-phone` | `VerifyPhoneScreen` | Verificación de teléfono (Firebase) |
-| `(tabs)/profile/delete-account` | `DeleteAccountScreen` | Baja de cuenta — **requerido por Apple**, ya existe ✅ |
-
-**Notificaciones**: `NotificationsScreen` (modal global, `NotificationsModalRoot` en `_layout.tsx`), estado en `notificationsUI.store` + `useNotificationsQuery`.
-
----
-
-## Gaps detectados al mapear (no bloquean nada, quedan anotados)
-
-- No hay estado "primera vez sin datos" documentado explícitamente para `OrdersListScreen`/`MyReviewsScreen`/`FavoritesScreen` — verificar que cada uno tenga `EmptyState` propio y no solo lista vacía sin CTA.
-- `KYCStatus` tiene 3 estados terminales distintos de éxito (`expired`, `declined`, `failed`) además de `rejected` — confirmar que cada uno tenga copy diferenciado en `KYCStatusScreen`/`KYCRejectedScreen` y no un mensaje genérico que confunda "rechazado" con "expiró, reintentá".
-- Cancelación/disputa de orden: confirmar que el modal de motivo (`RejectOrderPayload`/`DisputeOrderPayload`) existe y no es un simple `Alert.alert` de confirmación sin input.
+- El PRD (5.7) promete marca de error y reintento por mensaje en el chat; `ChatScreen.tsx` no tiene estado de envío por mensaje (solo carga fallida y avisos). Pendiente.
+- `AdminBackgroundCheckScreen` siempre queda vacía: no existe endpoint de pendientes.
+- Los flujos de orden se probaron contra producción solo por REST (2026-11-23); la interfaz, el socket y las notificaciones no se probaron en un dispositivo.

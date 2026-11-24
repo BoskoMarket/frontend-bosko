@@ -1,8 +1,8 @@
 # Mapa de navegación
 
-Se completa durante la migración del design system (`odd/tasks/design-system-centralization.md`): cada pantalla migrada agrega sus salidas acá.
+Se completó durante la migración del design system (historial en `odd/archive/tasks/design-system-centralization.md`): cada pantalla migrada agregó sus salidas acá.
 
-Diagrama navegable (generado a mano desde este mapa): [`odd/nav-flow.html`](nav-flow.html). Este archivo es la fuente de verdad; al cambiarlo, actualizar el bloque de datos al inicio del HTML. Tareas abiertas: `odd/tasks/navigation-fixes.md`.
+Diagrama navegable (generado a mano desde este mapa): [`odd/nav-flow.html`](nav-flow.html). Este archivo es la fuente de verdad; al cambiarlo, actualizar el bloque de datos al inicio del HTML. Las tareas de navegación ya cerradas están en `odd/archive/tasks/navigation-fixes.md`; el estado vigente está en `docs/STATUS.md`.
 
 Qué registrar por pantalla: cada `router.push/replace/back/navigate`, `<Link href>`, `<Redirect>`, guards de `_layout`, y aperturas de modales o URLs externas.
 

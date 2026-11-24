@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project status
+
+Current state (done, open work, never verified on a device, risks) lives in `docs/STATUS.md`: read it first. Product definition: `docs/PRD.md`. Order and screen flows: `docs/FLOWS.md`. History of closed work lives in `docs/archive/` and `odd/archive/` (closed tasks in `odd/archive/tasks/`); do not treat those files as current. Integration branch is `dev` (PRs target `dev`).
+
 ## Commands
 
 ```bash
@@ -21,7 +25,7 @@ npx jest __tests__/login.test.tsx
 
 ## Key constraints
 
-- **Dev build required**: `react-native-reanimated` ~4.1.1 and `moti` ^0.30.0 use TurboModules (`react-native-worklets`) not bundled in Expo Go. Use `npx expo run:ios` or EAS Build for full functionality.
+- **Dev build required**: `react-native-reanimated` ~4.1.7 and `moti` ^0.30.0 use TurboModules (`react-native-worklets`) not bundled in Expo Go. Use `npx expo run:ios` or EAS Build for full functionality.
 - **Env vars**: requires `.env` at root with `EXPO_PUBLIC_API_URL=https://api.boskoapp.site/api/v1`. App crashes at module load if missing.
 - **Platform**: iOS + Android. `KeyboardAvoidingView` uses `behavior="padding"` on both.
 
@@ -29,10 +33,10 @@ npx jest __tests__/login.test.tsx
 
 | Package | Version |
 |---|---|
-| expo | ^54.0.4 |
-| react-native | 0.81.4 |
-| expo-router | ~6.0.7 |
-| react-native-reanimated | ~4.1.1 |
+| expo | ~54.0.37 |
+| react-native | 0.81.5 |
+| expo-router | ~6.0.24 |
+| react-native-reanimated | ~4.1.7 |
 | moti | ^0.30.0 |
 | socket.io-client | ^4.8.3 |
 | axios | ^1.12.2 |
@@ -65,6 +69,12 @@ app/auth/select-city.tsx → City (and terms) for new Google users or accounts w
 app/suspended.tsx      → Suspended-account screen (root stack); reached by a 403 ACCOUNT_SUSPENDED
 app/search.tsx         → Search screen
 app/upload-reel.tsx    → Publish a reel (providers), root stack
+app/orders/            → Order stack: index, [id] (detail), quote, review; checkout and payment-success redirect while `FEATURES.payments` is false
+app/service-form.tsx   → Create/edit the provider's service (modal route)
+app/admin/background-check.tsx → Admin review of background checks (the pending list has no backend endpoint yet: the screen is always empty)
+app/terms.tsx          → Terms and conditions (linked from registration and Perfil)
+app/welcome-video.tsx  → One-time welcome video after registration
+app/dev/components.tsx → Design-system component gallery (purpose inferred from the filename; unverified)
 ```
 
 **Product v1** (`docs/PRD.md`, tasks in `odd/tasks/prd-v1-frontend.md`): the client pays the provider outside the app; two separated markets (Tandil/ARS and Barranquilla/COP, the user's city is chosen at registration); one service per provider with a required main photo; order flow `pending → accepted → in_progress → awaiting_confirmation → completed` (pending expires in 48 h, auto-close 3 days after "terminado"); disputes are resolved by support over WhatsApp (`SupportContactButton`, number from `GET /app/config`); copy in neutral Spanish (`__tests__/neutralCopy.test.ts` fails on voseo). Backend contracts: `docs/backend-prd-v1-contracts.md`.
@@ -159,6 +169,9 @@ src/
     chat.store.ts            ← conversaciones, unread, socket, typing
     preferences.store.ts     ← preferencias de usuario con persist (reelsAutoplay)
     marketplace.store.ts     ← categoría seleccionada, filtros, search query
+    appLock.store.ts         ← biometric app lock (persisted)
+    notificationsUI.store.ts ← open/closed state of the global notifications modal
+    theme.store.ts           ← light/dark toggle (persisted); palette data lives in the design system
   hooks/queries/             ← TanStack Query (server state)
     useProfileQuery.ts
     useOrdersQuery.ts
@@ -198,6 +211,8 @@ src/
 | `search` | Search services/providers | TanStack Query + Zustand (query state) |
 | `notifications` | Push notifications (expo-notifications, dev build only) | TanStack Query + `usePushNotificationSetup` hook |
 | `plans` | Subscription plan management (hidden in v1 behind `FEATURES.payments`) | — |
+| `admin` | Admin background-check review screen (`AdminBackgroundCheckScreen`) | — |
+| `reports` | Report flow for users, reviews, works and reels (`ReportFlow`, reasons, error mapping, `canReport`) | Service calls, no store |
 
 ### API layer
 
@@ -251,7 +266,7 @@ All of it lives under `src/core/design-system/` — the one folder to check befo
 - **Toda pantalla sigue el tema claro/oscuro** (`tc.*` de `useThemeColors()`). Nada de pantallas "siempre dark". Excepción: contenido sobre video/imagen usa `TOKENS.onMedia` / `TOKENS.scrim` por legibilidad.
 - Si falta un token o un componente: **se agrega primero al design system** (y se exporta en el barrel), después se usa. Nunca resolverlo local en la pantalla.
 - **Enforcement**: la regla ESLint `no-restricted-syntax` de `eslint.config.mjs` está en `error` (ya no `warn`): `npm run lint` y CI fallan ante un literal de diseño fuera de `src/core/design-system/`. `npm run lint:ds` imprime el conteo de violaciones (debe ser 0). Un test sobre `src/components` y `src/core/components` también prohíbe literales.
-- Objetivo: rebranding cambiando solo la capa de marca (simulacro hecho en T13: cambiar nombre y colores en `brand.ts` movió toda la UI, el nombre/splash de `app.config.ts` y los permisos de iOS/Android). Historial de la migración: `odd/tasks/design-system-centralization.md`.
+- Objetivo: rebranding cambiando solo la capa de marca (simulacro hecho en T13: cambiar nombre y colores en `brand.ts` movió toda la UI, el nombre/splash de `app.config.ts` y los permisos de iOS/Android). Historial de la migración: `odd/archive/tasks/design-system-centralization.md`.
 
 #### Capa de marca (rebrand)
 
